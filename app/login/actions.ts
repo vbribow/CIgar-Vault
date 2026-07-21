@@ -35,7 +35,7 @@ export async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get("email") || "").trim();
   const origin = (await headers()).get("origin") || "";
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/auth/confirm?next=/reset-password`,
   });
   if (error) redirect(failure(error.message, "forgot", "/"));
   redirect("/login?mode=signin&notice=Check%20your%20email%20for%20a%20password%20reset%20link.");

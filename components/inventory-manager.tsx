@@ -10,6 +10,7 @@ import { findBoxFormat } from "@/lib/box-formats";
 import { CatalogFields } from "@/components/catalog-fields";
 import type { CatalogCigar } from "@/lib/types";
 import { canonicalBrand } from "@/lib/brand-directory";
+import { PhotoInventoryIntake } from "@/components/photo-inventory-intake";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
@@ -21,6 +22,7 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
   const [missing, setMissing] = useState(initialMissing);
   const [storage, setStorage] = useState(initialStorage);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
+  const [draft, setDraft] = useState<InventoryItem | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -48,7 +50,7 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Save failed");
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
-      setEditing(null); setMessage(`${id} saved.`); event.currentTarget.reset();
+      setEditing(null); setDraft(null); setMessage(`${id} saved.`); event.currentTarget.reset();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
@@ -61,9 +63,10 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
     else { const result = await response.json(); setMessage(result.error || "Delete failed"); }
   }
 
-  const formItem = editing ?? empty;
+  const formItem = editing ?? draft ?? empty;
   const suggestedFormat = findBoxFormat(formItem);
   return <>
+    <PhotoInventoryIntake catalog={catalog} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("")}} />
     <section className="toolbar" aria-label="Inventory filters">
       <label><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label>
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
@@ -77,7 +80,7 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
       <td className="rowActions"><button onClick={() => { setEditing(item); setMessage(""); }}>Edit</button>{mode !== "mock" && <button className="danger" onClick={() => remove(item)}>Delete</button>}</td>
     </tr>)}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
-    <section className="section editor"><div className="sectionHead"><div><h2>{editing ? `Edit ${editing.inventoryId}` : "Add inventory lot"}</h2><div className="small">{mode === "mock" ? "Preview only: connect a data source to enable writes." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{editing && <button className="button secondary" onClick={() => setEditing(null)}>Cancel</button>}</div>
+    <section className="section editor"><div className="sectionHead"><div><h2>{editing ? `Edit ${editing.inventoryId}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{mode === "mock" ? "Preview only: connect a data source to enable writes." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && <button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>}</div>
       <form key={formItem.inventoryId || "new"} className="inventoryForm" onSubmit={submit}>
         <label><span>Inventory ID *</span><input name="inventoryId" required defaultValue={formItem.inventoryId} readOnly={Boolean(editing)} /></label>
         <CatalogFields item={formItem} catalog={catalog} />
