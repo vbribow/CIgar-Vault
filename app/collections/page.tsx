@@ -3,6 +3,7 @@ import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
 import { loadCollections, loadValuations } from "@/lib/data";
 import "../collection-catalog/catalog.css";
+import "./dashboard.css";
 export const dynamic = "force-dynamic";
 export default async function CollectionsPage() {
   const mode = await accountDataMode();
