@@ -17,3 +17,10 @@ export function authorizeWrite(request: Request): boolean {
   if (!expected) return process.env.NODE_ENV !== "production" && dataMode() === "mock";
   return request.headers.get("x-founder-key") === expected;
 }
+
+export function authorizeSensorSync(request: Request): boolean {
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  const authorization = request.headers.get("authorization");
+  if (cronSecret && authorization === `Bearer ${cronSecret}`) return true;
+  return authorizeWrite(request);
+}
