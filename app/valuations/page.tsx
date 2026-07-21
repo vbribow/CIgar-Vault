@@ -3,6 +3,8 @@ import { loadInventory } from "@/lib/inventory";
 import { loadValuations } from "@/lib/data";
 import { buildValuationIntelligence } from "@/lib/valuation-intelligence";
 import "./valuations.css";
+import "./research.css";
+import { ValuationResearchPanel } from "@/components/valuation-research-panel";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -84,6 +86,7 @@ export default async function ValuationsPage() {
           <small>Latest records with source links</small>
         </article>
       </section>
+      <ValuationResearchPanel items={intelligence.reviewQueue.map((row)=>row.item)} mode={mode}/>
 
       <section className="section valuationQueue">
         <div className="sectionHead">
