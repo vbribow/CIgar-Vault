@@ -8,19 +8,24 @@ import type { InventoryItem } from "@/lib/types";
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "retailValue", "actualCost", "score"]);
 
-export function InventoryManager({ initialItems, mode }: { initialItems: InventoryItem[]; mode: DataMode }) {
+export function InventoryManager({ initialItems, mode, initialMissing = "all", initialStorage = "all" }: { initialItems: InventoryItem[]; mode: DataMode; initialMissing?: string; initialStorage?: string }) {
   const [items, setItems] = useState(initialItems);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [missing, setMissing] = useState(initialMissing);
+  const [storage, setStorage] = useState(initialStorage);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
   const statuses = useMemo(() => [...new Set(items.map((item) => item.status).filter(Boolean))].sort(), [items]);
+  const locations = useMemo(() => [...new Set(items.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [items]);
   const filtered = useMemo(() => items.filter((item) => {
     const haystack = `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola}`.toLowerCase();
-    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status);
-  }), [items, query, status]);
+    const missingMatch = missing === "all" || (missing === "quantity" && item.originalQty === undefined) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
+    const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
+    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch;
+  }), [items, query, status, missing, storage]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
@@ -53,6 +58,8 @@ export function InventoryManager({ initialItems, mode }: { initialItems: Invento
     <section className="toolbar" aria-label="Inventory filters">
       <label><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label>
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+      <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>
+      <label><span>Storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All locations</option><option value="unassigned">Unassigned</option>{locations.map((value)=><option key={value}>{value}</option>)}</select></label>
       <div className="filterCount">{filtered.length} of {items.length} lots</div>
     </section>
 
