@@ -39,7 +39,8 @@ const fieldColumns: Array<[keyof InventoryItem, string]> = [
   ["smokedQty", "Qty Smoked"], ["currentQty", "Current Qty"], ["retailValue", "Retail Replacement Value"],
   ["actualCost", "Actual Cost"], ["storageLocationId", "Storage Location ID"], ["status", "Status"],
   ["priority", "Priority"], ["score", "Brian Score"], ["action", "Recommended Action"],
-  ["photoLink", "Photo Link"], ["provenanceNotes", "Provenance Notes"], ["notes", "General Notes"],
+  ["photoLink", "Photo Link"], ["boxPhotoLink", "Box Photo Link"], ["boxCodePhotoLink", "Box Code Photo Link"],
+  ["provenanceDocumentLink", "Provenance Document Link"], ["provenanceNotes", "Provenance Notes"], ["notes", "General Notes"],
 ];
 const numericFields = new Set<keyof InventoryItem>(["originalQty", "smokedQty", "currentQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
 const booleanFields = new Set<keyof InventoryItem>(["habanosVerified"]);

@@ -32,6 +32,9 @@ export const InventoryInputSchema = z.object({
   score: z.coerce.number().min(0).max(100).optional(),
   action: optionalText,
   photoLink: z.string().trim().url().optional().or(z.literal("")),
+  boxPhotoLink: z.string().trim().url().optional().or(z.literal("")),
+  boxCodePhotoLink: z.string().trim().url().optional().or(z.literal("")),
+  provenanceDocumentLink: z.string().trim().url().optional().or(z.literal("")),
   provenanceNotes: optionalText,
   notes: optionalText,
 }).strict().superRefine((item, context) => {

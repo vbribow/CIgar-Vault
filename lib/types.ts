@@ -26,6 +26,9 @@ export type InventoryItem = {
   score?: number;
   action?: string;
   photoLink?: string;
+  boxPhotoLink?: string;
+  boxCodePhotoLink?: string;
+  provenanceDocumentLink?: string;
   provenanceNotes?: string;
   notes?: string;
 };
