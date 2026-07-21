@@ -166,3 +166,20 @@ export async function addValuation(value: Valuation): Promise<void> {
   const cells=recordCells([["Valuation ID",value.valuationId],["Inventory ID",value.inventoryId],["Valuation Date",value.valuationDate],["Retail Replacement Value",value.replacementValue],["Market Value",value.marketValue],["Source",value.source],["Source URL",value.sourceUrl],["Confidence",value.confidence],["Notes",value.notes]],sheet.columns);
   await request(`/sheets/${requireEnv("SMARTSHEET_VALUATIONS_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify([{toBottom:true,cells}])});
 }
+
+export async function recordValuation(value: Valuation): Promise<void> {
+  const [inventorySheet, valuationSheet] = await Promise.all([getSheet(), recordSheet("SMARTSHEET_VALUATIONS_SHEET_ID")]);
+  if (valuationSheet.rows.some((row) => String(recordValues(row, valuationSheet.columns).get("Valuation ID")) === value.valuationId)) throw new Error(`Valuation ID ${value.valuationId} already exists`);
+  const inventoryRow = inventorySheet.rows.find((row) => rowToInventory(row, inventorySheet.columns).inventoryId === value.inventoryId);
+  if (!inventoryRow) throw new Error(`Inventory ID ${value.inventoryId} was not found`);
+  const before = rowToInventory(inventoryRow, inventorySheet.columns);
+  const after = value.replacementValue === undefined ? before : { ...before, retailValue: value.replacementValue };
+  if (value.replacementValue !== undefined) await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(after,inventorySheet.columns)}]) });
+  try {
+    const cells=recordCells([["Valuation ID",value.valuationId],["Inventory ID",value.inventoryId],["Valuation Date",value.valuationDate],["Retail Replacement Value",value.replacementValue],["Market Value",value.marketValue],["Source",value.source],["Source URL",value.sourceUrl],["Confidence",value.confidence],["Notes",value.notes]],valuationSheet.columns);
+    await request(`/sheets/${requireEnv("SMARTSHEET_VALUATIONS_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify([{toBottom:true,cells}])});
+  } catch (error) {
+    if (value.replacementValue !== undefined) await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(before,inventorySheet.columns)}]) }).catch(()=>undefined);
+    throw error;
+  }
+}
