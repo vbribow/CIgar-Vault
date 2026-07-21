@@ -14,6 +14,7 @@ export type InventoryItem = {
   packaging?: string;
   boxCode?: string;
   habanosSealPhotoLink?: string;
+  habanosVerified?: boolean;
   storageLocationId?: string;
   status?: string;
   priority?: string;

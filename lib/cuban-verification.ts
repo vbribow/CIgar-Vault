@@ -6,7 +6,8 @@ export function isCubanInventory(item: InventoryItem) { return cubanBrands.has(i
 export function isLooseCigar(item: InventoryItem) { return /individual|loose|single/i.test(item.packaging || ""); }
 export function cubanVerificationStatus(item: InventoryItem) {
   if (isLooseCigar(item)) return "Loose sticks";
-  if (item.boxCode && item.habanosSealPhotoLink) return "Evidence complete";
+  if (item.habanosVerified && item.boxCode && item.habanosSealPhotoLink) return "Verified";
+  if (item.boxCode && item.habanosSealPhotoLink) return "Ready to verify";
   if (item.boxCode || item.habanosSealPhotoLink) return "Partial evidence";
   return "Evidence needed";
 }

@@ -32,7 +32,8 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
     const form = new FormData(event.currentTarget);
-    const payload = Object.fromEntries([...form.entries()].flatMap(([key, value]) => key === "writeKey" || value === "" ? [] : [[key, numberFields.has(key) ? Number(value) : value]]));
+    const payload: Record<string, unknown> = Object.fromEntries([...form.entries()].flatMap(([key, value]) => key === "writeKey" || value === "" ? [] : [[key, numberFields.has(key) ? Number(value) : value]]));
+    payload.habanosVerified = form.get("habanosVerified") === "on";
     const id = String(payload.inventoryId);
     const isEdit = Boolean(editing);
     try {
@@ -66,7 +67,7 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
     </section>
 
     <div className="tableWrap"><table className="table"><thead><tr><th>ID</th><th>Cigar</th><th>Year</th><th>Qty</th><th>Unit retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr key={item.inventoryId}>
-      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Evidence complete"?<a href={item.habanosSealPhotoLink} target="_blank" rel="noreferrer">Evidence ✓</a>:cubanVerificationStatus(item)}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
+      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Verified"?<span className="verifyState verify-verified">Verified ✓</span>:<a href="/verification">{cubanVerificationStatus(item)}</a>}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
       <td className="rowActions"><button onClick={() => { setEditing(item); setMessage(""); }}>Edit</button>{mode === "smartsheet" && <button className="danger" onClick={() => remove(item)}>Delete</button>}</td>
     </tr>)}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
@@ -86,6 +87,7 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
         <label><span>Storage location</span><input name="storageLocationId" defaultValue={formItem.storageLocationId} /></label>
         <label><span>Box code</span><input name="boxCode" defaultValue={formItem.boxCode} placeholder="Factory and date code" /></label>
         <label><span>Habanos seal photo URL</span><input name="habanosSealPhotoLink" type="url" defaultValue={formItem.habanosSealPhotoLink} placeholder="https://…" /></label>
+        <label className="verificationCheck"><span>Habanos verification</span><span className="checkRow"><input name="habanosVerified" type="checkbox" defaultChecked={formItem.habanosVerified} /> Verified on Habanos.com</span><small>Requires both a box code and seal photo.</small></label>
         <label className="wide"><span>Recommended action</span><input name="action" defaultValue={formItem.action} /></label>
         <label className="wide"><span>Notes</span><textarea name="notes" defaultValue={formItem.notes} rows={3} /></label>
         {mode === "smartsheet" && <label className="wide"><span>Founder write key *</span><input name="writeKey" type="password" required autoComplete="current-password" /></label>}

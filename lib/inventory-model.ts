@@ -15,6 +15,7 @@ export const InventoryInputSchema = z.object({
   packaging: optionalText,
   boxCode: optionalText,
   habanosSealPhotoLink: z.string().trim().url().optional().or(z.literal("")),
+  habanosVerified: z.boolean().optional(),
   originalQty: optionalNumber,
   smokedQty: optionalNumber,
   currentQty: optionalNumber,
@@ -31,6 +32,9 @@ export const InventoryInputSchema = z.object({
 }).strict().superRefine((item, context) => {
   if (item.originalQty !== undefined && (item.smokedQty ?? 0) > item.originalQty) {
     context.addIssue({ code: "custom", path: ["smokedQty"], message: "Smoked quantity cannot exceed original quantity" });
+  }
+  if (item.habanosVerified && (!item.boxCode || !item.habanosSealPhotoLink)) {
+    context.addIssue({ code: "custom", path: ["habanosVerified"], message: "Add both a box code and Habanos seal photo before marking this lot verified" });
   }
 });
 
