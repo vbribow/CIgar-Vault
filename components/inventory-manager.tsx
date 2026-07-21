@@ -7,11 +7,14 @@ import type { InventoryItem } from "@/lib/types";
 import { lotRetailValue } from "@/lib/valuation";
 import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
 import { findBoxFormat } from "@/lib/box-formats";
+import { CatalogFields } from "@/components/catalog-fields";
+import type { CatalogCigar } from "@/lib/types";
+import { canonicalBrand } from "@/lib/brand-directory";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
 
-export function InventoryManager({ initialItems, mode, initialMissing = "all", initialStorage = "all" }: { initialItems: InventoryItem[]; mode: DataMode; initialMissing?: string; initialStorage?: string }) {
+export function InventoryManager({ initialItems, catalog, mode, initialMissing = "all", initialStorage = "all" }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; mode: DataMode; initialMissing?: string; initialStorage?: string }) {
   const [items, setItems] = useState(initialItems);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
@@ -35,6 +38,7 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
     const form = new FormData(event.currentTarget);
     const payload: Record<string, unknown> = Object.fromEntries([...form.entries()].flatMap(([key, value]) => key === "writeKey" || value === "" ? [] : [[key, numberFields.has(key) ? Number(value) : value]]));
     payload.habanosVerified = form.get("habanosVerified") === "on";
+    payload.brand = canonicalBrand(String(payload.brand || ""));
     const id = String(payload.inventoryId);
     const isEdit = Boolean(editing);
     try {
@@ -76,9 +80,7 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
     <section className="section editor"><div className="sectionHead"><div><h2>{editing ? `Edit ${editing.inventoryId}` : "Add inventory lot"}</h2><div className="small">{mode === "mock" ? "Preview only: connect Smartsheet to enable writes." : "Changes save directly to Smartsheet."}</div></div>{editing && <button className="button secondary" onClick={() => setEditing(null)}>Cancel</button>}</div>
       <form key={formItem.inventoryId || "new"} className="inventoryForm" onSubmit={submit}>
         <label><span>Inventory ID *</span><input name="inventoryId" required defaultValue={formItem.inventoryId} readOnly={Boolean(editing)} /></label>
-        <label><span>Brand *</span><input name="brand" required defaultValue={formItem.brand} /></label>
-        <label><span>Line / Series</span><input name="line" defaultValue={formItem.line} /></label>
-        <label><span>Vitola *</span><input name="vitola" required defaultValue={formItem.vitola} /></label>
+        <CatalogFields item={formItem} catalog={catalog} />
         <label><span>Vintage</span><input name="vintage" defaultValue={formItem.vintage} /></label>
         <label><span>Full boxes owned</span><input name="fullBoxQty" type="number" min="0" step="1" defaultValue={formItem.fullBoxQty} /></label>
         <label><span>Cigars per box</span><input name="sticksPerBox" type="number" min="1" step="1" defaultValue={formItem.sticksPerBox ?? (suggestedFormat?.sizes.length === 1 ? suggestedFormat.sizes[0] : undefined)} placeholder={formItem.knownBoxSizes || suggestedFormat?.sizes.join(", ") || "e.g. 10, 12, 20, 25"} /></label>

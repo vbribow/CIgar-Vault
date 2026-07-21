@@ -1,6 +1,6 @@
 import { requireEnv } from "./config";
 import { consumeOneInventory, normalizeInventory } from "./inventory-model";
-import type { InventoryItem, SmokingLog, Valuation } from "./types";
+import type { CatalogCigar, InventoryItem, SmokingLog, Valuation } from "./types";
 
 const BASE = "https://api.smartsheet.com/2.0";
 const TIMEOUT_MS = 8_000;
@@ -86,6 +86,22 @@ export async function checkSmartsheet() {
 export async function getInventory(): Promise<InventoryItem[]> {
   const sheet = await getSheet();
   return sheet.rows.map((row) => rowToInventory(row, sheet.columns));
+}
+
+export async function getCatalog(): Promise<CatalogCigar[]> {
+  const sheet = await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");
+  return sheet.rows.map((row) => {
+    const values = recordValues(row, sheet.columns);
+    return {
+      catalogId: String(values.get("Catalog ID") || row.id),
+      brand: String(values.get("Brand") || ""),
+      line: String(values.get("Line / Series") || ""),
+      vitola: String(values.get("Cigar / Vitola") || ""),
+      country: values.get("Country") as string | undefined,
+      sourceUrl: values.get("Source URL") as string | undefined,
+      researchStatus: values.get("Research Status") as string | undefined,
+    };
+  }).filter((item) => item.brand);
 }
 
 export async function addInventoryRow(input: InventoryItem): Promise<void> {
