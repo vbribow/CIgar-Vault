@@ -1,0 +1,1 @@
+export default function LoadingInventory(){return <main className="shell"><div className="loadingBrand">Cigar Vault</div><div className="skeleton titleSkeleton"/><div className="skeleton tableSkeleton"/></main>}

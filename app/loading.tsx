@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="shell"><div className="loadingBrand">Cigar Vault</div><div className="skeleton heroSkeleton"/><div className="grid">{[1,2,3,4].map(i=><div className="skeleton cardSkeleton" key={i}/>)}</div></main>}
