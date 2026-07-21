@@ -9,6 +9,7 @@ const sections = [
   { href: "/valuations", label: "Valuations", related: ["/records"] },
   { href: "/humidors", label: "Humidors" },
   { href: "/sensors", label: "Sensors" },
+  { href: "/alerts", label: "Alerts" },
   { href: "/activity", label: "Activity" },
 ];
 
