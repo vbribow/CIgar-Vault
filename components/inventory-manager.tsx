@@ -5,10 +5,10 @@ import { inventoryCompleteness } from "@/lib/inventory-model";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem } from "@/lib/types";
 import { lotRetailValue } from "@/lib/valuation";
+import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "retailValue", "actualCost", "score"]);
-const cubanBrands = new Set(["Bolívar", "Cohiba", "Hoyo de Monterrey", "Juan López", "Partagás", "Ramon Allones", "Saint Luis Rey", "Trinidad"]);
 
 export function InventoryManager({ initialItems, mode, initialMissing = "all", initialStorage = "all" }: { initialItems: InventoryItem[]; mode: DataMode; initialMissing?: string; initialStorage?: string }) {
   const [items, setItems] = useState(initialItems);
@@ -66,7 +66,7 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
     </section>
 
     <div className="tableWrap"><table className="table"><thead><tr><th>ID</th><th>Cigar</th><th>Year</th><th>Qty</th><th>Unit retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr key={item.inventoryId}>
-      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!cubanBrands.has(item.brand)?"—":item.boxCode&&item.habanosSealPhotoLink?<a href={item.habanosSealPhotoLink} target="_blank" rel="noreferrer">Evidence ✓</a>:item.boxCode?"Seal needed":"Box code needed"}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
+      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Evidence complete"?<a href={item.habanosSealPhotoLink} target="_blank" rel="noreferrer">Evidence ✓</a>:cubanVerificationStatus(item)}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
       <td className="rowActions"><button onClick={() => { setEditing(item); setMessage(""); }}>Edit</button>{mode === "smartsheet" && <button className="danger" onClick={() => remove(item)}>Delete</button>}</td>
     </tr>)}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
