@@ -66,7 +66,7 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
   const formItem = editing ?? draft ?? empty;
   const suggestedFormat = findBoxFormat(formItem);
   return <>
-    <PhotoInventoryIntake catalog={catalog} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("")}} />
+    <PhotoInventoryIntake catalog={catalog} inventory={items} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("")}} />
     <section className="toolbar" aria-label="Inventory filters">
       <label><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label>
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
