@@ -25,6 +25,8 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
   const [draft, setDraft] = useState<InventoryItem | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const statuses = useMemo(() => [...new Set(items.map((item) => item.status).filter(Boolean))].sort(), [items]);
   const locations = useMemo(() => [...new Set(items.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [items]);
@@ -63,6 +65,37 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
     else { const result = await response.json(); setMessage(result.error || "Delete failed"); }
   }
 
+  function toggleSelected(inventoryId: string) {
+    setSelected((current) => { const next = new Set(current); if (next.has(inventoryId)) next.delete(inventoryId); else next.add(inventoryId); return next; });
+  }
+
+  async function applyBulkUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const status = String(form.get("bulkStatus") || "");
+    const storageLocationId = String(form.get("bulkStorage") || "").trim();
+    const priority = String(form.get("bulkPriority") || "");
+    const writeKey = String(form.get("writeKey") || "");
+    if (!status && !storageLocationId && !priority) { setMessage("Choose at least one bulk change."); return; }
+    const targets = items.filter((item) => selected.has(item.inventoryId));
+    if (!targets.length || !window.confirm(`Apply these changes to ${targets.length} selected lot${targets.length === 1 ? "" : "s"}? Quantities will not change.`)) return;
+    setBulkSaving(true); setMessage("");
+    try {
+      const updated: InventoryItem[] = [];
+      for (const item of targets) {
+        const payload = { ...item, ...(status ? { status } : {}), ...(storageLocationId ? { storageLocationId } : {}), ...(priority ? { priority } : {}) };
+        const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, { method: "PUT", headers: { "Content-Type": "application/json", "x-founder-key": writeKey }, body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(`${item.inventoryId}: ${result.error || "Update failed"}`);
+        updated.push(result.data);
+      }
+      const replacements = new Map(updated.map((item) => [item.inventoryId, item]));
+      setItems((current) => current.map((item) => replacements.get(item.inventoryId) || item));
+      setSelected(new Set()); setMessage(`${updated.length} inventory lots updated.`); event.currentTarget.reset();
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Bulk update failed"); }
+    finally { setBulkSaving(false); }
+  }
+
   const formItem = editing ?? draft ?? empty;
   const suggestedFormat = findBoxFormat(formItem);
   return <>
@@ -75,8 +108,10 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
       <div className="filterCount">{filtered.length} of {items.length} lots</div>
     </section>
 
-    <div className="tableWrap"><table className="table"><thead><tr><th>ID</th><th>Cigar</th><th>Year</th><th>Owned</th><th>Total sticks</th><th>Unit retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr key={item.inventoryId}>
-      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td className="small">{item.fullBoxQty === undefined && item.looseStickQty === undefined ? "Not split" : <>{item.fullBoxQty ?? 0} box{item.fullBoxQty === 1 ? "" : "es"}<br />{item.looseStickQty ?? 0} loose</>}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Verified"?<span className="verifyState verify-verified">Verified ✓</span>:<a href="/verification">{cubanVerificationStatus(item)}</a>}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
+    {selected.size>0&&<form className="bulkInventoryBar" onSubmit={applyBulkUpdate}><div><strong>{selected.size} selected</strong><button type="button" onClick={()=>setSelected(new Set())}>Clear</button></div><label><span>Status</span><select name="bulkStatus" defaultValue=""><option value="">No change</option><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label><label><span>Storage</span><input name="bulkStorage" list="bulk-storage-options" placeholder="No change"/><datalist id="bulk-storage-options">{locations.map((value)=><option key={value}>{value}</option>)}</datalist></label><label><span>Priority</span><select name="bulkPriority" defaultValue=""><option value="">No change</option><option>Low</option><option>Medium</option><option>High</option></select></label>{mode==="smartsheet"&&<label><span>Founder write key</span><input name="writeKey" type="password" required/></label>}<button className="button" disabled={bulkSaving}>{bulkSaving?"Updating…":"Apply changes"}</button></form>}
+
+    <div className="tableWrap"><table className="table"><thead><tr><th><input type="checkbox" aria-label="Select visible inventory" checked={filtered.length>0&&filtered.every((item)=>selected.has(item.inventoryId))} onChange={(event)=>setSelected((current)=>{const next=new Set(current);filtered.forEach((item)=>event.target.checked?next.add(item.inventoryId):next.delete(item.inventoryId));return next})}/></th><th>ID</th><th>Cigar</th><th>Year</th><th>Owned</th><th>Total sticks</th><th>Unit retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr className={selected.has(item.inventoryId)?"selectedRow":""} key={item.inventoryId}>
+      <td><input type="checkbox" aria-label={`Select ${item.inventoryId}`} checked={selected.has(item.inventoryId)} onChange={()=>toggleSelected(item.inventoryId)}/></td><td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td className="small">{item.fullBoxQty === undefined && item.looseStickQty === undefined ? "Not split" : <>{item.fullBoxQty ?? 0} box{item.fullBoxQty === 1 ? "" : "es"}<br />{item.looseStickQty ?? 0} loose</>}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Verified"?<span className="verifyState verify-verified">Verified ✓</span>:<a href="/verification">{cubanVerificationStatus(item)}</a>}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
       <td className="rowActions"><button onClick={() => { setEditing(item); setMessage(""); }}>Edit</button>{mode !== "mock" && <button className="danger" onClick={() => remove(item)}>Delete</button>}</td>
     </tr>)}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
