@@ -1,4 +1,4 @@
-export type DataMode = "mock" | "smartsheet";
+export type DataMode = "mock" | "smartsheet" | "supabase";
 
 export function dataMode(): DataMode {
   if (process.env.USE_MOCK_DATA === "true") return "mock";
