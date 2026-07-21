@@ -1,6 +1,8 @@
 import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
 import { loadInventory } from "@/lib/inventory";
 
+export const dynamic = "force-dynamic";
+
 const HABANOS_CHECKER = "https://www.habanos.com/en/authenticity-check/?lang=en";
 
 export default async function VerificationPage() {
