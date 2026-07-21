@@ -41,10 +41,6 @@ export const InventoryInputSchema = z.object({
   if ((item.fullBoxQty ?? 0) > 0 && item.sticksPerBox === undefined) {
     context.addIssue({ code: "custom", path: ["sticksPerBox"], message: "Cigars per box is required when full boxes are entered" });
   }
-  const breakdownTotal = (item.fullBoxQty ?? 0) * (item.sticksPerBox ?? 0) + (item.looseStickQty ?? 0);
-  if ((item.fullBoxQty !== undefined || item.looseStickQty !== undefined) && (item.smokedQty ?? 0) > breakdownTotal) {
-    context.addIssue({ code: "custom", path: ["smokedQty"], message: "Smoked quantity cannot exceed the box-and-stick total" });
-  }
   if (item.habanosVerified && (!item.boxCode || !item.habanosSealPhotoLink)) {
     context.addIssue({ code: "custom", path: ["habanosVerified"], message: "Add both a box code and Habanos seal photo before marking this lot verified" });
   }
@@ -52,11 +48,19 @@ export const InventoryInputSchema = z.object({
 
 export function normalizeInventory(item: InventoryInput): InventoryItem {
   const hasOwnershipBreakdown = item.fullBoxQty !== undefined || item.looseStickQty !== undefined;
-  const originalQty = hasOwnershipBreakdown
-    ? (item.fullBoxQty ?? 0) * (item.sticksPerBox ?? 0) + (item.looseStickQty ?? 0)
-    : item.originalQty;
-  const currentQty = originalQty === undefined ? item.currentQty : Math.max(0, originalQty - (item.smokedQty ?? 0));
+  const countedQty = hasOwnershipBreakdown ? (item.fullBoxQty ?? 0) * (item.sticksPerBox ?? 0) + (item.looseStickQty ?? 0) : undefined;
+  const currentQty = countedQty ?? (item.originalQty === undefined ? item.currentQty : Math.max(0, item.originalQty - (item.smokedQty ?? 0)));
+  const originalQty = countedQty === undefined ? item.originalQty : countedQty + (item.smokedQty ?? 0);
   return { ...item, originalQty, currentQty };
+}
+
+export function consumeOneInventory(item: InventoryItem): InventoryItem {
+  const smokedQty = (item.smokedQty ?? 0) + 1;
+  if (item.looseStickQty !== undefined || item.fullBoxQty !== undefined) {
+    if ((item.looseStickQty ?? 0) > 0) return normalizeInventory({ ...item, smokedQty, looseStickQty: (item.looseStickQty ?? 0) - 1 });
+    if ((item.fullBoxQty ?? 0) > 0 && item.sticksPerBox) return normalizeInventory({ ...item, smokedQty, fullBoxQty: (item.fullBoxQty ?? 0) - 1, looseStickQty: item.sticksPerBox - 1 });
+  }
+  return normalizeInventory({ ...item, smokedQty });
 }
 
 export function inventoryCompleteness(item: InventoryItem): number {

@@ -1,5 +1,5 @@
 import { requireEnv } from "./config";
-import { normalizeInventory } from "./inventory-model";
+import { consumeOneInventory, normalizeInventory } from "./inventory-model";
 import type { InventoryItem, SmokingLog, Valuation } from "./types";
 
 const BASE = "https://api.smartsheet.com/2.0";
@@ -150,7 +150,7 @@ export async function recordSmokingLog(log: SmokingLog): Promise<void> {
   if (!inventoryRow) throw new Error(`Inventory ID ${log.inventoryId} was not found`);
   const before = rowToInventory(inventoryRow, inventorySheet.columns);
   if (before.currentQty !== undefined && before.currentQty <= 0) throw new Error(`${log.inventoryId} has no remaining inventory`);
-  const after = normalizeInventory({ ...before, smokedQty: (before.smokedQty ?? 0) + 1 });
+  const after = consumeOneInventory(before);
   await request(`/sheets/${sheetId()}/rows`, { method: "PUT", body: JSON.stringify([{ id: inventoryRow.id, cells: cellsFor(after, inventorySheet.columns) }]) });
   try {
     const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], smokingSheet.columns);
