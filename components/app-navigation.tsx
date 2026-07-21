@@ -7,6 +7,7 @@ const sections = [
   { href: "/inventory", label: "Inventory", related: ["/catalog", "/box-formats", "/inventory-count", "/storage", "/collection-health", "/verification"] },
   { href: "/collections", label: "Collections", related: ["/collection-catalog"] },
   { href: "/valuations", label: "Valuations", related: ["/records"] },
+  { href: "/reports", label: "Reports" },
   { href: "/humidors", label: "Humidors" },
   { href: "/sensors", label: "Sensors" },
   { href: "/alerts", label: "Alerts" },
