@@ -1,0 +1,10 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { climateHealth,historicalClimateAlerts } from "../lib/climate-alerts";
+import type { EnvironmentalSensor,Humidor,HumidorReading,InventoryItem } from "../lib/types";
+const humidor:Humidor={humidorId:"H1",name:"Main",targetTempF:68,minTempF:65,maxTempF:72,targetHumidity:67,minHumidity:62,maxHumidity:72};
+const sensor:EnvironmentalSensor={sensorId:"S1",humidorId:"H1",provider:"Tempi",name:"Main Tempi",syncMethod:"CSV import",connectionStatus:"Connected",batteryPercent:18};
+const inventory:InventoryItem[]=[{inventoryId:"I1",brand:"Cohiba",line:"Siglo IV",vitola:"Corona Gorda",currentQty:25,retailValue:60,storageLocationId:"H1"}];
+test("critical humidity exposes stored collection value",()=>{const readings:HumidorReading[]=[{readingId:"R1",humidorId:"H1",sensorId:"S1",recordedAt:"2026-07-21T11:00:00Z",temperatureF:68,humidity:54}];const result=climateHealth(humidor,readings,[sensor],inventory,new Date("2026-07-21T12:00:00Z"));assert.equal(result.severity,"Critical");assert.equal(result.valueAtRisk,1500);assert.equal(result.battery,18);});
+test("old readings mark a sensor offline and value unmonitored",()=>{const readings:HumidorReading[]=[{readingId:"R1",humidorId:"H1",recordedAt:"2026-07-19T10:00:00Z",temperatureF:68,humidity:67}];const result=climateHealth(humidor,readings,[sensor],inventory,new Date("2026-07-21T12:00:00Z"));assert.equal(result.severity,"Offline");assert.equal(result.unmonitoredValue,1500);});
+test("history records temperature and humidity exceptions",()=>{const readings:HumidorReading[]=[{readingId:"R1",humidorId:"H1",recordedAt:"2026-07-21T11:00:00Z",temperatureF:75,humidity:55}];assert.equal(historicalClimateAlerts([humidor],readings).length,2);});
