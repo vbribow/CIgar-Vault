@@ -1,9 +1,10 @@
 import { InventoryItem } from "@/lib/types";
+import { lotRetailValue } from "@/lib/valuation";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 export function Dashboard({ items }: { items: InventoryItem[] }) {
   const knownQty = items.reduce((sum, item) => sum + (item.currentQty || 0), 0);
-  const value = items.reduce((sum, item) => sum + (item.retailValue || 0), 0);
+  const value = items.reduce((sum, item) => sum + (lotRetailValue(item) || 0), 0);
   const scored = items.filter((item) => typeof item.score === "number");
   const avg = scored.length ? scored.reduce((sum, item) => sum + (item.score || 0), 0) / scored.length : 0;
   const featured = [...items].sort((a,b) => (b.score || 0) - (a.score || 0)).slice(0,8);
@@ -15,7 +16,7 @@ export function Dashboard({ items }: { items: InventoryItem[] }) {
     <div className="grid">
       <div className="card"><div className="metric">{items.length}</div><div className="label">Inventory lots</div></div>
       <div className="card"><div className="metric">{knownQty}</div><div className="label">Known cigars remaining</div></div>
-      <div className="card"><div className="metric">{money.format(value)}</div><div className="label">Known replacement value · {valued}/{items.length} valued</div></div>
+      <div className="card"><div className="metric">{money.format(value)}</div><div className="label">Known collection value · unit retail × remaining quantity · {valued}/{items.length} priced</div></div>
       <div className="card"><div className="metric">{avg.toFixed(1)}</div><div className="label">Average recorded score</div></div>
     </div>
     <section className="section"><div className="sectionHead"><div><h2>Collection highlights</h2><div className="small">Smartsheet-backed inventory intelligence</div></div><a className="button secondary" href="/inventory">View inventory</a></div>

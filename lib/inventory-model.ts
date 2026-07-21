@@ -13,6 +13,8 @@ export const InventoryInputSchema = z.object({
   vitola: z.string().trim().min(1).max(200),
   vintage: z.union([z.string().trim().max(20), z.number().int().min(1800).max(2200)]).optional(),
   packaging: optionalText,
+  boxCode: optionalText,
+  habanosSealPhotoLink: z.string().trim().url().optional().or(z.literal("")),
   originalQty: optionalNumber,
   smokedQty: optionalNumber,
   currentQty: optionalNumber,

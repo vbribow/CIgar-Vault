@@ -32,7 +32,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 const fieldColumns: Array<[keyof InventoryItem, string]> = [
   ["inventoryId", "Inventory ID"], ["catalogId", "Catalog ID"], ["collectionId", "Collection ID"],
   ["brand", "Brand"], ["line", "Line / Series"], ["vitola", "Cigar / Vitola"],
-  ["vintage", "Production / Vintage Year"], ["packaging", "Packaging"], ["originalQty", "Original Qty"],
+  ["vintage", "Production / Vintage Year"], ["packaging", "Packaging"], ["boxCode", "Box Code"],
+  ["habanosSealPhotoLink", "Habanos Seal Photo Link"], ["originalQty", "Original Qty"],
   ["smokedQty", "Qty Smoked"], ["currentQty", "Current Qty"], ["retailValue", "Retail Replacement Value"],
   ["actualCost", "Actual Cost"], ["storageLocationId", "Storage Location ID"], ["status", "Status"],
   ["priority", "Priority"], ["score", "Brian Score"], ["action", "Recommended Action"],

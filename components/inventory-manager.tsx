@@ -4,9 +4,11 @@ import { FormEvent, useMemo, useState } from "react";
 import { inventoryCompleteness } from "@/lib/inventory-model";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem } from "@/lib/types";
+import { lotRetailValue } from "@/lib/valuation";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "retailValue", "actualCost", "score"]);
+const cubanBrands = new Set(["Bolívar", "Cohiba", "Hoyo de Monterrey", "Juan López", "Partagás", "Ramon Allones", "Saint Luis Rey", "Trinidad"]);
 
 export function InventoryManager({ initialItems, mode, initialMissing = "all", initialStorage = "all" }: { initialItems: InventoryItem[]; mode: DataMode; initialMissing?: string; initialStorage?: string }) {
   const [items, setItems] = useState(initialItems);
@@ -63,8 +65,8 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
       <div className="filterCount">{filtered.length} of {items.length} lots</div>
     </section>
 
-    <div className="tableWrap"><table className="table"><thead><tr><th>ID</th><th>Cigar</th><th>Year</th><th>Qty</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr key={item.inventoryId}>
-      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td>{item.currentQty ?? "—"}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
+    <div className="tableWrap"><table className="table"><thead><tr><th>ID</th><th>Cigar</th><th>Year</th><th>Qty</th><th>Unit retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr key={item.inventoryId}>
+      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!cubanBrands.has(item.brand)?"—":item.boxCode&&item.habanosSealPhotoLink?<a href={item.habanosSealPhotoLink} target="_blank" rel="noreferrer">Evidence ✓</a>:item.boxCode?"Seal needed":"Box code needed"}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
       <td className="rowActions"><button onClick={() => { setEditing(item); setMessage(""); }}>Edit</button>{mode === "smartsheet" && <button className="danger" onClick={() => remove(item)}>Delete</button>}</td>
     </tr>)}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
@@ -77,11 +79,13 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
         <label><span>Vintage</span><input name="vintage" defaultValue={formItem.vintage} /></label>
         <label><span>Original quantity</span><input name="originalQty" type="number" min="0" step="1" defaultValue={formItem.originalQty} /></label>
         <label><span>Smoked quantity</span><input name="smokedQty" type="number" min="0" step="1" defaultValue={formItem.smokedQty} /></label>
-        <label><span>Replacement value</span><input name="retailValue" type="number" min="0" step="0.01" defaultValue={formItem.retailValue} /></label>
+        <label><span>Retail price per cigar</span><input name="retailValue" type="number" min="0" step="0.01" defaultValue={formItem.retailValue} /></label>
         <label><span>Score</span><input name="score" type="number" min="0" max="100" defaultValue={formItem.score} /></label>
         <label><span>Status</span><select name="status" defaultValue={formItem.status}><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label>
         <label><span>Priority</span><input name="priority" defaultValue={formItem.priority} /></label>
         <label><span>Storage location</span><input name="storageLocationId" defaultValue={formItem.storageLocationId} /></label>
+        <label><span>Box code</span><input name="boxCode" defaultValue={formItem.boxCode} placeholder="Factory and date code" /></label>
+        <label><span>Habanos seal photo URL</span><input name="habanosSealPhotoLink" type="url" defaultValue={formItem.habanosSealPhotoLink} placeholder="https://…" /></label>
         <label className="wide"><span>Recommended action</span><input name="action" defaultValue={formItem.action} /></label>
         <label className="wide"><span>Notes</span><textarea name="notes" defaultValue={formItem.notes} rows={3} /></label>
         {mode === "smartsheet" && <label className="wide"><span>Founder write key *</span><input name="writeKey" type="password" required autoComplete="current-password" /></label>}

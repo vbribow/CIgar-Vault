@@ -15,3 +15,9 @@ test("validation rejects smoked quantities above the original quantity", () => {
 test("completeness reflects the five launch-critical fields", () => {
   assert.equal(inventoryCompleteness({ inventoryId: "INV-1", brand: "Test", line: "", vitola: "Toro", originalQty: 10, currentQty: 10, vintage: 2024 }), 60);
 });
+
+test("Cuban verification accepts a box code and seal photo URL", () => {
+  const parsed = InventoryInputSchema.parse({ inventoryId: "INV-CU", brand: "Cohiba", line: "Robustos", vitola: "Robusto", boxCode: "AMO OCT 16", habanosSealPhotoLink: "https://example.com/seal.jpg" });
+  assert.equal(parsed.boxCode, "AMO OCT 16");
+  assert.equal(parsed.habanosSealPhotoLink, "https://example.com/seal.jpg");
+});

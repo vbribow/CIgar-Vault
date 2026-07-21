@@ -12,6 +12,8 @@ export type InventoryItem = {
   actualCost?: number;
   collectionId?: string;
   packaging?: string;
+  boxCode?: string;
+  habanosSealPhotoLink?: string;
   storageLocationId?: string;
   status?: string;
   priority?: string;
