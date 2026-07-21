@@ -1,0 +1,6 @@
+import { SensorManager } from "@/components/sensor-manager";
+import { dataMode } from "@/lib/config";
+import { getHumidors,getSensors } from "@/lib/smartsheet";
+import "./sensors.css";
+export const dynamic="force-dynamic";
+export default async function SensorsPage(){const mode=dataMode();const[humidors,sensors]=mode==="mock"?[[],[]]:await Promise.all([getHumidors(),getSensors()]);return <main className="shell"><nav className="nav"><a className="brand" href="/">Cigar Vault</a><div className="navLinks"><a href="/humidors">Humidors</a><span className="badge">Sensor registry</span></div></nav><section className="sensorHero"><div><div className="eyebrow">Connected climate</div><h1>Sensors, normalized.</h1><p className="lede">Register Tempi now and preserve one clean reading format for every future Bluetooth, gateway, and cloud provider.</p></div><div className="tempiCallout"><strong>Tempi-ready</strong><span>Import exported CSV history today. Gateway or mobile-bridge sync can use the same ingestion path later.</span><a href="https://tempi.fi/support/" target="_blank" rel="noreferrer">Tempi export instructions ↗</a></div></section><SensorManager initialSensors={sensors} humidors={humidors} mode={mode}/></main>}
