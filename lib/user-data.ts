@@ -2,7 +2,7 @@ import type { DataMode } from "./config";
 import { dataMode } from "./config";
 import { createClient, supabaseConfigured } from "./supabase/server";
 
-export type VaultRecordKind = "inventory"|"collections"|"humidors"|"readings"|"sensors"|"valuations"|"smokes"|"activities";
+export type VaultRecordKind = "inventory"|"collections"|"humidors"|"readings"|"sensors"|"valuations"|"smokes"|"activities"|"wishlist";
 
 async function accountContext() {
   if (!supabaseConfigured()) return undefined;

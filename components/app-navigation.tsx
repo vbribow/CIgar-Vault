@@ -6,6 +6,7 @@ const sections = [
   { href: "/", label: "Dashboard" },
   { href: "/inventory", label: "Inventory", related: ["/catalog", "/catalog-discovery", "/box-formats", "/inventory-count", "/storage", "/collection-health", "/verification"] },
   { href: "/collections", label: "Collections", related: ["/collection-catalog", "/acquisitions"] },
+  { href: "/wishlist", label: "Wishlist" },
   { href: "/valuations", label: "Valuations", related: ["/records"] },
   { href: "/reports", label: "Reports" },
   { href: "/humidors", label: "Humidors" },
