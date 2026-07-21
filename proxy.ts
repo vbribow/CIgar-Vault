@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
+  // Private Sites deployments already enforce owner authentication.
+  if (process.env.SITES_DEPLOYMENT === "true") return NextResponse.next();
   const password = process.env.APP_ACCESS_PASSWORD;
   if (!password) return process.env.NODE_ENV === "production" ? new NextResponse("APP_ACCESS_PASSWORD is required", { status: 503 }) : NextResponse.next();
   const expectedUser = process.env.APP_ACCESS_USER || "founder";
