@@ -1,5 +1,3 @@
-import { env } from "cloudflare:workers";
-
 type StoredObject = { body: ReadableStream; httpMetadata?: { contentType?: string }; size?: number; writeHttpMetadata(headers: Headers): void };
 type PhotoBucket = {
   put(key: string, value: ArrayBuffer, options: { httpMetadata: { contentType: string }; customMetadata: Record<string, string> }): Promise<void>;
@@ -17,7 +15,8 @@ export const photoFields: Record<PhotoKind, "photoLink" | "boxPhotoLink" | "haba
   provenance: "provenanceDocumentLink",
 };
 
-export function photoBucket(): PhotoBucket {
+export async function photoBucket(): Promise<PhotoBucket> {
+  const { env } = await import("cloudflare:workers");
   const bucket = env.PHOTOS as PhotoBucket | undefined;
   if (!bucket) throw new Error("Photo storage is not configured");
   return bucket;

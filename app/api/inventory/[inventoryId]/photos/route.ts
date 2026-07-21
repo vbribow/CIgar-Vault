@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ inv
     const item = (await loadInventory()).find((candidate) => candidate.inventoryId === inventoryId);
     if (!item) return NextResponse.json({ error: "Inventory lot not found" }, { status: 404 });
     const key = safePhotoKey(inventoryId, kind, file);
-    await photoBucket().put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type }, customMetadata: { inventoryId, kind, originalName: file.name.slice(0, 200) } });
+    await (await photoBucket()).put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type }, customMetadata: { inventoryId, kind, originalName: file.name.slice(0, 200) } });
     const url = new URL(`/api/photos/${key.split("/").map(encodeURIComponent).join("/")}`, request.url).toString();
     const updated = { ...item, [photoFields[kind]]: url };
     await updateInventoryRow(inventoryId, updated);
