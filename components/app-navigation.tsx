@@ -12,6 +12,7 @@ const sections = [
   { href: "/sensors", label: "Sensors" },
   { href: "/alerts", label: "Alerts" },
   { href: "/activity", label: "Activity" },
+  { href: "/account", label: "Account" },
 ];
 
 function matches(pathname: string, href: string) {
