@@ -30,6 +30,28 @@ export async function signUp(formData: FormData) {
   redirect(next);
 }
 
+export async function requestPasswordReset(formData: FormData) {
+  const supabase = await createClient();
+  const email = String(formData.get("email") || "").trim();
+  const origin = (await headers()).get("origin") || "";
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  });
+  if (error) redirect(failure(error.message, "forgot", "/"));
+  redirect("/login?mode=signin&notice=Check%20your%20email%20for%20a%20password%20reset%20link.");
+}
+
+export async function updatePassword(formData: FormData) {
+  const supabase = await createClient();
+  const password = String(formData.get("password") || "");
+  const confirmation = String(formData.get("confirmation") || "");
+  if (password.length < 8) redirect("/reset-password?error=Password%20must%20be%20at%20least%208%20characters.");
+  if (password !== confirmation) redirect("/reset-password?error=Passwords%20do%20not%20match.");
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
+  redirect("/login?notice=Password%20updated.%20You%20can%20sign%20in%20now.");
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
