@@ -94,6 +94,7 @@ export function InventoryManager({ initialItems, catalog, mode, initialMissing =
         <label><span>Status</span><select name="status" defaultValue={formItem.status}><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label>
         <label><span>Priority</span><input name="priority" defaultValue={formItem.priority} /></label>
         <label><span>Storage location</span><input name="storageLocationId" defaultValue={formItem.storageLocationId} /></label>
+        <label><span>Collection ID</span><input name="collectionId" defaultValue={formItem.collectionId} placeholder="Assign in Collections" /></label>
         <label><span>Box code</span><input name="boxCode" defaultValue={formItem.boxCode} placeholder="Factory and date code" /></label>
         <label><span>Habanos seal photo URL</span><input name="habanosSealPhotoLink" type="url" defaultValue={formItem.habanosSealPhotoLink} placeholder="https://…" /></label>
         <label className="verificationCheck"><span>Habanos verification</span><span className="checkRow"><input name="habanosVerified" type="checkbox" defaultChecked={formItem.habanosVerified} /> Verified on Habanos.com</span><small>Requires both a box code and seal photo.</small></label>
