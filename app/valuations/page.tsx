@@ -1,0 +1,21 @@
+import { dataMode } from "@/lib/config";
+import { loadInventory } from "@/lib/inventory";
+import { getValuations } from "@/lib/smartsheet";
+
+export const dynamic = "force-dynamic";
+const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const unitMoney = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+
+export default async function ValuationsPage() {
+  const mode = dataMode();
+  const [inventory, valuations] = await Promise.all([loadInventory(), mode === "mock" ? [] : getValuations()]);
+  const latest = new Map<string, (typeof valuations)[number]>();
+  for (const valuation of [...valuations].sort((a, b) => a.valuationDate.localeCompare(b.valuationDate))) latest.set(valuation.inventoryId, valuation);
+  const rows = inventory.map((item) => { const valuation=latest.get(item.inventoryId);const quantity=item.currentQty;const retailLot=item.retailValue!==undefined&&quantity!==undefined?item.retailValue*quantity:undefined;const marketUnit=valuation?.marketValue;const marketLot=marketUnit!==undefined&&quantity!==undefined?marketUnit*quantity:undefined;return{item,valuation,retailLot,marketUnit,marketLot}; });
+  const retailTotal=rows.reduce((sum,row)=>sum+(row.retailLot??0),0);const marketTotal=rows.reduce((sum,row)=>sum+(row.marketLot??0),0);const marketLots=rows.filter(row=>row.marketUnit!==undefined).length;const sourced=rows.filter(row=>row.valuation?.sourceUrl).length;const unpriced=rows.filter(row=>row.item.retailValue===undefined&&row.marketUnit===undefined).length;
+  return <main className="shell"><nav className="nav"><a className="brand" href="/">Cigar Vault</a><div className="navLinks"><a href="/inventory">Inventory</a><a href="/collection-health">Collection health</a><a href="/storage">Storage</a><a href="/records">Journal</a></div></nav>
+    <section className="valueHero"><div><div className="eyebrow">Valuation intelligence</div><h1>Know what the vault is worth.</h1><p className="lede">Retail replacement and auction market evidence, calculated per cigar and multiplied by the quantity you own.</p></div><div className="valueHeroCard"><span>Documented market value</span><strong>{money.format(marketTotal)}</strong><small>{marketLots} of {inventory.length} lots have market evidence</small></div></section>
+    <section className="valueMetrics"><article><span>Retail replacement</span><strong>{money.format(retailTotal)}</strong><small>Known unit retail × quantity</small></article><article><span>Auction market</span><strong>{money.format(marketTotal)}</strong><small>Latest completed-sale comparables</small></article><article><span>Sourced records</span><strong>{sourced}</strong><small>Valuations with traceable links</small></article><article><span>Unpriced lots</span><strong>{unpriced}</strong><small>Need retail or auction research</small></article></section>
+    <section className="section"><div className="sectionHead"><div><div className="eyebrow">Lot-level evidence</div><h2>Portfolio valuation ledger</h2></div><a className="button secondary" href="/records">Add valuation</a></div><div className="tableWrap"><table className="table valueTable"><thead><tr><th>Cigar</th><th>Qty</th><th>Retail / stick</th><th>Retail lot</th><th>Market / stick</th><th>Market lot</th><th>Confidence</th><th>Source</th></tr></thead><tbody>{rows.sort((a,b)=>(b.marketLot??b.retailLot??0)-(a.marketLot??a.retailLot??0)).map(({item,valuation,retailLot,marketUnit,marketLot})=><tr key={item.inventoryId}><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand} {item.line}</strong><div className="small">{item.inventoryId} · {item.vitola}</div></a></td><td>{item.currentQty??"—"}</td><td>{item.retailValue===undefined?"—":unitMoney.format(item.retailValue)}</td><td>{retailLot===undefined?"—":money.format(retailLot)}</td><td>{marketUnit===undefined?"—":unitMoney.format(marketUnit)}</td><td>{marketLot===undefined?"—":money.format(marketLot)}</td><td><span className={`confidence confidence-${(valuation?.confidence||"none").toLowerCase()}`}>{valuation?.confidence||"Pending"}</span></td><td>{valuation?.sourceUrl?<a className="textLink" href={valuation.sourceUrl} target="_blank" rel="noreferrer">View evidence ↗</a>:"—"}</td></tr>)}</tbody></table></div></section>
+  </main>;
+}
