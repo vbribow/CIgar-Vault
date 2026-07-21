@@ -8,6 +8,11 @@ export type InventoryItem = {
   originalQty?: number;
   smokedQty?: number;
   currentQty?: number;
+  fullBoxQty?: number;
+  sticksPerBox?: number;
+  looseStickQty?: number;
+  knownBoxSizes?: string;
+  boxFormatSourceUrl?: string;
   retailValue?: number;
   actualCost?: number;
   collectionId?: string;

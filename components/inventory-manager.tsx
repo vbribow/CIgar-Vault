@@ -6,9 +6,10 @@ import type { DataMode } from "@/lib/config";
 import type { InventoryItem } from "@/lib/types";
 import { lotRetailValue } from "@/lib/valuation";
 import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
+import { findBoxFormat } from "@/lib/box-formats";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
-const numberFields = new Set(["originalQty", "smokedQty", "retailValue", "actualCost", "score"]);
+const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
 
 export function InventoryManager({ initialItems, mode, initialMissing = "all", initialStorage = "all" }: { initialItems: InventoryItem[]; mode: DataMode; initialMissing?: string; initialStorage?: string }) {
   const [items, setItems] = useState(initialItems);
@@ -57,6 +58,7 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
   }
 
   const formItem = editing ?? empty;
+  const suggestedFormat = findBoxFormat(formItem);
   return <>
     <section className="toolbar" aria-label="Inventory filters">
       <label><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label>
@@ -66,8 +68,8 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
       <div className="filterCount">{filtered.length} of {items.length} lots</div>
     </section>
 
-    <div className="tableWrap"><table className="table"><thead><tr><th>ID</th><th>Cigar</th><th>Year</th><th>Qty</th><th>Unit retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr key={item.inventoryId}>
-      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Verified"?<span className="verifyState verify-verified">Verified ✓</span>:<a href="/verification">{cubanVerificationStatus(item)}</a>}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
+    <div className="tableWrap"><table className="table"><thead><tr><th>ID</th><th>Cigar</th><th>Year</th><th>Owned</th><th>Total sticks</th><th>Unit retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Score</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => <tr key={item.inventoryId}>
+      <td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a></td><td>{item.vintage || "—"}</td><td className="small">{item.fullBoxQty === undefined && item.looseStickQty === undefined ? "Not split" : <>{item.fullBoxQty ?? 0} box{item.fullBoxQty === 1 ? "" : "es"}<br />{item.looseStickQty ?? 0} loose</>}</td><td>{item.currentQty ?? "—"}</td><td>{item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Verified"?<span className="verifyState verify-verified">Verified ✓</span>:<a href="/verification">{cubanVerificationStatus(item)}</a>}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{item.score ?? "—"}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
       <td className="rowActions"><button onClick={() => { setEditing(item); setMessage(""); }}>Edit</button>{mode === "smartsheet" && <button className="danger" onClick={() => remove(item)}>Delete</button>}</td>
     </tr>)}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
@@ -78,7 +80,12 @@ export function InventoryManager({ initialItems, mode, initialMissing = "all", i
         <label><span>Line / Series</span><input name="line" defaultValue={formItem.line} /></label>
         <label><span>Vitola *</span><input name="vitola" required defaultValue={formItem.vitola} /></label>
         <label><span>Vintage</span><input name="vintage" defaultValue={formItem.vintage} /></label>
-        <label><span>Original quantity</span><input name="originalQty" type="number" min="0" step="1" defaultValue={formItem.originalQty} /></label>
+        <label><span>Full boxes owned</span><input name="fullBoxQty" type="number" min="0" step="1" defaultValue={formItem.fullBoxQty} /></label>
+        <label><span>Cigars per box</span><input name="sticksPerBox" type="number" min="1" step="1" defaultValue={formItem.sticksPerBox ?? (suggestedFormat?.sizes.length === 1 ? suggestedFormat.sizes[0] : undefined)} placeholder={formItem.knownBoxSizes || suggestedFormat?.sizes.join(", ") || "e.g. 10, 12, 20, 25"} /></label>
+        <label><span>Loose sticks owned</span><input name="looseStickQty" type="number" min="0" step="1" defaultValue={formItem.looseStickQty} /></label>
+        <label><span>Known box sizes</span><input name="knownBoxSizes" defaultValue={formItem.knownBoxSizes ?? suggestedFormat?.sizes.join(", ")} placeholder="e.g. 10, 25" /></label>
+        <label><span>Box format source</span><input name="boxFormatSourceUrl" type="url" defaultValue={formItem.boxFormatSourceUrl ?? suggestedFormat?.sourceUrl} placeholder="https://…" /></label>
+        <label><span>Original quantity (legacy)</span><input name="originalQty" type="number" min="0" step="1" defaultValue={formItem.originalQty} /><small>Used until boxes and loose sticks are entered.</small></label>
         <label><span>Smoked quantity</span><input name="smokedQty" type="number" min="0" step="1" defaultValue={formItem.smokedQty} /></label>
         <label><span>Retail price per cigar</span><input name="retailValue" type="number" min="0" step="0.01" defaultValue={formItem.retailValue} /></label>
         <label><span>Score</span><input name="score" type="number" min="0" max="100" defaultValue={formItem.score} /></label>

@@ -19,6 +19,11 @@ export const InventoryInputSchema = z.object({
   originalQty: optionalNumber,
   smokedQty: optionalNumber,
   currentQty: optionalNumber,
+  fullBoxQty: z.coerce.number().int().nonnegative().optional(),
+  sticksPerBox: z.coerce.number().int().positive().optional(),
+  looseStickQty: z.coerce.number().int().nonnegative().optional(),
+  knownBoxSizes: z.string().trim().max(100).optional(),
+  boxFormatSourceUrl: z.string().trim().url().optional().or(z.literal("")),
   retailValue: optionalNumber,
   actualCost: optionalNumber,
   storageLocationId: optionalText,
@@ -33,14 +38,25 @@ export const InventoryInputSchema = z.object({
   if (item.originalQty !== undefined && (item.smokedQty ?? 0) > item.originalQty) {
     context.addIssue({ code: "custom", path: ["smokedQty"], message: "Smoked quantity cannot exceed original quantity" });
   }
+  if ((item.fullBoxQty ?? 0) > 0 && item.sticksPerBox === undefined) {
+    context.addIssue({ code: "custom", path: ["sticksPerBox"], message: "Cigars per box is required when full boxes are entered" });
+  }
+  const breakdownTotal = (item.fullBoxQty ?? 0) * (item.sticksPerBox ?? 0) + (item.looseStickQty ?? 0);
+  if ((item.fullBoxQty !== undefined || item.looseStickQty !== undefined) && (item.smokedQty ?? 0) > breakdownTotal) {
+    context.addIssue({ code: "custom", path: ["smokedQty"], message: "Smoked quantity cannot exceed the box-and-stick total" });
+  }
   if (item.habanosVerified && (!item.boxCode || !item.habanosSealPhotoLink)) {
     context.addIssue({ code: "custom", path: ["habanosVerified"], message: "Add both a box code and Habanos seal photo before marking this lot verified" });
   }
 });
 
 export function normalizeInventory(item: InventoryInput): InventoryItem {
-  const calculated = item.originalQty === undefined ? item.currentQty : item.originalQty - (item.smokedQty ?? 0);
-  return { ...item, currentQty: calculated };
+  const hasOwnershipBreakdown = item.fullBoxQty !== undefined || item.looseStickQty !== undefined;
+  const originalQty = hasOwnershipBreakdown
+    ? (item.fullBoxQty ?? 0) * (item.sticksPerBox ?? 0) + (item.looseStickQty ?? 0)
+    : item.originalQty;
+  const currentQty = originalQty === undefined ? item.currentQty : Math.max(0, originalQty - (item.smokedQty ?? 0));
+  return { ...item, originalQty, currentQty };
 }
 
 export function inventoryCompleteness(item: InventoryItem): number {

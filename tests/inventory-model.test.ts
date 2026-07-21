@@ -7,6 +7,17 @@ test("remaining quantity is derived from original and smoked quantities", () => 
   assert.equal(item.currentQty, 7);
 });
 
+test("box and loose-stick quantities produce a total cigar count", () => {
+  const item = normalizeInventory({ inventoryId: "INV-BOX", brand: "Test", line: "Line", vitola: "Toro", fullBoxQty: 2, sticksPerBox: 25, looseStickQty: 4, smokedQty: 3 });
+  assert.equal(item.originalQty, 54);
+  assert.equal(item.currentQty, 51);
+});
+
+test("a full-box quantity requires cigars per box", () => {
+  const result = InventoryInputSchema.safeParse({ inventoryId: "INV-BOX", brand: "Test", line: "", vitola: "Toro", fullBoxQty: 1 });
+  assert.equal(result.success, false);
+});
+
 test("validation rejects smoked quantities above the original quantity", () => {
   const result = InventoryInputSchema.safeParse({ inventoryId: "INV-1", brand: "Test", line: "", vitola: "Toro", originalQty: 2, smokedQty: 3 });
   assert.equal(result.success, false);

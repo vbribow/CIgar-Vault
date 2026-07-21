@@ -33,13 +33,15 @@ const fieldColumns: Array<[keyof InventoryItem, string]> = [
   ["inventoryId", "Inventory ID"], ["catalogId", "Catalog ID"], ["collectionId", "Collection ID"],
   ["brand", "Brand"], ["line", "Line / Series"], ["vitola", "Cigar / Vitola"],
   ["vintage", "Production / Vintage Year"], ["packaging", "Packaging"], ["boxCode", "Box Code"],
-  ["habanosSealPhotoLink", "Habanos Seal Photo Link"], ["habanosVerified", "Habanos Verified"], ["originalQty", "Original Qty"],
+  ["habanosSealPhotoLink", "Habanos Seal Photo Link"], ["habanosVerified", "Habanos Verified"],
+  ["fullBoxQty", "Full Boxes"], ["sticksPerBox", "Cigars Per Box"], ["looseStickQty", "Loose Sticks"],
+  ["knownBoxSizes", "Known Box Sizes"], ["boxFormatSourceUrl", "Box Format Source"], ["originalQty", "Original Qty"],
   ["smokedQty", "Qty Smoked"], ["currentQty", "Current Qty"], ["retailValue", "Retail Replacement Value"],
   ["actualCost", "Actual Cost"], ["storageLocationId", "Storage Location ID"], ["status", "Status"],
   ["priority", "Priority"], ["score", "Brian Score"], ["action", "Recommended Action"],
   ["photoLink", "Photo Link"], ["provenanceNotes", "Provenance Notes"], ["notes", "General Notes"],
 ];
-const numericFields = new Set<keyof InventoryItem>(["originalQty", "smokedQty", "currentQty", "retailValue", "actualCost", "score"]);
+const numericFields = new Set<keyof InventoryItem>(["originalQty", "smokedQty", "currentQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
 const booleanFields = new Set<keyof InventoryItem>(["habanosVerified"]);
 
 function sheetId() { return requireEnv("SMARTSHEET_INVENTORY_SHEET_ID"); }
