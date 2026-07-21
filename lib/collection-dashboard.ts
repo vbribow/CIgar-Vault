@@ -30,6 +30,19 @@ export function collectionTemplateFor(collection: CigarCollection) {
   return collectionTemplates.find((template) => normalized(template.name) === name);
 }
 
+export function collectionRequirementMatches(collection: CigarCollection, members: InventoryItem[]) {
+  const template = collectionTemplateFor(collection);
+  const rawMatches = template ? matchCollectionRequirements(template.requirements, members) : [];
+  const assignedInventory = new Set<string>();
+  return rawMatches.map((match) => {
+    if (!match.inventoryId || assignedInventory.has(match.inventoryId)) {
+      return { ...match, inventoryId: undefined, label: undefined };
+    }
+    assignedInventory.add(match.inventoryId);
+    return match;
+  });
+}
+
 export function summarizeCollection(
   collection: CigarCollection,
   inventory: InventoryItem[],
@@ -45,15 +58,7 @@ export function summarizeCollection(
     return sum + (valuation?.marketValue ?? item.retailValue ?? 0) * (item.currentQty ?? 0);
   }, 0);
   const template = collectionTemplateFor(collection);
-  const rawMatches = template ? matchCollectionRequirements(template.requirements, members) : [];
-  const assignedInventory = new Set<string>();
-  const matches = rawMatches.map((match) => {
-    if (!match.inventoryId || assignedInventory.has(match.inventoryId)) {
-      return { ...match, inventoryId: undefined, label: undefined };
-    }
-    assignedInventory.add(match.inventoryId);
-    return match;
-  });
+  const matches = collectionRequirementMatches(collection, members);
   const expectedComponents = collection.expectedComponents ?? template?.expectedComponents;
   const ownedComponents = template
     ? matches.filter((match) => Boolean(match.inventoryId)).length
