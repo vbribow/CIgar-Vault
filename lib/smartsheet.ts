@@ -103,8 +103,13 @@ export async function getCatalog(): Promise<CatalogCigar[]> {
       sourceUrl: values.get("Source URL") as string | undefined,
       researchStatus: values.get("Research Status") as string | undefined,
     };
-  }).filter((item) => item.brand);
+  }).filter((item) => item.brand && !["Pending review","Rejected"].includes(item.researchStatus || ""));
 }
+
+function catalogFromRow(row:SmartsheetRow,columns:SmartsheetColumn[]):CatalogCigar{const values=recordValues(row,columns);return{catalogId:String(values.get("Catalog ID")||row.id),brand:String(values.get("Brand")||""),line:String(values.get("Line / Series")||""),vitola:String(values.get("Cigar / Vitola")||""),country:values.get("Country") as string|undefined,sourceUrl:values.get("Source URL") as string|undefined,researchStatus:values.get("Research Status") as string|undefined}}
+export async function getCatalogDiscoveries(){const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");return sheet.rows.map(row=>catalogFromRow(row,sheet.columns)).filter(item=>item.brand&&item.researchStatus==="Pending review")}
+export async function addCatalogDiscoveries(items:CatalogCigar[]){if(!items.length)return 0;const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const existing=new Set(sheet.rows.map(row=>catalogFromRow(row,sheet.columns).catalogId));const pending=items.filter(item=>!existing.has(item.catalogId));if(!pending.length)return 0;const rows=pending.map(item=>({toBottom:true,cells:recordCells([["Catalog ID",item.catalogId],["Brand",item.brand],["Line / Series",item.line],["Cigar / Vitola",item.vitola],["Country",item.country],["Source URL",item.sourceUrl],["Research Status","Pending review"]],sheet.columns)}));await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify(rows)});return pending.length}
+export async function reviewCatalogDiscovery(catalogId:string,status:"Approved"|"Rejected"){const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const row=sheet.rows.find(candidate=>catalogFromRow(candidate,sheet.columns).catalogId===catalogId);if(!row)throw new Error("Catalog discovery was not found");const cells=recordCells([["Research Status",status]],sheet.columns);await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"PUT",body:JSON.stringify([{id:row.id,cells}])})}
 
 export async function addInventoryRow(input: InventoryItem): Promise<void> {
   const item = normalizeInventory(input);

@@ -3,6 +3,10 @@
     {
       "path": "/api/sensor-sync",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/catalog-discovery/run",
+      "schedule": "0 12 * * 1"
     }
   ]
 }
