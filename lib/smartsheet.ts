@@ -138,6 +138,24 @@ export async function addSmokingLog(log: SmokingLog): Promise<void> {
   const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], sheet.columns);
   await request(`/sheets/${requireEnv("SMARTSHEET_SMOKING_LOG_SHEET_ID")}/rows`, { method:"POST", body:JSON.stringify([{toBottom:true,cells}]) });
 }
+
+export async function recordSmokingLog(log: SmokingLog): Promise<void> {
+  const [inventorySheet, smokingSheet] = await Promise.all([getSheet(), recordSheet("SMARTSHEET_SMOKING_LOG_SHEET_ID")]);
+  if (smokingSheet.rows.some((row) => String(recordValues(row, smokingSheet.columns).get("Smoke ID")) === log.smokeId)) throw new Error(`Smoke ID ${log.smokeId} already exists`);
+  const inventoryRow = inventorySheet.rows.find((row) => rowToInventory(row, inventorySheet.columns).inventoryId === log.inventoryId);
+  if (!inventoryRow) throw new Error(`Inventory ID ${log.inventoryId} was not found`);
+  const before = rowToInventory(inventoryRow, inventorySheet.columns);
+  if (before.currentQty !== undefined && before.currentQty <= 0) throw new Error(`${log.inventoryId} has no remaining inventory`);
+  const after = normalizeInventory({ ...before, smokedQty: (before.smokedQty ?? 0) + 1 });
+  await request(`/sheets/${sheetId()}/rows`, { method: "PUT", body: JSON.stringify([{ id: inventoryRow.id, cells: cellsFor(after, inventorySheet.columns) }]) });
+  try {
+    const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], smokingSheet.columns);
+    await request(`/sheets/${requireEnv("SMARTSHEET_SMOKING_LOG_SHEET_ID")}/rows`, { method:"POST", body:JSON.stringify([{toBottom:true,cells}]) });
+  } catch (error) {
+    await request(`/sheets/${sheetId()}/rows`, { method: "PUT", body: JSON.stringify([{ id: inventoryRow.id, cells: cellsFor(before, inventorySheet.columns) }]) }).catch(() => undefined);
+    throw error;
+  }
+}
 export async function getValuations(): Promise<Valuation[]> {
   const sheet = await recordSheet("SMARTSHEET_VALUATIONS_SHEET_ID");
   return sheet.rows.map((row) => { const v=recordValues(row,sheet.columns); return { valuationId:String(v.get("Valuation ID")||row.id), inventoryId:String(v.get("Inventory ID")||""), valuationDate:String(v.get("Valuation Date")||""), replacementValue:v.get("Retail Replacement Value")===undefined?undefined:Number(v.get("Retail Replacement Value")), marketValue:v.get("Market Value")===undefined?undefined:Number(v.get("Market Value")), source:v.get("Source") as string|undefined, sourceUrl:v.get("Source URL") as string|undefined, confidence:v.get("Confidence") as string|undefined, notes:v.get("Notes") as string|undefined }; });
