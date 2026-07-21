@@ -93,6 +93,16 @@ export async function addInventoryRow(input: InventoryItem): Promise<void> {
   await request(`/sheets/${sheetId()}/rows`, { method: "POST", body: JSON.stringify([{ toBottom: true, cells: cellsFor(item, sheet.columns) }]) });
 }
 
+export async function addInventoryRows(inputs: InventoryItem[]): Promise<number> {
+  if (!inputs.length) return 0;
+  const sheet = await getSheet();
+  const existing = new Set(sheet.rows.map((row) => rowToInventory(row, sheet.columns).inventoryId));
+  const pending = inputs.map(normalizeInventory).filter((item) => !existing.has(item.inventoryId));
+  if (!pending.length) return 0;
+  await request(`/sheets/${sheetId()}/rows`, { method: "POST", body: JSON.stringify(pending.map((item) => ({ toBottom: true, cells: cellsFor(item, sheet.columns) }))) });
+  return pending.length;
+}
+
 export async function updateInventoryRow(inventoryId: string, input: InventoryItem): Promise<void> {
   const sheet = await getSheet();
   const row = sheet.rows.find((candidate) => rowToInventory(candidate, sheet.columns).inventoryId === inventoryId);

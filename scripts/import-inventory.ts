@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { InventoryInputSchema, normalizeInventory } from "../lib/inventory-model";
-import { addInventoryRow } from "../lib/smartsheet";
+import { addInventoryRows, getInventory } from "../lib/smartsheet";
 
 async function main() {
   const envFile = path.join(process.cwd(), ".env.local");
@@ -20,6 +20,12 @@ async function main() {
   console.log(JSON.stringify({ source, rows: rows.length, valid: valid.length, invalid: errors.length, duplicates, errors }, null, 2));
   if (errors.length || duplicates.length) process.exitCode = 1;
   else if (!apply) console.log("Dry run complete. Add --apply to write validated rows to Smartsheet.");
-  else { for (const row of valid) { await addInventoryRow(row); console.log(`Imported ${row.inventoryId}`); } console.log(`Imported ${valid.length} rows.`); }
+  else {
+    const existingIds = new Set((await getInventory()).map((row) => row.inventoryId));
+    const pending = valid.filter((row) => !existingIds.has(row.inventoryId));
+    console.log(`Skipping ${existingIds.size} existing rows; ${pending.length} remain.`);
+    const added = await addInventoryRows(pending);
+    console.log(`Import complete. ${added} rows added.`);
+  }
 }
 main().catch((error) => { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; });
