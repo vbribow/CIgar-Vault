@@ -1,6 +1,7 @@
 import { requireEnv } from "./config";
 import { consumeOneInventory, normalizeInventory } from "./inventory-model";
-import type { CatalogCigar, InventoryItem, SmokingLog, Valuation } from "./types";
+import type { ActivityInput } from "./activity-model";
+import type { CatalogCigar, InventoryActivity, InventoryItem, SmokingLog, Valuation } from "./types";
 
 const BASE = "https://api.smartsheet.com/2.0";
 const TIMEOUT_MS = 8_000;
@@ -203,4 +204,51 @@ export async function recordValuation(value: Valuation): Promise<void> {
     if (value.replacementValue !== undefined) await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(before,inventorySheet.columns)}]) }).catch(()=>undefined);
     throw error;
   }
+}
+
+function activityFromRow(row: SmartsheetRow, columns: SmartsheetColumn[]): InventoryActivity {
+  const v = recordValues(row, columns);
+  const number = (title: string) => v.get(title) === undefined || v.get(title) === "" ? undefined : Number(v.get(title));
+  return { activityId:String(v.get("Activity ID")||row.id), inventoryId:String(v.get("Inventory ID")||""), eventDate:String(v.get("Event Date")||""), eventType:String(v.get("Event Type")||"Correction") as InventoryActivity["eventType"], quantityChange:number("Quantity Change"), boxesChange:number("Boxes Change"), looseSticksChange:number("Loose Sticks Change"), totalAmount:number("Total Amount"), fromStorage:v.get("From Storage") as string|undefined, toStorage:v.get("To Storage") as string|undefined, resultingQuantity:number("Resulting Quantity"), resultingFullBoxes:number("Resulting Full Boxes"), resultingLooseSticks:number("Resulting Loose Sticks"), notes:v.get("Notes") as string|undefined, createdAt:v.get("Created At") as string|undefined };
+}
+
+export async function getActivities(): Promise<InventoryActivity[]> {
+  const sheet = await recordSheet("SMARTSHEET_ACTIVITY_SHEET_ID");
+  return sheet.rows.map((row) => activityFromRow(row, sheet.columns)).sort((a,b) => `${b.eventDate}${b.createdAt||""}`.localeCompare(`${a.eventDate}${a.createdAt||""}`));
+}
+
+function removeSticks(item: InventoryItem, quantity: number): InventoryItem {
+  if (quantity > (item.currentQty ?? 0)) throw new Error(`Only ${item.currentQty ?? 0} cigars remain in ${item.inventoryId}`);
+  let boxes = item.fullBoxQty ?? 0;
+  let loose = item.looseStickQty ?? (item.fullBoxQty === undefined ? item.currentQty ?? 0 : 0);
+  while (quantity > loose && boxes > 0 && item.sticksPerBox) { boxes -= 1; loose += item.sticksPerBox; }
+  if (quantity > loose) throw new Error("Count the box and loose-stick breakdown before removing this quantity");
+  return normalizeInventory({ ...item, fullBoxQty:boxes, looseStickQty:loose-quantity });
+}
+
+export async function recordActivity(input: ActivityInput): Promise<InventoryActivity> {
+  const [inventorySheet, activitySheet] = await Promise.all([getSheet(), recordSheet("SMARTSHEET_ACTIVITY_SHEET_ID")]);
+  const inventoryRow = inventorySheet.rows.find((row) => rowToInventory(row, inventorySheet.columns).inventoryId === input.inventoryId);
+  if (!inventoryRow) throw new Error(`Inventory ID ${input.inventoryId} was not found`);
+  const before = rowToInventory(inventoryRow, inventorySheet.columns);
+  let after = before;
+  const beforeBoxes = before.fullBoxQty ?? 0;
+  const beforeLoose = before.looseStickQty ?? (before.fullBoxQty === undefined ? before.currentQty ?? 0 : 0);
+  const boxSticks = input.boxes * (before.sticksPerBox ?? 0);
+  if ((input.boxes > 0 || input.eventType === "Open box") && !before.sticksPerBox) throw new Error("Set cigars per box on this lot first");
+  if (["Purchase","Add sticks","Correction"].includes(input.eventType)) after = normalizeInventory({ ...before, fullBoxQty:beforeBoxes+input.boxes, looseStickQty:beforeLoose+input.quantity });
+  if (input.eventType === "Add box") after = normalizeInventory({ ...before, fullBoxQty:beforeBoxes+input.boxes, looseStickQty:beforeLoose });
+  if (input.eventType === "Open box") { if (beforeBoxes < 1) throw new Error("No full box is available to open"); after = normalizeInventory({ ...before, fullBoxQty:beforeBoxes-1, looseStickQty:beforeLoose+(before.sticksPerBox??0) }); }
+  if (["Smoke","Gift","Sale","Damaged / discarded"].includes(input.eventType)) after = removeSticks(before, input.eventType === "Smoke" ? Math.max(1,input.quantity) : input.quantity + boxSticks);
+  if (input.eventType === "Storage move") after = normalizeInventory({ ...before, storageLocationId:input.toStorage });
+  const activity: InventoryActivity = { activityId:`ACT-${crypto.randomUUID()}`, inventoryId:input.inventoryId, eventDate:input.eventDate, eventType:input.eventType, quantityChange:(after.currentQty??0)-(before.currentQty??0), boxesChange:(after.fullBoxQty??0)-beforeBoxes, looseSticksChange:(after.looseStickQty??0)-beforeLoose, totalAmount:input.totalAmount, fromStorage:input.eventType==="Storage move"?before.storageLocationId:undefined, toStorage:input.toStorage, resultingQuantity:after.currentQty, resultingFullBoxes:after.fullBoxQty, resultingLooseSticks:after.looseStickQty, notes:input.notes, createdAt:new Date().toISOString() };
+  await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(after,inventorySheet.columns)}]) });
+  try {
+    const cells=recordCells([["Activity ID",activity.activityId],["Inventory ID",activity.inventoryId],["Event Date",activity.eventDate],["Event Type",activity.eventType],["Quantity Change",activity.quantityChange],["Boxes Change",activity.boxesChange],["Loose Sticks Change",activity.looseSticksChange],["Total Amount",activity.totalAmount],["From Storage",activity.fromStorage],["To Storage",activity.toStorage],["Resulting Quantity",activity.resultingQuantity],["Resulting Full Boxes",activity.resultingFullBoxes],["Resulting Loose Sticks",activity.resultingLooseSticks],["Notes",activity.notes],["Created At",activity.createdAt]],activitySheet.columns);
+    await request(`/sheets/${requireEnv("SMARTSHEET_ACTIVITY_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify([{toBottom:true,cells}])});
+  } catch (error) {
+    await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(before,inventorySheet.columns)}]) }).catch(()=>undefined);
+    throw error;
+  }
+  return activity;
 }
