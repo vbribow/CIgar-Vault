@@ -1,5 +1,7 @@
 export type SystemJobId="sensor-sync"|"catalog-discovery"|"wishlist-monitor"|"valuation-monitor"|"rating-monitor";
 export type SystemRun={runId:string;jobId:SystemJobId;status:"Succeeded"|"Failed";startedAt:string;completedAt:string;summary:string;error?:string};
+type AutomationOutcome={status?:string;inventoryId?:string;error?:string};
+type AutomationData={checked?:number;batchSize?:number;remainingEligible?:number;outcomes?:AutomationOutcome[]};
 export type HealthCheck={id:string;name:string;description:string;status:"Ready"|"Attention"|"Unavailable";detail:string;href?:string};
 export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:string;nextDescription:string}>=[
   {id:"sensor-sync",name:"Sensor synchronization",path:"/api/sensor-sync",schedule:"0 * * * *",nextDescription:"Hourly at minute 0"},
@@ -19,3 +21,22 @@ export function configurationChecks(environment:Record<string,string|undefined>)
 ]}
 export function latestRuns(runs:SystemRun[]){return new Map(systemJobs.map(job=>[job.id,[...runs].filter(run=>run.jobId===job.id).sort((a,b)=>b.completedAt.localeCompare(a.completedAt))[0]]))}
 export function healthScore(checks:HealthCheck[],jobs=systemJobs,runs:SystemRun[]=[]){const ready=checks.filter(check=>check.status==="Ready").length;const failedLatest=[...latestRuns(runs).values()].filter(run=>run?.status==="Failed").length;return Math.max(0,Math.round(ready/checks.length*100)-Math.round(failedLatest/Math.max(1,jobs.length)*25))}
+export function automationRunSummary(data:unknown){
+  if(!data||typeof data!=="object")return "Automation completed.";
+  const value=data as AutomationData;
+  if(!Array.isArray(value.outcomes))return JSON.stringify(value).slice(0,500)||"Automation completed.";
+  const counts=value.outcomes.reduce<Record<string,number>>((result,outcome)=>{const status=outcome.status||"unknown";result[status]=(result[status]||0)+1;return result},{});
+  const parts=[`Checked ${value.checked??value.outcomes.length}`];
+  for(const status of ["updated","unsupported","failed","skipped"])if(counts[status])parts.push(`${counts[status]} ${status}`);
+  if(typeof value.remainingEligible==="number")parts.push(`${value.remainingEligible} remaining`);
+  const failures=value.outcomes.filter(outcome=>outcome.status==="failed"&&outcome.error).slice(0,3).map(outcome=>`${outcome.inventoryId||"lot"}: ${outcome.error}`);
+  return `${parts.join(" · ")}${failures.length?`. Errors: ${failures.join(" | ")}`:""}`.slice(0,700);
+}
+export function readableError(error:unknown){
+  if(error instanceof Error)return error.message;
+  if(error&&typeof error==="object"){
+    const value=error as {message?:unknown;details?:unknown;hint?:unknown;code?:unknown};
+    return [value.message,value.details,value.hint,value.code].filter(part=>typeof part==="string"&&part).join(" · ")||"Run failed";
+  }
+  return typeof error==="string"?error:"Run failed";
+}
