@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { authorizeWrite } from "@/lib/config";
 import { CigarVisionResultSchema, cigarVisionJsonSchema, responseOutputText } from "@/lib/cigar-vision";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
+import { retryableVisionFailure, visionFailureMessage } from "@/lib/photo-identification";
+
+export const runtime="nodejs";
+export const maxDuration=120;
 
 const MAX_FILES = 8;
 const MAX_TOTAL_BYTES = 4 * 1024 * 1024;
@@ -35,15 +39,22 @@ export async function POST(request: Request) {
       images = await Promise.all(files.map(async (file) => ({ type: "input_image" as const, image_url: `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`, detail: "high" as const })));
       prompt = "Identify the cigar inventory represented by these views of exactly one physical asset. Reconcile all photos as front, back, band, seal, box-code, and contents views of that same asset. Read visible manufacturer, line or collection, named cigar/vitola, release or vintage year, packaging, factory/box code, and count. Distinguish a sealed or full box from an open box and loose sticks. A printed box capacity is sticksPerBox; visible remaining cigars are not automatically a full box. Never infer ownership quantity from packaging capacity. Never invent missing details: use empty strings or nulls and list ambiguity and alternate matches in uncertainties. Return manufacturer as brand, product family or collection as line, and the exact named cigar, vitola, or assortment as vitola. This result is only a review draft and must not save inventory.";
     }
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: process.env.OPENAI_VISION_MODEL?.trim() || "gpt-5.6-terra", reasoning: { effort: "low" }, store: false, max_output_tokens: 1800,
+    const requestBody=JSON.stringify({ model: process.env.OPENAI_VISION_MODEL?.trim() || "gpt-5.6-terra", reasoning: { effort: "low" }, store: false, max_output_tokens: 1800,
         input: [{ role: "user", content: [{ type: "input_text", text: prompt }, ...images] }],
         text: { format: { type: "json_schema", name: "cigar_identification", strict: true, schema: cigarVisionJsonSchema } },
-      }), signal: AbortSignal.timeout(60_000),
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error((payload as { error?: { message?: string } }).error?.message || `OpenAI request failed (${response.status})`);
+      });
+    let payload:unknown,responseStatus=0,responseMessage="";
+    for(let attempt=0;attempt<2;attempt++){
+      const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},body:requestBody,signal:AbortSignal.timeout(75_000)});
+      responseStatus=response.status;
+      const raw=await response.text();
+      try{payload=JSON.parse(raw)}catch{payload=undefined}
+      responseMessage=(payload as{error?:{message?:string}}|undefined)?.error?.message||raw.slice(0,300)||`OpenAI request failed (${response.status})`;
+      if(response.ok)break;
+      if(attempt===0&&retryableVisionFailure(response.status,responseMessage))continue;
+      throw new Error(visionFailureMessage(responseMessage));
+    }
+    if(!payload||responseStatus>=400)throw new Error(visionFailureMessage(responseMessage||"Photo analysis failed"));
     const text = responseOutputText(payload);
     if (!text) throw new Error("The vision model returned no identification");
     return NextResponse.json({ data: CigarVisionResultSchema.parse(JSON.parse(text)) });
