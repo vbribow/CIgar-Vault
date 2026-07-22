@@ -8,7 +8,7 @@ const sections = [
   { href: "/collections", label: "Collections", related: ["/collection-catalog", "/acquisitions"] },
   { href: "/wishlist", label: "Wishlist" },
   { href: "/notifications", label: "Inbox" },
-  { href: "/valuations", label: "Valuations", related: ["/records"] },
+  { href: "/valuations", label: "Valuations", related: ["/records", "/value-history"] },
   { href: "/reports", label: "Reports" },
   { href: "/humidors", label: "Humidors" },
   { href: "/sensors", label: "Sensors" },

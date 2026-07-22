@@ -45,6 +45,9 @@ export default async function ValuationsPage() {
             <a className="button secondary" href="/reports">
               Open insurance report
             </a>
+            <a className="button secondary" href="/value-history">
+              View value history
+            </a>
           </div>
         </div>
         <div className="valueHeroCard">
