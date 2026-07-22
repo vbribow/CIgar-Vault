@@ -63,6 +63,7 @@ export function AppNavigation() {
         return <details className={`navGroup ${active ? "active" : ""}`} key={group.label}><summary>{group.label}<span aria-hidden="true">⌄</span></summary><div className="navMenu">{group.links.map(([href, label, description]) => <a href={href} className={matches(pathname, href) ? "active" : undefined} aria-current={matches(pathname, href) ? "page" : undefined} key={href}><strong>{label}</strong><small>{description}</small></a>)}</div></details>;
       })}
       <a href="/notifications" className={matches(pathname, "/notifications") ? "active" : undefined}>Inbox</a>
+      <a href="/pricing" className={matches(pathname, "/pricing") ? "active" : undefined}>Plans</a>
       <a href="/account" className={matches(pathname, "/account") ? "active" : undefined}>Account</a>
     </nav>
   </div></header>;
