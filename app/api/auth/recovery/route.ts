@@ -16,9 +16,10 @@ export async function POST(request:Request){
     const supabase=createClient(url,key,{auth:{...recoveryAuthOptions,persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${origin}/reset-password`});
     if(error)throw error;
-    return NextResponse.json({data:{sent:true}});
+    return NextResponse.json({data:{sent:true,cooldownSeconds:65*60}});
   }catch(error){
     const message=error instanceof Error?error.message:"Unable to send recovery email";
-    return NextResponse.json({error:message==="email rate limit exceeded"?"Too many recovery emails were requested. Wait for the hourly limit to reset, then try once.":message},{status:error instanceof z.ZodError?422:429});
+    const rateLimited=message.toLowerCase().includes("rate limit");
+    return NextResponse.json({error:rateLimited?"Supabase did not send an email because its hourly limit is active. Wait for the countdown to finish, then try exactly once.":message,...(rateLimited?{retryAfterSeconds:65*60}:{})},{status:error instanceof z.ZodError?422:429,headers:rateLimited?{"Retry-After":String(65*60)}:undefined});
   }
 }
