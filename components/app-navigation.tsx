@@ -18,6 +18,7 @@ const groups = [
       ["/inventory-integrity", "Integrity center", "Compare, back up, and restore inventory"],
       ["/system-health", "System health", "Check integrations and automation runs"],
       ["/founder-insights", "Founder insights", "Measure private launch activation"],
+      ["/founder-onboarding", "Beta onboarding", "Track the first 25 collectors"],
     ],
   },
   {
