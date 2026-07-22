@@ -17,6 +17,7 @@ const groups = [
       ["/verification", "Habanos verification", "Preserve box-code and seal evidence"],
       ["/inventory-integrity", "Integrity center", "Compare, back up, and restore inventory"],
       ["/system-health", "System health", "Check integrations and automation runs"],
+      ["/founder-insights", "Founder insights", "Measure private launch activation"],
     ],
   },
   {

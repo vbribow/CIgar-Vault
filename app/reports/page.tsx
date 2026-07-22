@@ -4,6 +4,7 @@ import { buildInsuranceReport } from "@/lib/insurance-report";
 import { loadInventory } from "@/lib/inventory";
 import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./reports.css";
+import { ProductEvent } from "@/components/product-event";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -49,7 +50,7 @@ export default async function ReportsPage() {
   ] as const;
 
   return (
-    <main className="shell wideShell insuranceReport">
+    <main className="shell wideShell insuranceReport"><ProductEvent eventType="insurance-report-viewed" />
       <section className="reportHero">
         <div>
           <div className="eyebrow">Collection protection</div>
