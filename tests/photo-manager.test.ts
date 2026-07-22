@@ -10,3 +10,8 @@ test("photo upload always releases its mobile loading state", () => {
   assert.match(source, /setUploading\(false\)/);
   assert.match(source, /aria-live="polite"/);
 });
+
+test("an attached photo can update the surrounding inventory editor", () => {
+  assert.match(source, /onAttached\?: \(item: InventoryItem\) => void/);
+  assert.match(source, /onAttached\?\.\(result\.data\)/);
+});

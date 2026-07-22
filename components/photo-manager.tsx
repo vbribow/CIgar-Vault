@@ -7,7 +7,7 @@ const kinds = [
   ["cigar", "Cigar"], ["box", "Box"], ["habanos-seal", "Habanos seal"], ["box-code", "Box code"], ["provenance", "Receipt / provenance"],
 ] as const;
 
-export function PhotoManager({ item }: { item: InventoryItem }) {
+export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAttached?: (item: InventoryItem) => void }) {
   const [photos, setPhotos] = useState({ cigar: item.photoLink, box: item.boxPhotoLink, seal: item.habanosSealPhotoLink, code: item.boxCodePhotoLink, provenance: item.provenanceDocumentLink });
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -32,6 +32,7 @@ export function PhotoManager({ item }: { item: InventoryItem }) {
 
       const map: Record<string, keyof typeof photos> = { cigar: "cigar", box: "box", "habanos-seal": "seal", "box-code": "code", provenance: "provenance" };
       setPhotos((current) => ({ ...current, [map[result.kind]]: result.url }));
+      onAttached?.(result.data);
       setMessage("Photo attached and inventory synced ✓");
       formElement.reset();
     } catch (error) {

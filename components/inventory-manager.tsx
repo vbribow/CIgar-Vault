@@ -12,6 +12,7 @@ import type { CatalogCigar } from "@/lib/types";
 import { canonicalBrand } from "@/lib/brand-directory";
 import { PhotoInventoryIntake } from "@/components/photo-inventory-intake";
 import { ratingSummary } from "@/lib/cigar-ratings";
+import { PhotoManager } from "@/components/photo-manager";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
@@ -167,6 +168,7 @@ export function InventoryManager({ initialItems, catalog, ratings, mode, initial
         {mode === "smartsheet" && <label className="wide"><span>Founder write key *</span><input name="writeKey" type="password" required autoComplete="current-password" /></label>}
         <div className="formActions wide"><button className="button" disabled={saving || mode === "mock"}>{saving ? "Saving…" : editing ? "Save changes" : "Add lot"}</button>{message && <output>{message}</output>}</div>
       </form>
+      {editing&&<PhotoManager item={editing} onAttached={(updated)=>{setEditing(updated);setItems(current=>current.map(item=>item.inventoryId===updated.inventoryId?updated:item));}}/>}
     </section>
   </>;
 }
