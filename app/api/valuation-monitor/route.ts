@@ -29,9 +29,9 @@ export async function GET(request:Request){
     const eligible=[...users.entries()].filter(([userId])=>!disabled.has(userId)).flatMap(([userId,group])=>group.inventory.filter(item=>valuationNeedsMonitoring(item,group.valuations)).map(item=>({userId,item}))).sort((a,b)=>valuationMonitorPriority(b.item)-valuationMonitorPriority(a.item));
     const candidates=[...users.values()].flatMap(group=>group.inventory.flatMap(item=>{const valuation=group.valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]}));
     const requested=Number(new URL(request.url).searchParams.get("limit"));const batchSize=Number.isInteger(requested)&&requested>0?Math.min(requested,valuationBatchSize()):valuationBatchSize();
-    const estimatedCallCost=valuationCostEstimate();const budget=valuationBudgetStatus(usageEvents||[],new Date(),undefined,estimatedCallCost);let researchSlots=Math.max(0,Math.floor(budget.remainingBeforePause/estimatedCallCost));
+    const estimatedCallCost=valuationCostEstimate();const budget=valuationBudgetStatus(usageEvents||[],new Date(),undefined,estimatedCallCost);let researchSlots=Math.min(batchSize,Math.max(0,Math.floor(budget.remainingBeforePause/estimatedCallCost)));
     const work:ValuationWork[]=[];
-    for(const row of eligible.slice(0,batchSize)){const cached=reusableValuation(row.item,candidates);if(cached)work.push({...row,cached});else if(researchSlots>0){researchSlots--;work.push(row)}}
+    for(const row of eligible){const cached=reusableValuation(row.item,candidates);if(cached)work.push({...row,cached});else if(researchSlots>0){researchSlots--;work.push(row)}}
     const outcomes=await inValuationBatches(work,async row=>{
       let researchRecorded=false;
       try{
@@ -45,6 +45,6 @@ export async function GET(request:Request){
       }catch(error){if(!row.cached&&!researchRecorded)await admin.from("product_events").insert({user_id:row.userId,event_type:"valuation-research",properties:{estimatedCostUsd:estimatedCallCost,model:process.env.OPENAI_VALUATION_MODEL?.trim()||"gpt-5-mini",inventoryId:row.item.inventoryId,failed:true}});return{inventoryId:row.item.inventoryId,status:"failed",error:error instanceof Error?error.message:"Failed"}}
     });
     const completed=outcomes.filter(outcome=>outcome.status!=="failed").length;const researched=outcomes.filter(outcome=>outcome.status==="updated"||outcome.status==="unsupported").length,cached=outcomes.filter(outcome=>outcome.status==="cached").length;
-    return NextResponse.json({data:{checked:outcomes.length,batchSize,researched,cached,remainingEligible:Math.max(0,eligible.length-completed),estimatedSpendThisMonth:Math.round((budget.estimatedSpend+researched*estimatedCallCost)*100)/100,monthlyBudget:budget.monthlyBudget,pauseAt:budget.pauseAt,budgetPaused:work.length<Math.min(batchSize,eligible.length)&&researchSlots<=0,outcomes}});
+    return NextResponse.json({data:{checked:outcomes.length,batchSize,researched,cached,remainingEligible:Math.max(0,eligible.length-completed),estimatedSpendThisMonth:Math.round((budget.estimatedSpend+researched*estimatedCallCost)*100)/100,monthlyBudget:budget.monthlyBudget,pauseAt:budget.pauseAt,budgetPaused:budget.paused,outcomes}});
   }catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Valuation monitoring failed"},{status:502})}
 }

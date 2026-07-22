@@ -6,7 +6,9 @@ const rarePattern=/vintage|rare|limited|collector|collection|presentation|discon
 
 export type ValuationUsageEvent={created_at:string;properties?:{estimatedCostUsd?:number;cached?:boolean}};
 
-export function valuationIdentityKey(item:InventoryItem){return [item.brand,item.line,item.vitola,item.vintage??"",item.packaging??""].map(value=>String(value).trim().toLowerCase().replace(/\s+/g," ")).join("|")}
+// A valuation is stored per cigar, so box/presentation packaging does not change
+// the reusable identity. Vintage remains part of the identity when supplied.
+export function valuationIdentityKey(item:InventoryItem){return [item.brand,item.line,item.vitola,item.vintage??""].map(value=>String(value).trim().toLowerCase().replace(/\s+/g," ")).join("|")}
 
 export function valuationIdentityReady(item:InventoryItem){return [item.brand,item.line,item.vitola].every(value=>Boolean(value?.trim())&&!/^(unknown|n\/a|tbd|unspecified)$/i.test(value.trim()))}
 
@@ -26,7 +28,7 @@ export function valuationNeedsMonitoring(item:InventoryItem,valuations:Valuation
 
 export function reusableValuation(item:InventoryItem,candidates:Array<{item:InventoryItem;valuation:Valuation}>,now=new Date()){
   const key=valuationIdentityKey(item);
-  return candidates.filter(candidate=>candidate.item.inventoryId!==item.inventoryId&&valuationIdentityKey(candidate.item)===key&&Boolean(candidate.valuation.sourceUrl)&&candidate.valuation.confidence!=="Low"&&!valuationNeedsMonitoring(candidate.item,[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
+  return candidates.filter(candidate=>valuationIdentityKey(candidate.item)===key&&(candidate.valuation.marketValue!==undefined||candidate.valuation.replacementValue!==undefined)&&!valuationNeedsMonitoring(candidate.item,[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
 }
 
 export function valuationMonitorPriority(item:InventoryItem){return (item.retailValue??0)*(item.currentQty??0)+(item.priority==="High"?10_000:0)}
