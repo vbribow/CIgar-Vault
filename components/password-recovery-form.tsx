@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createRecoveryClient } from "@/lib/supabase/recovery-client";
 import { appOrigin } from "@/lib/app-origin";
 
 export function PasswordRecoveryForm() {
@@ -18,8 +18,8 @@ export function PasswordRecoveryForm() {
     const email = String(form.get("email") || "").trim();
     const productionHost = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL?.trim();
     const origin = appOrigin(window.location.origin, productionHost);
-    const redirectTo = `${origin}/auth/confirm?next=/reset-password`;
-    const { error: requestError } = await createClient().auth.resetPasswordForEmail(email, { redirectTo });
+    const redirectTo = `${origin}/reset-password`;
+    const { error: requestError } = await createRecoveryClient().auth.resetPasswordForEmail(email, { redirectTo });
     setBusy(false);
     if (requestError) {
       setError(requestError.message === "email rate limit exceeded" ? "Too many recovery emails were requested. Please wait until the hourly email limit resets, then try once more." : requestError.message);
