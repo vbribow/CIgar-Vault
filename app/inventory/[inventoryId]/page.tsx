@@ -3,7 +3,7 @@ import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
 import { loadActivities, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
-import { PhotoManager } from "@/components/photo-manager";
+import { InventoryRecordTools } from "@/components/inventory-record-tools";
 import { buildCigarTimeline,estimateAging } from "@/lib/collection-intelligence";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
@@ -140,7 +140,7 @@ export default async function CigarPage({
           </p>
         )}
       </section>
-      <PhotoManager item={item} />
+      <InventoryRecordTools initialItem={item} inventory={items} mode={mode} />
     </main>
   );
 }
