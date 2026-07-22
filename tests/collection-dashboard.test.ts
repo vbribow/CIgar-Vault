@@ -23,6 +23,8 @@ test("summarizes whole value, premium, completeness, and history", () => {
   assert.equal(result.premium, 600);
   assert.equal(result.completionPercent, 100);
   assert.equal(result.missingComponents.length, 0);
+  assert.equal(result.expectedCigars,40);
+  assert.deepEqual(result.expectedContents,["20 Padrón-made cigars honoring Carlos A. Fuente, Sr.","20 Fuente-made cigars honoring José O. Padrón"]);
   assert.deepEqual(result.valueHistory, [{ date: "2026-01-01", value: 900 }]);
 });
 

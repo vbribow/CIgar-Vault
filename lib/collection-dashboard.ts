@@ -13,6 +13,8 @@ export type CollectionDashboardSummary = {
   premium: number;
   ownedComponents: number;
   expectedComponents?: number;
+  expectedCigars?: number;
+  expectedContents: string[];
   completionPercent: number;
   missingComponents: string[];
   valueHistory: CollectionValuePoint[];
@@ -94,6 +96,8 @@ export function summarizeCollection(
     premium: wholeValue - componentValue,
     ownedComponents,
     expectedComponents,
+    expectedCigars: collection.expectedCigars ?? template?.expectedCigars,
+    expectedContents: template?.requirements ?? [],
     completionPercent,
     missingComponents,
     valueHistory,
