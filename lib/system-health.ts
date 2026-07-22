@@ -5,7 +5,7 @@ export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:s
   {id:"sensor-sync",name:"Sensor synchronization",path:"/api/sensor-sync",schedule:"0 * * * *",nextDescription:"Hourly at minute 0"},
   {id:"catalog-discovery",name:"Catalog discovery",path:"/api/catalog-discovery/run",schedule:"0 12 * * 1",nextDescription:"Monday at 12:00 UTC"},
   {id:"wishlist-monitor",name:"Wishlist monitoring",path:"/api/wishlist-monitor",schedule:"30 13 * * *",nextDescription:"Daily at 13:30 UTC"},
-  {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"0 14 * * 0",nextDescription:"Sunday at 14:00 UTC"},
+  {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"0 14 * * *",nextDescription:"Daily at 14:00 UTC · up to 12 lots"},
   {id:"rating-monitor",name:"Professional rating coverage",path:"/api/rating-monitor",schedule:"30 14 * * 0",nextDescription:"Sunday at 14:30 UTC"},
 ];
 export function configurationChecks(environment:Record<string,string|undefined>):HealthCheck[]{const has=(...names:string[])=>names.every(name=>Boolean(environment[name]?.trim()));return[

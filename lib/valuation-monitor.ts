@@ -9,3 +9,14 @@ export function valuationNeedsMonitoring(item:InventoryItem, valuations:Valuatio
 }
 
 export function valuationMonitorPriority(item:InventoryItem){return (item.retailValue??0)*(item.currentQty??0)+(item.priority==="High"?10_000:0)}
+
+export function valuationBatchSize(value=process.env.VALUATION_BATCH_SIZE){
+  const parsed=Number(value||12);
+  return Number.isFinite(parsed)?Math.min(12,Math.max(1,Math.floor(parsed))):12;
+}
+
+export async function inValuationBatches<T,R>(items:T[],worker:(item:T)=>Promise<R>,concurrency=4){
+  const results:R[]=[];
+  for(let index=0;index<items.length;index+=concurrency)results.push(...await Promise.all(items.slice(index,index+concurrency).map(worker)));
+  return results;
+}

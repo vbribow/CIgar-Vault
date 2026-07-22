@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/valuation-monitor",
-      "schedule": "0 14 * * 0"
+      "schedule": "0 14 * * *"
     },
     {
       "path": "/api/rating-monitor",
