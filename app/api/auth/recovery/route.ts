@@ -16,7 +16,7 @@ export async function POST(request:Request){
     const supabase=createClient(url,key,{auth:{...recoveryAuthOptions,persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${origin}/reset-password`});
     if(error)throw error;
-    return NextResponse.json({data:{sent:true,cooldownSeconds:65*60}});
+    return NextResponse.json({data:{sent:true,cooldownSeconds:10*60}});
   }catch(error){
     const message=error instanceof Error?error.message:"Unable to send recovery email";
     const rateLimited=message.toLowerCase().includes("rate limit");

@@ -1,8 +1,10 @@
-export const RECOVERY_COOLDOWN_SECONDS = 65 * 60;
-export const RECOVERY_COOLDOWN_KEY = "cigar-vault:recovery-cooldown-until";
+export const RECOVERY_SUCCESS_COOLDOWN_SECONDS = 10 * 60;
+export const RECOVERY_RATE_LIMIT_SECONDS = 65 * 60;
+export const RECOVERY_COOLDOWN_KEY = "cigar-vault:recovery-cooldown-v2";
+export const LEGACY_RECOVERY_COOLDOWN_KEY = "cigar-vault:recovery-cooldown-until";
 
-export function recoveryCooldownUntil(now = Date.now()) {
-  return now + RECOVERY_COOLDOWN_SECONDS * 1000;
+export function recoveryCooldownUntil(seconds: number, now = Date.now()) {
+  return now + seconds * 1000;
 }
 
 export function recoverySecondsRemaining(until: number, now = Date.now()) {
