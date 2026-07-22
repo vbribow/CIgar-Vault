@@ -38,6 +38,7 @@ const groups = [
       ["/intelligence", "Collection intelligence", "Health score, Collector DNA, and vault priorities"],
       ["/cigar-somm", "Cigar Somm", "Questions plus coffee, spirit, cocktail, and nonalcoholic pairings"],
       ["/valuations", "Valuations", "Research unit and market values"],
+      ["/auction-market", "Auction market", "Verified completed sales and source connections"],
       ["/ratings", "Professional ratings", "Research published review scores"],
       ["/value-history", "Portfolio history", "Track collection value over time"],
       ["/reports", "Insurance report", "Create an evidence-backed property schedule"],
