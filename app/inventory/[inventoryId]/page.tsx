@@ -76,7 +76,7 @@ export default async function CigarPage({
           <strong>{item.storageLocationId || "Not set"}</strong>
         </div>
       </section>
-      <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div><a className="button secondary" href="/intelligence#cellar">Open Cellar Advisor</a></section>
+      <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div><a className="button secondary" href="/cigar-somm">Ask Cigar Somm</a></section>
       <section className="detailGrid">
         <article className="card">
           <div className="eyebrow">Collector direction</div>

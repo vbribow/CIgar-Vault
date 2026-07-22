@@ -42,7 +42,7 @@ export function CollectorCommandCenter({ intelligence }: { intelligence: ReturnT
       <article className="terminalList"><header><div><span>Exception queue</span><strong>Records needing attention</strong></div><a href="/inventory-integrity">Audit →</a></header>
         <div>{intelligence.advisor.needsAttention.map(item => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}><span><strong>{item.brand} {item.line}</strong><small>{[item.currentQty === undefined && "quantity", item.retailValue === undefined && "value", !item.storageLocationId && "location", !item.vintage && "release year"].filter(Boolean).join(" · ")} needed</small></span><em>Fix →</em></a>)}{!intelligence.advisor.needsAttention.length && <p>Every core inventory field is complete.</p>}</div>
       </article>
-      <article className="terminalList"><header><div><span>Cellar advisor</span><strong>Smoke window</strong></div><a href="/intelligence#cellar">Advisor →</a></header>
+      <article className="terminalList"><header><div><span>Cigar Somm</span><strong>Smoke window</strong></div><a href="/cigar-somm">Ask Somm →</a></header>
         <div>{intelligence.advisor.smokeNow.slice(0, 5).map(item => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}><span><strong>{item.brand} {item.line}</strong><small>{item.vintage ?? "Undated"} · {item.vitola}</small></span><em>{item.score ?? "Ready"}</em></a>)}{!intelligence.advisor.smokeNow.length && <p>Add release years to unlock evidence-based maturity guidance.</p>}</div>
       </article>
     </div>
