@@ -35,9 +35,9 @@ export default async function ValuationsPage() {
           <div className="eyebrow">Valuation intelligence</div>
           <h1>Keep every value current.</h1>
           <p className="lede">
-            A rolling review system for dated retail and auction
-            evidence—calculated per cigar, multiplied by the quantity you own,
-            and never presented as an independent appraisal.
+            A rolling review system that separates retail replacement, market
+            estimates, and verified completed sales—calculated per cigar and
+            never presented as an independent appraisal.
           </p>
           <div className="ctaRow">
             <a className="button" href="/records">
@@ -171,8 +171,9 @@ export default async function ValuationsPage() {
                 <th>Cigar</th>
                 <th>Qty</th>
                 <th>Retail / stick</th>
-                <th>Latest market</th>
+                <th>Market estimate</th>
                 <th>Market lot</th>
+                <th>Last completed sale</th>
                 <th>Change</th>
                 <th>Freshness</th>
                 <th>Evidence</th>
@@ -218,6 +219,7 @@ export default async function ValuationsPage() {
                         ? "—"
                         : money.format(row.marketLot)}
                     </td>
+                    <td>{row.latest?.lastSaleValue === undefined ? "—" : <>{unitMoney.format(row.latest.lastSaleValue)}<small>{row.latest.lastSaleDate || row.latest.valuationDate}{row.latest.lastSaleVenue ? ` · ${row.latest.lastSaleVenue}` : ""}</small>{row.latest.lastSaleSourceUrl && <a className="textLink" href={row.latest.lastSaleSourceUrl} target="_blank" rel="noreferrer">Proof ↗</a>}</>}</td>
                     <td>
                       {row.changePercent === undefined ? (
                         "—"

@@ -36,7 +36,7 @@ export type InventoryItem = {
 export type InventoryInput = Omit<InventoryItem, "currentQty"> & { currentQty?: number };
 
 export type SmokingLog = { smokeId: string; inventoryId: string; dateSmoked: string; vintage?: string | number; overall?: number; flavor?: string; strength?: string; sweetness?: string; construction?: string; tastingNotes?: string; buyAgain?: boolean };
-export type Valuation = { valuationId: string; inventoryId: string; valuationDate: string; replacementValue?: number; marketValue?: number; source?: string; sourceUrl?: string; confidence?: string; notes?: string };
+export type Valuation = { valuationId: string; inventoryId: string; valuationDate: string; replacementValue?: number; marketValue?: number; lastSaleValue?: number; lastSaleDate?: string; lastSaleVenue?: string; lastSaleSourceUrl?: string; source?: string; sourceUrl?: string; confidence?: string; notes?: string };
 export type ProfessionalRating = { ratingId:string; inventoryId:string; publication:string; score:number; reviewDate?:string; reviewer?:string; sourceUrl:string; matchConfidence:"High"|"Medium"|"Low"; matchedVintage?:string|number; summary?:string; createdAt:string };
 export type ActivityType = "Purchase" | "Add sticks" | "Add box" | "Open box" | "Smoke" | "Gift" | "Sale" | "Damaged / discarded" | "Correction" | "Storage move";
 export type InventoryActivity = { activityId: string; inventoryId: string; eventDate: string; eventType: ActivityType; quantityChange?: number; boxesChange?: number; looseSticksChange?: number; totalAmount?: number; fromStorage?: string; toStorage?: string; resultingQuantity?: number; resultingFullBoxes?: number; resultingLooseSticks?: number; notes?: string; createdAt?: string };

@@ -22,6 +22,9 @@ export default async function CigarPage({
       : await Promise.all([loadSmokingLogs(), loadValuations(), loadActivities(), loadRatings()]);
   const history = smokes.filter((s) => s.inventoryId === inventoryId);
   const values = valuations.filter((v) => v.inventoryId === inventoryId);
+  const latestSale = values
+    .filter((value) => value.lastSaleValue !== undefined)
+    .sort((a, b) => (b.lastSaleDate || b.valuationDate).localeCompare(a.lastSaleDate || a.valuationDate))[0];
   const events = activities.filter((a) => a.inventoryId === inventoryId);
   const publishedRatings = ratingsForInventory(ratings, inventoryId);
   const published = ratingSummary(ratings, inventoryId);
@@ -66,7 +69,7 @@ export default async function CigarPage({
           <strong>{item.originalQty ?? "—"}</strong>
         </div>
         <div>
-          <span>Replacement</span>
+          <span>Retail replacement / cigar</span>
           <strong>
             {item.retailValue ? `$${item.retailValue.toLocaleString()}` : "—"}
           </strong>
@@ -76,6 +79,7 @@ export default async function CigarPage({
           <strong>{item.storageLocationId || "Not set"}</strong>
         </div>
       </section>
+      <section className="section card"><div className="sectionHead"><div><div className="eyebrow">Market transaction evidence</div><h2>{latestSale ? `$${latestSale.lastSaleValue!.toLocaleString()} per cigar` : "No verified completed sale recorded"}</h2><p className="small">{latestSale ? `Last known completed sale · ${latestSale.lastSaleDate || latestSale.valuationDate}${latestSale.lastSaleVenue ? ` · ${latestSale.lastSaleVenue}` : ""}` : "Auction estimates, open lots, and asking prices are not labeled as sales."}</p></div>{latestSale?.lastSaleSourceUrl ? <a className="button secondary" href={latestSale.lastSaleSourceUrl} target="_blank" rel="noreferrer">View sale evidence ↗</a> : <a className="button secondary" href="/valuations">Research sale history</a>}</div><div className="detailStats"><div><span>Retail replacement</span><strong>{item.retailValue === undefined ? "Not researched" : `$${item.retailValue.toLocaleString()} / cigar`}</strong></div><div><span>Retail lot subtotal</span><strong>{item.retailValue === undefined || item.currentQty === undefined ? "Not available" : `$${(item.retailValue * item.currentQty).toLocaleString()}`}</strong></div><div><span>Latest completed sale</span><strong>{latestSale?.lastSaleValue === undefined ? "Not found" : `$${latestSale.lastSaleValue.toLocaleString()} / cigar`}</strong></div><div><span>Sale venue</span><strong>{latestSale?.lastSaleVenue || "Not documented"}</strong></div></div></section>
       <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div><a className="button secondary" href={`/cigar-somm?inventoryId=${encodeURIComponent(item.inventoryId)}`}>Analyze with Cigar Somm</a></section>
       <section className="detailGrid">
         <article className="card">
