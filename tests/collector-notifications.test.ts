@@ -10,6 +10,7 @@ test("builds and prioritizes price matches", () => {
   const result = buildCollectorNotifications(items, new Date("2026-07-21T12:00:00.000Z"));
   assert.equal(result.length, 1);
   assert.equal(result[0].kind, "Price match");
+  assert.equal(result[0].wishlistId, "W1");
   assert.equal(result[0].priority, "High");
 });
 

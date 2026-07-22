@@ -2,6 +2,7 @@ import type { PriceMatch, WishlistItem } from "@/lib/types";
 
 export type CollectorNotification = {
   id: string;
+  wishlistId: string;
   kind: "Price match" | "Availability" | "Purchase follow-up" | "Monitoring";
   priority: "High" | "Medium" | "Standard";
   title: string;
@@ -17,6 +18,7 @@ const priorityWeight = { High: 3, Medium: 2, Standard: 1 } as const;
 function matchNotification(item: WishlistItem, match: PriceMatch): CollectorNotification {
   return {
     id: `MATCH-${item.wishlistId}-${match.url}`,
+    wishlistId: item.wishlistId,
     kind: "Price match",
     priority: item.priority,
     title: `${item.brand} ${item.vitola} is at or below target`,
@@ -36,6 +38,7 @@ export function buildCollectorNotifications(items: WishlistItem[], now = new Dat
     if (item.status === "Watching" && item.targetPrice === undefined) {
       notifications.push({
         id: `TARGET-${item.wishlistId}`,
+        wishlistId: item.wishlistId,
         kind: "Monitoring",
         priority: "Standard",
         title: `Set a target for ${item.brand} ${item.vitola}`,
@@ -50,6 +53,7 @@ export function buildCollectorNotifications(items: WishlistItem[], now = new Dat
       if (!Number.isFinite(checked) || now.getTime() - checked > 36 * 60 * 60 * 1000) {
         notifications.push({
           id: `STALE-${item.wishlistId}`,
+          wishlistId: item.wishlistId,
           kind: "Monitoring",
           priority: item.priority === "High" ? "High" : "Medium",
           title: `${item.brand} ${item.vitola} needs a market refresh`,
@@ -63,6 +67,7 @@ export function buildCollectorNotifications(items: WishlistItem[], now = new Dat
     if (item.status === "Purchased" && !item.inventoryId) {
       notifications.push({
         id: `PURCHASE-${item.wishlistId}`,
+        wishlistId: item.wishlistId,
         kind: "Purchase follow-up",
         priority: "High",
         title: `Add ${item.brand} ${item.vitola} to the vault`,
