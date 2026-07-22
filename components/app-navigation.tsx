@@ -33,6 +33,7 @@ const groups = [
   {
     label: "Value & reports",
     links: [
+      ["/intelligence", "Collection intelligence", "Health score, Collector DNA, and Cellar Advisor"],
       ["/valuations", "Valuations", "Research unit and market values"],
       ["/ratings", "Professional ratings", "Research published review scores"],
       ["/value-history", "Portfolio history", "Track collection value over time"],

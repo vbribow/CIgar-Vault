@@ -2,9 +2,10 @@ import { InventoryItem } from "@/lib/types";
 import { lotRetailValue } from "@/lib/valuation";
 import type { OnboardingStep } from "@/lib/onboarding";
 import { OnboardingDashboard } from "./onboarding-dashboard";
+import type { buildCollectionIntelligence } from "@/lib/collection-intelligence";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-export function Dashboard({ items, onboarding }: { items: InventoryItem[]; onboarding: OnboardingStep[] }) {
+export function Dashboard({ items, onboarding,intelligence }: { items: InventoryItem[]; onboarding: OnboardingStep[];intelligence:ReturnType<typeof buildCollectionIntelligence> }) {
   const knownQty = items.reduce((sum, item) => sum + (item.currentQty || 0), 0);
   const value = items.reduce((sum, item) => sum + (lotRetailValue(item) || 0), 0);
   const scored = items.filter((item) => typeof item.score === "number");
@@ -21,6 +22,7 @@ export function Dashboard({ items, onboarding }: { items: InventoryItem[]; onboa
       <div className="card"><div className="metric">{money.format(value)}</div><div className="label">Known collection value · unit retail × remaining quantity · {valued}/{items.length} priced</div></div>
       <div className="card"><div className="metric">{avg.toFixed(1)}</div><div className="label">Average recorded score</div></div>
     </div>
+    <section className="dashboardIntelligence"><a className="dashboardScore" href="/intelligence"><span>Collection Score</span><strong>{intelligence.score}</strong><small>Eight connected intelligence dimensions →</small></a><article><div className="eyebrow">Cellar Advisor</div><h2>{intelligence.advisor.smokeNow[0]?`${intelligence.advisor.smokeNow[0].brand} ${intelligence.advisor.smokeNow[0].line}`:"Build your smoking window"}</h2><p>{intelligence.advisor.smokeNow[0]?`${intelligence.advisor.smokeNow[0].vitola} is among the strongest dated candidates to consider now.`:"Add release years to unlock maturity and peak-window guidance."}</p><a href="/intelligence#cellar">Open this week’s advice →</a></article><article><div className="eyebrow">Market movement</div><h2>{intelligence.advisor.appreciating[0]?`+${intelligence.advisor.appreciating[0].changePercent}% documented`:"No unproven claims"}</h2><p>{intelligence.advisor.appreciating[0]?`${intelligence.advisor.appreciating[0].item.brand} ${intelligence.advisor.appreciating[0].item.line} leads measured appreciation.`:"Cigar Vault waits for two dated valuations before reporting appreciation."}</p><a href="/value-history">Review portfolio history →</a></article><article><div className="eyebrow">Collector DNA · {intelligence.dna.confidence}</div><h2>{intelligence.dna.topBrands.join(" · ")||"Taste profile developing"}</h2><p>{intelligence.dna.tastings} recorded tasting{intelligence.dna.tastings===1?"":"s"} currently shape personalized guidance.</p><a href="/records">Strengthen the profile →</a></article></section>
     <OnboardingDashboard steps={onboarding} />
     <section className="section featureMap"><div className="sectionHead"><div><div className="eyebrow">Everything in Cigar Vault</div><h2>One collection. Five connected systems.</h2><p className="small">Start with the job you need to do; every tool works from the same inventory record.</p></div></div>
       <div className="featurePillars">

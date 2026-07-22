@@ -4,6 +4,7 @@ import { loadInventory } from "@/lib/inventory";
 import { loadActivities, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
 import { PhotoManager } from "@/components/photo-manager";
+import { buildCigarTimeline,estimateAging } from "@/lib/collection-intelligence";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
   params,
@@ -24,6 +25,8 @@ export default async function CigarPage({
   const events = activities.filter((a) => a.inventoryId === inventoryId);
   const publishedRatings = ratingsForInventory(ratings, inventoryId);
   const published = ratingSummary(ratings, inventoryId);
+  const aging=estimateAging(item);
+  const timeline=buildCigarTimeline(item,events,history,values,publishedRatings);
   return (
     <main className="shell">
       <nav className="nav">
@@ -73,6 +76,7 @@ export default async function CigarPage({
           <strong>{item.storageLocationId || "Not set"}</strong>
         </div>
       </section>
+      <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div><a className="button secondary" href="/intelligence#cellar">Open Cellar Advisor</a></section>
       <section className="detailGrid">
         <article className="card">
           <div className="eyebrow">Collector direction</div>
@@ -112,11 +116,12 @@ export default async function CigarPage({
           </a>
         </article>
       </section>
-      <section className="section card">
+      <section className="section card cigarTimeline">
         <div className="sectionHead">
           <div>
-            <div className="eyebrow">Activity ledger</div>
-            <h2>{events.length} events</h2>
+            <div className="eyebrow">Ownership intelligence</div>
+            <h2>{timeline.length} timeline events</h2>
+            <p className="small">Purchases, moves, smokes, scores, professional reviews, and valuation changes in one history.</p>
           </div>
           <a
             className="button secondary"
@@ -125,17 +130,12 @@ export default async function CigarPage({
             Record activity
           </a>
         </div>
-        {events.slice(0, 5).map((event) => (
-          <p className="historyRow" key={event.activityId}>
-            <span>
-              {event.eventDate} · {event.eventType}
-            </span>
-            <strong>{event.resultingQuantity ?? "—"} remaining</strong>
-          </p>
+        {timeline.slice(0, 20).map((event,index) => (
+          <article className="timelineEvent" key={`${event.date}-${event.type}-${index}`}><i/><span>{event.date}</span><div><small>{event.type}</small><strong>{event.title}</strong><p>{event.detail}</p></div></article>
         ))}
-        {!events.length && (
+        {!timeline.length && (
           <p className="small">
-            No activity recorded yet. Start with a purchase, count correction,
+            No timeline evidence yet. Start with a purchase, valuation, tasting,
             or storage move.
           </p>
         )}
