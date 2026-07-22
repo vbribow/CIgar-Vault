@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       if (files.some((file) => !allowedTypes.has(file.type))) return NextResponse.json({ error: "Use JPG, PNG, or WebP photos" }, { status: 415 });
       if (files.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_BYTES) return NextResponse.json({ error: "The prepared photos exceed the 4 MB analysis limit" }, { status: 413 });
       images = await Promise.all(files.map(async (file) => ({ type: "input_image" as const, image_url: `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`, detail: "high" as const })));
-      prompt = "Identify the cigar inventory represented by these views of one physical asset. Read visible bands, box text, release year, factory/box code, and count only clearly visible cigars. Distinguish a sealed/full box from loose sticks. Never invent missing details: use empty strings or nulls and list ambiguity in uncertainties. Return the manufacturer as brand, the product family as line, and the named cigar or assortment as vitola. This result is only a review draft and must not save inventory.";
+      prompt = "Identify the cigar inventory represented by these views of exactly one physical asset. Reconcile all photos as front, back, band, seal, box-code, and contents views of that same asset. Read visible manufacturer, line or collection, named cigar/vitola, release or vintage year, packaging, factory/box code, and count. Distinguish a sealed or full box from an open box and loose sticks. A printed box capacity is sticksPerBox; visible remaining cigars are not automatically a full box. Never infer ownership quantity from packaging capacity. Never invent missing details: use empty strings or nulls and list ambiguity and alternate matches in uncertainties. Return manufacturer as brand, product family or collection as line, and the exact named cigar, vitola, or assortment as vitola. This result is only a review draft and must not save inventory.";
     }
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -48,6 +48,8 @@ export async function POST(request: Request) {
     if (!text) throw new Error("The vision model returned no identification");
     return NextResponse.json({ data: CigarVisionResultSchema.parse(JSON.parse(text)) });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Photo analysis failed" }, { status: 502 });
+    const message=error instanceof Error?error.message:"Photo analysis failed";
+    if(error instanceof Error&&error.name==="TimeoutError")return NextResponse.json({error:"Photo identification took too long. Your draft is safe—tap Identify again."},{status:504});
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
