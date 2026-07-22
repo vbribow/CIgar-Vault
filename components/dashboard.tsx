@@ -3,6 +3,7 @@ import { lotRetailValue } from "@/lib/valuation";
 import type { OnboardingStep } from "@/lib/onboarding";
 import { OnboardingDashboard } from "./onboarding-dashboard";
 import type { buildCollectionIntelligence } from "@/lib/collection-intelligence";
+import { CollectorCommandCenter } from "./collector-command-center";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 export function Dashboard({ items, onboarding,intelligence }: { items: InventoryItem[]; onboarding: OnboardingStep[];intelligence:ReturnType<typeof buildCollectionIntelligence> }) {
@@ -16,6 +17,7 @@ export function Dashboard({ items, onboarding,intelligence }: { items: Inventory
   const maxStatus = Math.max(...Object.values(statuses),1);
   const aging = items.filter((item) => item.status === "Hold" || item.status === "Preserve").sort((a,b)=>(a.vintage?Number(a.vintage):9999)-(b.vintage?Number(b.vintage):9999)).slice(0,3);
   return <>
+    <CollectorCommandCenter intelligence={intelligence} />
     <div className="grid">
       <div className="card"><div className="metric">{items.length}</div><div className="label">Inventory lots</div></div>
       <div className="card"><div className="metric">{knownQty}</div><div className="label">Known cigars remaining</div></div>

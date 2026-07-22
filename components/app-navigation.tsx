@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { GlobalSearch } from "@/components/global-search";
 
 const groups = [
   {
@@ -67,7 +68,7 @@ export function AppNavigation() {
   const pathname = usePathname();
   return <><header className="appHeader"><div className="appHeaderInner">
     <a className="appBrand" href="/" aria-label="Cigar Vault dashboard"><span className="appBrandMark">CV</span><span><strong>Cigar Vault</strong><small>Collection intelligence</small></span></a>
-    <nav className="appNav" aria-label="Primary navigation">
+    <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <a href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Dashboard</a>
       {groups.map(group => {
         const active = group.links.some(([href]) => matches(pathname, href));
