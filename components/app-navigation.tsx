@@ -27,6 +27,7 @@ const groups = [
       ["/collections", "My collections", "Value collectible sets as a whole"],
       ["/collection-catalog", "Collection catalog", "Browse researched heritage sets"],
       ["/acquisitions", "Acquisition planner", "Find missing collection components"],
+      ["/decision-center", "Decision center", "Set goals, evaluate purchases, and compare market channels"],
       ["/wishlist", "Wishlist", "Monitor targets, pricing, and availability"],
     ],
   },
