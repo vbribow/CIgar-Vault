@@ -10,7 +10,7 @@ export const standardVitolas = [
   "Toro Extra", "Toro Gordo", "Toro Grande", "Torpedo"
 ] as const;
 
-export function vitolaOptions(catalogVitolas: string[] = []) {
-  return [...new Set([...standardVitolas, ...catalogVitolas].map((value) => value.trim()).filter(Boolean))]
+export function vitolaOptions(catalogVitolas: string[] = [], includeStandards = true) {
+  return [...new Set([...(includeStandards ? standardVitolas : []), ...catalogVitolas].map((value) => value.trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b));
 }

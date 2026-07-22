@@ -12,3 +12,9 @@ test("catalog vitolas extend the standard dropdown without duplicates", () => {
   assert.equal(options.filter((value) => value === "Robusto").length, 1);
   assert.equal(options.filter((value) => value === "Rare Estate 1992").length, 1);
 });
+
+test("a cigar-specific dropdown never invents unavailable vitolas", () => {
+  const options = vitolaOptions(["Robusto", "Toro"], false);
+  assert.deepEqual(options, ["Robusto", "Toro"]);
+  assert.equal(options.includes("Double Corona"), false);
+});
