@@ -66,6 +66,12 @@ export function consumeOneInventory(item: InventoryItem): InventoryItem {
   return normalizeInventory({ ...item, smokedQty });
 }
 
+export function applyTotalQuantityCorrection(item: InventoryInput,total:number):InventoryInput{
+  if(!Number.isInteger(total)||total<0)throw new Error("Corrected total quantity must be a whole number at or above zero");
+  const{fullBoxQty:_,sticksPerBox:__,looseStickQty:___,...rest}=item;
+  return{...rest,originalQty:total+(item.smokedQty??0),currentQty:total};
+}
+
 export function inventoryCompleteness(item: InventoryItem): number {
   const fields = [item.originalQty, item.currentQty, item.retailValue, item.vintage, item.storageLocationId];
   return Math.round((fields.filter((value) => value !== undefined && value !== "").length / fields.length) * 100);
