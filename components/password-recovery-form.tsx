@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { createRecoveryClient } from "@/lib/supabase/recovery-client";
-import { appOrigin } from "@/lib/app-origin";
 
 export function PasswordRecoveryForm() {
   const [message, setMessage] = useState("");
@@ -16,13 +14,11 @@ export function PasswordRecoveryForm() {
     setMessage("");
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") || "").trim();
-    const productionHost = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL?.trim();
-    const origin = appOrigin(window.location.origin, productionHost);
-    const redirectTo = `${origin}/reset-password`;
-    const { error: requestError } = await createRecoveryClient().auth.resetPasswordForEmail(email, { redirectTo });
+    const response=await fetch("/api/auth/recovery",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email})});
+    const result=await response.json();
     setBusy(false);
-    if (requestError) {
-      setError(requestError.message === "email rate limit exceeded" ? "Too many recovery emails were requested. Please wait until the hourly email limit resets, then try once more." : requestError.message);
+    if (!response.ok) {
+      setError(result.error||"Unable to send recovery email.");
       return;
     }
     setMessage("Recovery email sent. Open only the newest message. Its link will return to the public Cigar Vault site, not a protected preview.");
