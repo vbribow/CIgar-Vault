@@ -1,8 +1,10 @@
 import { InventoryItem } from "@/lib/types";
 import { lotRetailValue } from "@/lib/valuation";
+import type { OnboardingStep } from "@/lib/onboarding";
+import { OnboardingDashboard } from "./onboarding-dashboard";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-export function Dashboard({ items }: { items: InventoryItem[] }) {
+export function Dashboard({ items, onboarding }: { items: InventoryItem[]; onboarding: OnboardingStep[] }) {
   const knownQty = items.reduce((sum, item) => sum + (item.currentQty || 0), 0);
   const value = items.reduce((sum, item) => sum + (lotRetailValue(item) || 0), 0);
   const scored = items.filter((item) => typeof item.score === "number");
@@ -19,6 +21,7 @@ export function Dashboard({ items }: { items: InventoryItem[] }) {
       <div className="card"><div className="metric">{money.format(value)}</div><div className="label">Known collection value · unit retail × remaining quantity · {valued}/{items.length} priced</div></div>
       <div className="card"><div className="metric">{avg.toFixed(1)}</div><div className="label">Average recorded score</div></div>
     </div>
+    <OnboardingDashboard steps={onboarding} />
     <section className="section featureMap"><div className="sectionHead"><div><div className="eyebrow">Everything in Cigar Vault</div><h2>One collection. Five connected systems.</h2><p className="small">Start with the job you need to do; every tool works from the same inventory record.</p></div></div>
       <div className="featurePillars">
         <article><span className="pillarNumber">01</span><h3>Inventory & provenance</h3><p>Track boxes, loose cigars, photos, documents, box codes, verification, location, and every quantity-changing event.</p><div><a href="/inventory">Manage inventory →</a><a href="/inventory-integrity">Protect the records →</a></div></article>
