@@ -48,6 +48,13 @@ const groups = [
       ["/alerts", "Climate alerts", "Review warnings and delivery history"],
     ],
   },
+  {
+    label: "Community",
+    links: [
+      ["/community", "Collector community", "Message board and member-rated Top 25"],
+      ["/ai-administrator", "AI Administrator", "Founder moderation and community operations"],
+    ],
+  },
 ] as const;
 
 function matches(pathname: string, href: string) {
