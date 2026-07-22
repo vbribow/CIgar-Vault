@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { applyTotalQuantityCorrection, inventoryCompleteness } from "@/lib/inventory-model";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem, ProfessionalRating } from "@/lib/types";
@@ -29,6 +29,18 @@ export function InventoryManager({ initialItems, catalog, ratings, mode, initial
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date>();
+
+  useEffect(()=>{
+    if(editing||draft||saving||bulkSaving)return;
+    let active=true;
+    async function refresh(){try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)return;const result=await response.json();if(active&&Array.isArray(result.data)){setItems(result.data);setLastSynced(new Date())}}catch{/* retain the last known inventory during a network interruption */}}
+    const onFocus=()=>void refresh();
+    const onVisibility=()=>{if(document.visibilityState==="visible")void refresh()};
+    window.addEventListener("focus",onFocus);document.addEventListener("visibilitychange",onVisibility);void refresh();
+    const timer=window.setInterval(()=>{if(document.visibilityState==="visible")void refresh()},30_000);
+    return()=>{active=false;window.removeEventListener("focus",onFocus);document.removeEventListener("visibilitychange",onVisibility);window.clearInterval(timer)};
+  },[editing,draft,saving,bulkSaving]);
 
   const statuses = useMemo(() => [...new Set(items.map((item) => item.status).filter(Boolean))].sort(), [items]);
   const locations = useMemo(() => [...new Set(items.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [items]);
@@ -123,7 +135,7 @@ export function InventoryManager({ initialItems, catalog, ratings, mode, initial
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>
       <label><span>Storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All locations</option><option value="unassigned">Unassigned</option>{locations.map((value)=><option key={value}>{value}</option>)}</select></label>
-      <div className="filterCount">{filtered.length} of {items.length} lots</div>
+      <div className="filterCount">{filtered.length} of {items.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
     </section>
 
     {selected.size>0&&<form className="bulkInventoryBar" onSubmit={applyBulkUpdate}><div><strong>{selected.size} selected</strong><button type="button" onClick={()=>setSelected(new Set())}>Clear</button></div><label><span>Status</span><select name="bulkStatus" defaultValue=""><option value="">No change</option><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label><label><span>Storage</span><input name="bulkStorage" list="bulk-storage-options" placeholder="No change"/><datalist id="bulk-storage-options">{locations.map((value)=><option key={value}>{value}</option>)}</datalist></label><label><span>Priority</span><select name="bulkPriority" defaultValue=""><option value="">No change</option><option>Low</option><option>Medium</option><option>High</option></select></label>{mode==="smartsheet"&&<label><span>Founder write key</span><input name="writeKey" type="password" required/></label>}<button className="button" disabled={bulkSaving}>{bulkSaving?"Updating…":"Apply changes"}</button></form>}

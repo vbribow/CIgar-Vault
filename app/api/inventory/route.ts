@@ -22,7 +22,7 @@ function errorResponse(error: unknown) {
 
 export async function GET() {
   try {
-    return NextResponse.json({ data: await loadInventory(), mode: dataMode() });
+    return NextResponse.json({ data: await loadInventory(), mode: dataMode() }, { headers:{"Cache-Control":"private, no-store, max-age=0"} });
   } catch (error) {
     return errorResponse(error);
   }

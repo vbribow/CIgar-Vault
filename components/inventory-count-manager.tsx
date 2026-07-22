@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import { findBoxFormat } from "@/lib/box-formats";
 import type { InventoryItem } from "@/lib/types";
@@ -29,6 +29,18 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
   const [writeKey, setWriteKey] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
   const [messages, setMessages] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState<Set<string>>(new Set());
+  const [lastSynced, setLastSynced] = useState<Date>();
+
+  useEffect(()=>{
+    let active=true;
+    async function refresh(){if(saving)return;try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)return;const result=await response.json();if(!active||!Array.isArray(result.data))return;setItems(result.data);setDrafts(current=>Object.fromEntries(result.data.map((item:InventoryItem)=>[item.inventoryId,dirty.has(item.inventoryId)?current[item.inventoryId]??draftFor(item):draftFor(item)])));setLastSynced(new Date())}catch{/* preserve the count workspace while offline */}}
+    const onFocus=()=>void refresh();
+    const onVisibility=()=>{if(document.visibilityState==="visible")void refresh()};
+    window.addEventListener("focus",onFocus);document.addEventListener("visibilitychange",onVisibility);void refresh();
+    const timer=window.setInterval(()=>{if(document.visibilityState==="visible")void refresh()},30_000);
+    return()=>{active=false;window.removeEventListener("focus",onFocus);document.removeEventListener("visibilitychange",onVisibility);window.clearInterval(timer)};
+  },[dirty,saving]);
 
   const counted = items.filter(isCounted).length;
   const knownTotal = items.reduce((sum, item) => sum + (item.currentQty ?? 0), 0);
@@ -39,6 +51,7 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
 
   function change(id: string, field: keyof CountDraft, value: string) {
     setDrafts((current) => ({ ...current, [id]: { ...current[id], [field]: value } }));
+    setDirty(current=>new Set(current).add(id));
     setMessages((current) => ({ ...current, [id]: "" }));
   }
 
@@ -77,6 +90,7 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
       const result = await response.json();
       if (!response.ok) throw new Error(result.issues?.[0]?.message || result.error || "Save failed");
       setItems((current) => current.map((candidate) => candidate.inventoryId === item.inventoryId ? result.data : candidate));
+      setDirty(current=>{const next=new Set(current);next.delete(item.inventoryId);return next});
       setMessages((current) => ({ ...current, [item.inventoryId]: `${result.data.currentQty} cigars saved ✓` }));
     } catch (error) {
       setMessages((current) => ({ ...current, [item.inventoryId]: error instanceof Error ? error.message : "Save failed" }));
@@ -85,7 +99,7 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
 
   return <>
     <section className="countMetrics"><article><span>Counted lots</span><strong>{counted} / {items.length}</strong><small>{Math.round(counted / Math.max(items.length, 1) * 100)}% reconciled</small></article><article><span>Known cigars</span><strong>{knownTotal.toLocaleString()}</strong><small>Across current quantities</small></article><article><span>Remaining</span><strong>{items.length - counted}</strong><small>Lots still needing a physical count</small></article></section>
-    <section className="countControls"><label><span>Search collection</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, cigar, or inventory ID" /></label><label><span>Show</span><select value={scope} onChange={(event) => setScope(event.target.value)}><option value="uncounted">Needs count</option><option value="counted">Counted</option><option value="all">All lots</option></select></label><label><span>Founder write key</span><input type="password" value={writeKey} onChange={(event) => setWriteKey(event.target.value)} autoComplete="current-password" placeholder="Required to save" /></label></section>
+    <section className="countControls"><label><span>Search collection</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, cigar, or inventory ID" /></label><label><span>Show</span><select value={scope} onChange={(event) => setScope(event.target.value)}><option value="uncounted">Needs count</option><option value="counted">Counted</option><option value="all">All lots</option></select></label><label><span>Founder write key</span><input type="password" value={writeKey} onChange={(event) => setWriteKey(event.target.value)} autoComplete="current-password" placeholder="Required to save" /></label>{lastSynced&&<small>Cross-device sync checked {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</section>
     <section className="countList">{visible.map((item) => {
       const draft = drafts[item.inventoryId];
       const format = findBoxFormat(item);
