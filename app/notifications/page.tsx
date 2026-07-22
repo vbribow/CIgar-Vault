@@ -1,12 +1,13 @@
 import { NotificationCenter } from "@/components/notification-center";
-import { buildCollectorNotifications } from "@/lib/collector-notifications";
-import { loadWishlist } from "@/lib/data";
+import { buildCollectorNotifications, buildRatingNotifications } from "@/lib/collector-notifications";
+import { loadRatingDrafts, loadWishlist } from "@/lib/data";
+import { loadInventory } from "@/lib/inventory";
 import "./notifications.css";
 import "./controls.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function NotificationsPage() {
-  const wishlist = await loadWishlist();
-  return <main className="shell notificationPage"><NotificationCenter notifications={buildCollectorNotifications(wishlist)} items={wishlist}/></main>;
+  const [wishlist,ratingDrafts,inventory] = await Promise.all([loadWishlist(),loadRatingDrafts(),loadInventory()]);
+  return <main className="shell notificationPage"><NotificationCenter notifications={[...buildRatingNotifications(ratingDrafts,inventory),...buildCollectorNotifications(wishlist)]} items={wishlist} ratingDrafts={ratingDrafts}/></main>;
 }

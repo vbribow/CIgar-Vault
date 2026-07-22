@@ -1,9 +1,13 @@
 import type { PriceMatch, WishlistItem } from "@/lib/types";
+import type { InventoryItem } from "@/lib/types";
+import type { RatingDraftRecord } from "@/lib/rating-monitor";
 
 export type CollectorNotification = {
   id: string;
-  wishlistId: string;
-  kind: "Price match" | "Availability" | "Purchase follow-up" | "Monitoring";
+  wishlistId?: string;
+  recordId: string;
+  recordKind: "wishlist"|"rating-drafts";
+  kind: "Price match" | "Availability" | "Purchase follow-up" | "Monitoring" | "Rating review";
   priority: "High" | "Medium" | "Standard";
   title: string;
   detail: string;
@@ -19,6 +23,7 @@ function matchNotification(item: WishlistItem, match: PriceMatch): CollectorNoti
   return {
     id: `MATCH-${item.wishlistId}-${match.url}`,
     wishlistId: item.wishlistId,
+    recordId:item.wishlistId,recordKind:"wishlist",
     kind: "Price match",
     priority: item.priority,
     title: `${item.brand} ${item.vitola} is at or below target`,
@@ -39,6 +44,7 @@ export function buildCollectorNotifications(items: WishlistItem[], now = new Dat
       notifications.push({
         id: `TARGET-${item.wishlistId}`,
         wishlistId: item.wishlistId,
+        recordId:item.wishlistId,recordKind:"wishlist",
         kind: "Monitoring",
         priority: "Standard",
         title: `Set a target for ${item.brand} ${item.vitola}`,
@@ -54,6 +60,7 @@ export function buildCollectorNotifications(items: WishlistItem[], now = new Dat
         notifications.push({
           id: `STALE-${item.wishlistId}`,
           wishlistId: item.wishlistId,
+          recordId:item.wishlistId,recordKind:"wishlist",
           kind: "Monitoring",
           priority: item.priority === "High" ? "High" : "Medium",
           title: `${item.brand} ${item.vitola} needs a market refresh`,
@@ -68,6 +75,7 @@ export function buildCollectorNotifications(items: WishlistItem[], now = new Dat
       notifications.push({
         id: `PURCHASE-${item.wishlistId}`,
         wishlistId: item.wishlistId,
+        recordId:item.wishlistId,recordKind:"wishlist",
         kind: "Purchase follow-up",
         priority: "High",
         title: `Add ${item.brand} ${item.vitola} to the vault`,
@@ -79,3 +87,5 @@ export function buildCollectorNotifications(items: WishlistItem[], now = new Dat
   }
   return notifications.sort((a, b) => priorityWeight[b.priority] - priorityWeight[a.priority] || b.occurredAt.localeCompare(a.occurredAt));
 }
+
+export function buildRatingNotifications(drafts:RatingDraftRecord[],inventory:InventoryItem[]):CollectorNotification[]{const items=new Map(inventory.map(item=>[item.inventoryId,item]));return drafts.filter(draft=>draft.ratings.length).map((draft):CollectorNotification=>{const item=items.get(draft.inventoryId);const high=Math.max(...draft.ratings.map(rating=>rating.score));return{id:`RATING-${draft.inventoryId}-${draft.researchedAt}`,recordId:draft.inventoryId,recordKind:"rating-drafts",kind:"Rating review",priority:high>=95?"High":"Medium",title:`${draft.ratings.length} published rating${draft.ratings.length===1?"":"s"} found for ${item?.brand||draft.inventoryId}`,detail:`Highest candidate score: ${high}. Review exact cigar and vintage matches before saving.`,occurredAt:draft.researchedAt,href:`/ratings`}}).sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt))}

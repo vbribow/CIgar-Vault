@@ -2,11 +2,12 @@
 import { useMemo, useState } from "react";
 import type { CollectorNotification } from "@/lib/collector-notifications";
 import type { WishlistItem } from "@/lib/types";
+import type { RatingDraftRecord } from "@/lib/rating-monitor";
 
 const money = new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:2 });
 
-export function NotificationCenter({ notifications, items }:{ notifications:CollectorNotification[]; items:WishlistItem[] }) {
-  const initialAcknowledged = useMemo(() => new Set(items.flatMap(item => item.acknowledgedNotificationIds || [])), [items]);
+export function NotificationCenter({ notifications, items, ratingDrafts }:{ notifications:CollectorNotification[]; items:WishlistItem[]; ratingDrafts:RatingDraftRecord[] }) {
+  const initialAcknowledged = useMemo(() => new Set([...items.flatMap(item => item.acknowledgedNotificationIds || []),...ratingDrafts.flatMap(item=>item.acknowledgedNotificationIds||[])]), [items,ratingDrafts]);
   const [acknowledged, setAcknowledged] = useState(initialAcknowledged);
   const [showArchived, setShowArchived] = useState(false);
   const [busy, setBusy] = useState("");
@@ -20,7 +21,7 @@ export function NotificationCenter({ notifications, items }:{ notifications:Coll
 
   async function update(item:CollectorNotification, value:boolean) {
     setBusy(item.id); setMessage("");
-    const response = await fetch("/api/notifications", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({wishlistId:item.wishlistId, notificationId:item.id, acknowledged:value}) });
+    const response = await fetch("/api/notifications", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({recordKind:item.recordKind,recordId:item.recordId, notificationId:item.id, acknowledged:value}) });
     const result = await response.json(); setBusy("");
     if (!response.ok) { setMessage(result.error || "Notification update failed"); return false; }
     setAcknowledged(current => { const next = new Set(current); if (value) next.add(item.id); else next.delete(item.id); return next; });
