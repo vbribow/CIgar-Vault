@@ -4,7 +4,11 @@ import { updateSupabaseSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   // Private Sites deployments already enforce owner authentication.
   if (process.env.SITES_DEPLOYMENT === "true") return NextResponse.next();
+  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname.startsWith("/auth/");
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return updateSupabaseSession(request);
+
+  // Keep account recovery reachable during a configuration or provider outage.
+  if (publicPath) return NextResponse.next();
 
   const password = process.env.APP_ACCESS_PASSWORD;
   if (!password) return process.env.NODE_ENV === "production" ? new NextResponse("Authentication is not configured", { status: 503 }) : NextResponse.next();

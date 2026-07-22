@@ -17,14 +17,26 @@ export async function updateSupabaseSession(request: NextRequest) {
       },
     },
   );
-  const { data } = await supabase.auth.getClaims();
   const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname.startsWith("/auth/");
-  if (!data?.claims && !publicPath) {
+  let claims;
+  try {
+    const { data, error } = await supabase.auth.getClaims();
+    if (error) throw error;
+    claims = data?.claims;
+  } catch {
+    if (publicPath) return response;
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("next", request.nextUrl.pathname);
+    url.searchParams.set("error", "Authentication is temporarily unavailable. Please try again.");
+    return NextResponse.redirect(url);
+  }
+  if (!claims && !publicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
-  if (data?.claims && request.nextUrl.pathname === "/login") return NextResponse.redirect(new URL("/", request.url));
+  if (claims && request.nextUrl.pathname === "/login") return NextResponse.redirect(new URL("/", request.url));
   return response;
 }
