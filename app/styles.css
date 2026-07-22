@@ -76,11 +76,12 @@ input[readonly] { opacity:.65; }
 .yearField{grid-column:span 2;padding:16px;border:1px solid var(--gold);border-radius:13px;background:linear-gradient(145deg,#302116,#17120f)}.yearField>span{color:var(--gold2);font-weight:850}.yearField input{font-size:24px;font-weight:850}
 .inventoryForm { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:22px; }
 .inventoryForm .wide { grid-column:span 2; }
+.focusedInventoryForm{grid-template-columns:repeat(3,1fr);max-width:860px}.focusedInventoryForm .quickTotalField{grid-column:1/-1}.focusedInventoryForm .yearField{grid-column:1/-1;max-width:430px}.focusedInventoryForm .formActions{grid-column:1/-1}.focusedInventoryForm .formActions .button{min-width:190px}
 .formActions { display:flex; align-items:center; gap:16px; }
 button.button { border:0; cursor:pointer; font:inherit; }
 button.button:disabled { opacity:.45; cursor:not-allowed; }
 output { color:#e5bf76; }
-@media (max-width:800px){ .toolbar{grid-template-columns:1fr}.inventoryForm{grid-template-columns:1fr 1fr}.inventoryForm .wide{grid-column:span 2} }
+@media (max-width:800px){ .toolbar{grid-template-columns:1fr}.inventoryForm,.focusedInventoryForm{grid-template-columns:1fr 1fr}.inventoryForm .wide{grid-column:span 2} }
 @media (max-width:520px){ .grid{grid-template-columns:1fr}.inventoryForm{grid-template-columns:1fr}.inventoryForm .wide{grid-column:span 1} }
 @media(max-width:700px){.inventoryDesktopTable{display:none}.inventoryMobileList{display:grid;gap:10px}.inventoryMobileList article{display:grid;grid-template-columns:1fr auto;gap:14px}.mobileLotActions{grid-column:1/-1}.editingEditor{margin-left:-8px;margin-right:-8px;padding:16px}.editingEditor .formActions .button{width:100%}}
 .navLinks{display:flex;gap:18px;align-items:center;font-size:13px}.recordsGrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}.recordForm{display:grid;gap:13px;margin-top:20px}.check{display:flex;grid-template-columns:auto 1fr;align-items:center}.check input{width:auto}.recordList{border-top:1px solid var(--line);margin-top:24px;padding-top:16px}.recordList>div{display:flex;justify-content:space-between;padding:9px 0;color:var(--muted)}.wideMessage{grid-column:1/-1}@media(max-width:800px){.recordsGrid{grid-template-columns:1fr}.navLinks>a{display:none}}
