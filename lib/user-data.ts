@@ -2,7 +2,7 @@ import type { DataMode } from "./config";
 import { dataMode } from "./config";
 import { createClient, supabaseConfigured } from "./supabase/server";
 
-export type VaultRecordKind = "inventory"|"collections"|"humidors"|"readings"|"sensors"|"valuations"|"smokes"|"activities"|"wishlist";
+export type VaultRecordKind = "inventory"|"collections"|"humidors"|"readings"|"sensors"|"valuations"|"smokes"|"activities"|"wishlist"|"integrity";
 
 async function accountContext() {
   if (!supabaseConfigured()) return undefined;
@@ -16,6 +16,14 @@ export async function accountDataMode(): Promise<DataMode> { return await accoun
 export async function loadOwnedRecords<T>(kind: VaultRecordKind, fallback: () => Promise<T[]>): Promise<T[]> {
   const context = await accountContext();
   if (!context) return fallback();
+  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("kind", kind).order("record_id");
+  if (error) throw error;
+  return (data ?? []).map(row => row.payload as T);
+}
+
+export async function loadAccountRecords<T>(kind: VaultRecordKind): Promise<T[] | undefined> {
+  const context = await accountContext();
+  if (!context) return undefined;
   const { data, error } = await context.supabase.from("vault_records").select("payload").eq("kind", kind).order("record_id");
   if (error) throw error;
   return (data ?? []).map(row => row.payload as T);

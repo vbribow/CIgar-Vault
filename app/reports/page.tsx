@@ -138,6 +138,11 @@ export default async function ReportsPage() {
       </section>
 
       <section className="reportSection">
+        <div className="sectionHead"><div><div className="eyebrow">Data protection</div><h2>Inventory integrity</h2></div><a className="textLink" href="/inventory-integrity">Compare Smartsheet and account →</a></div>
+        <p className="small">Detect missing records, quantity mismatches, duplicate IDs, and download a point-in-time inventory backup before making corrections.</p>
+      </section>
+
+      <section className="reportSection">
         <div className="sectionHead">
           <div>
             <div className="eyebrow">Storage evidence</div>
