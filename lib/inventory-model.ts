@@ -49,6 +49,16 @@ export const InventoryInputSchema = z.object({
   }
 });
 
+export function parseInventoryUpdate(value: unknown, existing?: InventoryItem): InventoryInput {
+  const first = InventoryInputSchema.safeParse(value);
+  if (first.success) return first.data;
+  const legacyVerified = existing?.habanosVerified === true && typeof value === "object" && value !== null && (value as Record<string, unknown>).habanosVerified === true;
+  const verificationOnly = first.error.issues.every(issue => issue.path[0] === "habanosVerified");
+  if (!legacyVerified || !verificationOnly) throw first.error;
+  const parsed = InventoryInputSchema.parse({ ...(value as Record<string, unknown>), habanosVerified: false });
+  return { ...parsed, habanosVerified: true };
+}
+
 export function normalizeInventory(item: InventoryInput): InventoryItem {
   const hasOwnershipBreakdown = item.fullBoxQty !== undefined || item.looseStickQty !== undefined;
   const countedQty = hasOwnershipBreakdown ? (item.fullBoxQty ?? 0) * (item.sticksPerBox ?? 0) + (item.looseStickQty ?? 0) : undefined;

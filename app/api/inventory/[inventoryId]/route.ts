@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import {
-  InventoryInputSchema,
   normalizeInventory,
+  parseInventoryUpdate,
 } from "@/lib/inventory-model";
+import { loadInventory } from "@/lib/inventory";
 import { deleteInventoryRow, updateInventoryRow } from "@/lib/smartsheet";
 import { deleteOwnedRecord, saveOwnedRecord } from "@/lib/user-data";
 
@@ -12,7 +13,7 @@ type Context = { params: Promise<{ inventoryId: string }> };
 function failure(error: unknown) {
   if (error instanceof ZodError)
     return NextResponse.json(
-      { error: "Invalid inventory data", issues: error.issues },
+      { error: `Invalid inventory data: ${error.issues.map(issue => `${issue.path.join(".") || "record"} — ${issue.message}`).join("; ")}`, issues: error.issues },
       { status: 422 },
     );
   const message = error instanceof Error ? error.message : "Unknown error";
@@ -34,9 +35,8 @@ function guard(request: Request) {
 export async function PUT(request: Request, context: Context) {
   try {
     const { inventoryId } = await context.params;
-    const item = normalizeInventory(
-      InventoryInputSchema.parse(await request.json()),
-    );
+    const existing = (await loadInventory()).find(candidate => candidate.inventoryId === inventoryId);
+    const item = normalizeInventory(parseInventoryUpdate(await request.json(), existing));
     if (item.inventoryId !== inventoryId)
       return NextResponse.json(
         { error: "Inventory ID cannot be changed" },
