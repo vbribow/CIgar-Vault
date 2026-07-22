@@ -53,7 +53,7 @@ export default async function ReportsPage() {
   ] as const;
 
   return (
-    <main className="shell wideShell insuranceReport"><ProductEvent eventType="insurance-report-viewed" /><UpgradeNudge plan={plan} context="reports" />
+    <main className="shell wideShell insuranceReport"><ProductEvent eventType="insurance-report-viewed" /><UpgradeNudge plan={plan} context="reports" signals={{lotCount:inventory.length,portfolioValue:report.totals.scheduledReplacementValue,humidorCount:humidors.length}} />
       <section className="reportHero">
         <div>
           <div className="eyebrow">Collection protection</div>

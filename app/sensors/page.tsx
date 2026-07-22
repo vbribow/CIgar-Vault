@@ -74,7 +74,7 @@ export default async function SensorsPage() {
           </a>
         </div>
       </section>
-      <UpgradeNudge plan={plan} context="sensors" usage={sensors.length}/>
+      <UpgradeNudge plan={plan} context="sensors" usage={sensors.length} signals={{humidorCount:humidors.length}}/>
       <section className="providerSection" aria-labelledby="provider-heading">
         <div className="providerHeading">
           <div>
