@@ -1,0 +1,2 @@
+import{createClient,supabaseConfigured}from"./supabase/server";import{normalizePlan,type PlanId}from"./entitlements";
+export async function loadAccountPlan():Promise<PlanId|undefined>{if(!supabaseConfigured())return undefined;const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();if(!user)return undefined;const{data}=await supabase.from("profiles").select("billing_plan").eq("user_id",user.id).maybeSingle();return normalizePlan(data?.billing_plan)}

@@ -3,6 +3,8 @@ import { SensorSyncPanel } from "@/components/sensor-sync-panel";
 import { accountDataMode } from "@/lib/user-data";
 import { loadHumidors, loadSensors } from "@/lib/data";
 import "./sensors.css";
+import { loadAccountPlan } from "@/lib/entitlements-server";
+import { UpgradeNudge } from "@/components/upgrade-nudge";
 export const dynamic = "force-dynamic";
 
 const providers = [
@@ -38,6 +40,7 @@ const providers = [
 
 export default async function SensorsPage() {
   const mode = await accountDataMode();
+  const plan = await loadAccountPlan();
   const [humidors, sensors] =
     mode === "mock"
       ? [[], []]
@@ -71,6 +74,7 @@ export default async function SensorsPage() {
           </a>
         </div>
       </section>
+      <UpgradeNudge plan={plan} context="sensors" usage={sensors.length}/>
       <section className="providerSection" aria-labelledby="provider-heading">
         <div className="providerHeading">
           <div>

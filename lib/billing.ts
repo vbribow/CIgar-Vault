@@ -6,5 +6,5 @@ export const founderPlan = {
 } as const;
 
 export function billingConfigured(environment: Record<string, string | undefined> = process.env) { return Boolean(environment.STRIPE_SECRET_KEY?.trim() && environment.STRIPE_FOUNDER_PRICE_ID?.trim()); }
-export function billingLabel(plan?: string | null, status?: string | null) { if (plan === "founder" && ["active", "trialing"].includes(status || "")) return "Founder active"; if (plan === "founder" && status === "past_due") return "Founder · payment attention"; if (plan === "founder" && status === "canceled") return "Founder · canceled"; return "Free preview"; }
+export function billingLabel(plan?: string | null, status?: string | null) { const name=plan==="collector"?"Collector":plan==="pro"?"Pro":plan==="concierge"?"Concierge":plan==="founder"?"Founder":undefined;if(name&&["active","trialing"].includes(status||""))return `${name} active`;if(name&&status==="past_due")return `${name} · payment attention`;if(name&&status==="canceled")return `${name} · canceled`;return "Free preview"; }
 export function stripeHeaders(secret = process.env.STRIPE_SECRET_KEY) { if (!secret) throw new Error("Stripe billing is not configured"); return { Authorization: `Bearer ${secret}`, "Content-Type": "application/x-www-form-urlencoded" }; }

@@ -5,6 +5,8 @@ import { loadInventory } from "@/lib/inventory";
 import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./reports.css";
 import { ProductEvent } from "@/components/product-event";
+import { loadAccountPlan } from "@/lib/entitlements-server";
+import { UpgradeNudge } from "@/components/upgrade-nudge";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -20,6 +22,7 @@ const unitMoney = new Intl.NumberFormat("en-US", {
 
 export default async function ReportsPage() {
   const mode = await accountDataMode();
+  const plan = await loadAccountPlan();
   const live = mode !== "mock";
   const [inventory, humidors, readings, sensors] = await Promise.all([
     loadInventory(),
@@ -50,7 +53,7 @@ export default async function ReportsPage() {
   ] as const;
 
   return (
-    <main className="shell wideShell insuranceReport"><ProductEvent eventType="insurance-report-viewed" />
+    <main className="shell wideShell insuranceReport"><ProductEvent eventType="insurance-report-viewed" /><UpgradeNudge plan={plan} context="reports" />
       <section className="reportHero">
         <div>
           <div className="eyebrow">Collection protection</div>

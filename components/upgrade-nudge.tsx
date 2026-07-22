@@ -1,0 +1,2 @@
+import{upgradeSuggestion,type PlanId,type UpgradeContext}from"@/lib/entitlements";
+export function UpgradeNudge({plan,context,usage=0}:{plan?:PlanId;context:UpgradeContext;usage?:number}){if(!plan)return null;const suggestion=upgradeSuggestion(plan,context,usage);if(!suggestion)return null;return <aside className="upgradeNudge"><div><span>Recommended for your vault</span><strong>{suggestion.title}</strong><small>{suggestion.detail}</small></div><a className="button secondary" href={`/pricing?recommended=${suggestion.target}`}>{suggestion.action}</a></aside>}
