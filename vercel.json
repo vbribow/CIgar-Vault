@@ -11,6 +11,10 @@
     {
       "path": "/api/wishlist-monitor",
       "schedule": "30 13 * * *"
+    },
+    {
+      "path": "/api/valuation-monitor",
+      "schedule": "0 14 * * 0"
     }
   ]
 }
