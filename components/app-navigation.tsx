@@ -31,6 +31,7 @@ const groups = [
     label: "Value & reports",
     links: [
       ["/valuations", "Valuations", "Research unit and market values"],
+      ["/ratings", "Professional ratings", "Research published review scores"],
       ["/value-history", "Portfolio history", "Track collection value over time"],
       ["/reports", "Insurance report", "Create an evidence-backed property schedule"],
       ["/records", "Smoking journal", "Record tastings and valuation evidence"],

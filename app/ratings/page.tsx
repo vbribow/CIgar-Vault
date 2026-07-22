@@ -1,0 +1,7 @@
+import { loadInventory } from "@/lib/inventory";
+import { loadRatings } from "@/lib/data";
+import { accountDataMode } from "@/lib/user-data";
+import { RatingResearchPanel } from "@/components/rating-research-panel";
+import "./ratings.css";
+export const dynamic="force-dynamic";
+export default async function RatingsPage(){const mode=await accountDataMode();const[inventory,ratings]=await Promise.all([loadInventory(),mode==="mock"?Promise.resolve([]):loadRatings()]);const rated=new Set(ratings.map(rating=>rating.inventoryId));const queue=[...inventory].sort((a,b)=>Number(rated.has(a.inventoryId))-Number(rated.has(b.inventoryId))||(b.currentQty??0)-(a.currentQty??0));return <main className="shell wideShell ratingsPage"><section className="ratingsHero"><div><div className="eyebrow">Professional reviews</div><h1>Published scores, with proof.</h1><p className="lede">Search exact cigar identities across established publications, review every match, and preserve the score beside the inventory lot without replacing your personal Vault score.</p></div><div className="ratingsMetric"><strong>{rated.size}</strong><span>inventory lots rated</span><small>{ratings.length} sourced reviews saved</small></div></section><section className="ratingRules"><span>Exact brand + line + vitola</span><span>Vintage-aware matching</span><span>Direct source links</span><span>Manual approval before save</span></section><RatingResearchPanel items={queue.slice(0,40)} initialRatings={ratings}/></main>}

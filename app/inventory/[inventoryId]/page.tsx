@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadActivities, loadSmokingLogs, loadValuations } from "@/lib/data";
+import { loadActivities, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
+import { ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
 import { PhotoManager } from "@/components/photo-manager";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
@@ -14,13 +15,15 @@ export default async function CigarPage({
   const item = items.find((i) => i.inventoryId === inventoryId);
   if (!item) notFound();
   const mode = await accountDataMode();
-  const [smokes, valuations, activities] =
+  const [smokes, valuations, activities, ratings] =
     mode === "mock"
-      ? [[], [], []]
-      : await Promise.all([loadSmokingLogs(), loadValuations(), loadActivities()]);
+      ? [[], [], [], []]
+      : await Promise.all([loadSmokingLogs(), loadValuations(), loadActivities(), loadRatings()]);
   const history = smokes.filter((s) => s.inventoryId === inventoryId);
   const values = valuations.filter((v) => v.inventoryId === inventoryId);
   const events = activities.filter((a) => a.inventoryId === inventoryId);
+  const publishedRatings = ratingsForInventory(ratings, inventoryId);
+  const published = ratingSummary(ratings, inventoryId);
   return (
     <main className="shell">
       <nav className="nav">
@@ -44,11 +47,12 @@ export default async function CigarPage({
           </span>
         </div>
         <div className="scoreCard">
-          <small>Vault score</small>
+          <small>Personal Vault score</small>
           <strong>{item.score ?? "—"}</strong>
           <span>{item.priority || "Unrated priority"}</span>
         </div>
       </section>
+      <section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>
       <section className="detailStats">
         <div>
           <span>Remaining</span>
