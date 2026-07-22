@@ -5,6 +5,7 @@ import { buildValuationIntelligence } from "@/lib/valuation-intelligence";
 import "./valuations.css";
 import "./research.css";
 import { ValuationResearchPanel } from "@/components/valuation-research-panel";
+import { MarketSignal, SignalLegend, confidenceTone, freshnessTone } from "@/components/market-signal";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -89,6 +90,7 @@ export default async function ValuationsPage() {
           <small>Latest records with source links</small>
         </article>
       </section>
+      <SignalLegend />
       <ValuationResearchPanel items={intelligence.reviewQueue.map((row)=>row.item)} mode={mode}/>
 
       <section className="section valuationQueue">
@@ -106,11 +108,7 @@ export default async function ValuationsPage() {
             {intelligence.reviewQueue.slice(0, 12).map((row) => (
               <article key={row.item.inventoryId}>
                 <div>
-                  <span
-                    className={`freshness freshness-${row.freshness.toLowerCase().replaceAll(" ", "-")}`}
-                  >
-                    {row.freshness}
-                  </span>
+                  <MarketSignal label={row.freshness} tone={freshnessTone(row.freshness)} />
                   <a href={`/inventory/${row.item.inventoryId}`}>
                     <strong>
                       {row.item.brand} {row.item.line}
@@ -237,11 +235,7 @@ export default async function ValuationsPage() {
                       )}
                     </td>
                     <td>
-                      <span
-                        className={`freshness freshness-${row.freshness.toLowerCase().replaceAll(" ", "-")}`}
-                      >
-                        {row.freshness}
-                      </span>
+                      <MarketSignal label={row.freshness} tone={freshnessTone(row.freshness)} />
                     </td>
                     <td>
                       {row.latest?.sourceUrl ? (
@@ -260,6 +254,7 @@ export default async function ValuationsPage() {
                         {row.records.length} historical record
                         {row.records.length === 1 ? "" : "s"}
                       </small>
+                      <MarketSignal label={`${row.latest?.confidence || "Unrated"} confidence`} tone={confidenceTone(row.latest?.confidence)} detail="Confidence reflects the quality and specificity of the recorded source evidence." />
                     </td>
                   </tr>
                 ))}
