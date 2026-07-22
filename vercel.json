@@ -19,6 +19,10 @@
     {
       "path": "/api/rating-monitor",
       "schedule": "30 14 * * 0"
+    },
+    {
+      "path": "/api/sommelier-knowledge/research",
+      "schedule": "0 15 * * 2"
     }
   ]
 }

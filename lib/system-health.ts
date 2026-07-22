@@ -1,4 +1,4 @@
-export type SystemJobId="sensor-sync"|"catalog-discovery"|"wishlist-monitor"|"valuation-monitor"|"rating-monitor";
+export type SystemJobId="sensor-sync"|"catalog-discovery"|"wishlist-monitor"|"valuation-monitor"|"rating-monitor"|"sommelier-research";
 export type SystemRun={runId:string;jobId:SystemJobId;status:"Succeeded"|"Failed";startedAt:string;completedAt:string;summary:string;error?:string};
 type AutomationOutcome={status?:string;inventoryId?:string;error?:string};
 type AutomationData={checked?:number;batchSize?:number;remainingEligible?:number;researched?:number;cached?:number;estimatedSpendThisMonth?:number;monthlyBudget?:number;pauseAt?:number;budgetPaused?:boolean;outcomes?:AutomationOutcome[]};
@@ -9,6 +9,7 @@ export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:s
   {id:"wishlist-monitor",name:"Wishlist monitoring",path:"/api/wishlist-monitor",schedule:"30 13 * * *",nextDescription:"Daily at 13:30 UTC"},
   {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"0 14 * * *",nextDescription:"Daily at 14:00 UTC · up to 3 due lots"},
   {id:"rating-monitor",name:"Professional rating coverage",path:"/api/rating-monitor",schedule:"30 14 * * 0",nextDescription:"Sunday at 14:30 UTC"},
+  {id:"sommelier-research",name:"Master Somm research",path:"/api/sommelier-knowledge/research",schedule:"0 15 * * 2",nextDescription:"Tuesday at 15:00 UTC · founder review required"},
 ];
 export function configurationChecks(environment:Record<string,string|undefined>):HealthCheck[]{const has=(...names:string[])=>names.every(name=>Boolean(environment[name]?.trim()));return[
   {id:"supabase",name:"Private account database",description:"Authentication and private vault records",status:has("NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY","SUPABASE_SERVICE_ROLE_KEY")?"Ready":"Attention",detail:has("NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY","SUPABASE_SERVICE_ROLE_KEY")?"Public and scheduled-service credentials configured":"One or more Supabase credentials are missing"},

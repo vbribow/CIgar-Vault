@@ -1,0 +1,4 @@
+import assert from"node:assert/strict";import test from"node:test";import{relevantKnowledge,SommelierKnowledgeSchema}from"../lib/sommelier-knowledge";
+const record=SommelierKnowledgeSchema.parse({knowledgeId:"SOMM-1",category:"spirit",subject:"Cognac",factType:"maturation",statement:"Cognac is matured in oak.",pairingImplications:"Oak and fruit can bridge mature cigar flavors.",sourceTitle:"Official reference",sourceUrl:"https://example.com/cognac",publisher:"Example",evidenceDate:"2026-07-22",confidence:"High",status:"approved",researchedAt:new Date().toISOString()});
+test("approved sommelier knowledge is ranked by question relevance",()=>{assert.equal(relevantKnowledge("Which Cognac fits an oak-forward cigar?",[record])[0]?.knowledgeId,"SOMM-1")});
+test("unrelated sommelier knowledge is not injected",()=>{assert.equal(relevantKnowledge("green tea",[record]).length,0)});
