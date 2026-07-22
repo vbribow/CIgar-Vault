@@ -1,13 +1,13 @@
 export type SystemJobId="sensor-sync"|"catalog-discovery"|"wishlist-monitor"|"valuation-monitor"|"rating-monitor";
 export type SystemRun={runId:string;jobId:SystemJobId;status:"Succeeded"|"Failed";startedAt:string;completedAt:string;summary:string;error?:string};
 type AutomationOutcome={status?:string;inventoryId?:string;error?:string};
-type AutomationData={checked?:number;batchSize?:number;remainingEligible?:number;outcomes?:AutomationOutcome[]};
+type AutomationData={checked?:number;batchSize?:number;remainingEligible?:number;researched?:number;cached?:number;estimatedSpendThisMonth?:number;monthlyBudget?:number;pauseAt?:number;budgetPaused?:boolean;outcomes?:AutomationOutcome[]};
 export type HealthCheck={id:string;name:string;description:string;status:"Ready"|"Attention"|"Unavailable";detail:string;href?:string};
 export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:string;nextDescription:string}>=[
   {id:"sensor-sync",name:"Sensor synchronization",path:"/api/sensor-sync",schedule:"0 * * * *",nextDescription:"Hourly at minute 0"},
   {id:"catalog-discovery",name:"Catalog discovery",path:"/api/catalog-discovery/run",schedule:"0 12 * * 1",nextDescription:"Monday at 12:00 UTC"},
   {id:"wishlist-monitor",name:"Wishlist monitoring",path:"/api/wishlist-monitor",schedule:"30 13 * * *",nextDescription:"Daily at 13:30 UTC"},
-  {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"0 14 * * *",nextDescription:"Daily at 14:00 UTC · up to 12 lots"},
+  {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"0 14 * * *",nextDescription:"Daily at 14:00 UTC · up to 3 due lots"},
   {id:"rating-monitor",name:"Professional rating coverage",path:"/api/rating-monitor",schedule:"30 14 * * 0",nextDescription:"Sunday at 14:30 UTC"},
 ];
 export function configurationChecks(environment:Record<string,string|undefined>):HealthCheck[]{const has=(...names:string[])=>names.every(name=>Boolean(environment[name]?.trim()));return[
@@ -27,8 +27,10 @@ export function automationRunSummary(data:unknown){
   if(!Array.isArray(value.outcomes))return JSON.stringify(value).slice(0,500)||"Automation completed.";
   const counts=value.outcomes.reduce<Record<string,number>>((result,outcome)=>{const status=outcome.status||"unknown";result[status]=(result[status]||0)+1;return result},{});
   const parts=[`Checked ${value.checked??value.outcomes.length}`];
-  for(const status of ["updated","unsupported","failed","skipped"])if(counts[status])parts.push(`${counts[status]} ${status}`);
+  for(const status of ["updated","cached","unsupported","failed","skipped"])if(counts[status])parts.push(`${counts[status]} ${status}`);
   if(typeof value.remainingEligible==="number")parts.push(`${value.remainingEligible} remaining`);
+  if(typeof value.estimatedSpendThisMonth==="number"&&typeof value.monthlyBudget==="number")parts.push(`Est. $${value.estimatedSpendThisMonth.toFixed(2)} / $${value.monthlyBudget.toFixed(2)} monthly`);
+  if(value.budgetPaused)parts.push("paused at budget guardrail");
   const failures=value.outcomes.filter(outcome=>outcome.status==="failed"&&outcome.error).slice(0,3).map(outcome=>`${outcome.inventoryId||"lot"}: ${outcome.error}`);
   return `${parts.join(" · ")}${failures.length?`. Errors: ${failures.join(" | ")}`:""}`.slice(0,700);
 }
