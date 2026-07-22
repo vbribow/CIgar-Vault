@@ -64,7 +64,7 @@ function matches(pathname: string, href: string) {
 
 export function AppNavigation() {
   const pathname = usePathname();
-  return <header className="appHeader"><div className="appHeaderInner">
+  return <><header className="appHeader"><div className="appHeaderInner">
     <a className="appBrand" href="/" aria-label="Cigar Vault dashboard"><span className="appBrandMark">CV</span><span><strong>Cigar Vault</strong><small>Collection intelligence</small></span></a>
     <nav className="appNav" aria-label="Primary navigation">
       <a href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Dashboard</a>
@@ -76,5 +76,5 @@ export function AppNavigation() {
       <a href="/pricing" className={matches(pathname, "/pricing") ? "active" : undefined}>Plans</a>
       <a href="/account" className={matches(pathname, "/account") ? "active" : undefined}>Account</a>
     </nav>
-  </div></header>;
+  </div></header><nav className="mobileNav" aria-label="Mobile navigation"><a href="/" className={pathname==="/"?"active":undefined}><span>⌂</span><small>Home</small></a><a href="/inventory" className={matches(pathname,"/inventory")?"active":undefined}><span>▦</span><small>Vault</small></a><a href="/inventory#mobile-intake" className="mobileAdd"><span>＋</span><small>Add</small></a><a href="/intelligence" className={matches(pathname,"/intelligence")?"active":undefined}><span>◇</span><small>Insights</small></a><a href="/community" className={matches(pathname,"/community")?"active":undefined}><span>◎</span><small>Community</small></a></nav></>;
 }

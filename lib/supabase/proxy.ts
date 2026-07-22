@@ -17,7 +17,7 @@ export async function updateSupabaseSession(request: NextRequest) {
       },
     },
   );
-  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname.startsWith("/auth/");
+  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname.startsWith("/auth/");
   let claims;
   try {
     const { data, error } = await supabase.auth.getClaims();
