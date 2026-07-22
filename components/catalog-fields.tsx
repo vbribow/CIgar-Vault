@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { canonicalBrand, cigarBrands } from "@/lib/brand-directory";
 import type { CatalogCigar, InventoryItem } from "@/lib/types";
+import { VitolaField } from "@/components/vitola-field";
 
 export function CatalogFields({ item, catalog }: { item: InventoryItem; catalog: CatalogCigar[] }) {
   const [brand, setBrand] = useState(canonicalBrand(item.brand));
@@ -17,7 +18,7 @@ export function CatalogFields({ item, catalog }: { item: InventoryItem; catalog:
   return <>
     <label><span>Brand *</span><input name="brand" required list="cigar-brand-options" value={brand} onChange={(event) => { setBrand(event.target.value); setLine(""); setVitola(""); }} placeholder="Search or enter a brand" /><datalist id="cigar-brand-options">{brands.map((value) => <option key={value} value={value} />)}</datalist><small>{brands.length} canonical brands; custom entries allowed.</small></label>
     <label><span>Line / Series</span><input name="line" list="cigar-line-options" value={line} onChange={(event) => { setLine(event.target.value); setVitola(""); }} placeholder={brand ? "Choose or enter a line" : "Select a brand first"} /><datalist id="cigar-line-options">{lines.map((value) => <option key={value} value={value} />)}</datalist><small>{brand && lines.length ? `${lines.length} catalog line${lines.length === 1 ? "" : "s"}` : "Custom entries allowed."}</small></label>
-    <label><span>Vitola *</span><input name="vitola" required list="cigar-vitola-options" value={vitola} onChange={(event) => setVitola(event.target.value)} placeholder={line ? "Choose or enter a vitola" : "Select a line first"} /><datalist id="cigar-vitola-options">{vitolas.map((value) => <option key={value} value={value} />)}</datalist><small>{match ? `Catalog match: ${match.catalogId}` : vitolas.length ? `${vitolas.length} matching catalog option${vitolas.length === 1 ? "" : "s"}` : "Custom entries allowed."}</small></label>
+    <VitolaField value={vitola} onChange={setVitola} catalogVitolas={catalog.map((entry) => entry.vitola)} help={match ? `Catalog match: ${match.catalogId}` : vitolas.length ? `${vitolas.length} exact option${vitolas.length === 1 ? "" : "s"} for this brand and line; standard vitolas are also available.` : "Choose a standard vitola or use Other / custom."} />
     {match && <input name="catalogId" type="hidden" value={match.catalogId} />}
   </>;
 }
