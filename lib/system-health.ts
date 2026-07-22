@@ -32,6 +32,11 @@ export function automationRunSummary(data:unknown){
   const failures=value.outcomes.filter(outcome=>outcome.status==="failed"&&outcome.error).slice(0,3).map(outcome=>`${outcome.inventoryId||"lot"}: ${outcome.error}`);
   return `${parts.join(" · ")}${failures.length?`. Errors: ${failures.join(" | ")}`:""}`.slice(0,700);
 }
+export function automationRunSucceeded(data:unknown){
+  if(!data||typeof data!=="object")return true;
+  const outcomes=(data as AutomationData).outcomes;
+  return !Array.isArray(outcomes)||outcomes.every(outcome=>outcome.status!=="failed");
+}
 export function readableError(error:unknown){
   if(error instanceof Error)return error.message;
   if(error&&typeof error==="object"){
