@@ -5,6 +5,7 @@ import { loadCatalog } from "@/lib/catalog";
 import { loadRatings } from "@/lib/data";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
+import { WorkspaceGuide } from "@/components/workspace-guide";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const ratings = mode === "mock" ? [] : await loadRatings();
   const plan = await loadAccountPlan();
   return <main className="shell">
-    <nav className="nav"><a className="brand" href="/">Cigar Vault</a><div className="navLinks"><a href="/catalog">Catalog</a><a href="/valuations">Valuation</a><a href="/box-formats">Box formats</a><a href="/verification">Verification</a><a href="/collection-health">Collection health</a><a href="/storage">Storage</a><a href="/records">Journal</a><div className="badge">{items.length} lots · {mode}</div></div></nav>
-    <section className="section inventoryHeader"><div><h1>Inventory</h1><p className="lede">Search, review data quality, and manage every owned lot.</p></div><a className="button" href="/inventory-count">Count collection</a></section>
+    <section className="section inventoryHeader"><div><div className="eyebrow">Master collection record</div><h1>Inventory</h1><p className="lede">Add, correct, value, verify, and locate every box and individual cigar from one owner-controlled record.</p></div><a className="button" href="/inventory-count">Count collection</a></section>
+    <WorkspaceGuide items={[{label:"Capture",title:"Add by camera or form",detail:"Identify a cigar, review the fields, then approve it into inventory.",href:"#mobile-intake"},{label:"Maintain",title:"Correct quantities and years",detail:"Use focused mobile edits without disturbing the rest of the record."},{label:"Protect",title:"Complete value and provenance",detail:"Close evidence gaps for reporting, verification, and climate exposure.",href:"/collection-health"}]}/>
     <UpgradeNudge plan={plan} context="inventory" usage={items.length} signals={{lotCount:items.length,portfolioValue:items.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}}/>
     <InventoryManager initialItems={items} catalog={catalog} ratings={ratings} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} />
   </main>;

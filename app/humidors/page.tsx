@@ -5,6 +5,7 @@ import { loadInventory } from "@/lib/inventory";
 import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./humidors.css";
 import "./quick-links.css";
+import { WorkspaceGuide } from "@/components/workspace-guide";
 export const dynamic = "force-dynamic";
 export default async function HumidorsPage() {
   const mode = await accountDataMode();
@@ -33,6 +34,7 @@ export default async function HumidorsPage() {
           </span>
         </div>
       </section>
+      <WorkspaceGuide items={[{label:"Set",title:"Choose climate targets",detail:"Temperature and humidity ranges remain under collector control."},{label:"Connect",title:"Add readings or sensors",detail:"Use manual records, Tempi history, or configured cloud connections.",href:"/sensors"},{label:"Protect",title:"Act on value at risk",detail:"Alerts connect environmental exceptions to the inventory stored inside."}]}/>
       <ClimateAlertDashboard
         humidors={humidors}
         readings={readings}

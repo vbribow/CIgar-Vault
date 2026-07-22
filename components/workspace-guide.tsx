@@ -1,0 +1,2 @@
+export type WorkspaceGuideItem = { label: string; title: string; detail: string; href?: string };
+export function WorkspaceGuide({ items }: { items: WorkspaceGuideItem[] }) {return <section className="workspaceGuide" aria-label="How this workspace works">{items.map((item,index)=>{const content=<><span>{String(index+1).padStart(2,"0")} · {item.label}</span><strong>{item.title}</strong><small>{item.detail}</small></>;return item.href?<a href={item.href} key={item.title}>{content}<b>→</b></a>:<article key={item.title}>{content}</article>})}</section>}

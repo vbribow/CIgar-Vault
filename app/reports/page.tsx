@@ -7,6 +7,7 @@ import "./reports.css";
 import { ProductEvent } from "@/components/product-event";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
+import { WorkspaceGuide } from "@/components/workspace-guide";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -78,6 +79,7 @@ export default async function ReportsPage() {
           </div>
         </div>
       </section>
+      <WorkspaceGuide items={[{label:"Review",title:"Resolve report exceptions",detail:"Quantity, value, photos, provenance, storage, and Cuban evidence drive readiness."},{label:"Generate",title:"Create the current schedule",detail:"Known per-cigar replacement values are multiplied by quantities owned."},{label:"Export",title:"Download an owner-controlled copy",detail:"Use the schedule for documentation and discuss coverage with your insurer."}]}/>
 
       <section className="reportMetrics">
         <article>

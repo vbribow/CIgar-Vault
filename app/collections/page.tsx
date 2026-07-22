@@ -4,6 +4,7 @@ import { loadInventory } from "@/lib/inventory";
 import { loadCollections, loadValuations } from "@/lib/data";
 import "../collection-catalog/catalog.css";
 import "./dashboard.css";
+import { WorkspaceGuide } from "@/components/workspace-guide";
 export const dynamic = "force-dynamic";
 export default async function CollectionsPage() {
   const mode = await accountDataMode();
@@ -14,17 +15,6 @@ export default async function CollectionsPage() {
   ]);
   return (
     <main className="shell">
-      <nav className="nav">
-        <a className="brand" href="/">
-          Cigar Vault
-        </a>
-        <div className="navLinks">
-          <a href="/inventory">Inventory</a>
-          <a href="/activity">Activity</a>
-          <a href="/valuations">Valuation</a>
-          <span className="badge">Collections</span>
-        </div>
-      </nav>
       <section className="valueHero">
         <div>
           <div className="eyebrow">Curated sets</div>
@@ -42,6 +32,7 @@ export default async function CollectionsPage() {
           </small>
         </div>
       </section>
+      <WorkspaceGuide items={[{label:"Define",title:"Choose or research a set",detail:"Start from a known template or enter any named release."},{label:"Match",title:"Connect owned components",detail:"Cigar Vault compares expected contents with inventory."},{label:"Value",title:"Track parts and the whole",detail:"Preserve component value and complete-presentation premium."}]}/>
       <CollectionsManager
         initialCollections={collections}
         inventory={inventory}
