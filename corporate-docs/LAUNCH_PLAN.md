@@ -1,4 +1,10 @@
-# 30-Day Founder Launch Plan
+# Document 015 — 30-Day Founder Launch Plan
+
+**Version:** 0.1  
+**Status:** Working Draft  
+**Owner:** Brian Bowers  
+**Created:** July 23, 2026  
+**Last Updated:** July 23, 2026
 
 ## Week 1 — Working product
 - Connect Brian's live Smartsheet sheets.
