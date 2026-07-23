@@ -1,0 +1,3 @@
+import assert from "node:assert/strict";import test from "node:test";import{accountPreferencesFromRow,defaultAccountPreferences}from"../lib/account-preferences";
+test("account preferences remain enabled for existing collectors",()=>{assert.deepEqual(accountPreferencesFromRow(null),defaultAccountPreferences)});
+test("account preferences translate database fields",()=>{const value=accountPreferencesFromRow({email_notifications:false,valuation_research:false,product_analytics:false});assert.equal(value.emailNotifications,false);assert.equal(value.valuationResearch,false);assert.equal(value.productAnalytics,false);assert.equal(value.wishlistAlerts,true)});

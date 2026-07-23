@@ -1,0 +1,8 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { ratingMonitorPriority,ratingNeedsMonitoring,removeExistingRatingSources } from "../lib/rating-monitor";
+const item={inventoryId:"I1",brand:"Cohiba",line:"Siglo",vitola:"IV",currentQty:20,retailValue:50,priority:"High"};
+const rating={ratingId:"R1",inventoryId:"I1",publication:"Journal",score:94,sourceUrl:"https://example.com/one",matchConfidence:"High" as const,createdAt:"2025-01-01T00:00:00.000Z"};
+test("unrated lots are due while pending drafts pause monitoring",()=>{assert.equal(ratingNeedsMonitoring(item,[],undefined,new Date("2026-07-21")),true);assert.equal(ratingNeedsMonitoring(item,[],{inventoryId:"I1",researchedAt:"2026-07-20T00:00:00.000Z",ratings:[{publication:"Journal",score:95,reviewDate:"",reviewer:"",sourceUrl:"https://example.com/new",matchConfidence:"High",matchedVintage:null,summary:""}],notes:""},new Date("2026-07-21")),false)});
+test("monitor prioritizes unrated valuable high-priority lots",()=>assert.equal(ratingMonitorPriority(item,[]),102200));
+test("existing and duplicate source URLs are removed",()=>{const candidates=[{publication:"A",score:94,reviewDate:"",reviewer:"",sourceUrl:"https://example.com/one",matchConfidence:"High" as const,matchedVintage:null,summary:""},{publication:"B",score:95,reviewDate:"",reviewer:"",sourceUrl:"https://example.com/two",matchConfidence:"High" as const,matchedVintage:null,summary:""},{publication:"B",score:95,reviewDate:"",reviewer:"",sourceUrl:"https://example.com/two",matchConfidence:"High" as const,matchedVintage:null,summary:""}];assert.deepEqual(removeExistingRatingSources(candidates,[rating],"I1").map(value=>value.sourceUrl),["https://example.com/two"])});

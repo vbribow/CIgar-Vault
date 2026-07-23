@@ -1,0 +1,18 @@
+import { cigarBrands, habanosBrandSource } from "@/lib/brand-directory";
+import { loadCatalog } from "@/lib/catalog";
+import { loadInventory } from "@/lib/inventory";
+
+export const dynamic = "force-dynamic";
+
+export default async function CatalogPage() {
+  const inventory = await loadInventory();
+  const catalog = await loadCatalog(inventory);
+  const regions = ["Cuba", "Dominican Republic", "Nicaragua", "Honduras", "United States", "Other"] as const;
+  return <main className="shell">
+    <nav className="nav"><a className="brand" href="/">Cedriva</a><div className="navLinks"><a href="/inventory">Inventory</a><a href="/catalog-discovery">AI discoveries</a><a href="/inventory-count">Count collection</a><a href="/box-formats">Box formats</a></div></nav>
+    <section className="verifyHero"><div><div className="eyebrow">Master catalog</div><h1>One name for every cigar.</h1><p className="lede">Canonical brands prevent duplicate spellings. The directory includes Habanos, established producers, and independent boutique brands, while live Smartsheet records provide line and vitola choices.</p></div><div className="verifyScore"><strong>{cigarBrands.length}</strong><span>canonical brands</span><small>{cigarBrands.filter((brand)=>brand.segment==="Boutique").length} boutique producers included</small></div></section>
+    <section className="valueMetrics"><article><span>Habanos</span><strong>{cigarBrands.filter((brand)=>brand.segment==="Habanos").length}</strong><small>Complete official Cuban portfolio</small></article><article><span>Boutique</span><strong>{cigarBrands.filter((brand)=>brand.segment==="Boutique").length}</strong><small>Independent and small-production brands</small></article><article><span>Established</span><strong>{cigarBrands.filter((brand)=>brand.segment==="Established").length}</strong><small>Major premium producers</small></article><article><span>Detailed cigars</span><strong>{catalog.length}</strong><small>Live Smartsheet catalog records</small></article></section>
+    <section className="section"><div className="sectionHead"><div><div className="eyebrow">Brand directory</div><h2>Premium brands by primary region</h2></div><a className="button" href="/inventory">Add inventory</a></div><div className="brandGroups">{regions.map((region)=><article key={region}><div><h3>{region}</h3><strong>{cigarBrands.filter((brand)=>brand.region===region).length}</strong></div><p>{cigarBrands.filter((brand)=>brand.region===region).map((brand)=><span className={brand.segment === "Boutique" ? "boutiqueBrand" : ""} key={brand.name}>{brand.name}{brand.segment === "Boutique" ? " ◦" : ""} </span>)}</p>{region === "Cuba" && <a className="textLink" href={habanosBrandSource} target="_blank" rel="noreferrer">Official Habanos directory ↗</a>}</article>)}</div><p className="small boutiqueLegend">◦ Boutique or independent small-production brand</p></section>
+    <section className="section"><div className="sectionHead"><div><div className="eyebrow">Smartsheet catalog</div><h2>Detailed cigar records</h2></div></div><div className="tableWrap"><table className="table"><thead><tr><th>Catalog ID</th><th>Brand</th><th>Line</th><th>Vitola</th><th>Country</th><th>Research</th></tr></thead><tbody>{catalog.sort((a,b)=>a.brand.localeCompare(b.brand)).map((item)=><tr key={item.catalogId}><td className="small">{item.catalogId}</td><td><strong>{item.brand}</strong></td><td>{item.line||"—"}</td><td>{item.vitola||"—"}</td><td>{item.country||"—"}</td><td>{item.sourceUrl?<a className="textLink" href={item.sourceUrl} target="_blank" rel="noreferrer">{item.researchStatus||"Source"} ↗</a>:item.researchStatus||"Pending"}</td></tr>)}</tbody></table></div></section>
+  </main>;
+}

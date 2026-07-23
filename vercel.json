@@ -1,0 +1,28 @@
+{
+  "crons": [
+    {
+      "path": "/api/sensor-sync",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/catalog-discovery/run",
+      "schedule": "0 12 * * 1"
+    },
+    {
+      "path": "/api/wishlist-monitor",
+      "schedule": "30 13 * * *"
+    },
+    {
+      "path": "/api/valuation-monitor",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/rating-monitor",
+      "schedule": "30 14 * * 0"
+    },
+    {
+      "path": "/api/sommelier-knowledge/research",
+      "schedule": "0 15 * * 2"
+    }
+  ]
+}

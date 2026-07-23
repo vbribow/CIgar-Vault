@@ -1,0 +1,2 @@
+create table if not exists public.beta_collectors(id uuid primary key default gen_random_uuid(),name text not null,email text not null unique,stage text not null default 'Prospect' check(stage in ('Prospect','Invited','Signed up','Imported','Activated')),notes text,invited_at timestamptz,last_contact_at timestamptz,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+alter table public.beta_collectors enable row level security;

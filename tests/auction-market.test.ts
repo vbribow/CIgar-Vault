@@ -1,0 +1,7 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { auctionCoverage,matchAuctionSale,normalizeAuctionSale } from "../lib/auction-market";
+const sale=normalizeAuctionSale({sourceId:"house",externalLotId:"123",title:"Cohiba Siglo IV box of 20",brand:"Cohiba",line:"Siglo IV",vitola:"Corona Gorda",vintage:2025,soldAt:"2026-07-01",lotPrice:1200,currency:"USD",quantity:20,buyerPremiumIncluded:true,sourceUrl:"https://example.com/sold/123",status:"Sold"});
+test("completed auction lots normalize to a per-cigar sale value",()=>assert.equal(sale.unitPrice,60));
+test("auction matching requires exact identity before automatic use",()=>{assert.equal(matchAuctionSale(sale,{inventoryId:"I1",brand:"Cohiba",line:"Siglo IV",vitola:"Corona Gorda",vintage:2025}).decision,"Exact");assert.equal(matchAuctionSale(sale,{inventoryId:"I2",brand:"Cohiba",line:"Siglo IV",vitola:"Robusto",vintage:2025}).decision,"Review")});
+test("auction coverage requires value, date, and direct proof",()=>{const inventory=[{inventoryId:"I1",brand:"Cohiba",line:"Siglo IV",vitola:"Corona Gorda"},{inventoryId:"I2",brand:"Trinidad",line:"Vigia",vitola:"Torres"}];const result=auctionCoverage(inventory,[{valuationId:"V1",inventoryId:"I1",valuationDate:"2026-07-02",lastSaleValue:60,lastSaleDate:"2026-07-01",lastSaleSourceUrl:"https://example.com/sold/123"},{valuationId:"V2",inventoryId:"I2",valuationDate:"2026-07-02",lastSaleValue:40}]);assert.deepEqual(result,{lots:2,withVerifiedSale:1,missingSale:1})});

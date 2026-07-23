@@ -1,0 +1,43 @@
+import { RecordsManager } from "@/components/records-manager";
+import { accountDataMode } from "@/lib/user-data";
+import { loadInventory } from "@/lib/inventory";
+import { loadSmokingLogs, loadValuations } from "@/lib/data";
+export const dynamic = "force-dynamic";
+export default async function RecordsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ inventoryId?: string }>;
+}) {
+  const mode = await accountDataMode();
+  const [{ inventoryId }, inventory, smokes, valuations] = await Promise.all([
+    searchParams,
+    loadInventory(),
+    mode === "mock" ? [] : loadSmokingLogs(),
+    mode === "mock" ? [] : loadValuations(),
+  ]);
+  return (
+    <main className="shell">
+      <nav className="nav">
+        <a className="brand" href="/">
+          Cedriva
+        </a>
+        <a className="badge" href="/inventory">
+          Inventory
+        </a>
+      </nav>
+      <section className="section inventoryHeader">
+        <h1>Journal & value</h1>
+        <p className="lede">
+          Record every smoke and preserve a dated valuation history.
+        </p>
+      </section>
+      <RecordsManager
+        inventory={inventory}
+        initialSmokes={smokes}
+        initialValuations={valuations}
+        mode={mode}
+        selectedInventoryId={inventoryId}
+      />
+    </main>
+  );
+}
