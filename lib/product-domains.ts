@@ -21,7 +21,7 @@ export const productDomains:ProductDomain[]=[
   {id:"review",label:"Review",promise:"Learn from trustworthy experience—your own and others'.",href:"/records",links:[
     {href:"/records",label:"Smoking journal",description:"Remember tasting experiences and how cigars develop"},
     {href:"/ratings",label:"Published reviews",description:"Compare attributable professional scores"},
-    {href:"/cigar-somm",label:"Cigar Somm",description:"Explore tasting profiles and thoughtful pairings"},
+    {href:"/cigar-somm",label:"Cedriva AI advisor",description:"Explore tasting profiles and thoughtful pairings"},
   ]},
   {id:"market",label:"Market",promise:"Understand value without reducing the culture to speculation.",href:"/valuations",links:[
     {href:"/valuations",label:"Collection values",description:"Research retail replacement and market evidence"},
@@ -41,10 +41,10 @@ export const productDomains:ProductDomain[]=[
   {id:"learn",label:"Learn",promise:"Make expertise approachable and lifelong.",href:"/learn",links:[
     {href:"/learn",label:"Learning paths",description:"Build confidence through contextual education"},
     {href:"/catalog",label:"Cigar reference",description:"Learn through documented cigar identities"},
-    {href:"/sommelier-library",label:"Curated knowledge",description:"Review the evidence library behind Cigar Somm"},
+    {href:"/sommelier-library",label:"Curated knowledge",description:"Review the evidence library behind Cedriva AI"},
   ]},
   {id:"ai",label:"Cedriva AI",promise:"Elevate collector judgment with trusted, personal guidance.",href:"/cigar-somm",links:[
-    {href:"/cigar-somm",label:"Consult Cigar Somm",description:"Ask about one cigar, its profile, readiness, and pairings"},
+    {href:"/cigar-somm",label:"Consult Cedriva AI",description:"Ask about one cigar, its profile, readiness, and pairings"},
     {href:"/intelligence",label:"Collection intelligence",description:"Understand patterns, priorities, and evidence gaps"},
     {href:"/acquisitions",label:"Collection goals",description:"See documented pieces that would complete a set"},
   ]},
