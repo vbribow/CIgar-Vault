@@ -8,3 +8,7 @@ dist
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# Local Cedriva strategy and governance documents guide development but are not published.
+/corporate-docs/*.md
+!/corporate-docs/LAUNCH_PLAN.md
