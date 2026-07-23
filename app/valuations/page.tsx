@@ -6,6 +6,8 @@ import "./valuations.css";
 import "./research.css";
 import { ValuationResearchPanel } from "@/components/valuation-research-panel";
 import { MarketSignal, SignalLegend, confidenceTone, freshnessTone } from "@/components/market-signal";
+import { RetailPricingControls } from "@/components/retail-pricing-controls";
+import { retailBoxValue } from "@/lib/retail-pricing";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -19,8 +21,9 @@ const unitMoney = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
 });
 
-export default async function ValuationsPage() {
+export default async function ValuationsPage({ searchParams }: { searchParams: Promise<{ inventoryId?: string }> }) {
   const mode = await accountDataMode();
+  const filters = await searchParams;
   const [inventory, valuations] = await Promise.all([
     loadInventory(),
     mode === "mock" ? [] : loadValuations(),
@@ -91,6 +94,7 @@ export default async function ValuationsPage() {
         </article>
       </section>
       <SignalLegend />
+      <RetailPricingControls items={inventory} mode={mode} initialInventoryId={filters.inventoryId} />
       <ValuationResearchPanel items={intelligence.reviewQueue.map((row)=>row.item)} mode={mode}/>
 
       <section className="section valuationQueue">
@@ -171,6 +175,7 @@ export default async function ValuationsPage() {
                 <th>Cigar</th>
                 <th>Qty</th>
                 <th>Retail / stick</th>
+                <th>Retail / box</th>
                 <th>Market estimate</th>
                 <th>Market lot</th>
                 <th>Last completed sale</th>
@@ -203,6 +208,12 @@ export default async function ValuationsPage() {
                       {row.item.retailValue === undefined
                         ? "—"
                         : unitMoney.format(row.item.retailValue)}
+                    </td>
+                    <td>
+                      {retailBoxValue(row.item) === undefined
+                        ? "—"
+                        : unitMoney.format(retailBoxValue(row.item)!)}
+                      {row.item.sticksPerBox !== undefined && <small>{row.item.sticksPerBox} cigars</small>}
                     </td>
                     <td>
                       {row.latestUnit === undefined ? (
