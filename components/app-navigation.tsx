@@ -56,6 +56,7 @@ const groups = [
   {
     label: "Community",
     links: [
+      ["/constitution", "Our constitution", "The purpose and principles governing Cedriva"],
       ["/community", "Collector community", "Message board and member-rated Top 25"],
       ["/ai-administrator", "AI Administrator", "Founder moderation and community operations"],
     ],
@@ -69,7 +70,7 @@ function matches(pathname: string, href: string) {
 export function AppNavigation() {
   const pathname = usePathname();
   return <><header className="appHeader"><div className="appHeaderInner">
-    <a className="appBrand" href="/" aria-label="Cigar Vault dashboard"><span className="appBrandMark">CV</span><span><strong>Cigar Vault</strong><small>Collection intelligence</small></span></a>
+    <a className="appBrand" href="/" aria-label="Cedriva dashboard"><span className="appBrandMark">C</span><span><strong>Cedriva</strong><small>Premium cigar culture</small></span></a>
     <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <a href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Dashboard</a>
       {groups.map(group => {

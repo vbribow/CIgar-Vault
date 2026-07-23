@@ -19,7 +19,7 @@ export default async function RecordsPage({
     <main className="shell">
       <nav className="nav">
         <a className="brand" href="/">
-          Cigar Vault
+          Cedriva
         </a>
         <a className="badge" href="/inventory">
           Inventory

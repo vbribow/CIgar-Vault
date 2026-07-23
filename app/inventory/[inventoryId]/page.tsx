@@ -34,7 +34,7 @@ export default async function CigarPage({
     <main className="shell">
       <nav className="nav">
         <a className="brand" href="/">
-          Cigar Vault
+          Cedriva
         </a>
         <a className="backLink" href="/inventory">
           ← Collection

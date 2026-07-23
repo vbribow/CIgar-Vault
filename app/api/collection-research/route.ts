@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   if (query.length < 3) return NextResponse.json({ error: "Enter at least 3 characters" }, { status: 400 });
   try {
     const response = await fetch(collectionSearchUrl(query), {
-      headers: { "User-Agent": "Cigar Vault collection research" },
+      headers: { "User-Agent": "Cedriva collection research" },
       next: { revalidate: 3600 },
     });
     if (!response.ok) throw new Error(`Search provider returned ${response.status}`);

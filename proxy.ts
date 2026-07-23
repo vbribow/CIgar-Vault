@@ -4,7 +4,7 @@ import { updateSupabaseSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   // Private Sites deployments already enforce owner authentication.
   if (process.env.SITES_DEPLOYMENT === "true") return NextResponse.next();
-  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname.startsWith("/auth/");
+  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname === "/constitution" || request.nextUrl.pathname.startsWith("/auth/");
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return updateSupabaseSession(request);
 
   // Keep account recovery reachable during a configuration or provider outage.
@@ -18,7 +18,7 @@ export async function proxy(request: NextRequest) {
     try { const [user, supplied] = atob(authorization.slice(6)).split(":"); if (user === expectedUser && supplied === password) return NextResponse.next(); }
     catch { /* malformed credentials */ }
   }
-  return new NextResponse("Authentication required", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Cigar Vault", charset="UTF-8"' } });
+  return new NextResponse("Authentication required", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Cedriva", charset="UTF-8"' } });
 }
 
 export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|icons/|sw.js|manifest.webmanifest).*)"] };

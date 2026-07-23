@@ -34,7 +34,7 @@ export default async function HumidorDetailPage({
     <main className="shell">
       <nav className="nav">
         <a className="brand" href="/">
-          Cigar Vault
+          Cedriva
         </a>
         <div className="navLinks">
           <a href="/humidors">← Humidors</a>

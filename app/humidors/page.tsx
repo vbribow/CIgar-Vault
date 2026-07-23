@@ -29,7 +29,7 @@ export default async function HumidorsPage() {
         <div className="climateLegend">
           <strong>User-controlled targets</strong>
           <span>
-            Cigar Vault suggests starting values, but you decide the temperature
+            Cedriva suggests starting values, but you decide the temperature
             and humidity ranges.
           </span>
         </div>

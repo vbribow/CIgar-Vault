@@ -8,7 +8,7 @@ export function CollectionPopulateButton({ collectionId, mode }: { collectionId:
   const [busy, setBusy] = useState(false), [message, setMessage] = useState("");
   const router = useRouter();
   async function populate() {
-    if (!window.confirm("Confirm that you own this complete presentation. Cigar Vault will add its documented cigar components to main inventory and link them to this collection.")) return;
+    if (!window.confirm("Confirm that you own this complete presentation. Cedriva will add its documented cigar components to main inventory and link them to this collection.")) return;
     const founderKey = mode === "smartsheet" ? window.prompt("Founder write key") : "";
     if (mode === "smartsheet" && founderKey === null) return;
     setBusy(true); setMessage("");

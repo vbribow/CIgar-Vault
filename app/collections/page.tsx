@@ -32,7 +32,7 @@ export default async function CollectionsPage() {
           </small>
         </div>
       </section>
-      <WorkspaceGuide items={[{label:"Define",title:"Choose or research a set",detail:"Start from a known template or enter any named release."},{label:"Match",title:"Connect owned components",detail:"Cigar Vault compares expected contents with inventory."},{label:"Value",title:"Track parts and the whole",detail:"Preserve component value and complete-presentation premium."}]}/>
+      <WorkspaceGuide items={[{label:"Define",title:"Choose or research a set",detail:"Start from a known template or enter any named release."},{label:"Match",title:"Connect owned components",detail:"Cedriva compares expected contents with inventory."},{label:"Value",title:"Track parts and the whole",detail:"Preserve component value and complete-presentation premium."}]}/>
       <CollectionsManager
         initialCollections={collections}
         inventory={inventory}

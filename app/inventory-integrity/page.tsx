@@ -15,7 +15,7 @@ export default async function InventoryIntegrityPage() {
   const duplicates = [...findDuplicateInventoryIds(master).map(item => ({ ...item, source: "Smartsheet" })), ...findDuplicateInventoryIds(account ?? []).map(item => ({ ...item, source: "Account" }))];
 
   return <main className="shell wideShell integrityShell">
-    <section className="integrityHero"><div><div className="eyebrow">Inventory protection</div><h1>Inventory Integrity Center.</h1><p className="lede">Compare the Smartsheet master with your private Cigar Vault account before anything is changed.</p></div><div className={`integrityScore ${summary.score === 100 ? "good" : "attention"}`}><strong>{summary.score}%</strong><span>records aligned</span><small>{new Date().toLocaleString()}</small></div></section>
+    <section className="integrityHero"><div><div className="eyebrow">Inventory protection</div><h1>Inventory Integrity Center.</h1><p className="lede">Compare the Smartsheet master with your private Cedriva account before anything is changed.</p></div><div className={`integrityScore ${summary.score === 100 ? "good" : "attention"}`}><strong>{summary.score}%</strong><span>records aligned</span><small>{new Date().toLocaleString()}</small></div></section>
     {!signedIn && <div className="integrityNotice">Sign in to compare your private account with the Smartsheet master. The master inventory is available for backup now.</div>}
     <section className="integrityMetrics">
       <article><span>Smartsheet master</span><strong>{master.length}</strong><small>canonical inventory lots</small></article>

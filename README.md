@@ -1,4 +1,4 @@
-# Cigar Vault MVP
+# Cedriva MVP
 
 A speed-to-market collector application with **Smartsheet as the complete source of truth**.
 
@@ -27,7 +27,7 @@ Open `http://localhost:3000`.
 
 Smartsheet API access is available on eligible Business and Enterprise plans. Generate an API token in Smartsheet Personal Settings > API Access. Keep it server-side and never commit it.
 
-1. Create a workspace named `Cigar Vault MVP`.
+1. Create a workspace named `Cedriva MVP`.
 2. Copy `.env.example` to `.env.local`.
 3. Set `SMARTSHEET_ACCESS_TOKEN` and `SMARTSHEET_WORKSPACE_ID`.
 4. Run `pnpm provision:smartsheet`.

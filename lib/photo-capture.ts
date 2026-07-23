@@ -16,4 +16,4 @@ export function validatePhotoSelection(existing: PhotoLike[], incoming: PhotoLik
   return null;
 }
 
-export function photoPreparationError(fileName:string){return `Cigar Vault could not prepare ${fileName}. On iPhone, use Open rear camera to take a new photo. For an existing image, share or export it as JPG first.`}
+export function photoPreparationError(fileName:string){return `Cedriva could not prepare ${fileName}. On iPhone, use Open rear camera to take a new photo. For an existing image, share or export it as JPG first.`}

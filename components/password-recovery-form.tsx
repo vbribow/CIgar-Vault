@@ -64,7 +64,7 @@ export function PasswordRecoveryForm() {
       return;
     }
     startCooldown(Number(result.data?.cooldownSeconds)||RECOVERY_SUCCESS_COOLDOWN_SECONDS);
-    setMessage("Recovery email sent. Open only the newest message. Its link will return to the public Cigar Vault site, not a protected preview.");
+    setMessage("Recovery email sent. Open only the newest message. Its link will return to the public Cedriva site, not a protected preview.");
   }
 
   return <form onSubmit={submit}>
@@ -73,6 +73,6 @@ export function PasswordRecoveryForm() {
     {error && <div className="loginMessage error">{error}</div>}
     {message && <div className="loginMessage">{message}</div>}
     {secondsRemaining > 0 && <div className="recoveryStatus" role="status"><strong>Recovery request paused</strong><span>Do not request another message yet. Check spam or junk and use only the newest email. Successful requests pause for 10 minutes; provider rate limits pause for 65 minutes.</span></div>}
-    <p className="recoveryHelp">Still locked out after the timer ends? {supportEmail ? <a href={`mailto:${supportEmail}?subject=Cigar%20Vault%20account%20recovery`}>Contact support</a> : "Contact the Cigar Vault administrator"} before requesting repeatedly.</p>
+    <p className="recoveryHelp">Still locked out after the timer ends? {supportEmail ? <a href={`mailto:${supportEmail}?subject=Cigar%20Vault%20account%20recovery`}>Contact support</a> : "Contact the Cedriva administrator"} before requesting repeatedly.</p>
   </form>;
 }
