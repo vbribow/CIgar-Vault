@@ -5,6 +5,7 @@ import { loadActivities, loadRatings, loadSmokingLogs, loadValuations } from "@/
 import { ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
 import { InventoryRecordTools } from "@/components/inventory-record-tools";
 import { buildCigarTimeline,estimateAging } from "@/lib/collection-intelligence";
+import { EvidenceLabel } from "@/components/evidence-label";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
   params,
@@ -53,11 +54,16 @@ export default async function CigarPage({
           </span>
         </div>
         <div className="scoreCard">
-          <small>Personal Vault score</small>
+          <small>Personal collection score</small>
           <strong>{item.score ?? "—"}</strong>
           <span>{item.priority || "Unrated priority"}</span>
         </div>
       </section>
+      <section className="cigarStory">
+        <div><div className="eyebrow">The story in your collection</div><h2>{item.line || item.brand}</h2><p>{item.provenanceNotes || item.notes || `This ${item.vitola} is documented as part of your collection${item.vintage?` from ${item.vintage}`:""}. Add the acquisition, people, place, or occasion behind it to preserve why it matters—not only what it is.`}</p><a className="textLink" href="#record-tools">Continue documenting its story →</a></div>
+        <div className="cigarStoryFacts"><article><span>Identity</span><strong>{item.brand} · {item.line}</strong><small>{item.vitola}{item.vintage?` · ${item.vintage}`:""}</small></article><article><span>Your chapter</span><strong>{history.length} smoking experience{history.length===1?"":"s"}</strong><small>{events.length} documented collection event{events.length===1?"":"s"}</small></article><article><span>Provenance</span><strong>{item.boxCode||item.provenanceDocumentLink?"Evidence started":"Story waiting"}</strong><small>{item.storageLocationId?`Cared for in ${item.storageLocationId}`:"Storage not yet documented"}</small></article></div>
+      </section>
+      <EvidenceLabel evidence={{kind:"Community",sourceName:"Your private collector record",confidence:item.provenanceNotes||item.boxCode?"Medium":"Unrated",supports:"Identity, ownership context, and personal provenance",commercialInfluence:"None disclosed"}}/>
       <section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>
       <section className="detailStats">
         <div>
@@ -80,7 +86,7 @@ export default async function CigarPage({
         </div>
       </section>
       <section className="section card"><div className="sectionHead"><div><div className="eyebrow">Market transaction evidence</div><h2>{latestSale ? `$${latestSale.lastSaleValue!.toLocaleString()} per cigar` : "No verified completed sale recorded"}</h2><p className="small">{latestSale ? `Last known completed sale · ${latestSale.lastSaleDate || latestSale.valuationDate}${latestSale.lastSaleVenue ? ` · ${latestSale.lastSaleVenue}` : ""}` : "Auction estimates, open lots, and asking prices are not labeled as sales."}</p></div>{latestSale?.lastSaleSourceUrl ? <a className="button secondary" href={latestSale.lastSaleSourceUrl} target="_blank" rel="noreferrer">View sale evidence ↗</a> : <a className="button secondary" href="/valuations">Research sale history</a>}</div><div className="detailStats"><div><span>Retail replacement</span><strong>{item.retailValue === undefined ? "Not researched" : `$${item.retailValue.toLocaleString()} / cigar`}</strong></div><div><span>Retail lot subtotal</span><strong>{item.retailValue === undefined || item.currentQty === undefined ? "Not available" : `$${(item.retailValue * item.currentQty).toLocaleString()}`}</strong></div><div><span>Latest completed sale</span><strong>{latestSale?.lastSaleValue === undefined ? "Not found" : `$${latestSale.lastSaleValue.toLocaleString()} / cigar`}</strong></div><div><span>Sale venue</span><strong>{latestSale?.lastSaleVenue || "Not documented"}</strong></div></div></section>
-      <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div><a className="button secondary" href={`/cigar-somm?inventoryId=${encodeURIComponent(item.inventoryId)}`}>Analyze with Cigar Somm</a></section>
+      <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging · AI-assisted</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div><a className="button secondary" href={`/cigar-somm?inventoryId=${encodeURIComponent(item.inventoryId)}`}>Consult Cedriva AI</a></section>
       <section className="detailGrid">
         <article className="card">
           <div className="eyebrow">Collector direction</div>
@@ -144,7 +150,7 @@ export default async function CigarPage({
           </p>
         )}
       </section>
-      <InventoryRecordTools initialItem={item} inventory={items} mode={mode} />
+      <div id="record-tools"><InventoryRecordTools initialItem={item} inventory={items} mode={mode} /></div>
     </main>
   );
 }

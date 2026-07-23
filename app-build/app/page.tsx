@@ -4,6 +4,7 @@ import { loadCollections, loadHumidorReadings, loadHumidors, loadSensors, loadSm
 import { accountDataMode, loadAccountRecords } from "@/lib/user-data";
 import { buildOnboardingSteps, type IntegrityAudit } from "@/lib/onboarding";
 import { buildCollectionIntelligence } from "@/lib/collection-intelligence";
+import { CollectorJourney } from "@/components/collector-journey";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,8 @@ export default async function Home() {
   const onboarding = buildOnboardingSteps({ inventory:items, collections, humidors, sensors, valuations, integrityAudits });
   const intelligence=buildCollectionIntelligence({inventory:items,valuations,humidors,readings,smokes,sensors});
   return <main className="shell">
-    <section className="hero productHero"><div><div className="eyebrow">Preserve · Honor · Grow</div><h1>Your collection is a story worth preserving.</h1><p className="lede">Cedriva connects the cigars you collect with their craftsmanship, history, memories, provenance, care, and community—helping premium cigar culture endure for generations.</p><div className="ctaRow"><a className="button" href="/inventory">Open my collection</a><a className="button secondary" href="/discover">Discover something meaningful</a></div></div><div className="card productPromise"><div className="eyebrow">Tradition, strengthened by technology</div><h2>Knowledge without barriers. Intelligence without pretense.</h2><p>Advanced tools respect experienced collectors while welcoming every beginner. Evidence is sourced, uncertainty is visible, and expertise is amplified—not replaced.</p><div className="trustLine"><span>Education</span><span>Trust</span><span>Community</span><span>Culture</span></div><a className="textLink" href="/explore">Explore the connected Cedriva experience →</a></div></section>
+    <section className="hero productHero"><div><div className="eyebrow">Preserve · Honor · Grow</div><h1>Your collection is a story worth preserving.</h1><p className="lede">Cedriva helps every collector learn with confidence, document with purpose, and remain connected to the people and traditions behind every cigar.</p><div className="ctaRow"><a className="button" href="/inventory">Document my collection</a><a className="button secondary" href="/discover">Discover something meaningful</a></div></div><figure className="cultureHero"><img src="/editorial/cigar-roller.jpg" alt="A cigar artisan working with tobacco leaves at a rolling table"/><figcaption><span>The craft behind the collection</span><strong>Every cigar begins with people, place, and patience.</strong><a href="https://unsplash.com/photos/vHCkVUogO-w" target="_blank" rel="noreferrer">Photograph by Austin · Unsplash ↗</a></figcaption></figure></section>
+    <CollectorJourney/>
     <Dashboard items={items} onboarding={onboarding} intelligence={intelligence} />
   </main>;
 }
