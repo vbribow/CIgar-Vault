@@ -18,6 +18,8 @@ export type CollectionDashboardSummary = {
   completionPercent: number;
   missingComponents: string[];
   valueHistory: CollectionValuePoint[];
+  valueEvidence: "Collection record" | "Researched template" | "Component inventory" | "Pending";
+  valueAsOf?: string;
 };
 
 const normalized = (value: string) =>
@@ -29,7 +31,10 @@ export function collectionTemplateFor(collection: CigarCollection) {
   );
   if (byId) return byId;
   const name = normalized(collection.name);
-  return collectionTemplates.find((template) => normalized(template.name) === name);
+  return collectionTemplates.find((template) => {
+    const names = [template.name, ...(template.aliases ?? [])].map(normalized);
+    return names.some(candidate => candidate === name || (candidate.length >= 8 && name.includes(candidate)));
+  });
 }
 
 export function collectionRequirementMatches(collection: CigarCollection, members: InventoryItem[]) {
@@ -89,7 +94,14 @@ export function summarizeCollection(
   const valueHistory = [...datedValues]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, value]) => ({ date, value }));
-  const wholeValue = collection.wholeMarketValue ?? componentValue;
+  const wholeValue = collection.wholeMarketValue ?? template?.documentedWholeValue ?? componentValue;
+  const valueEvidence = collection.wholeMarketValue !== undefined
+    ? "Collection record"
+    : template?.documentedWholeValue !== undefined
+      ? "Researched template"
+      : componentValue > 0
+        ? "Component inventory"
+        : "Pending";
   return {
     componentValue,
     wholeValue,
@@ -101,5 +113,7 @@ export function summarizeCollection(
     completionPercent,
     missingComponents,
     valueHistory,
+    valueEvidence,
+    valueAsOf: collection.valuationDate ?? template?.valueAsOf,
   };
 }
