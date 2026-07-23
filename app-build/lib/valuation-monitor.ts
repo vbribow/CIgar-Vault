@@ -1,4 +1,5 @@
 import { isCubanInventory } from "./cuban-verification";
+import { canonicalCigarIdentity, cigarIdentityKey } from "./cigar-identity";
 import type { InventoryItem, Valuation } from "./types";
 
 const DAY_MS=86_400_000;
@@ -8,9 +9,9 @@ export type ValuationUsageEvent={created_at:string;properties?:{estimatedCostUsd
 
 // A valuation is stored per cigar, so box/presentation packaging does not change
 // the reusable identity. Vintage remains part of the identity when supplied.
-export function valuationIdentityKey(item:InventoryItem){return [item.brand,item.line,item.vitola,item.vintage??""].map(value=>String(value).trim().toLowerCase().replace(/\s+/g," ")).join("|")}
+export function valuationIdentityKey(item:InventoryItem){return cigarIdentityKey(item)}
 
-export function valuationIdentityReady(item:InventoryItem){return [item.brand,item.line,item.vitola].every(value=>Boolean(value?.trim())&&!/^(unknown|n\/a|tbd|unspecified)$/i.test(value.trim()))}
+export function valuationIdentityReady(item:InventoryItem){return canonicalCigarIdentity(item).complete}
 
 export function valuationRefreshDays(item:InventoryItem,latest?:Valuation){
   if(latest?.marketValue===undefined&&latest?.replacementValue===undefined&&/insufficient|unsupported|no defensible/i.test(latest?.notes||""))return 180;

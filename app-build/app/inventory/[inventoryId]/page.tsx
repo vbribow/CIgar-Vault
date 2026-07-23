@@ -6,6 +6,7 @@ import { ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
 import { InventoryRecordTools } from "@/components/inventory-record-tools";
 import { buildCigarTimeline,estimateAging } from "@/lib/collection-intelligence";
 import { EvidenceLabel } from "@/components/evidence-label";
+import { canonicalCigarIdentity } from "@/lib/cigar-identity";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
   params,
@@ -29,6 +30,7 @@ export default async function CigarPage({
   const events = activities.filter((a) => a.inventoryId === inventoryId);
   const publishedRatings = ratingsForInventory(ratings, inventoryId);
   const published = ratingSummary(ratings, inventoryId);
+  const identity=canonicalCigarIdentity(item);
   const aging=estimateAging(item);
   const timeline=buildCigarTimeline(item,events,history,values,publishedRatings);
   return (
@@ -61,7 +63,7 @@ export default async function CigarPage({
       </section>
       <section className="cigarStory">
         <div><div className="eyebrow">The story in your collection</div><h2>{item.line || item.brand}</h2><p>{item.provenanceNotes || item.notes || `This ${item.vitola} is documented as part of your collection${item.vintage?` from ${item.vintage}`:""}. Add the acquisition, people, place, or occasion behind it to preserve why it matters—not only what it is.`}</p><a className="textLink" href="#record-tools">Continue documenting its story →</a></div>
-        <div className="cigarStoryFacts"><article><span>Identity</span><strong>{item.brand} · {item.line}</strong><small>{item.vitola}{item.vintage?` · ${item.vintage}`:""}</small></article><article><span>Your chapter</span><strong>{history.length} smoking experience{history.length===1?"":"s"}</strong><small>{events.length} documented collection event{events.length===1?"":"s"}</small></article><article><span>Provenance</span><strong>{item.boxCode||item.provenanceDocumentLink?"Evidence started":"Story waiting"}</strong><small>{item.storageLocationId?`Cared for in ${item.storageLocationId}`:"Storage not yet documented"}</small></article></div>
+        <div className="cigarStoryFacts"><article><span>Canonical identity</span><strong>{item.brand} · {item.line}</strong><small>{item.vitola}{item.vintage?` · ${item.vintage}`:""} · {identity.identityId}</small></article><article><span>Connected knowledge</span><strong>{publishedRatings.length} review{publishedRatings.length===1?"":"s"} · {values.length} value record{values.length===1?"":"s"}</strong><small>{identity.complete?"Exact identity ready":"Identity needs review before evidence can be reused"}</small></article><article><span>Your chapter</span><strong>{history.length} smoking experience{history.length===1?"":"s"}</strong><small>{events.length} documented collection event{events.length===1?"":"s"}</small></article><article><span>Provenance</span><strong>{item.boxCode||item.provenanceDocumentLink?"Evidence started":"Story waiting"}</strong><small>{item.storageLocationId?`Cared for in ${item.storageLocationId}`:"Storage not yet documented"}</small></article></div>
       </section>
       <EvidenceLabel evidence={{kind:"Community",sourceName:"Your private collector record",confidence:item.provenanceNotes||item.boxCode?"Medium":"Unrated",supports:"Identity, ownership context, and personal provenance",commercialInfluence:"None disclosed"}}/>
       <section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>
