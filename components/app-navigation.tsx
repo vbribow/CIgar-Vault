@@ -56,6 +56,7 @@ const groups = [
   {
     label: "Community",
     links: [
+      ["/manifesto", "Our manifesto", "The declaration at the heart of Cedriva"],
       ["/constitution", "Our constitution", "The purpose and principles governing Cedriva"],
       ["/community", "Collector community", "Message board and member-rated Top 25"],
       ["/ai-administrator", "AI Administrator", "Founder moderation and community operations"],
