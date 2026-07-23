@@ -5,8 +5,12 @@ import test from "node:test";
 const navigation = readFileSync(new URL("../components/app-navigation.tsx", import.meta.url), "utf8");
 const inventory = readFileSync(new URL("../app/inventory/page.tsx", import.meta.url), "utf8");
 
-test("collections are directly reachable from mobile navigation and inventory", () => {
-  assert.match(navigation, /href="\/collections"/);
-  assert.match(navigation, /<small>Collections<\/small>/);
+test("collections remain directly reachable through the mobile Vault and inventory", () => {
+  assert.match(navigation, /matches\(pathname,"\/collections"\)/);
+  assert.match(navigation, /<small>Vault<\/small>/);
   assert.match(inventory, /View collections/);
+});
+
+test("mobile navigation begins with collector purposes",()=>{
+  for(const label of["Home","Discover","Document","Vault","Explore"])assert.match(navigation,new RegExp(`<small>${label}<\\/small>`));
 });
