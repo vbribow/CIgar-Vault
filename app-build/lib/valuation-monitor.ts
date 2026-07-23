@@ -29,7 +29,7 @@ export function valuationNeedsMonitoring(item:InventoryItem,valuations:Valuation
 
 export function reusableValuation(item:InventoryItem,candidates:Array<{item:InventoryItem;valuation:Valuation}>,now=new Date()){
   const key=valuationIdentityKey(item);
-  return candidates.filter(candidate=>valuationIdentityKey(candidate.item)===key&&(candidate.valuation.marketValue!==undefined||candidate.valuation.replacementValue!==undefined)&&!valuationNeedsMonitoring(candidate.item,[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
+  return candidates.filter(candidate=>valuationIdentityKey(candidate.item)===key&&candidate.valuation.replacementValue!==undefined&&Boolean(candidate.valuation.sourceUrl)&&/^(High|Medium)$/i.test(candidate.valuation.confidence??"")&&!valuationNeedsMonitoring(candidate.item,[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
 }
 
 export function valuationMonitorPriority(item:InventoryItem){return (item.retailValue??0)*(item.currentQty??0)+(item.priority==="High"?10_000:0)}
