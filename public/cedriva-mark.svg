@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Cedriva</title>
+  <desc id="description">A C within a cedar-box label inspired archival seal.</desc>
+  <rect width="512" height="512" rx="108" fill="#0f0d0b"/>
+  <path d="M112 64h288l48 48v288l-48 48H112l-48-48V112l48-48Z" fill="#181411" stroke="#c09a5b" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M336 168a120 120 0 1 0 0 176" fill="none" stroke="#f2ece3" stroke-width="38" stroke-linecap="round"/>
+  <path d="M368 136v240M368 192h48M368 320h48" fill="none" stroke="#c09a5b" stroke-width="18" stroke-linecap="round"/>
+</svg>

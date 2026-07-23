@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { GlobalSearch } from "@/components/global-search";
+import { CedrivaMark } from "@/components/cedriva-mark";
 
 const groups = [
   {
@@ -71,7 +72,7 @@ function matches(pathname: string, href: string) {
 export function AppNavigation() {
   const pathname = usePathname();
   return <><header className="appHeader"><div className="appHeaderInner">
-    <a className="appBrand" href="/" aria-label="Cedriva dashboard"><span className="appBrandMark">C</span><span><strong>Cedriva</strong><small>Premium cigar culture</small></span></a>
+    <a className="appBrand" href="/" aria-label="Cedriva dashboard"><CedrivaMark/><span><strong>Cedriva</strong><small>Premium cigar culture</small></span></a>
     <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <a href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Dashboard</a>
       {groups.map(group => {
