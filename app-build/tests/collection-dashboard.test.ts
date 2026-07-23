@@ -24,8 +24,18 @@ test("summarizes whole value, premium, completeness, and history", () => {
   assert.equal(result.completionPercent, 100);
   assert.equal(result.missingComponents.length, 0);
   assert.equal(result.expectedCigars,40);
+  assert.equal(result.valueEvidence,"Collection record");
   assert.deepEqual(result.expectedContents,["20 Padrón-made cigars honoring Carlos A. Fuente, Sr.","20 Fuente-made cigars honoring José O. Padrón"]);
   assert.deepEqual(result.valueHistory, [{ date: "2026-01-01", value: 900 }]);
+});
+
+test("uses researched template value while keeping unsupported values visibly pending", () => {
+  const researched = summarizeCollection({ collectionId: "COL-FUENTE-DREAM-DYNASTY", name: "From Dream to Dynasty Collection" }, [], []);
+  assert.equal(researched.wholeValue, 2250);
+  assert.equal(researched.valueEvidence, "Researched template");
+  const unsupported = summarizeCollection({ collectionId: "COL-CUSTOM", name: "Custom Set" }, [], []);
+  assert.equal(unsupported.wholeValue, 0);
+  assert.equal(unsupported.valueEvidence, "Pending");
 });
 
 test("lists missing template components", () => {
