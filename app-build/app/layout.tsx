@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   description: "Preserve your collection, deepen your knowledge, and help grow the culture of premium cigars.",
   manifest:"/manifest.webmanifest",
   appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Cedriva"},
-  icons:{icon:[{url:"/icons/cigar-vault-192.png",sizes:"192x192",type:"image/png"}],apple:[{url:"/icons/cigar-vault-192.png",sizes:"192x192",type:"image/png"}]},
+  icons:{icon:[{url:"/cedriva-mark.svg",type:"image/svg+xml"},{url:"/icons/cedriva-192.png",sizes:"192x192",type:"image/png"}],apple:[{url:"/icons/cedriva-192.png",sizes:"192x192",type:"image/png"}]},
 };
-export const viewport:Viewport={width:"device-width",initialScale:1,viewportFit:"cover",themeColor:"#100d0b"};
+export const viewport:Viewport={width:"device-width",initialScale:1,viewportFit:"cover",themeColor:"#0f0d0b"};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

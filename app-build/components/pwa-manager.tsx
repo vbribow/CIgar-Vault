@@ -1,5 +1,6 @@
 "use client";
 import { useEffect,useState } from "react";
+import { CedrivaMark } from "@/components/cedriva-mark";
 type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:"accepted"|"dismissed"}>};
 const productionHost="c-igar-vault-lmug.vercel.app";
 export function PwaManager(){
@@ -20,7 +21,7 @@ export function PwaManager(){
   function dismiss(){localStorage.setItem("cigar-vault:pwa-dismissed","1");setHidden(true)}
   async function install(){if(!event)return;await event.prompt();const choice=await event.userChoice;if(choice.outcome==="accepted")setHidden(true)}
   if(legacyHost)return <aside className="installPrompt updatePrompt"><span className="appBrandMark">!</span><div><strong>Old Cedriva installation</strong><small>{legacyHost} does not synchronize with the production app.</small></div><a href={`https://${productionHost}/`}>Open production</a></aside>;
-  if(waiting)return <aside className="installPrompt updatePrompt"><span className="appBrandMark">C</span><div><strong>Cedriva update ready</strong><small>Install the current photo and synchronization fixes.</small></div><button onClick={()=>waiting.postMessage({type:"SKIP_WAITING"})}>Update now</button></aside>;
+  if(waiting)return <aside className="installPrompt updatePrompt"><CedrivaMark/><div><strong>Cedriva update ready</strong><small>Install the current photo and synchronization fixes.</small></div><button onClick={()=>waiting.postMessage({type:"SKIP_WAITING"})}>Update now</button></aside>;
   if(hidden||(!event&&!showIos))return null;
-  return <aside className="installPrompt"><span className="appBrandMark">C</span><div><strong>Keep Cedriva on your phone</strong><small>{showIos?"Tap Share, then Add to Home Screen.":"Install the mobile app experience."}</small></div>{event&&<button onClick={install}>Install</button>}<button className="installDismiss" onClick={dismiss} aria-label="Dismiss install suggestion">×</button></aside>;
+  return <aside className="installPrompt"><CedrivaMark/><div><strong>Keep Cedriva on your phone</strong><small>{showIos?"Tap Share, then Add to Home Screen.":"Install the mobile app experience."}</small></div>{event&&<button onClick={install}>Install</button>}<button className="installDismiss" onClick={dismiss} aria-label="Dismiss install suggestion">×</button></aside>;
 }
