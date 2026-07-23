@@ -5,12 +5,18 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-build
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with: { version: 11.9.0 }
       - uses: actions/setup-node@v4
-        with: { node-version: 24, cache: pnpm }
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: app-build/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm typecheck
