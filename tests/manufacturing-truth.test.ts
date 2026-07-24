@@ -6,6 +6,7 @@ import { allBrandManufacturingCoverage, manufacturingCoverageForBrand, manufactu
 
 const catalogPage = readFileSync(new URL("../app/catalog/page.tsx", import.meta.url), "utf8");
 const manufacturingPage = readFileSync(new URL("../app/learn/manufacturing-truth/page.tsx", import.meta.url), "utf8");
+const manufacturingDirectory = readFileSync(new URL("../components/manufacturing-truth-directory.tsx", import.meta.url), "utf8");
 
 test("manufacturing truth records separate ownership, authorship, factories, and evidence", () => {
   assert.equal(manufacturingTruthRecords.length, 31);
@@ -68,4 +69,11 @@ test("every detailed catalog cigar renders a manufacturing status", () => {
 test("manufacturing research returns collectors to the searchable brand index", () => {
   assert.match(manufacturingPage, /href="#all-brands">Search every brand/);
   assert.doesNotMatch(manufacturingPage, /href="\/catalog">Review detailed cigars/);
+});
+
+test("unresolved manufacturing records expose their specific evidence gaps", () => {
+  assert.match(manufacturingDirectory, /View evidence gap/);
+  assert.match(manufacturingDirectory, /Evidence still required/);
+  assert.match(manufacturingDirectory, /How Cedriva verifies evidence/);
+  assert.doesNotMatch(manufacturingDirectory, /Review research standard/);
 });
