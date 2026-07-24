@@ -104,19 +104,34 @@ export function collectionComponentRepairs(collection: CigarCollection, template
     if (!existing || !legacyGenerated) return [];
     const identity = collectionComponentIdentity(requirement, template);
     const canonical = canonicalCigarIdentity({ ...identity, vintage: existing.vintage });
+    const documented = template.componentEvidence?.find(component => component.requirement === requirement);
+    const evidenceLabel = documented?.sourceLabel || template.sourceLabel;
+    const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
+    const notes = `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}`;
+    const provenanceNotes = `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`;
     const repaired = {
       ...existing,
       catalogId: canonical.identityId,
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
+      provenanceNotes,
     };
-    return [{
+    const result = {
       ...repaired,
       retailValue: repaired.retailValue ?? knownRetailValue(repaired, inventory),
       status: identity.needsIdentityReview ? "Review" : existing.status === "Review" ? "Preserve" : existing.status,
-      notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}`,
-    } satisfies InventoryItem];
+      notes,
+    } satisfies InventoryItem;
+    const unchanged = existing.catalogId === result.catalogId
+      && existing.brand === result.brand
+      && existing.line === result.line
+      && existing.vitola === result.vitola
+      && existing.provenanceNotes === result.provenanceNotes
+      && existing.retailValue === result.retailValue
+      && existing.status === result.status
+      && existing.notes === result.notes;
+    return unchanged ? [] : [result];
   });
 }
 

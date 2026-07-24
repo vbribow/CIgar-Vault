@@ -100,3 +100,34 @@ test("legacy generated component rows are repaired without changing collector qu
   assert.equal(repairs[0].photoLink, legacy.photoLink);
   assert.match(repairs[0].catalogId ?? "", /^CIG-/);
 });
+
+test("researched repairs are idempotent and preserve collector-owned fields", () => {
+  const legendsCollection = { collectionId: "COL-LEGENDS", name: "Fuente & Padrón Legends" };
+  const legendsTemplate = {
+    templateId: "TPL-LEGENDS", name: legendsCollection.name, maker: "Arturo Fuente × Padrón",
+    expectedComponents: 1, expectedCigars: 20,
+    requirements: ["20 Padrón-made cigars honoring Carlos A. Fuente, Sr."],
+    componentEvidence: [{
+      requirement: "20 Padrón-made cigars honoring Carlos A. Fuente, Sr.",
+      brand: "Padrón", line: "Legends Carlos A. Fuente, Sr.", vitola: "Box-pressed Churchill (7 × 50)",
+      sourceLabel: "Measured review", sourceUrl: "https://example.com/legends",
+    }],
+    packaging: "Presentation box", matchingRule: "Exact", accent: "#000",
+    sourceUrl: "https://example.com/release", sourceLabel: "Release", researchStatus: "Verified" as const,
+  };
+  const legacy = {
+    inventoryId: "INV-LEGENDS-C01", collectionId: legendsCollection.collectionId,
+    brand: "Padrón", line: "Legends Carlos A. Fuente, Sr.", vitola: "Size to verify",
+    vintage: 2018, currentQty: 17, photoLink: "https://example.com/photo.jpg", retailValue: 125,
+    notes: "Expected component: 20 Padrón-made cigars honoring Carlos A. Fuente, Sr. · Exact vitola still requires verification.",
+    status: "Review" as const,
+  };
+  const first = collectionComponentRepairs(legendsCollection, legendsTemplate, [legacy]);
+  assert.equal(first.length, 1);
+  assert.equal(first[0].currentQty, 17);
+  assert.equal(first[0].photoLink, legacy.photoLink);
+  assert.equal(first[0].retailValue, 125);
+  assert.equal(first[0].vintage, 2018);
+  assert.equal(first[0].provenanceNotes, "Collection component documented by Measured review: https://example.com/legends");
+  assert.equal(collectionComponentRepairs(legendsCollection, legendsTemplate, first).length, 0);
+});

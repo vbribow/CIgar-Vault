@@ -59,6 +59,6 @@ export function readinessSeedRows(partnerId:string){
     title:item.title,
     description:item.description,
     required:true,
-    status:"pending",
+    status:"pending" as const,
   }));
 }

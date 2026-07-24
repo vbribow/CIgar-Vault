@@ -17,6 +17,7 @@ test("completion reconciles components before reusing exact-match retail evidenc
  assert.match(control,/\/populate/);
  assert.match(control,/\/api\/retail-prices\/autofill/);
  assert.match(control,/Complete This Collection/);
+ assert.match(control,/Refresh Researched Identities/);
  assert.match(control,/Finish value research/);
 });
 
