@@ -101,6 +101,10 @@ export default async function HumidorDetailPage({
           <small>{members.length} inventory lots</small>
         </article>
       </section>
+      <section className="climateContextLink">
+        <div><div className="eyebrow">Interpret this environment</div><strong>One reading is a moment. The trend is the climate.</strong><p>Compare this humidor’s selected targets with New World and official Habanos guidance, then learn what sustained heat, dryness, or excess moisture can do over time.</p></div>
+        <a className="button secondary" href="/learn/humidor-climate">Open climate education</a>
+      </section>
       <section className="climateAnalytics">
         <article className="card trendPanel">
           <div className="sectionHead">

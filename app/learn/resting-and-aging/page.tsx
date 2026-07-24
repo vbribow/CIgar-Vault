@@ -173,7 +173,7 @@ export default function RestingAndAgingPage() {
           <div className="journalFields">
             <span>Identity</span><span>Box date</span><span>Arrival</span><span>Rest window</span><span>Storage</span><span>Checkpoint</span><span>Tasting</span><span>Decision</span>
           </div>
-          <div className="ctaRow"><a className="button" href="/inventory">Choose a cigar to document</a><a className="button secondary" href="/records">Record a tasting</a><a className="button secondary" href="/humidors">Review storage</a></div>
+          <div className="ctaRow"><a className="button" href="/inventory">Choose a cigar to document</a><a className="button secondary" href="/records">Record a tasting</a><a className="button secondary" href="/learn/humidor-climate">Master humidor climate</a><a className="button secondary" href="/humidors">Review storage</a></div>
         </div>
       </section>
 
