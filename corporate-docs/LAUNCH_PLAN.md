@@ -1,4 +1,10 @@
-# 30-Day Founder Launch Plan
+# Document 015 — 30-Day Founder Launch Plan
+
+**Version:** 0.1
+**Status:** Working Draft
+**Owner:** Brian Bowers
+**Created:** July 23, 2026
+**Last Updated:** July 23, 2026
 
 ## Week 1 — Working product
 - Connect Brian's live Smartsheet sheets.
@@ -23,3 +29,9 @@
 
 ## Initial offer
 “Your complete cigar collection organized, valued and aging intelligently—without losing control of your data.”
+
+## Revision History
+
+| Version | Date | Author | Change |
+|---:|---|---|---|
+| 0.1 | July 23, 2026 | Brian Bowers | Established the initial 30-day sequence for working product, collector workflow, paid beta, evidence, and the founder offer. |
