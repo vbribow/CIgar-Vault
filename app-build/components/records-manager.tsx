@@ -58,7 +58,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   </select>;
 
   return <div className="recordsGrid">
-    <section className="card smokeJournal">
+    <section className="card smokeJournal" id="log-smoke">
       <div className="eyebrow">Private tasting journal</div>
       <h2>Log a smoke</h2>
       <p className="small">Record what you experienced in your own words. There are no wrong tasting notes.</p>

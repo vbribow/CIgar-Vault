@@ -1,7 +1,9 @@
 import type { Metadata,Viewport } from "next";
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { AppNavigation } from "@/components/app-navigation";
 import { PwaManager } from "@/components/pwa-manager";
+import { JourneyArrival } from "@/components/journey-arrival";
 import "./styles.css";
 
 export async function generateMetadata():Promise<Metadata>{
@@ -27,7 +29,7 @@ export const viewport:Viewport={width:"device-width",initialScale:1,viewportFit:
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><AppNavigation />{children}<PwaManager/></body>
+      <body><AppNavigation /><Suspense fallback={null}><JourneyArrival/></Suspense>{children}<PwaManager/></body>
     </html>
   );
 }
