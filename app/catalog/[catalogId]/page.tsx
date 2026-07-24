@@ -62,7 +62,7 @@ export default async function CanonicalCigarRecordPage({ params }: { params: Pro
 
     <section className="canonicalPrinciple">
       <strong>One cigar. Every connected truth.</strong>
-      <p>This is the shared product record used by Discover, Vault, Learn, Verify, Market, Reviews, and Cedriva AI. Collector ownership remains private and separate.</p>
+      <p>This is the shared product record used by Discover, Vault, Learn, Verify, Market, Reviews, and Cedriva AI. Collector ownership remains private and separate. <Link href="/provenance-graph">See how the provenance graph works →</Link></p>
     </section>
 
     <section className="canonicalSection" id="identity">

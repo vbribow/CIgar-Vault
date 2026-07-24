@@ -1,0 +1,23 @@
+import { climateHealth } from "./climate-alerts";
+import type { buildCollectionIntelligence } from "./collection-intelligence";
+import type { PublicIndustryRegistryRecord } from "./industry-public";
+import type { EnvironmentalSensor,Humidor,HumidorReading,InventoryItem } from "./types";
+
+export type BriefingPriority="Now"|"Today"|"This week"|"For you"|"Industry";
+export type BriefingItem={id:string;priority:BriefingPriority;title:string;detail:string;href:string;source:"Collection evidence"|"Climate evidence"|"Official"|"AI-assisted";reason:string};
+
+export function buildDailyBriefing(input:{inventory:InventoryItem[];humidors:Humidor[];readings:HumidorReading[];sensors:EnvironmentalSensor[];intelligence:ReturnType<typeof buildCollectionIntelligence>;registry?:PublicIndustryRegistryRecord[]},now=new Date()){
+  const items:BriefingItem[]=[];const{inventory,humidors,readings,sensors,intelligence}=input;
+  for(const health of humidors.map(humidor=>climateHealth(humidor,readings,sensors,inventory,now)).filter(item=>item.severity!=="Good")){
+    items.push({id:`climate-${health.humidor.humidorId}`,priority:health.severity==="Critical"?"Now":"Today",title:`${health.humidor.name}: ${health.severity.toLowerCase()} climate condition`,detail:health.alerts[0]?.message||"Storage evidence needs attention.",href:`/humidors/${health.humidor.humidorId}`,source:"Climate evidence",reason:health.alerts[0]?.guidance||"Protect the cigars before making another collection decision."});
+  }
+  for(const mover of intelligence.history.movers.slice(0,2))items.push({id:`move-${mover.item.inventoryId}`,priority:"Today",title:`${mover.item.brand} ${mover.item.line} moved ${mover.changePercent>0?"+":""}${mover.changePercent}%`,detail:"Two dated valuations establish the measured change.",href:`/inventory/${mover.item.inventoryId}#value-evidence`,source:"Collection evidence",reason:"Review the newest source before treating movement as a durable market trend."});
+  for(const cigar of intelligence.advisor.smokeNow.slice(0,2))items.push({id:`smoke-${cigar.inventoryId}`,priority:"For you",title:`Consider ${cigar.brand} ${cigar.line}`,detail:`${cigar.vitola} · ${cigar.vintage||"year unknown"} · ${cigar.score?`${cigar.score}/100 recorded score`:"unscored"}`,href:`/inventory/${cigar.inventoryId}`,source:"AI-assisted",reason:"A transparent age heuristic and your collection evidence place this lot in a plausible smoking window."});
+  if(!intelligence.advisor.smokeNow.length&&intelligence.advisor.continueAging[0]){const cigar=intelligence.advisor.continueAging[0];items.push({id:`age-${cigar.inventoryId}`,priority:"For you",title:`Continue resting ${cigar.brand} ${cigar.line}`,detail:`${cigar.vitola} · ${cigar.vintage||"year unknown"} · developing age profile`,href:`/inventory/${cigar.inventoryId}`,source:"AI-assisted",reason:"A transparent age heuristic suggests patience; your tasting evidence can override this general guidance."})}
+  for(const cigar of intelligence.advisor.needsAttention.slice(0,2))items.push({id:`evidence-${cigar.inventoryId}`,priority:"This week",title:`Complete the record for ${cigar.brand} ${cigar.line}`,detail:[!cigar.vintage&&"year",cigar.retailValue===undefined&&"value",!cigar.storageLocationId&&"storage",!cigar.provenanceNotes&&"provenance"].filter(Boolean).join(" · ")+" needed",href:`/inventory/${cigar.inventoryId}`,source:"Collection evidence",reason:"Stronger records improve insurance, aging guidance, authentication, and future stewardship."});
+  const latest=(input.registry||[]).filter(item=>item.recordType==="release").slice(0,2);
+  for(const release of latest){const payload=release.payload as Record<string,unknown>;items.push({id:`release-${release.id}`,priority:"Industry",title:String(payload.releaseName||"Official release update"),detail:`${release.organizationName} · ${String(payload.availabilityStatus||"official record").replaceAll("_"," ")}`,href:"/industry/registry#releases",source:"Official",reason:"Published directly through a verified organization workspace and clearly labeled as official."})}
+  if(!items.length)items.push({id:"begin",priority:"This week",title:"Build the first intelligence signal",detail:"Document a cigar, assign its storage location, and record one dated value or tasting.",href:"/inventory",source:"AI-assisted",reason:"Cedriva waits for evidence instead of inventing urgency."});
+  const rank:Record<BriefingPriority,number>={Now:0,Today:1,"For you":2,"This week":3,Industry:4};
+  return{generatedAt:now.toISOString(),items:items.sort((a,b)=>rank[a.priority]-rank[b.priority]).slice(0,10),summary:{urgent:items.filter(item=>item.priority==="Now").length,collector:items.filter(item=>item.source!=="Official").length,industry:latest.length}};
+}
