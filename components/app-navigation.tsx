@@ -11,7 +11,7 @@ function matches(pathname: string, href: string) {
 
 export function AppNavigation() {
   const pathname = usePathname();
-  const publicPaths = ["/manifesto", "/constitution", "/login", "/recover", "/reset-password"];
+  const publicPaths = ["/manifesto", "/constitution", "/login", "/recover", "/reset-password", "/partners/join", "/r"];
   if (publicPaths.some((path) => matches(pathname, path))) return <header className="publicHeader"><div className="publicHeaderInner">
     <Link className="appBrand" href="/" aria-label="Cedriva home"><CedrivaMark/><span><strong>Cedriva</strong><small>Preserve · Honor · Grow</small></span></Link>
     <nav aria-label="Public navigation"><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><Link href="/login" className="button secondary">Sign in</Link></nav>
@@ -21,6 +21,7 @@ export function AppNavigation() {
     ["/valuations","Market","Understand value through dated evidence"],
     ["/verification","Verify","Protect authenticity and provenance"],
     ["/trust","Trust Center","Understand every Cedriva source label"],
+    ["/partner-platform","Partner Network","Manage attribution, commissions, and industry relationships"],
     ["/pricing","Reserve","Explore deeper intelligence and service"],
     ["/explore","All of Cedriva","See every connected collector experience"],
   ] as const;
