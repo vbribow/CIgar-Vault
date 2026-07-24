@@ -55,7 +55,7 @@ export function collectionEditionIssue(collection:CigarCollection){
   const template=collectionTemplateFor(collection);
   if(!template?.releaseYear)return undefined;
   if(!collection.releaseYear)return`Confirm the ${template.releaseYear} release year before using this edition template.`;
-  return collection.releaseYear===template.releaseYear?undefined:`Saved release year ${collection.releaseYear} does not match the researched ${template.releaseYear} edition.`;
+  return Number(collection.releaseYear)===template.releaseYear?undefined:`Saved release year ${collection.releaseYear} does not match the researched ${template.releaseYear} edition.`;
 }
 
 export function collectionRequirementMatches(collection: CigarCollection, members: InventoryItem[]) {
