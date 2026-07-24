@@ -8,7 +8,7 @@ const inventory = readFileSync(new URL("../app/inventory/page.tsx", import.meta.
 test("collections remain directly reachable through the mobile Vault and inventory", () => {
   assert.match(navigation, /matches\(pathname,"\/collections"\)/);
   assert.match(navigation, /<small>Vault<\/small>/);
-  assert.match(inventory, /View collections/);
+  assert.match(inventory, /Valuable Collections/);
 });
 
 test("mobile navigation keeps Cigar Somm prominent",()=>{
