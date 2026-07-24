@@ -39,6 +39,15 @@ test("Cigar Somm keeps a URL-selected inventory cigar available outside the shor
   assert.match(component,/selectOptions\.map/);
 });
 
+test("Cigar Somm requires explicit confirmation when a linked cigar belongs to a multi-cigar collection",()=>{
+  const page=readFileSync(new URL("../app/cigar-somm/page.tsx",import.meta.url),"utf8");
+  const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
+  assert.match(page,/params\.collectionId\|\|selected\?\.collectionId/);
+  assert.match(component,/collectionChoiceRequired=collectionCandidates\.length>1/);
+  assert.match(component,/Confirm the exact cigar before analysis/);
+  assert.match(component,/Choose the exact collection cigar above/);
+});
+
 test("Cigar Somm uses the fast source-aware search path for pairing requests",()=>{
   const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
   assert.match(service,/gpt-4\.1-mini/);
