@@ -51,11 +51,24 @@ test("lists missing template components", () => {
   assert.ok(result.missingComponents.includes("Family Reserve"));
 });
 
+test("researched collections exclude incorrectly assigned cigars from completion and value", () => {
+  const collection = { collectionId:"COL-PADRON-COLLECTION", name:"Padrón Collection" };
+  const inventory = [
+    { inventoryId:"RIGHT",brand:"Padrón",line:"1964 Anniversary Series",vitola:"Exclusivo",currentQty:1,retailValue:30,collectionId:collection.collectionId },
+    { inventoryId:"WRONG",brand:"Arturo Fuente",line:"OpusX",vitola:"Double Corona",currentQty:20,retailValue:100,collectionId:collection.collectionId },
+  ];
+  const result=summarizeCollection(collection,inventory,[]);
+  assert.equal(result.componentValue,30);
+  assert.equal(result.completionPercent,20);
+  assert.deepEqual(result.excludedAssignedLots,["WRONG"]);
+});
+
 test("subtracts fully priced original cigars from a humidor collection retail price", () => {
   const collection = { collectionId:"COL-FUENTE-PURPLE-DREAM", name:"Big Purple Dream Humidor" };
   const quantities=[10,6,10,10,10,10,10,10,20,10];
+  const lines=["OpusX Purple Rain","OpusX Big B","OpusX BBMF Natural","OpusX BBMF Maduro","OpusX El Escorpion Natural","OpusX El Escorpion Maduro","OpusX Rare Black Torpedo","OpusX Rare Black Double Corona","OpusX Scorpio Maduro","OpusX Tauros the Bull Maduro"];
   const inventory=quantities.map((originalQty,index)=>({
-    inventoryId:`P${index}`,brand:"Arturo Fuente",line:`OpusX component ${index}`,vitola:"Original release",
+    inventoryId:`P${index}`,brand:"Arturo Fuente",line:lines[index],vitola:"Size to verify",
     originalQty,currentQty:Math.max(0,originalQty-1),retailValue:50,collectionId:collection.collectionId,
   }));
   const result=summarizeCollection(collection,inventory,[]);

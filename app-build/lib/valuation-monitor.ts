@@ -29,7 +29,7 @@ export function valuationNeedsMonitoring(item:InventoryItem,valuations:Valuation
 
 export function reusableValuation(item:InventoryItem,candidates:Array<{item:InventoryItem;valuation:Valuation}>,now=new Date()){
   const key=valuationIdentityKey(item);
-  return candidates.filter(candidate=>valuationIdentityKey(candidate.item)===key&&candidate.valuation.replacementValue!==undefined&&Boolean(candidate.valuation.sourceUrl)&&/^(High|Medium)$/i.test(candidate.valuation.confidence??"")&&!valuationNeedsMonitoring(candidate.item,[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
+  return candidates.filter(candidate=>valuationIdentityKey(candidate.item)===key&&candidate.valuation.replacementValue!==undefined&&Boolean(candidate.valuation.sourceUrl)&&/^(High|Medium)$/i.test(candidate.valuation.confidence??"")&&!valuationNeedsMonitoring({...candidate.item,retailValue:candidate.valuation.replacementValue},[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
 }
 
 export function copiedValuation(item:InventoryItem,source:Valuation,now=new Date()):Valuation{
@@ -40,6 +40,23 @@ export function copiedValuation(item:InventoryItem,source:Valuation,now=new Date
     valuationDate:now.toISOString().slice(0,10),
     notes:`Exact-identity value reused during inventory upload. ${source.notes||""}`.trim(),
   };
+}
+
+export function applyReusableValuations(items:InventoryItem[],inventory:InventoryItem[],valuations:Valuation[],now=new Date()){
+  const inventoryById=new Map(inventory.map(item=>[item.inventoryId,item]));
+  const candidates=valuations.flatMap(valuation=>{
+    const item=inventoryById.get(valuation.inventoryId);
+    return item?[{item,valuation}]:[];
+  });
+  const shared:Valuation[]=[];
+  const valuedItems=items.map(item=>{
+    if(item.retailValue!==undefined)return item;
+    const reusable=reusableValuation(item,candidates,now);
+    if(reusable?.replacementValue===undefined)return item;
+    shared.push(copiedValuation(item,reusable,now));
+    return{...item,retailValue:reusable.replacementValue};
+  });
+  return{items:valuedItems,valuations:shared,valuedImmediately:shared.length};
 }
 
 export function valuationMonitorPriority(item:InventoryItem){

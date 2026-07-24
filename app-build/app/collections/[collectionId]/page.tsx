@@ -22,9 +22,8 @@ export default async function CollectionDetailPage({ params }: { params: Promise
   const evidence = collectionEvidence(collection,template?{name:template.sourceLabel,url:template.sourceUrl,date:template.valueAsOf}:undefined);
   const matches = collectionRequirementMatches(collection, members);
   const verifiedIds=new Set(matches.flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
-  const requiresExactAudit=template?.templateId==="TPL-FUENTE-DREAM-DYNASTY";
-  const verifiedMembers=requiresExactAudit?members.filter(item=>verifiedIds.has(item.inventoryId)):members;
-  const reviewMembers=requiresExactAudit?members.filter(item=>!verifiedIds.has(item.inventoryId)):[];
+  const verifiedMembers=template?members.filter(item=>verifiedIds.has(item.inventoryId)):members;
+  const reviewMembers=template?members.filter(item=>!verifiedIds.has(item.inventoryId)):[];
   const summary = summarizeCollection(collection, inventory, valuations);
   return <main className="shell collectionDetail">
     <nav className="nav"><a className="brand" href="/">Cedriva</a><div className="navLinks"><a href="/acquisitions">Acquisition planner</a><a className="backLink" href="/collections">← Collections</a></div></nav>
