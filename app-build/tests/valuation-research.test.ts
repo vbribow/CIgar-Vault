@@ -40,4 +40,7 @@ test("valuation research never treats owned quantity as original packaging", () 
   assert.match(source,/residual humidor value separately/);
   assert.match(source,/completed-result archives from established European auction houses/);
   assert.match(source,/whether the published result includes buyer's premium/);
+  assert.match(source,/For rare New World releases/);
+  assert.match(source,/two or more traceable signals/);
+  assert.match(source,/Never label a listing or estimate as a sale/);
 });
