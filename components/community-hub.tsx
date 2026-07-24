@@ -8,11 +8,11 @@ type CommunityData = { posts: CommunityPost[]; top25: CommunityRanking[]; rating
 const empty: CommunityData = { posts: [], top25: [], ratingCount: 0 };
 const blankRating = { displayName: "", brand: "", line: "", vitola: "", vintage: "", score: "", review: "" };
 
-export function CommunityHub({ inventoryOptions = [] }: { inventoryOptions?: CommunityRatingInventoryOption[] }) {
+export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { inventoryOptions?: CommunityRatingInventoryOption[]; initialTab?: "board" | "ratings" }) {
   const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [tab, setTab] = useState<"board" | "ratings">("board");
+  const [tab, setTab] = useState<"board" | "ratings">(initialTab);
   const [entryMode, setEntryMode] = useState<"vault" | "manual">(inventoryOptions.length ? "vault" : "manual");
   const [post, setPost] = useState({ displayName: "", category: "General", title: "", body: "" });
   const [rating, setRating] = useState(blankRating);
