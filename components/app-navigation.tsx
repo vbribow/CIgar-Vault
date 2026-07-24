@@ -20,6 +20,7 @@ export function AppNavigation() {
     ["/records","Review","Learn from your own experience and trusted voices"],
     ["/valuations","Market","Understand value through dated evidence"],
     ["/verification","Verify","Protect authenticity and provenance"],
+    ["/trust","Trust Center","Understand every Cedriva source label"],
     ["/pricing","Reserve","Explore deeper intelligence and service"],
     ["/explore","All of Cedriva","See every connected collector experience"],
   ] as const;
