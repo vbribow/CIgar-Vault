@@ -38,4 +38,6 @@ test("valuation research never treats owned quantity as original packaging", () 
   assert.match(source,/current owned quantity is inventory balance only/);
   assert.match(source,/Never treat it as an original box count/);
   assert.match(source,/residual humidor value separately/);
+  assert.match(source,/completed-result archives from established European auction houses/);
+  assert.match(source,/whether the published result includes buyer's premium/);
 });

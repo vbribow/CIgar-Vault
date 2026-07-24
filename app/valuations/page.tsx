@@ -38,8 +38,8 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           <div className="eyebrow">Valuation intelligence</div>
           <h1>Keep every value current.</h1>
           <p className="lede">
-            A rolling review system that separates retail replacement, market
-            estimates, and verified completed sales—calculated per cigar and
+            A rolling review system that separates retail replacement, aftermarket
+            value, and verified completed sales—calculated per cigar and
             never presented as an independent appraisal.
           </p>
           <div className="ctaRow">
@@ -55,7 +55,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           </div>
         </div>
         <div className="valueHeroCard">
-          <span>Documented market value</span>
+          <span>Documented aftermarket value</span>
           <strong>{money.format(totals.documentedMarketValue)}</strong>
           <small>
             {totals.current} current · {intelligence.reviewQueue.length} need
@@ -176,9 +176,9 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                 <th>Qty</th>
                 <th>Retail / stick</th>
                 <th>Retail / box</th>
-                <th>Market estimate</th>
-                <th>Market lot</th>
-                <th>Last completed sale</th>
+                <th>Aftermarket / stick</th>
+                <th>Aftermarket lot</th>
+                <th>Last known sale</th>
                 <th>Change</th>
                 <th>Freshness</th>
                 <th>Evidence</th>
