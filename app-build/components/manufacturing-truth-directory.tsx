@@ -56,6 +56,7 @@ const coverageStatuses: ("All statuses" | BrandManufacturingStatus)[] = ["All st
 export function ManufacturingCoverageIndex({ records }: { records: BrandManufacturingCoverage[] }) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<(typeof coverageStatuses)[number]>("All statuses");
+  const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return records.filter((record) => {
@@ -78,12 +79,30 @@ export function ManufacturingCoverageIndex({ records }: { records: BrandManufact
       <output aria-live="polite"><strong>{filtered.length}</strong><span>brand record{filtered.length === 1 ? "" : "s"}</span></output>
     </div>
     <div className="coverageIndex">
-      {filtered.map((record) => <article key={record.brand} data-status={record.status}>
-        <div><span>{record.primaryRegion} · {record.segment}</span><h3>{record.brand}</h3></div>
-        <div className="coverageStatus"><strong>{record.status}</strong><span>{record.evidence}</span></div>
-        <p>{record.manufacturing}</p>
-        <div className="coverageLinks"><a href={record.href}>{record.recordId ? "Open verified system" : record.status === "Country verified" ? "Review coverage rule" : "Review research standard"} →</a>{record.sourceUrl && <a href={record.sourceUrl} target="_blank" rel="noreferrer">Source ↗</a>}</div>
-      </article>)}
+      {filtered.map((record) => {
+        const expanded = expandedBrand === record.brand;
+        const gapId = `coverage-gap-${record.brand.toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+        const missing = record.status === "Country verified"
+          ? ["Exact factory", "Release period", "Product-level source"]
+          : ["Brand owner", "Creative authorship", "Actual factory", "Production relationship", "Direct source"];
+        return <article key={record.brand} data-status={record.status}>
+          <div><span>{record.primaryRegion} · {record.segment}</span><h3>{record.brand}</h3></div>
+          <div className="coverageStatus"><strong>{record.status}</strong><span>{record.evidence}</span></div>
+          <p>{record.manufacturing}</p>
+          {!record.recordId && expanded && <div className="coverageGap" id={gapId}>
+            <strong>{record.status === "Country verified" ? "What remains unverified" : "Evidence still required"}</strong>
+            <div>{missing.map((item) => <span key={item}>{item}</span>)}</div>
+            <p>{record.status === "Country verified" ? "Cedriva has official country-level evidence, but will not assign a factory to every release without product-level support." : "Cedriva will publish these relationships only after direct manufacturer evidence or corroborated historical sources meet the trust standard."}</p>
+            <a href="#research-standard">How Cedriva verifies evidence ↓</a>
+          </div>}
+          <div className="coverageLinks">
+            {record.recordId
+              ? <a href={record.href}>Open verified system →</a>
+              : <button type="button" aria-expanded={expanded} aria-controls={gapId} onClick={() => setExpandedBrand(expanded ? null : record.brand)}>{expanded ? "Close evidence gap ↑" : "View evidence gap ↓"}</button>}
+            {record.sourceUrl && <a href={record.sourceUrl} target="_blank" rel="noreferrer">Source ↗</a>}
+          </div>
+        </article>;
+      })}
     </div>
   </>;
 }
