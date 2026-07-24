@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const FormBoolean=z.union([z.boolean(),z.literal("true"),z.literal("false")]).transform(value=>value===true||value==="true");
+
 export const PartnerInput = z.object({
   name: z.string().trim().min(2).max(120),
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -23,10 +25,10 @@ export const CampaignInput = z.object({
   holdDays: z.coerce.number().int().min(0).max(180).default(30),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
-  termsConfirmed: z.coerce.boolean().default(false),
-  disclosureApproved: z.coerce.boolean().default(false),
-  audienceConsentConfirmed: z.coerce.boolean().default(false),
-  privacyReviewed: z.coerce.boolean().default(false),
+  termsConfirmed: FormBoolean.default(false),
+  disclosureApproved: FormBoolean.default(false),
+  audienceConsentConfirmed: FormBoolean.default(false),
+  privacyReviewed: FormBoolean.default(false),
 });
 
 export type PartnerInputValue = z.infer<typeof PartnerInput>;
