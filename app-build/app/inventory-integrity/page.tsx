@@ -18,7 +18,7 @@ export default async function InventoryIntegrityPage() {
     <section className="integrityHero"><div><div className="eyebrow">Inventory protection</div><h1>Inventory Integrity Center.</h1><p className="lede">Compare the Smartsheet master with your private Cedriva account before anything is changed.</p></div><div className={`integrityScore ${summary.score === 100 ? "good" : "attention"}`}><strong>{summary.score}%</strong><span>records aligned</span><small>{new Date().toLocaleString()}</small></div></section>
     {!signedIn && <div className="integrityNotice">Sign in to compare your private account with the Smartsheet master. The master inventory is available for backup now.</div>}
     <section className="integrityMetrics">
-      <article><span>Smartsheet master</span><strong>{master.length}</strong><small>canonical inventory lots</small></article>
+      <article><span>Smartsheet migration source</span><strong>{master.length}</strong><small>founder records available for controlled recovery</small></article>
       <article><span>Private account</span><strong>{signedIn ? account.length : "—"}</strong><small>{signedIn ? "account inventory lots" : "sign in to inspect"}</small></article>
       <article className={summary.mismatched ? "attention" : ""}><span>Field mismatches</span><strong>{signedIn ? summary.mismatched : "—"}</strong><small>quantity, value, identity, or storage</small></article>
       <article className={summary.masterOnly || summary.accountOnly ? "attention" : ""}><span>Missing records</span><strong>{signedIn ? summary.masterOnly + summary.accountOnly : "—"}</strong><small>{summary.masterOnly} absent from account · {summary.accountOnly} account-only</small></article>
