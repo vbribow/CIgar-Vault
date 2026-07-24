@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { rankCollectionSommCandidates } from "../lib/collection-somm";
+import { inferSommCollectionId, rankCollectionSommCandidates } from "../lib/collection-somm";
 import type { InventoryItem, SmokingLog } from "../lib/types";
 
 const padron: InventoryItem = { inventoryId:"LEGENDS-P",collectionId:"LEGENDS",brand:"Padrón",line:"Legends Carlos A. Fuente, Sr.",vitola:"Box-pressed Churchill (7 × 50)",currentQty:20 };
@@ -19,4 +19,9 @@ test("collection pairing does not invent a smoke-now leader without evidence",()
  const ranked=rankCollectionSommCandidates([padron,fuente],[],new Date("2026-07-24T00:00:00Z"));
  assert.ok(ranked.every(candidate=>candidate.evidence==="Readiness unknown"));
  assert.ok(ranked.every(candidate=>candidate.detail.includes("will not invent")));
+});
+
+test("Cigar Somm recovers a collection relationship from a generated inventory id",()=>{
+ const collections=[{collectionId:"COL-FUENTE-PADRON-LEGENDS",name:"Fuente & Padrón Legends",releaseYear:2022,memberIds:[]}];
+ assert.equal(inferSommCollectionId({...padron,collectionId:undefined,inventoryId:"INV-FUENTE-PADRON-LEGENDS-C01"},collections),"COL-FUENTE-PADRON-LEGENDS");
 });
