@@ -103,7 +103,11 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       && existing.notes?.includes("Expected component:");
     if (!existing || !legacyGenerated) return [];
     const identity = collectionComponentIdentity(requirement, template);
-    const canonical = canonicalCigarIdentity({ ...identity, vintage: existing.vintage });
+    const inheritedCollectionYear = existing.vintage !== undefined
+      && template.releaseYear !== undefined
+      && Number(existing.vintage) === Number(template.releaseYear);
+    const cigarVintage = inheritedCollectionYear ? undefined : existing.vintage;
+    const canonical = canonicalCigarIdentity({ ...identity, vintage: cigarVintage });
     const documented = template.componentEvidence?.find(component => component.requirement === requirement);
     const evidenceLabel = documented?.sourceLabel || template.sourceLabel;
     const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
@@ -115,6 +119,7 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
+      vintage: cigarVintage,
       provenanceNotes,
     };
     const result = {

@@ -101,6 +101,18 @@ test("legacy generated component rows are repaired without changing collector qu
   assert.match(repairs[0].catalogId ?? "", /^CIG-/);
 });
 
+test("legacy generated rows discard an inherited collection year", () => {
+  const legacy = {
+    inventoryId: "INV-TEST-C02", collectionId: "COL-TEST", brand: "Arturo Fuente", line: "Test Set",
+    vitola: "OpusX Lancero", vintage: 2024, looseStickQty: 3, currentQty: 3,
+    notes: "Expected component: OpusX Lancero",
+  };
+  const repairs = collectionComponentRepairs(collection, { ...template, releaseYear: 2024 }, [legacy]);
+  assert.equal(repairs.length, 1);
+  assert.equal(repairs[0].vintage, undefined);
+  assert.doesNotMatch(repairs[0].catalogId ?? "", /2024/);
+});
+
 test("researched repairs are idempotent and preserve collector-owned fields", () => {
   const legendsCollection = { collectionId: "COL-LEGENDS", name: "Fuente & Padrón Legends" };
   const legendsTemplate = {
