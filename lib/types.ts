@@ -35,7 +35,7 @@ export type InventoryItem = {
 
 export type InventoryInput = Omit<InventoryItem, "currentQty"> & { currentQty?: number };
 
-export type SmokingLog = { smokeId: string; inventoryId: string; dateSmoked: string; vintage?: string | number; overall?: number; flavor?: string; strength?: string; sweetness?: string; construction?: string; tastingNotes?: string; buyAgain?: boolean };
+export type SmokingLog = { smokeId: string; inventoryId: string; cigarName?: string; dateSmoked: string; vintage?: string | number; overall?: number; flavor?: string; strength?: string; sweetness?: string; construction?: string; tastingNotes?: string; buyAgain?: boolean };
 export type Valuation = { valuationId: string; inventoryId: string; valuationDate: string; replacementValue?: number; marketValue?: number; lastSaleValue?: number; lastSaleDate?: string; lastSaleVenue?: string; lastSaleSourceUrl?: string; source?: string; sourceUrl?: string; confidence?: string; notes?: string };
 export type ProfessionalRating = { ratingId:string; inventoryId:string; publication:string; score:number; reviewDate?:string; reviewer?:string; sourceUrl:string; matchConfidence:"High"|"Medium"|"Low"; matchedVintage?:string|number; summary?:string; createdAt:string };
 export type ActivityType = "Purchase" | "Add sticks" | "Add box" | "Open box" | "Smoke" | "Gift" | "Sale" | "Damaged / discarded" | "Correction" | "Storage move";

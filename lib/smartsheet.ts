@@ -157,12 +157,12 @@ function recordCells(values: Array<[string, RecordValue]>, columns: SmartsheetCo
 
 export async function getSmokingLogs(): Promise<SmokingLog[]> {
   const sheet = await recordSheet("SMARTSHEET_SMOKING_LOG_SHEET_ID");
-  return sheet.rows.map((row) => { const v = recordValues(row, sheet.columns); return { smokeId: String(v.get("Smoke ID") || row.id), inventoryId: String(v.get("Inventory ID") || ""), dateSmoked: String(v.get("Date Smoked") || ""), vintage: v.get("Production / Vintage Year") as string | number | undefined, overall: v.get("Overall 1–100") === undefined ? undefined : Number(v.get("Overall 1–100")), flavor: v.get("Flavor") as string | undefined, strength: v.get("Strength") as string | undefined, sweetness: v.get("Sweetness") as string | undefined, construction: v.get("Construction") as string | undefined, tastingNotes: v.get("Tasting Notes") as string | undefined, buyAgain: Boolean(v.get("Buy Again")) }; });
+  return sheet.rows.map((row) => { const v = recordValues(row, sheet.columns); return { smokeId: String(v.get("Smoke ID") || row.id), inventoryId: String(v.get("Inventory ID") || ""), cigarName:v.get("Cigar Name") as string|undefined, dateSmoked: String(v.get("Date Smoked") || ""), vintage: v.get("Production / Vintage Year") as string | number | undefined, overall: v.get("Overall 1–100") === undefined ? undefined : Number(v.get("Overall 1–100")), flavor: v.get("Flavor") as string | undefined, strength: v.get("Strength") as string | undefined, sweetness: v.get("Sweetness") as string | undefined, construction: v.get("Construction") as string | undefined, tastingNotes: v.get("Tasting Notes") as string | undefined, buyAgain: Boolean(v.get("Buy Again")) }; });
 }
 export async function addSmokingLog(log: SmokingLog): Promise<void> {
   const sheet = await recordSheet("SMARTSHEET_SMOKING_LOG_SHEET_ID");
   if (sheet.rows.some((row) => String(recordValues(row, sheet.columns).get("Smoke ID")) === log.smokeId)) throw new Error(`Smoke ID ${log.smokeId} already exists`);
-  const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], sheet.columns);
+  const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Cigar Name",log.cigarName],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], sheet.columns);
   await request(`/sheets/${requireEnv("SMARTSHEET_SMOKING_LOG_SHEET_ID")}/rows`, { method:"POST", body:JSON.stringify([{toBottom:true,cells}]) });
 }
 
@@ -176,7 +176,7 @@ export async function recordSmokingLog(log: SmokingLog): Promise<void> {
   const after = consumeOneInventory(before);
   await request(`/sheets/${sheetId()}/rows`, { method: "PUT", body: JSON.stringify([{ id: inventoryRow.id, cells: cellsFor(after, inventorySheet.columns) }]) });
   try {
-    const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], smokingSheet.columns);
+    const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Cigar Name",log.cigarName],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], smokingSheet.columns);
     await request(`/sheets/${requireEnv("SMARTSHEET_SMOKING_LOG_SHEET_ID")}/rows`, { method:"POST", body:JSON.stringify([{toBottom:true,cells}]) });
   } catch (error) {
     await request(`/sheets/${sheetId()}/rows`, { method: "PUT", body: JSON.stringify([{ id: inventoryRow.id, cells: cellsFor(before, inventorySheet.columns) }]) }).catch(() => undefined);
