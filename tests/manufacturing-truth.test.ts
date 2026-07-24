@@ -8,7 +8,7 @@ const catalogPage = readFileSync(new URL("../app/catalog/page.tsx", import.meta.
 const manufacturingPage = readFileSync(new URL("../app/learn/manufacturing-truth/page.tsx", import.meta.url), "utf8");
 
 test("manufacturing truth records separate ownership, authorship, factories, and evidence", () => {
-  assert.equal(manufacturingTruthRecords.length, 21);
+  assert.equal(manufacturingTruthRecords.length, 31);
   assert.equal(new Set(manufacturingTruthRecords.map((record) => record.id)).size, manufacturingTruthRecords.length);
   for (const record of manufacturingTruthRecords) {
     assert.ok(record.brand);
@@ -30,13 +30,13 @@ test("the first directory represents major owned, partner, mixed, and contract s
   for (const relationship of ["Vertically integrated", "Company-owned factory", "Partner-owned factory", "Directed contract production", "Mixed production"]) {
     assert.ok(manufacturingTruthRecords.some((record) => record.relationship === relationship));
   }
-  for (const id of ["my-father", "arturo-fuente", "perdomo", "espinosa", "aj-fernandez", "dunbarton", "warped", "manufactura-rivas", "plasencia", "foundation", "tatuaje", "illusione", "ovejanegracigars", "crowned-heads"]) {
+  for (const id of ["my-father", "arturo-fuente", "perdomo", "espinosa", "aj-fernandez", "dunbarton", "warped", "manufactura-rivas", "plasencia", "foundation", "tatuaje", "illusione", "ovejanegracigars", "crowned-heads", "adventura", "aging-room", "all-saints", "apostate", "artista", "avowed", "caldwell", "casdagli", "cavalier-geneve", "patina"]) {
     assert.ok(manufacturingTruthRecords.some((record) => record.id === id));
   }
 });
 
 test("factory and regional learning connect back to evidence records", () => {
-  assert.ok(manufacturingFactories.length >= 12);
+  assert.ok(manufacturingFactories.length >= 22);
   assert.ok(manufacturingRegions.length >= 6);
   const recordIds = new Set(manufacturingTruthRecords.map((record) => record.id));
   for (const factory of manufacturingFactories) assert.ok(recordIds.has(factory.record));
@@ -48,10 +48,12 @@ test("every brand in Cedriva receives a manufacturing coverage record", () => {
   assert.equal(cigarBrands.length, 162);
   assert.equal(allBrandManufacturingCoverage.length, cigarBrands.length);
   assert.equal(new Set(allBrandManufacturingCoverage.map((record) => record.brand)).size, cigarBrands.length);
-  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Factory verified").length, 25);
+  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Factory verified").length, 35);
   assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Country verified").length, 27);
-  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Research needed").length, 110);
+  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Research needed").length, 100);
   assert.equal(manufacturingCoverageForBrand("Perdomo").recordId, "perdomo");
+  assert.equal(manufacturingCoverageForBrand("Adventura").recordId, "adventura");
+  assert.equal(manufacturingCoverageForBrand("Patina").recordId, "patina");
   assert.equal(manufacturingCoverageForBrand("Cohiba").status, "Country verified");
   assert.equal(manufacturingCoverageForBrand("Unknown future brand").status, "Research needed");
 });
