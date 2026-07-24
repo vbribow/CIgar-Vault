@@ -31,3 +31,11 @@ test("Cigar Somm uses the fast source-aware search path for pairing requests",()
   assert.match(service,/tool_choice:"required"/);
   assert.match(service,/AbortSignal\.timeout\(60_000\)/);
 });
+test("Cigar Somm requests verified named spirit bottlings and discloses editorial independence",()=>{
+ const library=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
+ const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
+ assert.match(library,/real, currently documented bottlings/);
+ assert.match(library,/official producer\/importer page/);
+ assert.match(component,/Specific spirits/);
+ assert.match(component,/not sponsorships or endorsements/);
+});
