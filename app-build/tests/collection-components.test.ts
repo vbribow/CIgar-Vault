@@ -87,14 +87,15 @@ test("Dream to Dynasty preserves partner-facing brands and exact named cigars", 
 test("legacy generated component rows are repaired without changing collector quantities", () => {
   const legacy = {
     inventoryId: "INV-TEST-C02", collectionId: "COL-TEST", brand: "Arturo Fuente", line: "Test Set",
-    vitola: "OpusX Lancero", looseStickQty: 3, currentQty: 3, photoLink: "https://example.com/photo.jpg",
+    vitola: "OpusX Lancero", vintage: 2022, looseStickQty: 3, currentQty: 3, photoLink: "https://example.com/photo.jpg",
     notes: "Expected component: OpusX Lancero",
   };
-  const repairs = collectionComponentRepairs(collection, template, [legacy]);
+  const repairs = collectionComponentRepairs(collection, { ...template, releaseYear: 2024 }, [legacy]);
   assert.equal(repairs.length, 1);
   assert.equal(repairs[0].line, "OpusX");
   assert.equal(repairs[0].vitola, "Lancero");
   assert.equal(repairs[0].currentQty, 3);
+  assert.equal(repairs[0].vintage, 2024);
   assert.equal(repairs[0].photoLink, legacy.photoLink);
   assert.match(repairs[0].catalogId ?? "", /^CIG-/);
 });
