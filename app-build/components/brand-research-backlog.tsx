@@ -1,14 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { brandResearchBrief, type BrandResearchItem } from "@/lib/brand-research";
+import { brandResearchHref, type BrandResearchItem } from "@/lib/brand-research";
 
 const priorities = ["All priorities", "Boutique priority", "Established priority", "Historical follow-up"] as const;
 
 export function BrandResearchBacklog({ items }: { items: BrandResearchItem[] }) {
   const [query, setQuery] = useState("");
   const [priority, setPriority] = useState<(typeof priorities)[number]>("All priorities");
-  const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return items.filter((item) => (!needle || [item.brand, item.primaryRegion, item.segment, ...item.missing].join(" ").toLocaleLowerCase().includes(needle))
@@ -23,23 +22,11 @@ export function BrandResearchBacklog({ items }: { items: BrandResearchItem[] }) 
       <output><strong>{filtered.length}</strong><span>open records</span></output>
     </div>
     <div className="backlogGrid">{filtered.map((item) => {
-      const expanded = expandedBrand === item.brand;
-      const brief = brandResearchBrief(item);
-      const panelId = `brand-research-${item.brand.toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
       return <article key={item.brand}>
         <header><span>{item.priority}</span><strong>{item.status}</strong></header>
         <h3>{item.brand}</h3><p>{item.primaryRegion} · {item.segment}</p>
         <div>{item.missing.map((field) => <span key={field}>{field}</span>)}</div>
-        {expanded && <section className="brandResearchBrief" id={panelId}>
-          <span>Primary research question</span>
-          <strong>{brief.question}</strong>
-          <ol>{brief.sourceOrder.map((source, index) => <li key={source}><i>{String(index + 1).padStart(2, "0")}</i>{source}</li>)}</ol>
-          <p>{brief.publicationRule}</p>
-          <a href={item.href}>Read the full Cedriva evidence standard →</a>
-        </section>}
-        <button type="button" className="backlogBriefButton" aria-expanded={expanded} aria-controls={panelId} onClick={() => setExpandedBrand(expanded ? null : item.brand)}>
-          {expanded ? "Close research brief ↑" : "Open brand research brief ↓"}
-        </button>
+        <a className="backlogResearchLink" href={brandResearchHref(item.brand)}>Open {item.brand} research →</a>
       </article>;
     })}</div>
   </section>;

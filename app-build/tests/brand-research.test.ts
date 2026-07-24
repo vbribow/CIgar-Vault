@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { brandCoverageWithCatalog, brandResearchBacklog, brandResearchBrief, brandResearchSources, classifyDiscovery } from "../lib/brand-research";
+import { brandCoverageWithCatalog, brandResearchBacklog, brandResearchBrief, brandResearchHref, brandResearchSources, classifyDiscovery } from "../lib/brand-research";
 
 const catalog = [{ catalogId: "CAT-1", brand: "Example Cigars", line: "Original", vitola: "Toro" }];
 
@@ -24,6 +24,7 @@ test("every backlog record produces a brand-specific research brief", () => {
   assert.match(brief.question, new RegExp(item.brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   assert.equal(brief.sourceOrder.length, 3);
   assert.match(brief.publicationRule, /never extend evidence/i);
+  assert.equal(brandResearchHref("Padrón"), "/catalog-discovery/brand?name=Padr%C3%B3n");
 });
 
 test("approved catalog evidence expands public coverage without inventing factories", () => {
