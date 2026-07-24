@@ -13,7 +13,7 @@ const familyPrefixes = [
   "God of Fire Serie Aniversario", "Don Carlos", "Hemingway", "Rare Pink", "Casa Fuente", "Diamond Crown",
   "Chateau Fuente", "Forbidden X", "ForbiddenX", "Ashton ESG", "Ashton VSG", "OpusX", "Preferidos 1903",
 ];
-const explicitBrands = ["San Cristóbal de La Habana", "Hoyo de Monterrey", "Romeo y Julieta", "Joya de Nicaragua", "Arturo Fuente", "H. Upmann", "La Aurora", "My Father", "Diamond Crown", "God of Fire", "Davidoff", "Partagás", "Trinidad", "Bolívar", "Cohiba", "Padrón"];
+const explicitBrands = ["San Cristóbal de La Habana", "Hoyo de Monterrey", "Romeo y Julieta", "Joya de Nicaragua", "Arturo Fuente", "H. Upmann", "La Aurora", "My Father", "Diamond Crown", "God of Fire", "Davidoff", "Partagás", "Trinidad", "Bolívar", "Cohiba", "Padrón", "Ashton"];
 const vitolaAliases: Array<[RegExp, string]> = [
   [/\bcoronas especiales\b/i, "Coronas Especiales"], [/\bespl[eé]ndidos\b/i, "Espléndidos"],
   [/\brobustos\b/i, "Robusto"], [/\bp[ií]r[aá]mides\b/i, "Pirámide"], [/\bmedias coronas\b/i, "Media Corona"],
@@ -45,10 +45,18 @@ export function collectionComponentIdentity(requirement: string, template: Colle
     .replace(/,\s*\d+\s*(?:ring gauge|(?:\d+\s*)?\/?\d*\s*[×x]\s*\d+.*)$/i, "")
     .trim();
   const makerBrand = canonicalBrand(template.maker.split("×")[0].trim());
+  const fuentePrefix = /^Fuente Fuente\s+/i.test(description);
+  if (fuentePrefix) description = description.replace(/^Fuente Fuente\s+/i, "");
+  const jcNewmanPrefix = /^J\.?C\.?\s+Newman\s+/i.test(description);
+  if (jcNewmanPrefix) description = description.replace(/^J\.?C\.?\s+Newman\s+/i, "");
   const explicit = explicitBrands.find(candidate => description.toLocaleLowerCase().startsWith(candidate.toLocaleLowerCase()));
   const brand = /padr[oó]n-made/i.test(description) ? "Padrón" : /fuente-made/i.test(description) ? "Arturo Fuente" : canonicalBrand(explicit || makerBrand);
   if (explicit) description = description.slice(explicit.length).trim();
   description = description.replace(/^(?:-made\s+cigars?\s+honoring\s+)/i, "Legends ").replace(/\s+cigars?$/i, "").trim();
+  if(brand==="Ashton"){
+    const family=description.match(/^(ESG|VSG)\s+(.+)$/i);
+    if(family)return{brand,line:`Ashton ${family[1].toUpperCase()}`,vitola:family[2],quantity,needsIdentityReview:false};
+  }
 
   const standard = [...standardVitolas].sort((a, b) => b.length - a.length).find(value => new RegExp(`\\b${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(description));
   const alias = vitolaAliases.find(([pattern]) => pattern.test(description));
@@ -87,8 +95,7 @@ export function collectionComponentRepairs(collection: CigarCollection, template
     const inventoryId = `INV-${slug(collection.collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
     const existing = byId.get(inventoryId);
     const legacyGenerated = existing?.collectionId === collection.collectionId
-      && existing.notes?.includes(`Expected component: ${requirement}`)
-      && (!existing.catalogId || existing.line === collection.name);
+      && existing.notes?.includes("Expected component:");
     if (!existing || !legacyGenerated) return [];
     const identity = collectionComponentIdentity(requirement, template);
     const canonical = canonicalCigarIdentity({ ...identity, vintage: template.releaseYear });
