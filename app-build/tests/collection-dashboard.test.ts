@@ -25,6 +25,8 @@ test("summarizes whole value, premium, completeness, and history", () => {
   assert.equal(result.missingComponents.length, 0);
   assert.equal(result.expectedCigars,40);
   assert.equal(result.valueEvidence,"Collection record");
+  assert.equal(result.marketCoverage,2);
+  assert.equal(result.completedSaleCoverage,0);
   assert.deepEqual(result.expectedContents,["20 Padrón-made cigars honoring Carlos A. Fuente, Sr.","20 Fuente-made cigars honoring José O. Padrón"]);
   assert.deepEqual(result.valueHistory, [{ date: "2026-01-01", value: 900 }]);
 });

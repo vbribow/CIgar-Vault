@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeWrite, dataMode } from "@/lib/config";
-import { collectionComponentDrafts, unmaterializedCollectionRequirements } from "@/lib/collection-components";
+import { collectionComponentDrafts, collectionComponentRepairs, unmaterializedCollectionRequirements } from "@/lib/collection-components";
 import { collectionTemplateFor } from "@/lib/collection-dashboard";
 import { loadCollections } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
@@ -24,15 +24,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     });
     const fulfilled = new Set(reusable.map(match => match.requirement));
     const drafts = collectionComponentDrafts(collection, template, inventory, fulfilled).map(item => normalizeInventory(item));
-    if (!drafts.length && !reusable.length) return NextResponse.json({ data: { created: 0, linked: 0, unresolved: unmaterializedCollectionRequirements(template), message: "No new component lots were needed." } });
+    const repairs = collectionComponentRepairs(collection, template, inventory).map(item => normalizeInventory(item));
+    if (!drafts.length && !reusable.length && !repairs.length) return NextResponse.json({ data: { created: 0, linked: 0, repaired: 0, unresolved: unmaterializedCollectionRequirements(template), message: "No new component lots were needed." } });
     const accountSave = await Promise.all(drafts.map(item => saveOwnedRecord("inventory", item.inventoryId, item)));
     const accountLinks = await Promise.all(reusable.map(({ item }) => saveOwnedRecord("inventory", item.inventoryId, item)));
-    if (![...accountSave, ...accountLinks].every(Boolean)) {
+    const accountRepairs = await Promise.all(repairs.map(item => saveOwnedRecord("inventory", item.inventoryId, item)));
+    if (![...accountSave, ...accountLinks, ...accountRepairs].every(Boolean)) {
       if (!authorizeWrite(request)) return NextResponse.json({ error: "Sign in before populating collection inventory" }, { status: 401 });
       if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in preview mode" }, { status: 409 });
       await addInventoryRows(drafts);
-      await Promise.all(reusable.map(({ item }) => updateInventoryRow(item.inventoryId, item)));
+      await Promise.all([...reusable.map(({ item }) => item), ...repairs].map(item => updateInventoryRow(item.inventoryId, item)));
     }
-    return NextResponse.json({ data: { created: drafts.length, linked: reusable.length, unresolved: unmaterializedCollectionRequirements(template), items: drafts } }, { status: 201 });
+    return NextResponse.json({ data: { created: drafts.length, linked: reusable.length, repaired: repairs.length, unresolved: unmaterializedCollectionRequirements(template), items: drafts } }, { status: 201 });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Collection population failed" }, { status: 422 }); }
 }
