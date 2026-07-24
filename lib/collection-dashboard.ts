@@ -93,7 +93,9 @@ export function summarizeCollection(
     const originalCount = item.originalQty ?? item.currentQty ?? 0;
     return sum + (componentEvidence[index].retailUnit ?? 0) * originalCount;
   }, 0);
-  const expectedComponents = collection.expectedComponents ?? template?.expectedComponents;
+  // A verified edition template is authoritative. Older saved collection rows
+  // may contain a provisional count from before the contents were researched.
+  const expectedComponents = template?.expectedComponents ?? collection.expectedComponents;
   const ownedComponents = template
     ? matches.filter((match) => Boolean(match.inventoryId)).length
     : members.length;
@@ -129,7 +131,7 @@ export function summarizeCollection(
       : componentValue > 0
         ? "Component inventory"
         : "Pending";
-  const expectedCigars = collection.expectedCigars ?? template?.expectedCigars;
+  const expectedCigars = template?.expectedCigars ?? collection.expectedCigars;
   const originalCigars = members.reduce((sum,item)=>sum+(item.originalQty??item.currentQty??0),0);
   const hasCompleteCigarRetail = members.length > 0
     && componentEvidence.every(evidence => evidence.retailUnit !== undefined)

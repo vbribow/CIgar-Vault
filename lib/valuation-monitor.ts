@@ -60,7 +60,10 @@ export function applyReusableValuations(items:InventoryItem[],inventory:Inventor
 }
 
 export function valuationMonitorPriority(item:InventoryItem){
-  return(item.retailValue===undefined?50_000:0)+(item.priority==="High"?10_000:0)+(item.retailValue??0)*(item.currentQty??0);
+  return(item.retailValue===undefined?50_000:0)
+    +(item.collectionId?25_000:0)
+    +(item.priority==="High"?10_000:0)
+    +(item.retailValue??0)*(item.currentQty??0);
 }
 
 export function valuationBatchSize(value=process.env.VALUATION_BATCH_SIZE){
