@@ -6,6 +6,7 @@ import { researchInventoryValuation } from "@/lib/valuation-research";
 import { inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationCostEstimate,valuationMonitorPriority,valuationNeedsMonitoring } from "@/lib/valuation-monitor";
 import { getInventory,getValuations,recordValuation } from "@/lib/smartsheet";
 import type { InventoryItem,Valuation } from "@/lib/types";
+import { scheduledVaultAuthority } from "@/lib/data-authority";
 export const maxDuration=300;
 
 type OwnedGroup={inventory:InventoryItem[];valuations:Valuation[]};
@@ -72,12 +73,13 @@ async function monitorSmartsheet(request:Request){
 
 export async function GET(request:Request){
   if(!authorizeSensorSync(request))return NextResponse.json({error:"Unauthorized"},{status:401});
-  if(dataMode()==="smartsheet"){
+  const authority=scheduledVaultAuthority(process.env);
+  if(authority==="smartsheet-legacy-operations"&&dataMode()==="smartsheet"){
     try{return await monitorSmartsheet(request)}
     catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Valuation monitoring failed"},{status:502})}
   }
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if(!url||!serviceKey)return NextResponse.json({error:"Scheduled valuation monitoring requires SUPABASE_SERVICE_ROLE_KEY"},{status:503});
+  if(authority!=="supabase-private-vault"||!url||!serviceKey)return NextResponse.json({error:"Scheduled valuation monitoring requires Supabase service credentials; Smartsheet is available only as an explicitly configured legacy operations fallback"},{status:503});
   try{
     const admin=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
     const monthStart=`${new Date().toISOString().slice(0,7)}-01T00:00:00.000Z`;
