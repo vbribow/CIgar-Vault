@@ -11,14 +11,14 @@ export async function GET() {
     const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }, { data: records, error: recordsError }] = await Promise.all([
       supabase.from("profiles").select("display_name,collection_name,experience_level,billing_plan,billing_status,created_at,updated_at").eq("user_id", user.id).maybeSingle(),
       supabase.from("account_preferences").select("email_notifications,wishlist_alerts,valuation_research,rating_research,product_analytics,upgrade_recommendations,updated_at").eq("user_id", user.id).maybeSingle(),
-      supabase.from("vault_records").select("kind,record_id,payload,updated_at").order("kind").order("record_id"),
+      supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",user.id).order("kind").order("record_id"),
     ]);
     if (profileError || preferencesError || recordsError) throw profileError || preferencesError || recordsError;
     const createdAt = new Date().toISOString();
     const payload = buildAccountExport({ userId:user.id, email:user.email, profile, preferences, records:records || [], createdAt });
     return new NextResponse(JSON.stringify(payload, null, 2), { headers: {
       "content-type": "application/json; charset=utf-8",
-      "content-disposition": `attachment; filename="cigar-vault-complete-${createdAt.slice(0,10)}.json"`,
+      "content-disposition": `attachment; filename="cedriva-private-record-${createdAt.slice(0,10)}.json"`,
       "cache-control": "no-store",
     } });
   } catch (error) {
