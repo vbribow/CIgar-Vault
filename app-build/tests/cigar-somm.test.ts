@@ -24,6 +24,13 @@ test("Cigar Somm shows research progress and releases stalled requests",()=>{
   assert.match(component,/AbortSignal\.timeout\(105_000\)/);
 });
 
+test("Cigar Somm keeps a URL-selected inventory cigar available outside the shortened dropdown",()=>{
+  const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
+  assert.match(component,/selected=inventory\.find/);
+  assert.match(component,/\[selected,\.\.\.matches\]/);
+  assert.match(component,/selectOptions\.map/);
+});
+
 test("Cigar Somm uses the fast source-aware search path for pairing requests",()=>{
   const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
   assert.match(service,/gpt-4\.1-mini/);
