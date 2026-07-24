@@ -45,6 +45,16 @@ export async function deleteOwnedRecord(kind: VaultRecordKind, recordId: string)
   return true;
 }
 
+export async function deleteOwnedRecords(kind: VaultRecordKind, recordIds: string[]): Promise<number> {
+  const context = await accountContext();
+  if (!context) return 0;
+  const ids = [...new Set(recordIds.filter(Boolean))];
+  if (!ids.length) return 0;
+  const { error } = await context.supabase.from("vault_records").delete().eq("kind", kind).in("record_id", ids);
+  if (error) throw error;
+  return ids.length;
+}
+
 export async function importOwnedRecords(records: Array<{kind:VaultRecordKind;recordId:string;payload:unknown}>) {
   const context = await accountContext();
   if (!context) throw new Error("Sign in before importing records");

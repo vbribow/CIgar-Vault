@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { InventoryInputSchema,normalizeInventory } from "@/lib/inventory-model";
-import { MAX_IMPORT_BYTES,parseInventoryFile } from "@/lib/inventory-import";
-import { deleteOwnedRecord,importOwnedRecords,loadAccountRecords,saveOwnedRecord } from "@/lib/user-data";
+import { inventoryImportIdentity,MAX_IMPORT_BYTES,parseInventoryFile } from "@/lib/inventory-import";
+import { deleteOwnedRecords,importOwnedRecords,loadAccountRecords,saveOwnedRecord } from "@/lib/user-data";
+import { importRecordFingerprint,safelyRollbackImportedRecords } from "@/lib/import-safety";
 import { copiedValuation,reusableValuation } from "@/lib/valuation-monitor";
 import { getInventory,getValuations } from "@/lib/smartsheet";
 import type { InventoryItem,Valuation } from "@/lib/types";
@@ -27,6 +28,11 @@ export async function POST(request:Request){
    const parsedItems:InventoryItem[]=body.items.map((value:unknown)=>normalizeInventory(InventoryInputSchema.parse(value)));
    const existingIds=new Set(existing.map((item:InventoryItem)=>item.inventoryId));
    if(parsedItems.some((item:InventoryItem)=>existingIds.has(item.inventoryId)))return reply(new Error("One or more inventory IDs already exist. Preview the file again."),409);
+   if(new Set(parsedItems.map(item=>item.inventoryId)).size!==parsedItems.length)return reply(new Error("The selected rows contain duplicate inventory IDs."),409);
+   const acknowledged=new Set(Array.isArray(body.acknowledgedDuplicateIds)?body.acknowledgedDuplicateIds.map(String):[]);
+   const existingIdentities=new Set(existing.map(inventoryImportIdentity)),seenIdentities=new Set<string>(),unacknowledged:string[]=[];
+   for(const item of parsedItems){const identity=inventoryImportIdentity(item),duplicate=existingIdentities.has(identity)||seenIdentities.has(identity);if(duplicate&&!acknowledged.has(item.inventoryId))unacknowledged.push(item.inventoryId);seenIdentities.add(identity)}
+   if(unacknowledged.length)return reply(new Error(`Review and explicitly acknowledge possible duplicates before importing: ${unacknowledged.join(", ")}`),409);
    const [valuations,sharedInventory,sharedValuations]=await Promise.all([
     loadAccountRecords<Valuation>("valuations").then(value=>value||[]),
     getInventory().catch(()=>[]),
@@ -43,21 +49,29 @@ export async function POST(request:Request){
     return{...item,retailValue:reusable.replacementValue};
    });
    const batchId=`IMPORT-BATCH-${new Date().toISOString()}-${crypto.randomUUID()}`;
+   const inventoryFingerprints=Object.fromEntries(items.map(item=>[item.inventoryId,importRecordFingerprint(item)]));
+   const valuationFingerprints=Object.fromEntries(shared.map(value=>[value.valuationId,importRecordFingerprint(value)]));
+   const audit={action:"inventory-spreadsheet-import",status:"pending",batchId,fileName:String(body.fileName||"upload"),inventoryIds:items.map(item=>item.inventoryId),valuationIds:shared.map(value=>value.valuationId),inventoryFingerprints,valuationFingerprints,count:items.length,createdAt:new Date().toISOString()};
+   await saveOwnedRecord("integrity",batchId,audit);
    await importOwnedRecords([
     ...items.map((item:InventoryItem)=>({kind:"inventory" as const,recordId:item.inventoryId,payload:item})),
     ...shared.map(value=>({kind:"valuations" as const,recordId:value.valuationId,payload:value})),
    ]);
-   await saveOwnedRecord("integrity",batchId,{action:"inventory-spreadsheet-import",batchId,fileName:String(body.fileName||"upload"),inventoryIds:items.map((item:InventoryItem)=>item.inventoryId),valuationIds:shared.map(value=>value.valuationId),count:items.length,createdAt:new Date().toISOString()});
+   await saveOwnedRecord("integrity",batchId,{...audit,status:"complete",completedAt:new Date().toISOString()});
    return NextResponse.json({data:{batchId,imported:items.length,valuedImmediately:shared.length,valuationStatus:shared.length===items.length?"All uploaded cigars received current exact-match values.":"Remaining cigars entered the priority research queue."}});
   }
   if(body.action==="rollback"){
    const audits=await loadAccountRecords<Record<string,unknown>>("integrity");
    const audit=audits?.find(value=>value.batchId===body.batchId&&value.action==="inventory-spreadsheet-import");
    if(!audit||!Array.isArray(audit.inventoryIds))return reply(new Error("Import batch was not found"),404);
-   await Promise.all(audit.inventoryIds.map(id=>deleteOwnedRecord("inventory",String(id))));
-   if(Array.isArray(audit.valuationIds))await Promise.all(audit.valuationIds.map(id=>deleteOwnedRecord("valuations",String(id))));
-   await saveOwnedRecord("integrity",String(body.batchId),{...audit,action:"inventory-spreadsheet-import-rolled-back",rolledBackAt:new Date().toISOString()});
-   return NextResponse.json({data:{removed:audit.inventoryIds.length}});
+   if(!audit.inventoryFingerprints||typeof audit.inventoryFingerprints!=="object")return reply(new Error("This older import predates edit-safe rollback. Use Inventory Integrity to review it manually."),409);
+   const [currentInventory,currentValuations]=await Promise.all([loadAccountRecords<InventoryItem>("inventory").then(value=>value||[]),loadAccountRecords<Valuation>("valuations").then(value=>value||[])]);
+   const inventoryRollback=safelyRollbackImportedRecords(currentInventory,item=>item.inventoryId,audit.inventoryFingerprints as Record<string,string>);
+   const valuationRollback=safelyRollbackImportedRecords(currentValuations,value=>value.valuationId,(audit.valuationFingerprints&&typeof audit.valuationFingerprints==="object"?audit.valuationFingerprints:{}) as Record<string,string>);
+   await Promise.all([deleteOwnedRecords("inventory",inventoryRollback.removable),deleteOwnedRecords("valuations",valuationRollback.removable)]);
+   const protectedIds=[...inventoryRollback.protectedIds,...valuationRollback.protectedIds];
+   await saveOwnedRecord("integrity",String(body.batchId),{...audit,action:"inventory-spreadsheet-import-rolled-back",removedInventoryIds:inventoryRollback.removable,removedValuationIds:valuationRollback.removable,protectedIds,alreadyMissingIds:[...inventoryRollback.alreadyMissing,...valuationRollback.alreadyMissing],rolledBackAt:new Date().toISOString()});
+   return NextResponse.json({data:{removed:inventoryRollback.removable.length,protected:protectedIds.length,protectedIds}});
   }
   return reply(new Error("Unknown import action"));
  }catch(error){return reply(error,error instanceof SyntaxError?400:422)}
