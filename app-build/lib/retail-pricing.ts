@@ -19,6 +19,17 @@ export function retailBoxValue(item: Pick<InventoryItem, "retailValue" | "sticks
   return item.retailValue * item.sticksPerBox;
 }
 
+export function existingRetailPriceForBasis(
+  item: Pick<InventoryItem, "retailValue" | "sticksPerBox"> | undefined,
+  basis: ManualRetailPriceInput["basis"],
+) {
+  if (item?.retailValue === undefined) return undefined;
+  if (basis === "Per cigar") return item.retailValue;
+  return item.sticksPerBox === undefined
+    ? undefined
+    : item.retailValue * item.sticksPerBox;
+}
+
 export function normalizeManualRetailPrice(input: ManualRetailPriceInput) {
   if (!Number.isFinite(input.price) || input.price < 0) throw new Error("Enter a valid retail price.");
   if (input.basis === "Per cigar") {
