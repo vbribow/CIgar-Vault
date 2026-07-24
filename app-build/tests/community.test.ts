@@ -36,7 +36,17 @@ test("community activity metrics are real accessible navigation controls",()=>{
  assert.match(component,/function showTab\(next:"board"\|"ratings"\)/);
  assert.match(component,/aria-label=\{`View \$\{data\.posts\.length\} recent discussions`\}/);
  assert.match(component,/aria-label=\{`View \$\{data\.ratingCount\} collector ratings`\}/);
- assert.match(component,/onClick=\{\(\)=>showTab\("board"\)\}/);
- assert.match(component,/onClick=\{\(\)=>showTab\("ratings"\)\}/);
+ assert.match(component,/href="\/community\?tab=board#recent-discussions"/);
+ assert.match(component,/href="\/community\?tab=ratings#rate-a-cigar"/);
+ assert.match(component,/href="\/community\?tab=ratings#top-25"/);
  assert.match(component,/aria-pressed=\{tab==="ratings"\}/);
+});
+test("community destinations lead to substantive, distinct content",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.match(component,/id="recent-discussions"/);
+ assert.match(component,/Questions, experience, stewardship, and cultural knowledge/);
+ assert.match(component,/id="rate-a-cigar"/);
+ assert.match(component,/Your score enters the ranking only after publication/);
+ assert.match(component,/id="top-25"/);
+ assert.match(component,/retailer promotion never does/);
 });

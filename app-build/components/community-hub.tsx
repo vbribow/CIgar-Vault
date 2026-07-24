@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { communityStatusLabel, type CommunityPost, type CommunityRanking, type CommunityRating } from "@/lib/community";
 import type { CommunityRatingInventoryOption } from "@/lib/community-rating-options";
 import { TrustMark } from "@/components/trust-mark";
@@ -81,29 +82,146 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   }
 
   const identityFields = entryMode === "vault" ? <>
-    <label>Brand<select value={rating.brand} onChange={event => setRating({ ...rating, brand: event.target.value, line: "", vitola: "", vintage: "" })} required><option value="">Choose a brand</option>{brands.map(brand => <option key={brand}>{brand}</option>)}</select></label>
-    <label>Line or blend<select value={rating.line} disabled={!rating.brand} onChange={event => setRating({ ...rating, line: event.target.value, vitola: "", vintage: "" })} required><option value="">{rating.brand ? "Choose a line or blend" : "Choose a brand first"}</option>{lines.map(line => <option key={line}>{line}</option>)}</select></label>
-    <label>Vitola<select value={rating.vitola} disabled={!rating.line} onChange={event => setRating({ ...rating, vitola: event.target.value, vintage: "" })} required><option value="">{rating.line ? "Choose a vitola" : "Choose a line first"}</option>{vitolas.map(vitola => <option key={vitola}>{vitola}</option>)}</select></label>
-    {vintages.length ? <label>Vintage or release year<select value={rating.vintage} onChange={event => setRating({ ...rating, vintage: event.target.value })}><option value="">Not specified</option>{vintages.map(vintage => <option key={vintage}>{vintage}</option>)}</select></label> : null}
+    <label>Brand<select value={rating.brand} onChange={event => setRating({ ...rating, brand: event.target.value, line: "", vitola: "", vintage: "" })} required>
+<option value="">Choose a brand</option>{brands.map(brand => <option key={brand}>{brand}</option>)}</select>
+</label>
+    <label>Line or blend<select value={rating.line} disabled={!rating.brand} onChange={event => setRating({ ...rating, line: event.target.value, vitola: "", vintage: "" })} required>
+<option value="">{rating.brand ? "Choose a line or blend" : "Choose a brand first"}</option>{lines.map(line => <option key={line}>{line}</option>)}</select>
+</label>
+    <label>Vitola<select value={rating.vitola} disabled={!rating.line} onChange={event => setRating({ ...rating, vitola: event.target.value, vintage: "" })} required>
+<option value="">{rating.line ? "Choose a vitola" : "Choose a line first"}</option>{vitolas.map(vitola => <option key={vitola}>{vitola}</option>)}</select>
+</label>
+    {vintages.length ? <label>Vintage or release year<select value={rating.vintage} onChange={event => setRating({ ...rating, vintage: event.target.value })}>
+<option value="">Not specified</option>{vintages.map(vintage => <option key={vintage}>{vintage}</option>)}</select>
+</label> : null}
   </> : <>
-    <label>Brand<input value={rating.brand} onChange={event => setRating({ ...rating, brand: event.target.value })} required /></label>
-    <label>Line or blend<input value={rating.line} onChange={event => setRating({ ...rating, line: event.target.value })} required /></label>
-    <label>Vitola<input value={rating.vitola} onChange={event => setRating({ ...rating, vitola: event.target.value })} required /></label>
-    <label>Vintage or release year<input value={rating.vintage} onChange={event => setRating({ ...rating, vintage: event.target.value })} /></label>
+    <label>Brand<input value={rating.brand} onChange={event => setRating({ ...rating, brand: event.target.value })} required />
+</label>
+    <label>Line or blend<input value={rating.line} onChange={event => setRating({ ...rating, line: event.target.value })} required />
+</label>
+    <label>Vitola<input value={rating.vitola} onChange={event => setRating({ ...rating, vitola: event.target.value })} required />
+</label>
+    <label>Vintage or release year<input value={rating.vintage} onChange={event => setRating({ ...rating, vintage: event.target.value })} />
+</label>
   </>;
 
   return <>
-    <section className="communityMetrics" aria-label="Community activity"><button type="button" onClick={()=>showTab("board")} aria-label={`View ${data.posts.length} recent discussions`}><strong>{data.posts.length}</strong><span>recent discussions</span><small>Open message board →</small></button><button type="button" onClick={()=>showTab("ratings")} aria-label={`View ${data.ratingCount} collector ratings`}><strong>{data.ratingCount}</strong><span>collector ratings</span><small>Open ratings →</small></button><button type="button" onClick={()=>showTab("ratings")} aria-label={`View ${data.top25.length} ranked cigars`}><strong>{data.top25.length}</strong><span>ranked cigars</span><small>Open Top 25 →</small></button></section>
-    <section className="communityTabs"><button type="button" className={tab === "board" ? "active" : ""} aria-pressed={tab==="board"} onClick={() => showTab("board")}>Message board</button><button type="button" className={tab === "ratings" ? "active" : ""} aria-pressed={tab==="ratings"} onClick={() => showTab("ratings")}>Top 25 cigars</button></section>
+    <section className="communityMetrics" aria-label="Community activity">
+<Link href="/community?tab=board#recent-discussions" onClick={()=>setTab("board")} aria-label={`View ${data.posts.length} recent discussions`}>
+<strong>{data.posts.length}</strong>
+<span>recent discussions</span>
+<small>Read collector conversations →</small>
+</Link>
+<Link href="/community?tab=ratings#rate-a-cigar" onClick={()=>setTab("ratings")} aria-label={`View ${data.ratingCount} collector ratings`}>
+<strong>{data.ratingCount}</strong>
+<span>collector ratings</span>
+<small>Rate from your Vault →</small>
+</Link>
+<Link href="/community?tab=ratings#top-25" onClick={()=>setTab("ratings")} aria-label={`View ${data.top25.length} ranked cigars`}>
+<strong>{data.top25.length}</strong>
+<span>ranked cigars</span>
+<small>Explore the living Top 25 →</small>
+</Link>
+</section>
+    <section className="communityTabs">
+<button type="button" className={tab === "board" ? "active" : ""} aria-pressed={tab==="board"} onClick={() => showTab("board")}>Message board</button>
+<button type="button" className={tab === "ratings" ? "active" : ""} aria-pressed={tab==="ratings"} onClick={() => showTab("ratings")}>Top 25 cigars</button>
+</section>
     {message && <output className="communityMessage">{message}{message.includes("administrator review") && <small>Your contribution is private while it waits in the <a href="/ai-administrator">AI Administrator review queue</a>.</small>}</output>}
-    <aside className="communityTrust"><TrustMark kind="Community" compact/><span>Posts, reviews, and Top 25 scores reflect collector experience—not official product facts.</span><a href="/trust">How Cedriva labels trust →</a></aside>
-    {(data.myContributions.posts.length>0||data.myContributions.ratings.length>0)&&<section className="contributionTracker"><div className="sectionHead"><div><div className="eyebrow">Your contributions</div><h2>Publication status</h2><p>Track each submission from review through publication. Founder notes appear here when a correction is needed.</p></div><a className="button secondary" href="/ai-administrator">Founder review</a></div><div>{[...data.myContributions.posts.map(item=>({id:item.id,kind:"Discussion",label:item.title,status:item.status,reason:item.moderationReason,createdAt:item.createdAt})),...data.myContributions.ratings.map(item=>({id:item.id,kind:"Rating",label:`${item.brand} ${item.line} ${item.vitola} · ${item.score}`,status:item.status,reason:item.moderationReason,createdAt:item.createdAt}))].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(item=><article key={`${item.kind}-${item.id}`}><div><span>{item.kind}</span><strong>{item.label}</strong><small>{new Date(item.createdAt).toLocaleString()}</small></div><b data-status={item.status}>{communityStatusLabel(item.status)}</b>{item.status==="changes"&&item.reason&&<p>{item.reason}</p>}</article>)}</div></section>}
+    <aside className="communityTrust">
+<TrustMark kind="Community" compact/>
+<span>Posts, reviews, and Top 25 scores reflect collector experience—not official product facts.</span>
+<a href="/trust">How Cedriva labels trust →</a>
+</aside>
+    {(data.myContributions.posts.length>0||data.myContributions.ratings.length>0)&&<section className="contributionTracker">
+<div className="sectionHead">
+<div>
+<div className="eyebrow">Your contributions</div>
+<h2>Publication status</h2>
+<p>Track each submission from review through publication. Founder notes appear here when a correction is needed.</p>
+</div>
+<a className="button secondary" href="/ai-administrator">Founder review</a>
+</div>
+<div>{[...data.myContributions.posts.map(item=>({id:item.id,kind:"Discussion",label:item.title,status:item.status,reason:item.moderationReason,createdAt:item.createdAt})),...data.myContributions.ratings.map(item=>({id:item.id,kind:"Rating",label:`${item.brand} ${item.line} ${item.vitola} · ${item.score}`,status:item.status,reason:item.moderationReason,createdAt:item.createdAt}))].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(item=>
+<article key={`${item.kind}-${item.id}`}>
+<div>
+<span>{item.kind}</span>
+<strong>{item.label}</strong>
+<small>{new Date(item.createdAt).toLocaleString()}</small>
+</div>
+<b data-status={item.status}>{communityStatusLabel(item.status)}</b>{item.status==="changes"&&item.reason&&<p>{item.reason}</p>}</article>)}</div>
+</section>}
     {tab === "board" ? <div className="communityLayout">
-      <section><div className="sectionHead"><div><div className="eyebrow">Collector conversation</div><h2>Community board</h2></div></div>{loading ? <div className="emptyState">Loading community…</div> : data.posts.map(item => <article className="communityPost" key={item.id}><span>{item.category}</span><h3>{item.title}</h3><p>{item.body}</p><small>{item.displayName} · {new Date(item.createdAt).toLocaleDateString()}</small></article>)}{!loading && !data.posts.length && <div className="emptyState">No discussions yet. Start the first thoughtful conversation.</div>}</section>
-      <form className="communityForm" onSubmit={submitPost}><div className="eyebrow">New discussion</div><h2>Share with collectors</h2><label>Display name<input value={post.displayName} onChange={event => setPost({ ...post, displayName: event.target.value })} required minLength={2} /></label><label>Category<select value={post.category} onChange={event => setPost({ ...post, category: event.target.value })}><option>General</option><option>Cigar discussion</option><option>Collection care</option><option>Humidors</option><option>Events</option></select></label><label>Title<input value={post.title} onChange={event => setPost({ ...post, title: event.target.value })} required minLength={4} /></label><label>Message<textarea value={post.body} onChange={event => setPost({ ...post, body: event.target.value })} required minLength={10} rows={7} /></label><button className="button" disabled={Boolean(submitting)}>{submitting==="post"?"Publishing…":"Submit discussion"}</button><small>AI Administrator screens submissions. No sales, trades, personal contact details, or illegal activity.</small></form>
+      <section id="recent-discussions">
+<div className="sectionHead">
+<div>
+<div className="eyebrow">Collector conversation</div>
+<h2>Recent discussions</h2>
+<p>Questions, experience, stewardship, and cultural knowledge shared by Cedriva collectors.</p>
+</div>
+</div>{loading ? <div className="emptyState">Loading community…</div> : data.posts.map(item => <article className="communityPost" key={item.id}>
+<span>{item.category}</span>
+<h3>{item.title}</h3>
+<p>{item.body}</p>
+<small>{item.displayName} · {new Date(item.createdAt).toLocaleDateString()}</small>
+</article>)}{!loading && !data.posts.length && <div className="emptyState">
+<strong>The table is ready for its first conversation.</strong>
+<p>Ask a thoughtful question about a cigar, collection care, history, craftsmanship, or a memorable experience.</p>
+</div>}</section>
+      <form className="communityForm" onSubmit={submitPost}>
+<div className="eyebrow">New discussion</div>
+<h2>Share with collectors</h2>
+<label>Display name<input value={post.displayName} onChange={event => setPost({ ...post, displayName: event.target.value })} required minLength={2} />
+</label>
+<label>Category<select value={post.category} onChange={event => setPost({ ...post, category: event.target.value })}>
+<option>General</option>
+<option>Cigar discussion</option>
+<option>Collection care</option>
+<option>Humidors</option>
+<option>Events</option>
+</select>
+</label>
+<label>Title<input value={post.title} onChange={event => setPost({ ...post, title: event.target.value })} required minLength={4} />
+</label>
+<label>Message<textarea value={post.body} onChange={event => setPost({ ...post, body: event.target.value })} required minLength={10} rows={7} />
+</label>
+<button className="button" disabled={Boolean(submitting)}>{submitting==="post"?"Publishing…":"Submit discussion"}</button>
+<small>AI Administrator screens submissions. No sales, trades, personal contact details, or illegal activity.</small>
+</form>
     </div> : <div className="communityLayout">
-      <section><div className="sectionHead"><div><div className="eyebrow">Community consensus</div><h2>Top 25 cigars</h2><p>Ranked by average collector score, then number of ratings.</p></div></div><div className="rankingList">{data.top25.map(item => <article key={item.cigarKey}><strong>#{item.rank}</strong><div><h3>{item.brand} {item.line}</h3><span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span></div><b>{item.averageScore}</b><small>{item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"}</small></article>)}</div>{!data.top25.length && <div className="emptyState">The Top 25 begins with the first collector rating.</div>}</section>
-      <form className="communityForm" onSubmit={submitRating}><div className="eyebrow">Rate a cigar</div><h2>Add your score</h2><div className="ratingEntryMode" role="group" aria-label="Choose cigar entry method"><button type="button" className={entryMode === "vault" ? "active" : ""} disabled={!inventoryOptions.length} onClick={() => chooseMode("vault")}>Choose from my Vault</button><button type="button" className={entryMode === "manual" ? "active" : ""} onClick={() => chooseMode("manual")}>Enter manually</button></div><label>Display name<input value={rating.displayName} onChange={event => setRating({ ...rating, displayName: event.target.value })} required /></label>{identityFields}<label>Score (1–100)<input type="number" min="1" max="100" value={rating.score} onChange={event => setRating({ ...rating, score: event.target.value })} required /></label><label>Short review<textarea rows={4} value={rating.review} onChange={event => setRating({ ...rating, review: event.target.value })} /></label><button className="button" disabled={Boolean(submitting)}>{submitting==="rating"?"Publishing…":"Submit rating"}</button><small>{entryMode === "vault" ? "Cigar identity comes directly from your private Vault. Only the rating is shared." : "Use manual entry for a cigar that is not in your Vault."}</small></form>
+      <section id="top-25">
+<div className="sectionHead">
+<div>
+<div className="eyebrow">Community consensus</div>
+<h2>The living Top 25</h2>
+<p>Ranked by average collector score, then rating volume. Only published member ratings count; retailer promotion never does.</p>
+</div>
+</div>
+<div className="rankingList">{data.top25.map(item => <article key={item.cigarKey}>
+<strong>#{item.rank}</strong>
+<div>
+<h3>{item.brand} {item.line}</h3>
+<span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
+</div>
+<b>{item.averageScore}</b>
+<small>{item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"}</small>
+</article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the Top 25 without invented scores or promotional placement.</p></div>}</section>
+      <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating}>
+<div className="eyebrow">Rate a cigar</div>
+<h2>Document your experience</h2>
+<p>Choose the exact cigar from your Vault or identify it manually. Your score enters the ranking only after publication.</p>
+<div className="ratingEntryMode" role="group" aria-label="Choose cigar entry method">
+<button type="button" className={entryMode === "vault" ? "active" : ""} disabled={!inventoryOptions.length} onClick={() => chooseMode("vault")}>Choose from my Vault</button>
+<button type="button" className={entryMode === "manual" ? "active" : ""} onClick={() => chooseMode("manual")}>Enter manually</button>
+</div>
+<label>Display name<input value={rating.displayName} onChange={event => setRating({ ...rating, displayName: event.target.value })} required />
+</label>{identityFields}<label>Score (1–100)<input type="number" min="1" max="100" value={rating.score} onChange={event => setRating({ ...rating, score: event.target.value })} required />
+</label>
+<label>Short review<textarea rows={4} value={rating.review} onChange={event => setRating({ ...rating, review: event.target.value })} />
+</label>
+<button className="button" disabled={Boolean(submitting)}>{submitting==="rating"?"Publishing…":"Submit rating"}</button>
+<small>{entryMode === "vault" ? "Cigar identity comes directly from your private Vault. Only the rating is shared." : "Use manual entry for a cigar that is not in your Vault."}</small>
+</form>
     </div>}
   </>;
 }
