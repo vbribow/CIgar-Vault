@@ -12,6 +12,16 @@ export type TrustEvidence={
   commercialInfluence:"None disclosed"|"Disclosed"|"Unknown";
 };
 
+export const trustFramework=[
+  {kind:"Official",level:1,description:"Information supplied or confirmed by an authorized manufacturer or organization.",question:"Who officially supplied this?"},
+  {kind:"Verified Historical",level:2,description:"Information confirmed through multiple trusted or primary historical sources.",question:"Which independent records support this?"},
+  {kind:"Expert",level:3,description:"Attributable knowledge from a verified expert or established independent publication.",question:"Who is the expert and what is their field?"},
+  {kind:"Community",level:4,description:"Collector experience, opinion, observation, review, or shared knowledge.",question:"Whose lived experience is this?"},
+  {kind:"AI",level:5,description:"An AI-assisted inference or recommendation derived from permitted data.",question:"Which evidence and limitations shaped this insight?"},
+] as const satisfies ReadonlyArray<{kind:EvidenceKind;level:number;description:string;question:string}>;
+
+export function trustDefinition(kind:EvidenceKind){return trustFramework.find(value=>value.kind===kind)!}
+
 const confidence=(value?:string):EvidenceConfidence=>value==="High"||value==="Medium"||value==="Low"?value:"Unrated";
 
 export function valuationEvidence(value:Valuation):TrustEvidence{
