@@ -69,3 +69,8 @@ test("Cigar Somm requests verified named spirit bottlings and discloses editoria
  assert.match(component,/Verify this label/);
  assert.match(component,/not sponsorships or endorsements/);
 });
+test("Cigar Somm keeps its synthesis onsite while retaining optional source verification",()=>{
+ const styles=readFileSync(new URL("../app/cigar-somm/somm.css",import.meta.url),"utf8");
+ assert.match(styles,/complete experience stays onsite/);
+ assert.match(styles,/Verify source/);
+});
