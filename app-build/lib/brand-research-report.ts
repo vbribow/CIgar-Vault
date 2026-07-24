@@ -134,15 +134,15 @@ Every verified or partially verified claim must include a direct attributable so
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: process.env.OPENAI_VISION_MODEL?.trim() || "gpt-5.6-terra",
-      reasoning: { effort: "high" },
+      reasoning: { effort: "medium" },
       store: false,
-      max_output_tokens: 8000,
+      max_output_tokens: 5500,
       tools: [{ type: "web_search" }],
       include: ["web_search_call.action.sources"],
       input: prompt,
       text: { format: { type: "json_schema", name: "brand_manufacturing_research", strict: true, schema: brandResearchReportJsonSchema } },
     }),
-    signal: AbortSignal.timeout(110_000),
+    signal: AbortSignal.timeout(55_000),
   });
   const payload = await response.json();
   if (!response.ok) throw new Error((payload as { error?: { message?: string } }).error?.message || `Brand research failed (${response.status})`);
