@@ -43,4 +43,25 @@ Occasion: ${JSON.stringify(input.occasion||"not specified")}
 Include alcoholic pairings: ${input.includeAlcohol}
 Selected cigar context: ${JSON.stringify(context)}
 Private collector summary: ${JSON.stringify(collectorContext||null)}
-Founder-approved Master Somm Library: ${JSON.stringify(library.map(record=>({subject:record.subject,factType:record.factType,statement:record.statement,pairingImplications:record.pairingImplications,sourceTitle:record.sourceTitle,sourceUrl:record.sourceUrl,evidenceDate:record.evidenceDate,confidence:record.confidence})))}`;const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:process.env.OPENAI_SOMM_MODEL?.trim()||"gpt-5-mini",reasoning:{effort:"low"},store:false,max_output_tokens:3000,tools:[{type:"web_search"}],include:["web_search_call.action.sources"],input:prompt,text:{format:{type:"json_schema",name:"cigar_somm_answer",strict:true,schema:cigarSommJsonSchema}}}),signal:AbortSignal.timeout(90_000)});const payload=await response.json();if(!response.ok)throw new Error((payload as{error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);const text=responseOutputText(payload);if(!text)throw new Error("Cigar Somm returned no answer");return CigarSommAnswerSchema.parse(JSON.parse(text))}
+Founder-approved Master Somm Library: ${JSON.stringify(library.map(record=>({subject:record.subject,factType:record.factType,statement:record.statement,pairingImplications:record.pairingImplications,sourceTitle:record.sourceTitle,sourceUrl:record.sourceUrl,evidenceDate:record.evidenceDate,confidence:record.confidence})))}`;
+const model=process.env.OPENAI_SOMM_MODEL?.trim()||"gpt-4.1-mini";
+const response=await fetch("https://api.openai.com/v1/responses",{
+ method:"POST",
+ headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},
+ body:JSON.stringify({
+  model,
+  store:false,
+  max_output_tokens:2200,
+  tools:[{type:"web_search",search_context_size:"low"}],
+  tool_choice:"required",
+  include:["web_search_call.action.sources"],
+  input:prompt,
+  text:{format:{type:"json_schema",name:"cigar_somm_answer",strict:true,schema:cigarSommJsonSchema}},
+ }),
+ signal:AbortSignal.timeout(60_000),
+});
+const payload=await response.json();
+if(!response.ok)throw new Error((payload as{error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);
+const text=responseOutputText(payload);
+if(!text)throw new Error("Cigar Somm returned no answer");
+return CigarSommAnswerSchema.parse(JSON.parse(text))}
