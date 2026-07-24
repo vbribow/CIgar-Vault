@@ -50,6 +50,7 @@ const profileSources = [
     verified: "My Father’s history identifies García as a third-generation Cuban master blender who rolled his first cigar at eleven and opened El Rey de los Habanos in Miami with Jaime and Janny García in 2003.",
     study: "Study the family’s movement from a small Miami factory to vertically connected farming and production in Nicaragua. The useful theme is not a single flavor adjective; it is the relationship between inherited Cuban craft, family apprenticeship, and control from seed through production.",
     project: "Start with the Don Pepin García and My Father lineages, then compare multiple vitolas while documenting construction, pace, and development.",
+    themes: ["Cuban inheritance", "Family apprenticeship", "Seed-to-production control"],
     source: "https://myfathercigars.com/about/",
     label: "Official My Father history",
   },
@@ -60,6 +61,7 @@ const profileSources = [
     verified: "The company records that Jaime developed the original My Father blend in 2008 and built it to honor his father. He works inside a family system that includes farms and factories in Nicaragua.",
     study: "His documented story is a valuable case study in second-generation authorship: respecting an established house language while creating a distinct blend with its own purpose and emotional origin.",
     project: "Compare the original My Father blend with another García family project. Separate what the company documents from the sensory patterns you personally observe.",
+    themes: ["Second generation", "House-language evolution", "Blend as tribute"],
     source: "https://myfathercigars.com/about/",
     label: "Official My Father history",
   },
@@ -70,6 +72,7 @@ const profileSources = [
     verified: "Fuente’s family history credits Carlito Fuente with pursuing Dominican wrapper tobacco for Fuente Fuente OpusX, introduced as the company’s first successful all-Dominican cigar. Fuente also documents his revival of difficult perfecto forms in the Hemingway line.",
     study: "Two documented themes deserve study: expanding what an origin was believed capable of producing, and preserving demanding shapes because the making itself carries cultural value.",
     project: "Use OpusX to study agricultural ambition and the Hemingway line to study how shape, roller skill, and historical continuity interact.",
+    themes: ["Dominican wrapper", "Figurado preservation", "Agricultural ambition"],
     source: "https://arturofuente.com/history/family-history/",
     label: "Official Fuente family history",
   },
@@ -80,8 +83,109 @@ const profileSources = [
     verified: "Foundation describes Melillo as a tobacco sourcer and blender with more than two decades in production, including years working in Nicaragua, and records that he founded Foundation in 2015.",
     study: "His official company story places sourcing, Connecticut tobacco heritage, Nicaraguan production, old-world practice, modern craftsmanship, and cultural storytelling in the same frame.",
     project: "Compare a Foundation project rooted in Connecticut tobacco with one centered on Nicaraguan history. Ask how sourcing and story are made visible in the product—not merely in its marketing.",
+    themes: ["Source-driven design", "Connecticut heritage", "History as product context"],
     source: "https://foundationcigarcompany.com/about-foundation/",
     label: "Official Foundation biography",
+  },
+  {
+    initials: "NP",
+    name: "Nick Perdomo Jr.",
+    house: "Perdomo Cigars",
+    verified: "Perdomo records that Nick Perdomo Jr. founded Nick’s Cigar Co. with his father in 1992, opened the family’s first Nicaraguan factory in 1995, and developed vertically connected farming and production across Estelí, Condega, and Jalapa.",
+    study: "Perdomo is a study in repeatable systems: control of farming and inventory, extensive aging, technological quality control supporting traditional craft, and multiple wrapper expressions built around related Nicaraguan cores.",
+    project: "Compare the Connecticut, sun-grown, and Maduro versions of the 10th Anniversary line, then study Lot 23 as a single-farm concept. Record what changes with wrapper and what remains recognizably Perdomo.",
+    themes: ["Vertical integration", "Extended aging", "Three-wrapper comparisons"],
+    source: "https://www.perdomocigars.com/news/2019/8/13/nick-perdomo-jr-prepares-for-the-future",
+    label: "Official Perdomo family history",
+    source2: "https://www.perdomocigars.com/10th-anniversary",
+    label2: "Official 10th Anniversary blends",
+  },
+  {
+    initials: "EE",
+    name: "Erik Espinosa",
+    house: "Espinosa Premium Cigars · La Zona",
+    verified: "In a direct 2024 interview, Espinosa describes entering the trade as an independent broker in 1997, developing early brands with Eddie Ortega, and opening La Zona in Estelí around 2012. He also credits Hector Alfonso Sr. as a central collaborative blender.",
+    study: "The official portfolio shows deliberate range rather than one fixed signature: the aromatic Brazilian wrapper of Laranja Reserva, the all-Nicaraguan intensity of 601 La Bomba, and Mexican San Andrés over Nicaraguan tobacco in Murcielago.",
+    project: "Taste Laranja Reserva, 601 La Bomba, and Murcielago in comparable ring gauges. Study wrapper-led contrast, intensity, and how a boutique house maintains identity while working with outside production partners.",
+    themes: ["Wrapper-led contrast", "Boutique factory identity", "Collaborative authorship"],
+    source: "https://espinosacigars.com/core-lines/laranja-reserva/",
+    label: "Official Laranja Reserva blend",
+    source2: "https://www.cigaraficionado.com/article/a-conversation-with-erik-espinosa",
+    label2: "Direct Erik Espinosa interview",
+  },
+  {
+    initials: "EP",
+    name: "Ernesto Perez-Carrillo",
+    house: "Casa Carrillo",
+    verified: "Casa Carrillo identifies Perez-Carrillo as its master blender. He learned alongside his father at El Crédito, took over the factory in 1980, built La Gloria Cubana into a major Miami cigar, and returned to a family boutique company with his children in 2009.",
+    study: "His documented ambition is a complete sensory experience rather than a single strength target. The portfolio connects Cuban family instruction, Miami production, Dominican manufacturing, and blends designed as personal family narratives.",
+    project: "Study La Historia beside another Casa Carrillo line. Ask how wrapper origin, strength, and presentation change while consistency, tradition, and the intended full-body sensory experience remain.",
+    themes: ["Total sensory experience", "Miami-to-Dominican craft", "Family narrative"],
+    source: "https://casacarrillocigars.com/about-us/",
+    label: "Official Casa Carrillo history",
+    source2: "https://casacarrillocigars.com/la-historia/",
+    label2: "Official La Historia record",
+  },
+  {
+    initials: "LG",
+    name: "Litto Gomez",
+    house: "La Flor Dominicana",
+    verified: "La Flor Dominicana records the company founded by Litto and Ines Gomez in 1994 and documents Litto’s long project to grow Dominican wrapper and produce a cigar entirely from tobacco grown on the family’s La Canela farm.",
+    study: "The most useful style signals are estate-grown Dominican tobacco, patient development of wrapper, powerful leaf managed for balance, unusual shapes, and a willingness to treat each crop as a vintage with special small batches.",
+    project: "Use the LG Dominican Puro and a Small Batch release to examine estate identity, vintage variation, Pelo de Oro wrapper, and the difference between intensity and imbalance.",
+    themes: ["Dominican estate tobacco", "Power with balance", "Vintage small batches"],
+    source: "https://www.laflordominicana.com/lg",
+    label: "Official LFD LG and Small Batch history",
+    source2: "https://www.laflordominicana.com/about-3",
+    label2: "Official LFD 30-year record",
+  },
+  {
+    initials: "AJ",
+    name: "A.J. Fernandez",
+    house: "A.J. Fernandez Cigars",
+    verified: "A.J. Fernandez’s official biography describes him as both tobacco grower and blender and states that the components in his personal portfolio are selected for strength, aroma, and flavor to create a balanced experience.",
+    study: "His house record emphasizes rich, flavorful Nicaraguan tobacco disciplined by balance. New World, San Lotano, Bellas Artes, and Enclave offer ways to study how a large leaf inventory supports distinct identities rather than one repeated formula.",
+    project: "Compare two portfolio lines with different wrappers but similar vitolas. Record intensity, aroma, sweetness, texture, and the point at which richness becomes—or avoids becoming—fatigue.",
+    themes: ["Nicaraguan leaf depth", "Richness and balance", "Large portfolio range"],
+    source: "https://www.ajfernandezcigars.com/?page_id=8",
+    label: "Official A.J. Fernandez biography",
+  },
+  {
+    initials: "WH",
+    name: "Willy Herrera",
+    house: "Drew Estate",
+    verified: "Drew Estate identifies Herrera as its master blender and creative director. Before joining in 2011, he managed production, tobacco purchasing, curing, blending, and quality control at Miami’s El Titan de Bronze; he later spent a year immersed in Drew Estate’s Nicaraguan factory system.",
+    study: "His documented path joins small-factory Cuban technique with the scale and leaf resources of La Gran Fabrica. Drew Estate explicitly framed his goal as creating a personal style inside—not erased by—a much larger operation.",
+    project: "Study Herrera Estelí alongside a Drew Estate line born from the broader factory culture. Look for the tension and harmony between intimate Miami craft, Nicaraguan tobacco, and large-factory repeatability.",
+    themes: ["Miami fabriquita craft", "Factory immersion", "Personal voice at scale"],
+    source: "https://drewestate.com/press-release-willy-herrera-joins-drew-estate/",
+    label: "Official Herrera appointment record",
+    source2: "https://drewestate.com/our-story/",
+    label2: "Official Drew Estate factory history",
+  },
+  {
+    initials: "JB",
+    name: "José “Jochy” Blanco",
+    house: "La Galera · Tabacalera Palma",
+    verified: "La Galera describes Jochy Blanco as a longtime Dominican grower, processor, manufacturer, and creator of premium blends. The family system spans five generations, four Cibao Valley farms, and father-and-son master blending.",
+    study: "His profile is best understood through agricultural continuity: Dominican farm tobacco, disciplined aging, cooperation with rollers, and consistency built from the field through Tabacalera Palma rather than imposed only at final inspection.",
+    project: "Compare La Galera lines using different wrappers over Dominican cores. Track what the farm and factory identity contributes beneath the most visible leaf.",
+    themes: ["Dominican farm continuity", "Grower-blender integration", "Consistency through aging"],
+    source: "https://www.lagaleracigars.com/about-us",
+    label: "Official La Galera family history",
+  },
+  {
+    initials: "CE",
+    name: "Christian Eiroa",
+    house: "C.L.E. Cigar Company",
+    verified: "C.L.E. records that Eiroa grew up on his family’s Jamastrán Valley farm, returned to Honduras to learn tobacco in 1995, launched Camacho Corojo in 2000, and formed C.L.E. Cigar Company in 2012.",
+    study: "The defining documented thread is Honduran tobacco—especially the family’s work with Authentic Corojo—supported by farm control, prolonged curing and resting, precise priming selection, and rigorous construction systems.",
+    project: "Compare Eiroa or C.L.E. Corojo expressions with C.L.E. Connecticut. Observe what persists when the wrapper and intended intensity change while Honduran filler knowledge remains central.",
+    themes: ["Honduran terroir", "Authentic Corojo", "Farm-to-factory control"],
+    source: "https://clecigars.com/our-tradition/",
+    label: "Official Eiroa family history",
+    source2: "https://clecigars.com/shop/c-l-e-connecticut/",
+    label2: "Official C.L.E. Connecticut study",
   },
 ] as const;
 
@@ -228,15 +332,16 @@ export default function BlendingPage() {
       </section>
 
       <section className="blenderProfiles" id="profiles">
-        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · First profiles</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. It is the beginning of an expandable, sourced library honoring the people, teams, and traditions behind influential cigars.</p></div>
+        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 12 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
         <div className="profileGrid">{profileSources.map((profile)=><article key={profile.name}>
           <header><span>{profile.initials}</span><div><small>{profile.house}</small><h3>{profile.name}</h3></div></header>
           <dl>
             <div><dt>Verified record</dt><dd>{profile.verified}</dd></div>
-            <div><dt>What to study</dt><dd>{profile.study}</dd></div>
+            <div><dt>Documented style signals</dt><dd>{profile.study}</dd></div>
             <div><dt>Collector fieldwork</dt><dd>{profile.project}</dd></div>
           </dl>
-          <a href={profile.source} target="_blank" rel="noreferrer">{profile.label} ↗</a>
+          <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
+          <div className="profileSources"><a href={profile.source} target="_blank" rel="noreferrer">{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer">{profile.label2} ↗</a>}</div>
         </article>)}</div>
         <div className="profilePolicy"><strong>Profile standard</strong><p>Biographical facts require attributable sources. Company claims are labeled as company claims. Cedriva analysis is labeled as analysis. Sensory reputation is never presented as biography, and living craft is never reduced to an unsourced legend.</p></div>
       </section>
