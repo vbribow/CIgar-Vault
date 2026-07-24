@@ -1,18 +1,22 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import type { DataMode } from "@/lib/config";
-import { normalizeManualRetailPrice } from "@/lib/retail-pricing";
+import { existingRetailPriceForBasis, normalizeManualRetailPrice } from "@/lib/retail-pricing";
 import type { InventoryItem } from "@/lib/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const money = (value: number | undefined) => value === undefined ? "—" : value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+const inputValue = (value: number | undefined) => value === undefined ? "" : String(Math.round(value * 100) / 100);
 
 export function RetailPricingControls({ items, mode, initialInventoryId }: { items: InventoryItem[]; mode: DataMode; initialInventoryId?: string }) {
-  const [inventoryId, setInventoryId] = useState(items.some(item => item.inventoryId === initialInventoryId) ? initialInventoryId! : items[0]?.inventoryId ?? "");
+  const router = useRouter();
+  const initialItem = items.find(item => item.inventoryId === initialInventoryId) ?? items[0];
+  const [inventoryId, setInventoryId] = useState(initialItem?.inventoryId ?? "");
   const [basis, setBasis] = useState<"Per cigar" | "Full box">("Per cigar");
-  const [price, setPrice] = useState("");
-  const [sticksPerBox, setSticksPerBox] = useState("");
+  const [price, setPrice] = useState(inputValue(existingRetailPriceForBasis(initialItem, "Per cigar")));
+  const [sticksPerBox, setSticksPerBox] = useState(initialItem?.sticksPerBox ? String(initialItem.sticksPerBox) : "");
   const [source, setSource] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [writeKey, setWriteKey] = useState("");
@@ -66,8 +70,9 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Manual price save failed");
-      setMessage(`Saved ${money(values.unitPrice)} per cigar${values.boxPrice === undefined ? "" : ` · ${money(values.boxPrice)} per box`}. Refreshing…`);
-      window.setTimeout(() => window.location.reload(), 700);
+      setPrice(inputValue(basis === "Per cigar" ? values.unitPrice : values.boxPrice));
+      setMessage(`Saved ${money(values.unitPrice)} per cigar${values.boxPrice === undefined ? "" : ` · ${money(values.boxPrice)} per box`}. The saved value remains visible here.`);
+      router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Manual price save failed");
     } finally {
@@ -81,14 +86,14 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
       <button className="button" type="button" disabled={mode === "mock" || busy !== "" || (mode === "smartsheet" && !writeKey)} onClick={autofill}>{busy === "autofill" ? "Applying…" : "Apply known retail prices"}</button>
     </div>
     <form className="recordForm" onSubmit={saveManual}>
-      <label><span>Cigar</span><select value={inventoryId} onChange={event => { const item = items.find(value => value.inventoryId === event.target.value); setInventoryId(event.target.value); setSticksPerBox(item?.sticksPerBox ? String(item.sticksPerBox) : ""); }} required>{items.map(item => <option value={item.inventoryId} key={item.inventoryId}>{item.brand} · {item.line} · {item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</option>)}</select></label>
-      <label><span>Price basis</span><select value={basis} onChange={event => setBasis(event.target.value as "Per cigar" | "Full box")}><option>Per cigar</option><option>Full box</option></select></label>
+      <label><span>Cigar</span><select value={inventoryId} onChange={event => { const item = items.find(value => value.inventoryId === event.target.value); setInventoryId(event.target.value); setSticksPerBox(item?.sticksPerBox ? String(item.sticksPerBox) : ""); setPrice(inputValue(existingRetailPriceForBasis(item, basis))); setMessage(""); }} required>{items.map(item => <option value={item.inventoryId} key={item.inventoryId}>{item.brand} · {item.line} · {item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</option>)}</select></label>
+      <label><span>Price basis</span><select value={basis} onChange={event => { const nextBasis = event.target.value as "Per cigar" | "Full box"; setBasis(nextBasis); setPrice(inputValue(existingRetailPriceForBasis(selected, nextBasis))); setMessage(""); }}><option>Per cigar</option><option>Full box</option></select></label>
       <label><span>{basis === "Per cigar" ? "Retail price per cigar" : "Retail price for full box"}</span><input value={price} onChange={event => setPrice(event.target.value)} type="number" min="0" step="0.01" required /></label>
       <label><span>Cigars per box</span><input value={sticksPerBox} onChange={event => setSticksPerBox(event.target.value)} type="number" min="1" step="1" required={basis === "Full box"} placeholder={selected?.sticksPerBox ? String(selected.sticksPerBox) : "Needed for box value"} /></label>
       <label><span>Source</span><input value={source} onChange={event => setSource(event.target.value)} placeholder="Retailer, manufacturer, receipt, or your entry" /></label>
       <label><span>Source link</span><input value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} type="url" placeholder="Optional evidence URL" /></label>
       {mode === "smartsheet" && <label><span>Founder write key</span><input value={writeKey} onChange={event => setWriteKey(event.target.value)} type="password" required /></label>}
-      <div className="manualPricePreview"><span>Per cigar</span><strong>{money(normalized?.unitPrice)}</strong><span>Per full box</span><strong>{money(normalized?.boxPrice)}</strong></div>
+      <div className="manualPricePreview"><span>Saved per cigar</span><strong>{money(selected?.retailValue)}</strong><span>Entry per cigar</span><strong>{money(normalized?.unitPrice)}</strong><span>Entry per full box</span><strong>{money(normalized?.boxPrice)}</strong></div>
       <button className="button secondary" disabled={mode === "mock" || busy !== ""}>{busy === "manual" ? "Saving…" : "Save manual retail price"}</button>
     </form>
     {message && <output className="wideMessage">{message}</output>}
