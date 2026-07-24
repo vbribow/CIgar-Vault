@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 export const metadata:Metadata={title:"Learn",description:"Build premium cigar knowledge through welcoming, contextual learning that grows from beginner foundations to lifelong mastery."};
 const pathways=[
-  ["The Curious","Start without intimidation","How to choose, cut, light, enjoy, and store a first premium cigar.","/catalog","Explore cigar foundations"],
+  ["The Curious","Start without intimidation","How to choose, cut, light, enjoy, and store a first premium cigar.","/learn/foundations","Begin with the essentials"],
   ["The Explorer","Develop your own palate","Flavor, strength, wrappers, origins, journals, and thoughtful comparison.","/records","Begin a tasting journal"],
   ["The Enthusiast","Collect with intention","Humidors, aging, releases, factories, construction, and collection goals.","/humidors","Learn collection care"],
   ["The Collector","Protect what you’ve built","Provenance, authenticity, market evidence, insurance, and stewardship.","/intelligence","Understand your collection"],
