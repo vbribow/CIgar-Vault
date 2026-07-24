@@ -7,6 +7,7 @@ import { InventoryRecordTools } from "@/components/inventory-record-tools";
 import { buildCigarTimeline,estimateAging } from "@/lib/collection-intelligence";
 import { EvidenceLabel } from "@/components/evidence-label";
 import { canonicalCigarIdentity } from "@/lib/cigar-identity";
+import { cigarAdvisorActions, cigarAdvisorHref } from "@/lib/cigar-advisor-links";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
   params,
@@ -32,6 +33,7 @@ export default async function CigarPage({
   const published = ratingSummary(ratings, inventoryId);
   const identity=canonicalCigarIdentity(item);
   const aging=estimateAging(item);
+  const advisorActions=cigarAdvisorActions(item);
   const timeline=buildCigarTimeline(item,events,history,values,publishedRatings);
   return (
     <main className="shell">
@@ -88,7 +90,8 @@ export default async function CigarPage({
         </div>
       </section>
       <section className="section card"><div className="sectionHead"><div><div className="eyebrow">Market transaction evidence</div><h2>{latestSale ? `$${latestSale.lastSaleValue!.toLocaleString()} per cigar` : "No verified completed sale recorded"}</h2><p className="small">{latestSale ? `Last known completed sale · ${latestSale.lastSaleDate || latestSale.valuationDate}${latestSale.lastSaleVenue ? ` · ${latestSale.lastSaleVenue}` : ""}` : "Auction estimates, open lots, and asking prices are not labeled as sales."}</p></div>{latestSale?.lastSaleSourceUrl ? <a className="button secondary" href={latestSale.lastSaleSourceUrl} target="_blank" rel="noreferrer">View sale evidence ↗</a> : <a className="button secondary" href="/valuations">Research sale history</a>}</div><div className="detailStats"><div><span>Retail replacement</span><strong>{item.retailValue === undefined ? "Not researched" : `$${item.retailValue.toLocaleString()} / cigar`}</strong></div><div><span>Retail lot subtotal</span><strong>{item.retailValue === undefined || item.currentQty === undefined ? "Not available" : `$${(item.retailValue * item.currentQty).toLocaleString()}`}</strong></div><div><span>Latest completed sale</span><strong>{latestSale?.lastSaleValue === undefined ? "Not found" : `$${latestSale.lastSaleValue.toLocaleString()} / cigar`}</strong></div><div><span>Sale venue</span><strong>{latestSale?.lastSaleVenue || "Not documented"}</strong></div></div></section>
-      <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging · AI-assisted</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div><a className="button secondary" href={`/cigar-somm?inventoryId=${encodeURIComponent(item.inventoryId)}`}>Consult Cedriva AI</a></section>
+      <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging · AI-assisted</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div></section>
+      <section className="section card cigarAdvisor"><div className="cigarAdvisorIntro"><div><div className="eyebrow">Cedriva AI · Private collection guidance</div><h2>Ask with this exact cigar already selected.</h2><p>Cedriva combines trusted research with your private collection context, then shows what influenced the answer and where uncertainty remains.</p></div><a className="button" href={cigarAdvisorHref(item)}>Ask Cedriva about this cigar</a></div><div className="cigarAdvisorActions">{advisorActions.map(action=><a href={action.href} key={action.intent}><span>{action.label}</span><small>{action.detail}</small><b>→</b></a>)}</div><small className="cigarAdvisorPrivacy">Your account context is summarized for the answer. It is not presented as a public source or shared with other collectors.</small></section>
       <section className="detailGrid">
         <article className="card">
           <div className="eyebrow">Collector direction</div>
