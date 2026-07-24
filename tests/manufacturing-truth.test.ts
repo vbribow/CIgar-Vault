@@ -5,6 +5,7 @@ import { cigarBrands } from "../lib/brand-directory";
 import { allBrandManufacturingCoverage, manufacturingCoverageForBrand, manufacturingFactories, manufacturingRegions, manufacturingTruthHrefForHouse, manufacturingTruthRecords } from "../lib/manufacturing-truth";
 
 const catalogPage = readFileSync(new URL("../app/catalog/page.tsx", import.meta.url), "utf8");
+const manufacturingPage = readFileSync(new URL("../app/learn/manufacturing-truth/page.tsx", import.meta.url), "utf8");
 
 test("manufacturing truth records separate ownership, authorship, factories, and evidence", () => {
   assert.equal(manufacturingTruthRecords.length, 21);
@@ -60,4 +61,9 @@ test("every detailed catalog cigar renders a manufacturing status", () => {
   assert.match(catalogPage, /manufacturing\.status/);
   assert.match(catalogPage, /manufacturing\.manufacturing/);
   assert.match(catalogPage, /Manufacturing truth/);
+});
+
+test("manufacturing research returns collectors to the searchable brand index", () => {
+  assert.match(manufacturingPage, /href="#all-brands">Search every brand/);
+  assert.doesNotMatch(manufacturingPage, /href="\/catalog">Review detailed cigars/);
 });
