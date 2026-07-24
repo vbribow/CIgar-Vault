@@ -1,0 +1,10 @@
+.vaultPaths{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 22px}
+.vaultPaths>a{display:grid;gap:6px;min-height:170px;padding:20px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#241a14,#15110e);color:inherit;text-decoration:none}
+.vaultPaths>a:hover{border-color:#92703e;transform:translateY(-1px)}
+.vaultPaths span,.vaultPaths small{color:var(--muted)}
+.vaultPaths span{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.vaultPaths strong{font-size:23px;color:var(--gold2)}
+.vaultPaths small{line-height:1.5}
+.vaultPaths b{align-self:end;color:var(--gold2);font-size:12px}
+#inventory-records{scroll-margin-top:16px}
+@media(max-width:800px){.vaultPaths{grid-template-columns:1fr}.vaultPaths>a{min-height:auto}}
