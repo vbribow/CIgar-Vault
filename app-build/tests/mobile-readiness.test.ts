@@ -24,8 +24,9 @@ test("offline support caches only public shell assets", () => {
   assert.doesNotMatch(worker, /cache\.put\(event\.request/);
 });
 
-test("offline and install assets bypass protected-route middleware", () => {
+test("offline, install, and social-preview assets bypass protected-route middleware", () => {
   const proxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
   assert.match(proxy, /pathname === "\/offline"/);
   assert.match(proxy, /icons\/\|sw\.js\|manifest\.webmanifest/);
+  assert.match(proxy, /og\.png\|cedriva-mark\.svg/);
 });
