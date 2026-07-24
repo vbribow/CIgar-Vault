@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const stages = [
   { id:"curious",level:"01",name:"The Curious",statement:"I’m beginning to explore premium cigars.",promise:"Cedriva makes the culture approachable without simplifying what makes it special.",focus:["Learn the language","Choose with confidence","Enjoy the first experience"],primary:["/learn","Begin with the essentials"],secondary:["/discover","Discover a welcoming first cigar"] },
@@ -21,6 +22,6 @@ export function CollectorJourney() {
   return <section className="collectorJourney" aria-labelledby="collector-journey-heading">
     <div className="collectorJourneyIntro"><div><div className="eyebrow">Cedriva grows with you</div><h2 id="collector-journey-heading">Where are you in your collector journey?</h2></div><p>Choose the experience that feels closest today. This changes your starting point—not what you are allowed to explore.</p></div>
     <div className="journeyStagePicker" role="tablist" aria-label="Collector journey stage">{stages.map(item=><button type="button" role="tab" aria-selected={item.id===selected} className={item.id===selected?"active":undefined} onClick={()=>choose(item.id)} key={item.id}><span>{item.level}</span><strong>{item.name.replace("The ","")}</strong></button>)}</div>
-    <article className="journeyStagePanel" role="tabpanel"><div className="journeyStageCopy"><span>Level {stage.level}</span><h3>{stage.name}</h3><blockquote>“{stage.statement}”</blockquote><p>{stage.promise}</p></div><div className="journeyStageFocus"><span>What matters now</span>{stage.focus.map(item=><p key={item}><i>✓</i>{item}</p>)}</div><div className="journeyStageActions"><a className="button" href={stage.primary[0]}>{stage.primary[1]} →</a><a className="textLink" href={stage.secondary[0]}>{stage.secondary[1]} →</a></div></article>
+    <article className="journeyStagePanel" role="tabpanel"><div className="journeyStageCopy"><span>Level {stage.level}</span><h3>{stage.name}</h3><blockquote>“{stage.statement}”</blockquote><p>{stage.promise}</p></div><div className="journeyStageFocus"><span>What matters now</span>{stage.focus.map(item=><p key={item}><i>✓</i>{item}</p>)}</div><div className="journeyStageActions"><Link className="button" href={stage.primary[0]} prefetch>{stage.primary[1]} →</Link><Link className="textLink" href={stage.secondary[0]} prefetch>{stage.secondary[1]} →</Link></div></article>
   </section>;
 }
