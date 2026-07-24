@@ -1,0 +1,17 @@
+import type { Metadata } from "next";
+import { TrustMark } from "@/components/trust-mark";
+import { loadPublicIndustry } from "@/lib/industry-public";
+import { publicationTypeLabel } from "@/lib/industry-hub";
+import "./industry.css";
+
+export const dynamic="force-dynamic";
+export const metadata:Metadata={title:"Industry Hub",description:"Official manufacturer profiles, announcements, product launches, packaging changes, and alerts—clearly sourced and reviewed by Cedriva."};
+
+export default async function IndustryHubPage(){
+  const{profiles,publications}=await loadPublicIndustry();
+  return <main className="shell wideShell industryPage"><section className="industryHero"><div><div className="eyebrow">Cedriva Industry Hub</div><h1>The industry, in its own words.</h1><p className="lede">Official profiles, releases, factory news, education, packaging changes, and counterfeit alerts—published with visible sources and permanent corrections.</p></div><aside><TrustMark kind="Official"/><strong>Official identifies the source.</strong><p>It does not mean Cedriva independently endorses every claim. Editorial work remains separate and clearly labeled.</p></aside></section>
+    <section className="industryPrinciples"><article><span>01</span><strong>Authorized source</strong><p>Official records come from a verified organization workspace.</p></article><article><span>02</span><strong>Founder publication gate</strong><p>Submission, approval, and publication are separate decisions.</p></article><article><span>03</span><strong>Permanent history</strong><p>Updates and corrections never erase the record that came before.</p></article></section>
+    <section className="industryProfiles"><div className="sectionHead"><div><div className="eyebrow">Verified organizations</div><h2>Official digital homes</h2></div><span>{profiles.length} published</span></div><div>{profiles.map(profile=><a href={`/industry/${profile.slug}`} key={profile.id}><TrustMark kind="Official" compact/><h3>{profile.payload.displayName}</h3><p>{profile.payload.summary}</p><small>{profile.partnerType} · Published {new Date(profile.publishedAt).toLocaleDateString()}</small><strong>Open official profile →</strong></a>)}</div>{!profiles.length&&<div className="industryEmpty"><h3>The review desk is ready.</h3><p>No organization profile has completed Cedriva’s verification and publication process yet. Empty is more trustworthy than premature.</p></div>}</section>
+    <section className="industryNewsroom"><div className="sectionHead"><div><div className="eyebrow">Official newsroom</div><h2>Direct from verified organizations</h2></div><a className="textLink" href="/trust">Understand trust labels →</a></div><div>{publications.map(item=><article key={item.id}>{item.payload.heroImageUrl&&<img src={item.payload.heroImageUrl} alt=""/>}<div><TrustMark kind="Official" compact/><small>{publicationTypeLabel(item.type)} · {item.organizationName}</small><h3>{item.payload.title}</h3><p>{item.payload.summary}</p><footer><time>{new Date(item.publishedAt).toLocaleDateString()}</time><a href={`/industry/${item.slug}#publication-${item.id}`}>Read official statement →</a></footer></div></article>)}</div>{!publications.length&&<div className="industryEmpty"><h3>No official statements published.</h3><p>Drafts and submissions never appear here. Only separately approved and published records become public.</p></div>}</section>
+  </main>;
+}
