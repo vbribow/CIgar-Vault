@@ -18,9 +18,28 @@ const blenderWork = [
 ] as const;
 
 const leafRoles = [
-  ["Wrapper", "The outermost leaf must combine appearance, elasticity, durability, combustion, and flavor. Its influence can be important, but “the wrapper provides all the flavor” is not a reliable rule."],
-  ["Binder", "The binder holds the bunch and helps regulate structure and burn. It is not merely packaging; its physical and sensory properties must cooperate with both filler and wrapper."],
-  ["Filler", "Long-filler leaves create an internal composition of combustion, strength, aroma, body, and development. Their position and proportion matter as much as their names."],
+  ["Wrapper", "The outermost leaf must combine appearance, elasticity, durability, combustion, and flavor. It touches the mouth and has a high surface-area relationship in slender cigars, but no honest universal percentage can describe its contribution."],
+  ["Binder", "The binder compresses and shapes the bunch, supports the wrapper, and helps manage airflow and burn. It combusts with every draw, so a distinctive binder can materially change aroma, sweetness, spice, body, and finish."],
+  ["Filler", "Long-filler leaves form most of the cigar’s mass. Blenders arrange different primings and lots to manage combustion, strength, aroma, body, texture, and development from the foot to the head."],
+] as const;
+
+const primings = [
+  ["Volado / lower plant", "Thinner, lower-strength leaves valued especially for easy combustion. They can keep slower-burning leaves in rhythm and contribute delicacy without being “empty.”"],
+  ["Seco / middle plant", "Commonly associated with aroma and medium strength in the Cuban classification. Seco can carry fragrance, nuance, and continuity through a blend."],
+  ["Viso / middle-upper plant", "A widely used term outside the Cuban system for leaves between seco and ligero. Often selected for a combination of flavor, structure, and moderate-to-full intensity; usage varies by producer."],
+  ["Ligero / upper plant", "Thicker, more sun-exposed, slower-burning leaves commonly used for strength and concentrated flavor. Too much, poorly placed, can challenge combustion."],
+  ["Medio tiempo / rare top leaves", "Occasional leaves above the ligero on some plants and crops. In the Cuban system they are the highest fortaleza and are used sparingly for added intensity."],
+] as const;
+
+const wrapperFamilies = [
+  ["Connecticut Shade", "Cultivation style and tobacco family; it may be grown in Connecticut or elsewhere", "Cream, cedar, nuts, hay, gentle sweetness, soft pepper", "Pale color, mild nicotine, or U.S. origin"],
+  ["Connecticut Broadleaf", "A broadleaf tobacco historically grown outdoors in the Connecticut River Valley; frequently fermented to a maduro presentation", "Earth, cocoa, dark sweetness, espresso, pepper, dense texture", "That every Broadleaf is maduro—or every maduro is Broadleaf"],
+  ["Habano", "A seed-family or trade description rooted in Cuban tobacco heritage, usually paired with an actual growing origin", "Cedar, leather, earth, baking spice, pepper, natural sweetness", "Cuban origin or one fixed flavor"],
+  ["Corojo", "A tobacco lineage/name historically associated with Cuban wrapper, now grown in several countries and expressed through many hybrids", "Red pepper, cedar, earth, leather, aromatic spice", "One genetic strain, country, strength, or processing method"],
+  ["Cameroon", "Most usefully an origin designation for wrapper grown in Cameroon or the surrounding region", "Fragrant cedar, baking spice, toast, subtle sweetness, distinctive aromatic lift", "A color grade or a guarantee that every blend will be mild"],
+  ["Sumatra", "A seed, style, or origin term whose meaning must be completed by the stated country—Ecuadorian Sumatra is common", "Earth, wood, savory spice, floral or dry sweetness", "That the tobacco was necessarily grown on Sumatra"],
+  ["Mexican San Andrés", "An origin—Mexico’s San Andrés Valley—often seen as a dark or maduro wrapper", "Earth, cocoa, mineral character, coffee, pepper, dark sweetness", "Automatic strength, one seed, or one fermentation recipe"],
+  ["Nicaraguan sun-grown", "An origin plus open-sun cultivation; region, seed, priming, and processing still matter", "Concentrated earth, cedar, pepper, coffee, sweetness, substantial texture", "That all Nicaraguan sun-grown leaf tastes alike"],
 ] as const;
 
 const profileSources = [
@@ -108,6 +127,89 @@ export default function BlendingPage() {
       <section className="leafArchitecture">
         <div><div className="eyebrow">Inside the cigar</div><h2>Every layer has sensory and structural work to do.</h2><p>Wrapper, binder, and filler are useful roles—not a ranking of importance. The finished experience emerges from how the leaves interact while burning.</p></div>
         <div>{leafRoles.map(([title,body])=><article key={title}><span>{title.slice(0,1)}</span><div><h3>{title}</h3><p>{body}</p></div></article>)}</div>
+      </section>
+
+      <section className="tasteEquation" id="leaf-taste">
+        <div className="blendSectionHead"><div><div className="eyebrow">Where tobacco character comes from</div><h2>A leaf name is never the whole answer.</h2></div><p>The taste of one leaf is the accumulated result of biology, place, position, labor, transformation, and use. Change any one of these and the same familiar name can behave differently.</p></div>
+        <div className="tasteEquationFlow" aria-label="Factors that shape tobacco character">
+          {[
+            ["Seed","Genetic potential"],
+            ["Terroir","Soil, climate, field"],
+            ["Priming","Position on plant"],
+            ["Cultivation","Sun, shade, farm practice"],
+            ["Curing","Moisture and color change"],
+            ["Fermentation","Refinement and transformation"],
+            ["Age","Integration and development"],
+            ["Blend role","Wrapper, binder, filler"],
+          ].map(([title,body],index)=><article key={title}><span>{String(index+1).padStart(2,"0")}</span><h3>{title}</h3><p>{body}</p></article>)}
+        </div>
+        <p className="tasteEquationNote">Even then, construction, ring gauge, humidity, combustion temperature, smoking pace, and the collector’s own perception shape what reaches the palate.</p>
+      </section>
+
+      <section className="primingLesson">
+        <div><div className="eyebrow">The vertical leaf library</div><h2>Position on the plant changes the raw material.</h2><p>Upper leaves generally receive more sun, grow thicker, contain more oils and nicotine, and burn more slowly. Lower leaves tend to be thinner, lighter in strength, and more combustible. These are working tendencies—not substitutes for tasting the actual lot.</p><a className="textLink" href="https://www.habanos.com/en/the-anatomy-of-a-habano/" target="_blank" rel="noreferrer">Official Habanos leaf anatomy ↗</a></div>
+        <div className="primingStack">{primings.map(([name,body],index)=><article key={name}><span>{5-index}</span><div><h3>{name}</h3><p>{body}</p></div></article>)}</div>
+      </section>
+
+      <section className="sunShadeLesson">
+        <div className="blendSectionHead"><div><div className="eyebrow">Cultivation changes the leaf</div><h2>Shade-grown and sun-grown describe farming—not flavor grades.</h2></div><p>They tell you how light reached the plant. Seed, location, priming, curing, fermentation, and the rest of the blend determine what that cultivation becomes in the cigar.</p></div>
+        <div className="sunShadeCompare">
+          <article>
+            <span>Filtered light</span>
+            <h3>Shade-grown</h3>
+            <p>Cloth or natural cloud cover reduces and diffuses direct sunlight. Under traditional cloth shade, plants tend to produce larger, thinner, finer-textured, more elastic leaves with smaller veins—qualities prized for wrapper.</p>
+            <h4>Common sensory associations</h4>
+            <p>Cream, cedar, hay, nuts, gentle sweetness, and refined spice are often associated with Connecticut-style shade wrappers. They are tendencies, not promises, and shade-grown tobacco can still be flavorful or strong.</p>
+          </article>
+          <article>
+            <span>Direct light</span>
+            <h3>Sun-grown</h3>
+            <p>Plants mature in open sunlight. The leaf commonly becomes thicker, oilier, more textured, and physically robust, with the capacity for greater concentration. It usually requires careful curing and fermentation.</p>
+            <h4>Common sensory associations</h4>
+            <p>Earth, cedar, pepper, leather, coffee, and concentrated sweetness are common descriptions. Sun-grown does not automatically mean dark, maduro, full-strength, or better.</p>
+          </article>
+        </div>
+        <div className="sourceRail"><a href="https://www.habanos.com/en/the-perfect-leaf/" target="_blank" rel="noreferrer">Habanos: shade wrapper vs. sun filler and binder ↗</a><a href="https://portal.ct.gov/-/media/CAES/DOCUMENTS/Publications/Bulletins/B364pdf.pdf" target="_blank" rel="noreferrer">Connecticut Agricultural Experiment Station: shade and outdoor tobacco ↗</a></div>
+      </section>
+
+      <section className="maduroLesson">
+        <div>
+          <div className="eyebrow">Processing, not a single plant</div>
+          <h2>What is a Maduro?</h2>
+          <p className="lede">Maduro means “mature” or “ripe.” In premium cigars it describes leaf—usually wrapper—that has been deliberately developed through selection, curing, fermentation, and aging into a dark, mature presentation.</p>
+        </div>
+        <div className="maduroTruths">
+          <article><strong>It is not one seed.</strong><p>Broadleaf, San Andrés, Habano-family, and other sufficiently durable tobaccos can become maduro through producer-specific methods.</p></article>
+          <article><strong>It is not merely a color.</strong><p>Authentic maturation changes aroma, texture, combustibility, harsh compounds, and perceived sweetness. Dye or a dark color alone does not create those qualities.</p></article>
+          <article><strong>It is not automatically strong.</strong><p>A dark wrapper may taste rich while the complete blend remains moderate in nicotine. Color, flavor concentration, body, and strength are separate observations.</p></article>
+          <article><strong>It is not one flavor.</strong><p>Collectors often perceive cocoa, coffee, earth, dark fruit, molasses-like sweetness, or pepper—but origin, seed, priming, fermentation, and blend architecture decide the result.</p></article>
+        </div>
+        <div className="maduroProcess"><span>Selected resilient leaf</span><i>→</i><span>Controlled curing</span><i>→</i><span>Extended or intensified fermentation</span><i>→</i><span>Rest and aging</span><i>→</i><span>Dark, mature wrapper</span></div>
+        <p className="maduroCaution">There is no universal Maduro timetable or temperature. Producers protect different methods, and the leaf—not a marketing color target—must guide the process.</p>
+        <div className="sourceRail"><a href="https://store.davidoffgeneva.com/" target="_blank" rel="noreferrer">Davidoff: “Maduro is not color only” ↗</a><a href="https://www.perdomocigars.com/10th-anniversary" target="_blank" rel="noreferrer">Perdomo: Connecticut, sun-grown, and Maduro blend examples ↗</a></div>
+      </section>
+
+      <section className="wrapperLibrary">
+        <div className="blendSectionHead"><div><div className="eyebrow">A collector’s wrapper library</div><h2>Learn what the name tells you—and what it does not.</h2></div><p>The taste language below records common collector and producer associations, not a flavor guarantee. A careful cigar record preserves the complete identity whenever it is available.</p></div>
+        <div className="wrapperTable">
+          <div className="wrapperTableHead"><span>Name</span><span>What it may identify</span><span>Common associations</span><span>Never assume</span></div>
+          {wrapperFamilies.map(([name,meaning,taste,caution])=><article key={name}><h3>{name}</h3><p data-label="What it may identify">{meaning}</p><p data-label="Common associations">{taste}</p><p data-label="Never assume">{caution}</p></article>)}
+        </div>
+      </section>
+
+      <section className="binderDeepDive">
+        <div><div className="eyebrow">The misunderstood middle</div><h2>The binder is part of the flavor system.</h2><p>Because it is hidden, binder is often described only as structural. But it is a full tobacco leaf burning directly beneath the wrapper and around the entire filler bunch.</p></div>
+        <div className="binderQuestions">
+          <article><h3>Why choose one?</h3><p>Elasticity, tensile strength, thickness, combustion rate, neutral or distinctive flavor, compatibility with the wrapper, and the ability to hold the bunch at the intended density.</p></article>
+          <article><h3>How can it change taste?</h3><p>A binder may reinforce sweetness, add earth or spice, dry the finish, deepen body, or calm an assertive filler. Its effect depends on the particular leaf and its relationship to the entire blend.</p></article>
+          <article><h3>Can there be two?</h3><p>Some cigars use dual binders to solve structural, combustion, or sensory goals. “Double binder” describes construction; it does not guarantee greater strength or quality.</p></article>
+          <article><h3>How much flavor?</h3><p>No defensible fixed percentage applies to every cigar. Ring gauge, leaf thickness, chemistry, proportions, burn temperature, and the other components continually change the relationship.</p></article>
+        </div>
+      </section>
+
+      <section className="wrapperExperiment">
+        <div><div className="eyebrow">The most useful tasting exercise</div><h2>Change one wrapper. Observe the whole system.</h2></div>
+        <div><p>Find a producer offering Connecticut, sun-grown, and Maduro versions built around closely related binder and filler tobaccos. Smoke the same vitola under similar conditions. Record aroma before lighting, first-light character, sweetness, spice, body, nicotine strength, texture, combustion, transitions, and finish.</p><p>The goal is not to prove that the wrapper supplies a percentage of flavor. It is to notice how changing one leaf changes the relationships among every leaf.</p><a className="textLink" href="https://www.perdomocigars.com/10th-anniversary" target="_blank" rel="noreferrer">Study an official three-wrapper comparison ↗</a></div>
       </section>
 
       <section className="strengthLanguage">
