@@ -85,7 +85,10 @@ export function collectionComponentDrafts(collection: CigarCollection, template:
     const inventoryId = `INV-${slug(collection.collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
     if (existing.has(inventoryId)) return [];
     const canonical = canonicalCigarIdentity(identity);
-    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${template.sourceLabel}: ${template.sourceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
+    const documented = template.componentEvidence?.find(component => component.requirement === requirement);
+    const evidenceLabel = documented?.sourceLabel || template.sourceLabel;
+    const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
+    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
     return [{ ...draft, retailValue: knownRetailValue(draft, inventory) }];
   });
 }
