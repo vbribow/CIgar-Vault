@@ -8,6 +8,8 @@ import {
   invitationExpired,
   invitationExpiresAt,
 } from "../lib/partner-workspace";
+import { readinessDefinitions, readinessSeedRows, readinessSummary } from "../lib/partner-readiness";
+import { partnerCan } from "../lib/partner-model";
 
 test("creates one-time invitation tokens that are stored only as hashes",()=>{
   const invitation=createInvitationToken();
@@ -70,4 +72,45 @@ test("partner workspace exposes no founder approval or launch controls",async()=
   assert.doesNotMatch(component,/action:\s*["']approveCampaign["']/);
   assert.doesNotMatch(component,/action:\s*["']launchCampaign["']/);
   assert.doesNotMatch(component,/action:\s*["']pauseCampaign["']/);
+});
+
+test("partner readiness covers trust, brand, commercial, operations, and launch controls",()=>{
+  assert.equal(readinessDefinitions.length,9);
+  assert.deepEqual(new Set(readinessDefinitions.map(item=>item.category)),new Set(["Trust","Brand","Commercial","Operations","Launch"]));
+  assert.match(readinessDefinitions.find(item=>item.key==="privacy_data_use")?.description||"",/no access to private collector records/i);
+  assert.match(readinessDefinitions.find(item=>item.key==="commission_payout")?.description||"",/Never store bank or tax credentials/i);
+});
+
+test("readiness requires every defined control before activation",()=>{
+  const partnerId="2544af61-5328-4a82-9780-b50c996b298f";
+  const rows=readinessSeedRows(partnerId);
+  assert.deepEqual(readinessSummary(rows),{approved:0,required:9,complete:false});
+  const approved=rows.map(row=>({...row,status:"approved" as const}));
+  assert.deepEqual(readinessSummary(approved),{approved:9,required:9,complete:true});
+  assert.equal(readinessSummary(approved.slice(0,8)).complete,false);
+});
+
+test("only operational partner roles can submit readiness evidence",()=>{
+  assert.equal(partnerCan("owner","readiness.submit"),true);
+  assert.equal(partnerCan("administrator","readiness.submit"),true);
+  assert.equal(partnerCan("editor","readiness.submit"),true);
+  assert.equal(partnerCan("analyst","readiness.submit"),false);
+  assert.equal(partnerCan("viewer","readiness.submit"),false);
+});
+
+test("readiness migration creates no Fox records",async()=>{
+  const migration=await readFile(
+    new URL("../supabase/migrations/202607240004_partner_readiness.sql",import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(migration,/insert\s+into\s+public\.partner_readiness_items/i);
+  assert.doesNotMatch(migration,/update\s+public\.partners/i);
+  assert.match(migration,/Fox record remains untouched/i);
+});
+
+test("founder API enforces readiness before partner activation",async()=>{
+  const route=await readFile(new URL("../app/api/partners/route.ts",import.meta.url),"utf8");
+  assert.match(route,/input\.entity===["']partner["']&&input\.status===["']active["']/);
+  assert.match(route,/if\(!summary\.complete\)throw new Error/);
+  assert.match(route,/collaboration_locked/);
 });

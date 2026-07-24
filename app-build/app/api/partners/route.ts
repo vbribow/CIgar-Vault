@@ -5,6 +5,7 @@ import { authorizeWrite } from "@/lib/config";
 import { CampaignInput, PartnerInput, campaignLaunchBlockers } from "@/lib/partner-model";
 import { partnerAdmin } from "@/lib/partner-platform";
 import { PartnerInvitationInput, createInvitationToken, invitationExpiresAt, safeMembership } from "@/lib/partner-workspace";
+import { ReadinessReview, readinessSeedRows, readinessSummary } from "@/lib/partner-readiness";
 
 const RequestBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("createPartner"), data: PartnerInput }),
@@ -24,6 +25,8 @@ const RequestBody = z.discriminatedUnion("action", [
   z.object({action:z.literal("inviteMember"),data:PartnerInvitationInput}),
   z.object({action:z.literal("changeMemberRole"),id:z.string().uuid(),role:z.enum(["owner","administrator","editor","analyst","viewer"])}),
   z.object({action:z.literal("revokeMember"),id:z.string().uuid()}),
+  z.object({action:z.literal("initializeReadiness"),partnerId:z.string().uuid()}),
+  z.object({action:z.literal("reviewReadiness"),partnerId:z.string().uuid(),data:ReadinessReview}),
   z.object({
     action: z.literal("createPayout"),
     partnerId: z.string().uuid(),
@@ -79,7 +82,7 @@ export async function GET(request: Request) {
   if (!authorizeWrite(request)) return NextResponse.json({ error: "Founder authorization required" }, { status: 401 });
   try {
     const admin = adminOrThrow();
-    const [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships] = await Promise.all([
+    const [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships, readiness] = await Promise.all([
       admin.from("partners").select("*").order("created_at", { ascending: false }),
       admin.from("partner_campaigns").select("*,partners(name)").order("created_at", { ascending: false }),
       admin.from("partner_clicks").select("id,campaign_id,created_at").limit(10000),
@@ -90,8 +93,9 @@ export async function GET(request: Request) {
       admin.from("partner_campaign_approvals").select("*").order("created_at",{ascending:false}).limit(500),
       admin.from("partner_audit_events").select("*").order("created_at",{ascending:false}).limit(500),
       admin.from("partner_memberships").select("*").order("created_at",{ascending:false}).limit(1000),
+      admin.from("partner_readiness_items").select("*").order("created_at",{ascending:true}).limit(2000),
     ]);
-    const error = [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships].find(result => result.error)?.error;
+    const error = [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships, readiness].find(result => result.error)?.error;
     if (error) throw error;
     const confirmed = (conversions.data || []).filter(row => row.status === "confirmed");
     const commissionRows = commissions.data || [];
@@ -103,6 +107,7 @@ export async function GET(request: Request) {
       approvals:approvals.data||[],
       auditEvents:auditEvents.data||[],
       memberships:(memberships.data||[]).map(row=>({...safeMembership(row),partnerId:row.partner_id})),
+      readiness:readiness.data||[],
       summary: {
         activePartners: (partners.data || []).filter(row => row.status === "active").length,
         activeCampaigns: (campaigns.data || []).filter(row => row.status === "active").length,
@@ -136,6 +141,8 @@ export async function POST(request: Request) {
         notes: input.data.notes || null,
       }).select().single();
       if (error) throw error;
+      const{error:readinessError}=await admin.from("partner_readiness_items").insert(readinessSeedRows(data.id));
+      if(readinessError)throw readinessError;
       await admin.from("partner_audit_events").insert({ partner_id:data.id,action:"partner.created",subject_type:"partner",subject_id:data.id,details:{name:data.name,type:data.partner_type} });
       return NextResponse.json({ data }, { status: 201 });
     }
@@ -267,6 +274,25 @@ export async function POST(request: Request) {
       await admin.from("partner_audit_events").insert({partner_id:data.partner_id,action:"membership.revoked",subject_type:"membership",subject_id:data.id,details:{}});
       return NextResponse.json({data:{...safeMembership(data),partnerId:data.partner_id}});
     }
+    if(input.action==="initializeReadiness"){
+      const{data:partner,error:partnerError}=await admin.from("partners").select("id,slug,collaboration_locked,collaboration_lock_reason").eq("id",input.partnerId).single();
+      if(partnerError)throw partnerError;
+      if(partner.collaboration_locked)throw new Error(partner.collaboration_lock_reason||"Readiness initialization is founder-locked for this partner");
+      const{data,error}=await admin.from("partner_readiness_items").upsert(readinessSeedRows(partner.id),{onConflict:"partner_id,item_key",ignoreDuplicates:true}).select();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partner.id,action:"partner.readiness_initialized",subject_type:"partner",subject_id:partner.id,details:{itemsCreated:data?.length||0}});
+      return NextResponse.json({data:{partnerId:partner.id,itemsCreated:data?.length||0}});
+    }
+    if(input.action==="reviewReadiness"){
+      const{data:partner,error:partnerError}=await admin.from("partners").select("id,collaboration_locked,collaboration_lock_reason").eq("id",input.partnerId).single();
+      if(partnerError)throw partnerError;
+      if(partner.collaboration_locked)throw new Error(partner.collaboration_lock_reason||"Readiness review is founder-locked for this partner");
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("partner_readiness_items").update({status:input.data.status,founder_note:input.data.founderNote,reviewed_by:"founder",reviewed_at:now,updated_at:now}).eq("id",input.data.itemId).eq("partner_id",partner.id).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partner.id,action:`partner.readiness_${input.data.status}`,subject_type:"readiness",subject_id:data.id,details:{itemKey:data.item_key,founderNote:input.data.founderNote}});
+      return NextResponse.json({data});
+    }
     if (input.action === "createPayout") {
       if (input.periodStart > input.periodEnd) throw new Error("Payout start date must be before its end date");
       const { data: eligible, error: eligibleError } = await admin.from("partner_commissions")
@@ -291,6 +317,15 @@ export async function POST(request: Request) {
       await admin.from("partner_commissions").update({status:"paid",updated_at:now}).eq("payout_id",input.id);
       await admin.from("partner_audit_events").insert({partner_id:payout.partner_id,action:"payout.paid",subject_type:"payout",subject_id:payout.id,details:{amountCents:payout.amount_cents,paymentReference:input.paymentReference}});
       return NextResponse.json({data:payout});
+    }
+    if(input.entity==="partner"&&input.status==="active"){
+      const{data:partner,error:partnerError}=await admin.from("partners").select("id,collaboration_locked,collaboration_lock_reason").eq("id",input.id).single();
+      if(partnerError)throw partnerError;
+      if(partner.collaboration_locked)throw new Error(partner.collaboration_lock_reason||"Partner activation is founder-locked");
+      const{data:items,error:itemsError}=await admin.from("partner_readiness_items").select("required,status").eq("partner_id",input.id);
+      if(itemsError)throw itemsError;
+      const summary=readinessSummary(items||[]);
+      if(!summary.complete)throw new Error(`Partner readiness is incomplete: ${summary.approved} of ${summary.required||9} required controls approved`);
     }
     const table = input.entity === "partner" ? "partners" : "partner_commissions";
     const { data, error } = await admin.from(table).update({ status: input.status, updated_at: new Date().toISOString() }).eq("id", input.id).select().single();
