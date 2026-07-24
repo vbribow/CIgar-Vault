@@ -19,7 +19,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     if (!template) return NextResponse.json({ error: "This collection needs a researched contents template before inventory can be populated." }, { status: 409 });
     const editionIssue=collectionEditionIssue(collection);
     if(editionIssue)return NextResponse.json({error:`Collection edition must be corrected before population. ${editionIssue}`},{status:409});
-    const eligibleInventory = inventory.filter(item => !item.collectionId || item.collectionId === collection.collectionId);
+    const eligibleInventory = inventory.filter(item =>
+      (item.currentQty ?? 0) > 0
+      && (!item.collectionId || item.collectionId === collection.collectionId)
+    );
     const used = new Set<string>(), reusable = matchCollectionRequirements(template.requirements, eligibleInventory,collectionMatchMinimum(template)).flatMap(match => {
       const item = match.inventoryId ? inventory.find(candidate => candidate.inventoryId === match.inventoryId) : undefined;
       if (!item || used.has(item.inventoryId) || (item.collectionId && item.collectionId !== collection.collectionId)) return [];
