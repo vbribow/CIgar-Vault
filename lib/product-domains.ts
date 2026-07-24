@@ -43,6 +43,7 @@ export const productDomains:ProductDomain[]=[
     {href:"/learn/seed-to-smoke",label:"Seed to Smoke",description:"Follow tobacco, people, and craft from the field to the collector"},
     {href:"/learn/vitolas",label:"Understanding Vitolas",description:"Compare cigar dimensions, shapes, construction, and smoking relationships"},
     {href:"/learn/blending",label:"Blending & Master Blenders",description:"Understand blend architecture and study documented blender careers"},
+    {href:"/learn/manufacturing-truth",label:"Manufacturing Truth",description:"Find the brand owner, blender, actual factory, tobacco regions, and supporting evidence"},
     {href:"/catalog",label:"Cigar reference",description:"Learn through documented cigar identities"},
     {href:"/data-model",label:"How Cedriva understands a cigar",description:"Follow identity, release, provenance, evidence, and collector history"},
     {href:"/sommelier-library",label:"Curated knowledge",description:"Review the evidence library behind Cedriva AI"},

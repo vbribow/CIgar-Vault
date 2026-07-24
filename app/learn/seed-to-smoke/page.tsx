@@ -200,7 +200,7 @@ export default function SeedToSmokePage() {
 
       <section className="seedClosing">
         <div><div className="eyebrow">The collector’s role</div><h2>Knowledge turns consumption into stewardship.</h2></div>
-        <div><p>When collectors understand the work behind tobacco, they store more carefully, ask better questions, recognize construction, value honest information, support the people behind the industry, and preserve stories that might otherwise disappear.</p><div className="ctaRow"><a className="button" href="/learn">Continue learning</a><a className="button secondary" href="/data-model">See how Cedriva preserves the record</a></div></div>
+        <div><p>When collectors understand the work behind tobacco, they store more carefully, ask better questions, recognize construction, value honest information, support the people behind the industry, and preserve stories that might otherwise disappear.</p><div className="ctaRow"><a className="button" href="/learn/blending">Continue to blending</a><a className="button secondary" href="/learn/manufacturing-truth">Meet the factories</a><a className="button secondary" href="/data-model">See how Cedriva preserves the record</a></div></div>
       </section>
     </main>
   );
