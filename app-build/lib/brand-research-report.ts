@@ -128,15 +128,17 @@ Build an evidence-first research report that separates:
 
 Search official manufacturer and brand websites, official press releases, factory profiles, distributor announcements, direct interviews, PCA/TPE material, and established cigar trade publications. Prefer primary evidence. Use retailer pages only as secondary leads. Do not infer a factory from country, brand region, ownership, distribution, a blender's employer, or another cigar in the portfolio. Do not extend a factory documented for one line to the whole brand. Preserve historical factory changes instead of reporting only the current relationship.
 
+This is a bounded first-pass report, not an exhaustive biography. Use no more than eight strong sources. Prioritize the current owner, named creative contributors, core manufacturing relationships, and documented factory changes. Return remaining lines or periods as unresolved questions for follow-up instead of continuing to search indefinitely.
+
 Every verified or partially verified claim must include a direct attributable source URL, source title, evidence date, and confidence. For an unresolved claim, use "Unresolved" as the value, an empty source URL only when no defensible source exists, and explain the gap. Return only information about premium handmade cigars.`;
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: process.env.OPENAI_VISION_MODEL?.trim() || "gpt-5.6-terra",
-      reasoning: { effort: "medium" },
+      model: process.env.OPENAI_BRAND_RESEARCH_MODEL?.trim() || "gpt-5-mini",
+      reasoning: { effort: "low" },
       store: false,
-      max_output_tokens: 5500,
+      max_output_tokens: 3800,
       tools: [{ type: "web_search" }],
       include: ["web_search_call.action.sources"],
       input: prompt,
