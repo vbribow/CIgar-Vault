@@ -1,0 +1,51 @@
+.dataModelPage{padding-bottom:100px}
+.dataModelHero{display:grid;grid-template-columns:1.35fr .65fr;align-items:end;gap:50px;padding:clamp(48px,8vw,100px) 0 70px}
+.dataModelHero h1{max-width:900px;font-size:clamp(52px,8vw,92px)}
+.dataModelHero aside{display:grid;gap:12px;padding:28px;border:1px solid #76552e;border-radius:22px;background:radial-gradient(circle at 100% 0,#3b2919,transparent 55%),#17120f}
+.dataModelHero aside span,.dataModelDefinition>div:first-child{color:var(--gold2);font-size:10px;font-weight:850;letter-spacing:.11em;text-transform:uppercase}
+.dataModelHero aside strong{font-family:var(--font-display);font-size:30px;line-height:1.08}
+.dataModelHero aside p{margin:0;color:var(--muted);line-height:1.65}
+.dataModelDefinition{padding:42px 0;border-top:1px solid #74532e;border-bottom:1px solid #74532e}
+.dataModelDefinitionGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:24px;background:var(--line)}
+.dataModelDefinitionGrid article{padding:28px;background:#15100d}
+.dataModelDefinitionGrid article>span{color:var(--gold2);font:11px var(--font-data);text-transform:uppercase}
+.dataModelDefinitionGrid h2{margin:10px 0;font-size:28px}
+.dataModelDefinitionGrid p{margin:0;color:var(--muted);line-height:1.65}
+.dataModelSectionIntro{display:grid;grid-template-columns:1.1fr .9fr;align-items:end;gap:60px;margin-bottom:28px}
+.dataModelSectionIntro h2{max-width:650px;margin:8px 0 0;font-size:clamp(38px,5vw,58px);line-height:1}
+.dataModelSectionIntro>p{margin:0;color:var(--muted);font-size:15px;line-height:1.7}
+.dataModelIdentity,.dataModelRelationships{padding:80px 0 0}
+.dataModelIdentity ol{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0;padding:0;list-style:none}
+.dataModelIdentity li{display:grid;grid-template-columns:48px 1fr;gap:16px;padding:20px;border:1px solid var(--line);border-radius:15px;background:#17120f}
+.dataModelIdentity li>span{color:var(--gold2);font:12px var(--font-data)}
+.dataModelIdentity h3{margin:0 0 6px;font-size:22px}
+.dataModelIdentity p{margin:0;color:var(--muted);line-height:1.55}
+.dataModelRelationshipGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.dataModelRelationshipGrid article{display:grid;align-content:start;padding:26px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#251a13,#15100d)}
+.dataModelRelationshipGrid article>span{color:var(--gold2);font:11px var(--font-data)}
+.dataModelRelationshipGrid h3{margin:20px 0 9px;font-size:29px}
+.dataModelRelationshipGrid p{margin:0;color:var(--muted);line-height:1.6}
+.dataModelRelationshipGrid ul{display:grid;gap:8px;margin:20px 0 0;padding:18px 0 0 18px;border-top:1px solid var(--line);color:#d8cbbd;font-size:12px}
+.dataModelTrust{display:grid;grid-template-columns:.85fr 1.15fr;gap:60px;margin:90px 0 0;padding:50px 0;border-top:1px solid #74532e;border-bottom:1px solid #74532e}
+.dataModelTrust h2{margin:9px 0 15px;font-size:clamp(38px,5vw,56px);line-height:1}
+.dataModelTrust>div:first-child>p{color:var(--muted);line-height:1.65}
+.dataModelTrust blockquote{margin:28px 0 0;padding:18px 20px;border-left:2px solid var(--gold);background:#1a130e;color:#e3d4c2;font-family:var(--font-display);font-size:19px;line-height:1.45}
+.dataModelTrustList{display:grid;gap:8px}
+.dataModelTrustList article{display:grid;grid-template-columns:44px 1fr;gap:14px;padding:15px;border:1px solid var(--line);border-radius:13px;background:#17120f}
+.dataModelTrustList article>span{color:var(--gold2);font:11px var(--font-data)}
+.dataModelTrustList h3,.dataModelTrustList p{margin:0}.dataModelTrustList h3{font-size:19px}.dataModelTrustList p{margin-top:4px;color:var(--muted);font-size:12px;line-height:1.5}
+.dataModelPrivacy{display:grid;grid-template-columns:.8fr 1.2fr;gap:70px;margin-top:80px;padding:38px;border:1px solid #714f2a;border-radius:22px;background:radial-gradient(circle at 0 0,#392617,transparent 42%),#15100d}
+.dataModelPrivacy h2{margin:9px 0 0;font-size:43px}
+.dataModelPrivacy p{margin-top:0;color:#ded0bf;font-size:16px;line-height:1.7}
+.dataModelPrivacy ul{display:grid;gap:10px;margin:20px 0 0;padding-left:20px;color:var(--muted);line-height:1.55}
+.dataModelHistory{padding:85px 0 0;text-align:center}
+.dataModelHistory h2{max-width:900px;margin:9px auto 30px;font-size:clamp(40px,5.5vw,64px);line-height:1}
+.dataModelHistory>div:last-child{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:left}
+.dataModelHistory article{padding:23px;border-top:1px solid #77552e;background:#15100d}
+.dataModelHistory strong{color:var(--gold2);font-family:var(--font-display);font-size:22px}
+.dataModelHistory p{margin:10px 0 0;color:var(--muted);line-height:1.6}
+.dataModelClosing{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:90px;padding:50px 0;border-top:1px solid #74532e}
+.dataModelClosing h2{margin:8px 0 0;font-size:clamp(40px,5vw,60px);line-height:1}
+.dataModelClosing p{margin:0;color:var(--muted);font-size:16px;line-height:1.75}
+@media(max-width:850px){.dataModelHero,.dataModelSectionIntro,.dataModelTrust,.dataModelPrivacy,.dataModelClosing{grid-template-columns:1fr}.dataModelDefinitionGrid,.dataModelRelationshipGrid,.dataModelHistory>div:last-child{grid-template-columns:1fr}.dataModelIdentity ol{grid-template-columns:1fr}.dataModelSectionIntro,.dataModelTrust,.dataModelPrivacy,.dataModelClosing{gap:28px}.dataModelDefinitionGrid{background:transparent;gap:8px}.dataModelPrivacy{padding:27px}}
+@media(max-width:560px){.dataModelHero{padding-top:40px}.dataModelHero h1{font-size:48px}.dataModelIdentity,.dataModelRelationships{padding-top:58px}.dataModelIdentity li{grid-template-columns:38px 1fr;padding:17px}.dataModelRelationshipGrid article{padding:21px}.dataModelTrust{margin-top:65px}.dataModelPrivacy h2{font-size:35px}}
