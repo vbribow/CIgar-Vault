@@ -115,6 +115,9 @@ test("learning routes form a connected curriculum around manufacturing truth", (
   assert.match(manufacturingTruth, /Actual factory/);
   assert.match(manufacturingTruth, /Release/);
   assert.match(manufacturingTruth, /Provenance/);
+  assert.match(manufacturingTruth, /Complete Cedriva brand universe/);
+  assert.match(manufacturingTruth, /allBrandManufacturingCoverage/);
+  assert.match(manufacturingTruth, /No cigar disappears because its factory is unknown/);
 });
 
 test("the complete Cedriva learning curriculum remains publicly accessible", () => {
