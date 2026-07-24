@@ -5,13 +5,15 @@ import { CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor,
 
 test("Cigar Somm accepts an inventory-grounded pairing question",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I pair with this after dinner?",inventoryId:"INV-1",occasion:"After dinner",includeAlcohol:true});assert.equal(value.inventoryId,"INV-1");assert.equal(value.includeAlcohol,true)});
 test("Cigar Somm accepts a manually entered cigar without adding inventory",()=>{const value=CigarSommQuestionSchema.parse({question:"Analyze this cigar",cigarName:"Arturo Fuente OpusX Lost City Double Robusto",includeAlcohol:true});assert.equal(value.cigarName,"Arturo Fuente OpusX Lost City Double Robusto");assert.equal(value.inventoryId,undefined)});
+test("Cigar Somm accepts a drink, meal, time, or occasion without forcing a cigar first",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I smoke?",pairingDirection:"occasion-to-cigar",pairingContext:"Morning coffee after breakfast",includeAlcohol:false});assert.equal(value.pairingDirection,"occasion-to-cigar");assert.equal(value.pairingContext,"Morning coffee after breakfast")});
+test("Cigar Somm requires context when pairing from a moment to a cigar",()=>{assert.equal(CigarSommQuestionSchema.safeParse({question:"What should I smoke?",pairingDirection:"occasion-to-cigar",includeAlcohol:false}).success,false)});
 test("Cigar Somm requires either an inventory selection or manual cigar",()=>{assert.equal(CigarSommQuestionSchema.safeParse({question:"Analyze this cigar",includeAlcohol:true}).success,false)});
 
-test("Cigar Somm answers preserve tasting analysis, personalization, four pairing paths, and sources",()=>{const pairing={name:"Espresso",style:"Medium roast",why:"Matches toasted flavors",service:"Serve warm"};const value=CigarSommAnswerSchema.parse({answer:"A balanced pairing set.",cigarContext:"Test cigar",confidence:"Medium",personalization:{used:true,signals:["Prefers medium strength"],explanation:"Adjusted to the collector's recorded taste."},tastingProfile:{body:"Medium-full",strength:"Medium",coreNotes:["cedar","cocoa"],development:["Creamy opening","Pepper builds"],evidence:"Conservative synthesis of cited reviews."},basis:["General pairing principles"],coffee:[pairing],spirits:[{...pairing,name:"Appleton Estate 12 Year Rare Casks",producer:"Appleton Estate",label:"12 Year Rare Casks",verificationUrl:"https://example.com/appleton-12"}],cocktails:[{...pairing,name:"Rum Old Fashioned"}],nonAlcoholic:[{...pairing,name:"Sparkling mineral water"}],sources:[{title:"Official product page",url:"https://example.com/cigar",publisher:"Example Cigars",supports:"Blend composition"}],cautions:["Pairing is subjective"]});assert.equal(value.personalization.used,true);assert.equal(value.tastingProfile.coreNotes.length,2);assert.equal(value.coffee.length,1);assert.equal(value.spirits[0].label,"12 Year Rare Casks");assert.equal(value.cocktails.length,1);assert.equal(value.nonAlcoholic.length,1);assert.equal(value.sources.length,1)});
+test("Cigar Somm answers preserve tasting analysis, personalization, four pairing paths, and sources",()=>{const pairing={name:"Espresso",style:"Medium roast",why:"Matches toasted flavors",service:"Serve warm"};const value=CigarSommAnswerSchema.parse({answer:"A balanced pairing set.",cigarContext:"Test cigar",cigarRecommendations:[],confidence:"Medium",personalization:{used:true,signals:["Prefers medium strength"],explanation:"Adjusted to the collector's recorded taste."},tastingProfile:{body:"Medium-full",strength:"Medium",coreNotes:["cedar","cocoa"],development:["Creamy opening","Pepper builds"],evidence:"Conservative synthesis of cited reviews."},basis:["General pairing principles"],coffee:[pairing],spirits:[{...pairing,name:"Appleton Estate 12 Year Rare Casks",producer:"Appleton Estate",label:"12 Year Rare Casks",verificationUrl:"https://example.com/appleton-12"}],cocktails:[{...pairing,name:"Rum Old Fashioned"}],nonAlcoholic:[{...pairing,name:"Sparkling mineral water"}],sources:[{title:"Official product page",url:"https://example.com/cigar",publisher:"Example Cigars",supports:"Blend composition"}],cautions:["Pairing is subjective"]});assert.equal(value.personalization.used,true);assert.equal(value.tastingProfile.coreNotes.length,2);assert.equal(value.coffee.length,1);assert.equal(value.spirits[0].label,"12 Year Rare Casks");assert.equal(value.cocktails.length,1);assert.equal(value.nonAlcoholic.length,1);assert.equal(value.sources.length,1)});
 
 test("Cigar Somm requires every requested pairing category",()=>{
  const pairing={name:"Espresso",style:"Medium roast",why:"Matches toasted flavors",service:"Serve warm"};
- const answer=CigarSommAnswerSchema.parse({answer:"Pair carefully.",cigarContext:"Padrón Legends Carlos A. Fuente, Sr. Box-pressed Churchill",confidence:"Developing",personalization:{used:false,signals:[],explanation:"General guidance."},tastingProfile:{body:"Full",strength:"Medium-full",coreNotes:["cocoa"],development:["cedar"],evidence:"Conservative expectation."},basis:["Intensity"],coffee:[],spirits:[],cocktails:[],nonAlcoholic:[pairing],sources:[],cautions:[]});
+ const answer=CigarSommAnswerSchema.parse({answer:"Pair carefully.",cigarContext:"Padrón Legends Carlos A. Fuente, Sr. Box-pressed Churchill",cigarRecommendations:[],confidence:"Developing",personalization:{used:false,signals:[],explanation:"General guidance."},tastingProfile:{body:"Full",strength:"Medium-full",coreNotes:["cocoa"],development:["cedar"],evidence:"Conservative expectation."},basis:["Intensity"],coffee:[],spirits:[],cocktails:[],nonAlcoholic:[pairing],sources:[],cautions:[]});
  assert.throws(()=>requireCompletePairings(answer,true),/coffee, spirits, cocktails/);
  assert.equal(cigarSommJsonSchemaFor(true).properties.spirits.minItems,1);
  assert.equal("minItems" in cigarSommJsonSchemaFor(false).properties.spirits,false);
@@ -47,7 +49,7 @@ test("Cigar Somm requires explicit confirmation when a linked cigar belongs to a
   assert.match(component,/setCollectionChoiceConfirmed\]=useState\(!initialCollectionId\)/);
   assert.match(component,/Confirm the exact cigar before analysis/);
   assert.match(component,/Choose the exact collection cigar above/);
-  assert.match(component,/collectionChoiceConfirmed:source==="manual"\|\|collectionChoiceConfirmed/);
+  assert.match(component,/collectionChoiceConfirmed:source!=="inventory"\|\|collectionChoiceConfirmed/);
 });
 
 test("Cigar Somm uses the fast source-aware search path for pairing requests",()=>{
@@ -73,4 +75,13 @@ test("Cigar Somm keeps its synthesis onsite while retaining optional source veri
  const styles=readFileSync(new URL("../app/cigar-somm/somm.css",import.meta.url),"utf8");
  assert.match(styles,/complete experience stays onsite/);
  assert.match(styles,/Verify source/);
+});
+test("Cigar Somm supports pairing from a drink, meal, time, or occasion back to owned cigars",()=>{
+ const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
+ const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
+ assert.match(component,/My moment → a cigar/);
+ assert.match(component,/pairingDirection:source==="context"\?"occasion-to-cigar":"cigar-to-beverage"/);
+ assert.match(component,/I’m drinking coffee this morning/);
+ assert.match(service,/beverage to cigar, meal to cigar, time of day to cigar, and occasion to cigar/);
+ assert.match(service,/Never invent ownership/);
 });
