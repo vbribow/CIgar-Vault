@@ -116,7 +116,7 @@ export default function VitolasPage() {
 
       <section className="vitolaClosing">
         <div><div className="eyebrow">Collect with precision</div><h2>Record the name. Trust the measurements. Notice the experience.</h2></div>
-        <div><p>When comparing two vitolas from the same line, document length, ring gauge, shape, cut, draw, smoking pace, and where the profile changed. Over time, your journal will reveal which proportions best suit your preferences.</p><div className="ctaRow"><a className="button" href="/records">Begin a tasting record</a><a className="button secondary" href="/learn/seed-to-smoke">Return to Seed to Smoke</a></div></div>
+        <div><p>When comparing two vitolas from the same line, document length, ring gauge, shape, cut, draw, smoking pace, and where the profile changed. Over time, your journal will reveal which proportions best suit your preferences.</p><div className="ctaRow"><a className="button" href="/records">Begin a tasting record</a><a className="button secondary" href="/learn/blending">See how blenders adapt a vitola</a><a className="button secondary" href="/learn/manufacturing-truth">Trace the factory</a></div></div>
       </section>
     </main>
   );

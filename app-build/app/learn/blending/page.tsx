@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { manufacturingTruthHrefForHouse } from "@/lib/manufacturing-truth";
 import "./blending.css";
 
 export const metadata: Metadata = {
@@ -114,6 +115,22 @@ const profileSources = [
     label: "Official Perdomo family history",
     source2: "https://www.perdomocigars.com/10th-anniversary",
     label2: "Official 10th Anniversary blends",
+  },
+  {
+    initials: "NP",
+    name: "Néstor Andrés Plasencia",
+    house: "Plasencia Cigars",
+    manufacturing: "Vertically integrated family production across Nicaragua and Honduras. Plasencia grows and processes tobacco and operates multiple factories for its namesake portfolio and outside brand owners. The precise factory and country remain product-level facts.",
+    factorySource: "https://www.plasenciacigars.com/heritage/",
+    factoryLabel: "Official Plasencia family and factory history",
+    verified: "Plasencia’s official record identifies Néstor Andrés as a fifth-generation tobacco grower who joined the business full time after agricultural school, first on the farms and later extensively in the factories. The family launched its namesake portfolio after decades of growing tobacco and contract manufacturing.",
+    study: "His work is best studied as agricultural blending: seed choice, soil management, crop differences, fermentation, aged inventory, and factory repeatability are one connected system. The Alma and Cosecha projects also distinguish a family-owned brand from the many outside cigars Plasencia manufactures.",
+    project: "Compare an Alma-series Nicaraguan cigar with a Cosecha-series release tied to a harvest year. Record factory country, crop story, blend origins, wrapper, stated aging, and which claims are about the tobacco rather than the family name.",
+    themes: ["Five-generation agriculture", "Nicaragua and Honduras", "Brand versus contract manufacture"],
+    source: "https://www.plasenciacigars.com/qa-nestor-andres-plasencia-plasencia-tobacco/",
+    label: "Direct Néstor Andrés Plasencia interview",
+    source2: "https://www.plasenciacigars.com/what-you-dont-see-behind-the-scenes-of-plasencia-cigars/",
+    label2: "Plasencia factory and agriculture record",
   },
   {
     initials: "EE",
@@ -377,6 +394,12 @@ const myths = [
   ["“More age fixes the cigar.”", "Rest can integrate a sound blend and soften transitional characteristics. It cannot reliably repair poor combustion, imbalance, or defective tobacco."],
 ] as const;
 
+function profileTrustLabel(label: string) {
+  if (label.startsWith("Official")) return "Official";
+  if (label.startsWith("Direct")) return "Expert";
+  return "Verified Historical";
+}
+
 export default function BlendingPage() {
   return (
     <main className="shell blendingPage">
@@ -525,7 +548,7 @@ export default function BlendingPage() {
       </section>
 
       <section className="blenderProfiles" id="profiles">
-        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 21 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
+        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 22 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
         <div className="profileGrid">{profileSources.map((profile)=><article key={profile.name}>
           <header><span>{profile.initials}</span><div><small>{profile.house}</small><h3>{profile.name}</h3></div></header>
           <dl>
@@ -535,7 +558,7 @@ export default function BlendingPage() {
             <div><dt>Collector fieldwork</dt><dd>{profile.project}</dd></div>
           </dl>
           <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
-          <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer">{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer">{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer">{profile.label2} ↗</a>}</div>
+          <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
         </article>)}</div>
         <div className="profilePolicy"><strong>Profile standard</strong><p>Biographical facts require attributable sources. Company claims are labeled as company claims. Cedriva analysis is labeled as analysis. Sensory reputation is never presented as biography, and living craft is never reduced to an unsourced legend.</p></div>
       </section>
@@ -560,7 +583,7 @@ export default function BlendingPage() {
             <div><dt>Collector fieldwork</dt><dd>{profile.project}</dd></div>
           </dl>
           <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
-          <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer">{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer">{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer">{profile.label2} ↗</a>}</div>
+          <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
         </article>)}</div>
         <div className="profilePolicy"><strong>A note on authorship</strong><p>A compelling independent brand may be highly personal and still be collaborative. Cedriva names the manufacturing partner whenever the record supports it, because honoring the factory, rollers, tobacco teams, and blender is more truthful than constructing a lone-genius story.</p></div>
       </section>
@@ -584,7 +607,7 @@ export default function BlendingPage() {
 
       <section className="blendExercise">
         <div><div className="eyebrow">Collector exercise</div><h2>Compare with purpose.</h2></div>
-        <div><p>Choose two vitolas from the same line. Record their exact dimensions, storage condition, cut, draw, pace, smoke texture, perceived strength, body, flavor development, combustion, and finish. Do not begin by deciding which is “better.” Ask what each format reveals about the blend.</p><div className="ctaRow"><a className="button" href="/records">Create a tasting record</a><a className="button secondary" href="/learn/vitolas">Review vitolas</a></div></div>
+        <div><p>Choose two vitolas from the same line. Record their exact dimensions, storage condition, cut, draw, pace, smoke texture, perceived strength, body, flavor development, combustion, and finish. Do not begin by deciding which is “better.” Ask what each format reveals about the blend.</p><div className="ctaRow"><a className="button" href="/records">Create a tasting record</a><a className="button secondary" href="/learn/vitolas">Review vitolas</a><a className="button secondary" href="/learn/manufacturing-truth">Trace the manufacturer</a></div></div>
       </section>
     </main>
   );
