@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { latestRuns,systemJobs,type SystemRun } from "@/lib/system-health";
+import { latestRuns,systemJobs,type SystemRun,type ValuationOperationsSnapshot } from "@/lib/system-health";
 
 type ValuationControls={batchSize:number;monthlyBudget:number;estimatedCostPerResearch:number};
 
-export function SystemHealthManager({initialRuns,valuationControls}:{initialRuns:SystemRun[];valuationControls:ValuationControls}){
+export function SystemHealthManager({initialRuns,valuationControls,valuationSnapshot}:{initialRuns:SystemRun[];valuationControls:ValuationControls;valuationSnapshot:ValuationOperationsSnapshot}){
   const[runs,setRuns]=useState(initialRuns);
   const[key,setKey]=useState("");
   const[busy,setBusy]=useState("");
@@ -29,6 +29,19 @@ export function SystemHealthManager({initialRuns,valuationControls}:{initialRuns
   }
 
   return <section className="healthOperations">
+    <section className="healthChecks" aria-labelledby="valuation-operations-title">
+      <article className={valuationSnapshot.status.toLowerCase()}>
+        <span>{valuationSnapshot.status}</span><h2 id="valuation-operations-title">Live valuation coverage</h2>
+        <p>{valuationSnapshot.retailCovered} of {valuationSnapshot.totalLots} lots have retail replacement evidence.</p>
+        <small>{valuationSnapshot.retailCoveragePercent}% coverage · {valuationSnapshot.due} due · {valuationSnapshot.neverValued} never valued</small>
+        <a href="/valuations">Open valuation workspace →</a>
+      </article>
+      <article className={valuationSnapshot.latestAutomatedAt?"ready":"attention"}>
+        <span>{valuationSnapshot.latestAutomatedAt?"Observed":"Not observed"}</span><h2>Latest automated evidence</h2>
+        <p>{valuationSnapshot.latestAutomatedAt?new Date(valuationSnapshot.latestAutomatedAt).toLocaleDateString():"No scheduled valuation result is present in this Vault yet."}</p>
+        <small>{valuationSnapshot.latestEvidenceAt?`Latest evidence of any kind: ${new Date(valuationSnapshot.latestEvidenceAt).toLocaleDateString()}`:"No valuation evidence recorded"}</small>
+      </article>
+    </section>
     <div className="operationsToolbar">
       <div><div className="eyebrow">Operational controls</div><h2>Scheduled automation</h2><p>Run a job safely and preserve its result in the private run ledger.</p></div>
       <label><span>Founder write key</span><input type="password" value={key} onChange={event=>setKey(event.target.value)} placeholder="Required to run now"/></label>

@@ -49,4 +49,27 @@ export function readableError(error:unknown){
   }
   return typeof error==="string"?error:"Run failed";
 }
+
+export type ValuationOperationsSnapshot = {
+  totalLots:number;
+  retailCovered:number;
+  retailCoveragePercent:number;
+  due:number;
+  neverValued:number;
+  latestEvidenceAt?:string;
+  latestAutomatedAt?:string;
+  status:"Ready"|"Attention";
+};
+
+export function valuationOperationsSnapshot(inventory:InventoryItem[],valuations:Valuation[]):ValuationOperationsSnapshot{
+  const latestEvidenceAt=valuations.map(value=>value.valuationDate).filter(Boolean).sort().at(-1);
+  const latestAutomatedAt=valuations.filter(value=>/automated scheduled|shared exact-match/i.test(value.notes||"")).map(value=>value.valuationDate).filter(Boolean).sort().at(-1);
+  const valuedIds=new Set(valuations.filter(value=>value.replacementValue!==undefined||value.marketValue!==undefined||value.askingPrice!==undefined||value.lastSaleValue!==undefined||value.marketEvidenceType==="Insufficient evidence").map(value=>value.inventoryId));
+  const retailCovered=inventory.filter(item=>item.retailValue!==undefined||valuations.some(value=>value.inventoryId===item.inventoryId&&value.replacementValue!==undefined)).length;
+  const due=inventory.filter(item=>valuationNeedsMonitoring(item,valuations)).length;
+  const neverValued=inventory.filter(item=>!valuedIds.has(item.inventoryId)).length;
+  return{totalLots:inventory.length,retailCovered,retailCoveragePercent:inventory.length?Math.round(retailCovered/inventory.length*100):100,due,neverValued,latestEvidenceAt,latestAutomatedAt,status:due===0?"Ready":"Attention"};
+}
 import { dataAuthorityIsUnambiguous } from "./data-authority";
+import { valuationNeedsMonitoring } from "./valuation-monitor";
+import type { InventoryItem, Valuation } from "./types";
