@@ -12,7 +12,7 @@ test("complete collections create linked inventory lots with stated quantities",
   assert.equal(drafts[0].looseStickQty, 20);
   assert.equal(drafts[0].collectionId, "COL-TEST");
   assert.equal(drafts[0].vitola, "Double Corona");
-  assert.equal(drafts[0].vintage, undefined);
+  assert.equal((drafts[0] as { vintage?: number }).vintage, undefined);
   assert.match(drafts[0].catalogId ?? "", /^CIG-/);
   assert.equal(drafts[1].looseStickQty, 1);
   assert.equal(drafts[1].line, "OpusX");
