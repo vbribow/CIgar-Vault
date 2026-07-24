@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authorizeSensorSync,dataMode } from "@/lib/config";
+import { marketEvidenceType } from "@/lib/valuation-evidence";
 import { researchInventoryValuation } from "@/lib/valuation-research";
 import { inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationCostEstimate,valuationMonitorPriority,valuationNeedsMonitoring } from "@/lib/valuation-monitor";
 import { getInventory,getValuations,recordValuation } from "@/lib/smartsheet";
@@ -10,8 +11,20 @@ export const maxDuration=300;
 type OwnedGroup={inventory:InventoryItem[];valuations:Valuation[]};
 type ValuationWork={userId:string;item:InventoryItem;cached?:Valuation};
 
+function cachedValuationResearch(value:Valuation):Awaited<ReturnType<typeof researchInventoryValuation>>{
+  return{
+    replacementValue:value.replacementValue??null,marketValue:value.marketValue??null,
+    marketEvidenceType:marketEvidenceType(value),marketRangeLow:value.marketRangeLow??null,marketRangeHigh:value.marketRangeHigh??null,
+    askingPrice:value.askingPrice??null,askingPriceSource:value.askingPriceSource??"",askingPriceSourceUrl:value.askingPriceSourceUrl??"",
+    lastSaleValue:value.lastSaleValue??null,lastSaleDate:value.lastSaleDate??null,lastSaleVenue:value.lastSaleVenue??null,lastSaleSourceUrl:value.lastSaleSourceUrl??null,
+    source:value.source||"Shared valuation evidence",sourceUrl:value.sourceUrl||"",confidence:(value.confidence||"Medium") as "High"|"Medium"|"Low",
+    evidenceDate:value.valuationDate,notes:`Reused current evidence for an exact cigar identity. ${value.notes||""}`,comparables:[],
+  };
+}
+
 function completionValuation(item:InventoryItem,research:Awaited<ReturnType<typeof researchInventoryValuation>>,cached=false):Valuation{
   const supported=Boolean(research.sourceUrl)&&/^(High|Medium)$/i.test(research.confidence)&&(research.replacementValue!==null||research.marketValue!==null);
+  const insufficient=research.marketEvidenceType==="Insufficient evidence";
   const stamp=new Date().toISOString().replace(/\D/g,"").slice(0,14);
   return{
     valuationId:`VAL-AUTO-${item.inventoryId}-${stamp}`.slice(0,190),
@@ -19,14 +32,21 @@ function completionValuation(item:InventoryItem,research:Awaited<ReturnType<type
     valuationDate:research.evidenceDate,
     replacementValue:supported?research.replacementValue??undefined:undefined,
     marketValue:supported?research.marketValue??undefined:undefined,
-    lastSaleValue:supported?research.lastSaleValue??undefined:undefined,
-    lastSaleDate:supported?research.lastSaleDate??undefined:undefined,
-    lastSaleVenue:supported?research.lastSaleVenue??undefined:undefined,
-    lastSaleSourceUrl:supported?research.lastSaleSourceUrl??undefined:undefined,
-    source:supported?research.source:"Automated research — insufficient evidence",
+    marketEvidenceType:research.marketEvidenceType,
+    marketRangeLow:supported?research.marketRangeLow??undefined:undefined,
+    marketRangeHigh:supported?research.marketRangeHigh??undefined:undefined,
+    askingPrice:research.askingPriceSourceUrl?research.askingPrice??undefined:undefined,
+    askingPriceSource:research.askingPriceSource||undefined,
+    askingPriceSourceUrl:research.askingPriceSourceUrl||undefined,
+    comparableCount:research.comparables.length,
+    lastSaleValue:research.lastSaleSourceUrl?research.lastSaleValue??undefined:undefined,
+    lastSaleDate:research.lastSaleSourceUrl?research.lastSaleDate??undefined:undefined,
+    lastSaleVenue:research.lastSaleSourceUrl?research.lastSaleVenue??undefined:undefined,
+    lastSaleSourceUrl:research.lastSaleSourceUrl||undefined,
+    source:research.source||"Automated research — insufficient evidence",
     sourceUrl:research.sourceUrl||undefined,
     confidence:research.confidence,
-    notes:`${cached?"Shared exact-match evidence.":"Automated scheduled research."} ${supported?"":"Insufficient evidence; defer research for 180 days."} ${research.notes}`,
+    notes:`${cached?"Shared exact-match evidence.":"Automated scheduled research."} ${insufficient?"Insufficient aftermarket evidence; defer research for 180 days.":""} ${research.notes}`,
   };
 }
 
@@ -39,15 +59,10 @@ async function monitorSmartsheet(request:Request){
   const work=eligible.slice(0,batchSize).map(item=>({item,cached:reusableValuation(item,candidates)}));
   const outcomes=await inValuationBatches(work,async row=>{
     try{
-      const research=row.cached?{
-        replacementValue:row.cached.replacementValue??null,marketValue:row.cached.marketValue??null,lastSaleValue:row.cached.lastSaleValue??null,
-        lastSaleDate:row.cached.lastSaleDate??null,lastSaleVenue:row.cached.lastSaleVenue??null,lastSaleSourceUrl:row.cached.lastSaleSourceUrl??null,
-        source:row.cached.source||"Shared valuation evidence",sourceUrl:row.cached.sourceUrl||"",confidence:(row.cached.confidence||"Medium") as "High"|"Medium"|"Low",
-        evidenceDate:row.cached.valuationDate,notes:`Reused current evidence for an exact cigar identity. ${row.cached.notes||""}`,comparables:[],
-      }:await researchInventoryValuation(row.item);
+      const research=row.cached?cachedValuationResearch(row.cached):await researchInventoryValuation(row.item);
       const valuation=completionValuation(row.item,research,Boolean(row.cached));
       await recordValuation(valuation);
-      const supported=valuation.replacementValue!==undefined||valuation.marketValue!==undefined;
+      const supported=valuation.replacementValue!==undefined||valuation.marketValue!==undefined||valuation.askingPrice!==undefined||valuation.lastSaleValue!==undefined;
       return{inventoryId:row.item.inventoryId,status:supported?(row.cached?"cached":"updated"):"unsupported",confidence:research.confidence};
     }catch(error){return{inventoryId:row.item.inventoryId,status:"failed",error:error instanceof Error?error.message:"Failed"}}
   },2);
@@ -85,10 +100,10 @@ export async function GET(request:Request){
     const outcomes=await inValuationBatches(work,async row=>{
       let researchRecorded=false;
       try{
-        const research=row.cached?{replacementValue:row.cached.replacementValue??null,marketValue:row.cached.marketValue??null,lastSaleValue:row.cached.lastSaleValue??null,lastSaleDate:row.cached.lastSaleDate??null,lastSaleVenue:row.cached.lastSaleVenue??null,lastSaleSourceUrl:row.cached.lastSaleSourceUrl??null,source:row.cached.source||"Shared valuation evidence",sourceUrl:row.cached.sourceUrl||"",confidence:(row.cached.confidence||"Medium") as "High"|"Medium"|"Low",evidenceDate:row.cached.valuationDate,notes:`Reused current evidence for an exact cigar identity. ${row.cached.notes||""}`,comparables:[]}:await researchInventoryValuation(row.item);
+        const research=row.cached?cachedValuationResearch(row.cached):await researchInventoryValuation(row.item);
         if(!row.cached){const{error:eventError}=await admin.from("product_events").insert({user_id:row.userId,event_type:"valuation-research",properties:{estimatedCostUsd:estimatedCallCost,model:process.env.OPENAI_VALUATION_MODEL?.trim()||"gpt-5-mini",inventoryId:row.item.inventoryId}});if(eventError)throw eventError;researchRecorded=true}
-        const unsupported=research.marketValue===null&&research.replacementValue===null;
-        const valuation:Valuation={valuationId:`VAL-AUTO-${row.item.inventoryId}-${research.evidenceDate}`.slice(0,190),inventoryId:row.item.inventoryId,valuationDate:research.evidenceDate,replacementValue:research.replacementValue??undefined,marketValue:research.marketValue??undefined,lastSaleValue:research.lastSaleValue??undefined,lastSaleDate:research.lastSaleDate??undefined,lastSaleVenue:research.lastSaleVenue??undefined,lastSaleSourceUrl:research.lastSaleSourceUrl??undefined,source:unsupported?"Automated research — insufficient evidence":research.source,sourceUrl:research.sourceUrl||undefined,confidence:research.confidence,notes:`${row.cached?"Shared exact-match evidence.":"Automated scheduled research."} ${unsupported?"Insufficient evidence; defer research for 180 days.":""} ${research.notes}`};
+        const valuation={...completionValuation(row.item,research,Boolean(row.cached)),valuationId:`VAL-AUTO-${row.item.inventoryId}-${research.evidenceDate}`.slice(0,190)};
+        const unsupported=valuation.marketEvidenceType==="Insufficient evidence"&&valuation.replacementValue===undefined;
         const{error:saveError}=await admin.from("vault_records").upsert({user_id:row.userId,kind:"valuations",record_id:valuation.valuationId,payload:valuation,updated_at:new Date().toISOString()},{onConflict:"user_id,kind,record_id"});if(saveError)throw saveError;
         if(research.replacementValue!==null){const updated={...row.item,retailValue:research.replacementValue};const{error:inventoryError}=await admin.from("vault_records").update({payload:updated,updated_at:new Date().toISOString()}).eq("user_id",row.userId).eq("kind","inventory").eq("record_id",row.item.inventoryId);if(inventoryError)throw inventoryError}
         return{inventoryId:row.item.inventoryId,status:unsupported?"unsupported":row.cached?"cached":"updated",confidence:research.confidence};

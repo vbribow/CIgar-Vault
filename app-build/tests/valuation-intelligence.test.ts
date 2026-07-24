@@ -36,5 +36,13 @@ test("keeps retail replacement separate from documented aftermarket value and re
  assert.equal(result.totals.retailCoveragePercent,100);
  assert.equal(result.totals.marketCoveragePercent,50);
  assert.equal(result.totals.saleCoveragePercent,50);
- assert.deepEqual(result.rows[0].missingEvidence,["Aftermarket estimate","Completed sale","Linked source"]);
+ assert.deepEqual(result.rows[0].missingEvidence,["Aftermarket evidence","Completed sale","Linked source"]);
+});
+
+test("current insufficient evidence is a trusted result, not an immediate retry loop",()=>{
+ const inventory:InventoryItem[]=[{inventoryId:"N",brand:"Foundation",line:"Olmec",vitola:"Toro",currentQty:5,retailValue:16}];
+ const valuations:Valuation[]=[{valuationId:"V",inventoryId:"N",valuationDate:"2026-07-20",replacementValue:16,marketEvidenceType:"Insufficient evidence",confidence:"Low",notes:"No exact public secondary evidence."}];
+ const result=buildValuationIntelligence(inventory,valuations,new Date("2026-07-24"));
+ assert.equal(result.rows[0].evidenceType,"Insufficient evidence");
+ assert.equal(result.reviewQueue.length,0);
 });

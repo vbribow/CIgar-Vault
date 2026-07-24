@@ -1,4 +1,5 @@
 import type { InventoryItem, Valuation } from "./types";
+import { marketEvidenceType } from "./valuation-evidence";
 
 export type ValuationFreshness = "Current" | "Due soon" | "Stale" | "Never valued";
 
@@ -36,6 +37,7 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
     const retailLot = retailUnit === undefined || quantity === undefined ? undefined : retailUnit * quantity;
     const changePercent = latestUnit === undefined || previousUnit === undefined || previousUnit === 0 ? undefined : Math.round((latestUnit - previousUnit) / previousUnit * 1000) / 10;
     const freshness = valuationFreshness(latest?.valuationDate, now);
+    const evidenceType = marketEvidenceType(latest);
     const priorityScore = (item.retailValue === undefined ? 500 : 0)
       + (latest?.marketValue === undefined ? 120 : 0)
       + (freshness === "Never valued" ? 400 : freshness === "Stale" ? 300 : freshness === "Due soon" ? 150 : 0)
@@ -43,11 +45,11 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
       + Math.min(100, Math.round((marketLot ?? retailLot ?? 0) / 100));
     const missingEvidence=[
       retailUnit===undefined?"Retail replacement":undefined,
-      marketUnit===undefined?"Aftermarket estimate":undefined,
+      evidenceType==="Insufficient evidence"?"Aftermarket evidence":undefined,
       latest?.lastSaleValue===undefined?"Completed sale":undefined,
       !latest?.sourceUrl?"Linked source":undefined,
     ].filter((value):value is string=>Boolean(value));
-    return { item, latest, previous, retailUnit, marketUnit, latestUnit, previousUnit, marketLot, retailLot, changePercent, freshness, records, priorityScore, missingEvidence };
+    return { item, latest, previous, retailUnit, marketUnit, latestUnit, previousUnit, marketLot, retailLot, changePercent, freshness, evidenceType, records, priorityScore, missingEvidence };
   });
 
   const documentedMarketValue = rows.reduce((sum, row) => sum + (row.marketLot ?? 0), 0);
@@ -56,9 +58,9 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
     rows,
     reviewQueue: [...rows].filter(row =>
       row.item.retailValue === undefined
-      || row.latest?.marketValue === undefined
+      || (row.latest?.marketValue === undefined && row.evidenceType !== "Insufficient evidence")
       || row.freshness !== "Current"
-      || !row.latest?.sourceUrl
+      || (!row.latest?.sourceUrl && row.evidenceType !== "Insufficient evidence")
     ).sort((a, b) => b.priorityScore - a.priorityScore),
     totals: {
       documentedMarketValue,
@@ -71,6 +73,7 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
       retailCovered: rows.filter(row=>row.retailUnit!==undefined).length,
       marketCovered: rows.filter(row=>row.marketUnit!==undefined).length,
       saleCovered: rows.filter(row=>row.latest?.lastSaleValue!==undefined&&Boolean(row.latest.lastSaleSourceUrl)).length,
+      askingCovered: rows.filter(row=>row.latest?.askingPrice!==undefined&&Boolean(row.latest.askingPriceSourceUrl)).length,
       retailCoveragePercent: percent(rows.filter(row=>row.retailUnit!==undefined).length,rows.length),
       marketCoveragePercent: percent(rows.filter(row=>row.marketUnit!==undefined).length,rows.length),
       saleCoveragePercent: percent(rows.filter(row=>row.latest?.lastSaleValue!==undefined&&Boolean(row.latest.lastSaleSourceUrl)).length,rows.length),

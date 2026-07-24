@@ -10,6 +10,7 @@ import { RetailPricingControls } from "@/components/retail-pricing-controls";
 import { retailBoxValue } from "@/lib/retail-pricing";
 import { TrustMark } from "@/components/trust-mark";
 import { ValuationCompletionPanel } from "@/components/valuation-completion-panel";
+import { marketRangeText } from "@/lib/valuation-evidence";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -94,6 +95,16 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
         </article>
       </section>
       <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>Source-finding and normalization assisted by Cedriva AI</span></div><a href="/trust">Understand the evidence labels →</a></aside>
+      <section className="valueEvidenceStandard" aria-labelledby="value-evidence-standard">
+        <header><div className="eyebrow">The New World evidence standard</div><h2 id="value-evidence-standard">Precision must be earned.</h2><p>Cedriva records what the evidence proves and stops there. A listing is useful—but it is not a sale.</p></header>
+        <div>
+          <article><span>01</span><h3>Retail replacement</h3><p>Current exact-cigar price from a manufacturer or established retailer.</p></article>
+          <article><span>02</span><h3>Observed asking price</h3><p>A public secondary listing. Documented separately and never called market value.</p></article>
+          <article><span>03</span><h3>Verified completed sale</h3><p>Exact identity, sold status, date, venue, quantity, and direct proof.</p></article>
+          <article><span>04</span><h3>Estimated market range</h3><p>At least two independent secondary signals; shown as a range, not false precision.</p></article>
+          <article><span>05</span><h3>Insufficient evidence</h3><p>The trusted answer when the public market cannot support a defensible value.</p></article>
+        </div>
+      </section>
       <SignalLegend />
       <ValuationCompletionPanel items={intelligence.reviewQueue.map(row=>row.item)} mode={mode}/>
       <RetailPricingControls items={inventory} mode={mode} initialInventoryId={filters.inventoryId} />
@@ -220,11 +231,11 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                     </td>
                     <td>
                       {row.marketUnit === undefined ? (
-                        "—"
+                        row.latest?.askingPrice === undefined ? <><strong>Insufficient evidence</strong><small>No defensible aftermarket value</small></> : <><strong>{unitMoney.format(row.latest.askingPrice)}</strong><small>Observed asking price only</small></>
                       ) : (
                         <>
                           {unitMoney.format(row.marketUnit)}
-                          <small>{row.latest?.valuationDate}</small>
+                          <small>{marketRangeText(row.latest) || row.latest?.valuationDate}</small>
                         </>
                       )}
                     </td>
@@ -271,6 +282,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                         {row.records.length === 1 ? "" : "s"}
                       </small>
                       <MarketSignal label={`${row.latest?.confidence || "Unrated"} confidence`} tone={confidenceTone(row.latest?.confidence)} detail="Confidence reflects the quality and specificity of the recorded source evidence." />
+                      <small>{row.evidenceType}</small>
                     </td>
                   </tr>
                 ))}
