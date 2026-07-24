@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { collectionEditionIssue, summarizeCollection } from "../lib/collection-dashboard";
+import { collectionTrustAudit } from "../lib/collection-trust";
 
 test("summarizes whole value, premium, completeness, and history", () => {
   const collection = {
@@ -111,4 +112,28 @@ test("blocks a researched collection when its saved release year identifies anot
  assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2022",name:"La Gran Fumada",releaseYear:2023}),"Saved release year 2023 does not match the researched 2022 edition.");
  assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2022",name:"La Gran Fumada",releaseYear:2022}),undefined);
  assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2023",name:"La Gran Fumada Vol. II",releaseYear:"2023" as unknown as number}),undefined);
+});
+
+test("collection trust keeps aftermarket sales optional while exposing every evidence gap",()=>{
+ const collection={collectionId:"COL-FUENTE-PADRON-LEGENDS",name:"Fuente & Padrón Legends",releaseYear:2022};
+ const inventory=[
+  {inventoryId:"A",collectionId:collection.collectionId,brand:"Padrón",line:"Legends Carlos A. Fuente, Sr.",vitola:"Box-pressed Churchill (7 × 50)",currentQty:20,retailValue:40},
+  {inventoryId:"B",collectionId:collection.collectionId,brand:"Arturo Fuente",line:"Legends José O. Padrón",vitola:"Round Churchill (7 × 50)",currentQty:20,retailValue:40},
+ ];
+ const audit=collectionTrustAudit(collection,inventory,[]);
+ assert.equal(audit.checks.find(check=>check.id==="edition")?.status,"Verified");
+ assert.equal(audit.checks.find(check=>check.id==="inventory")?.status,"Verified");
+ assert.equal(audit.checks.find(check=>check.id==="retail")?.status,"Verified");
+ assert.equal(audit.checks.find(check=>check.id==="aftermarket")?.status,"Researching");
+ assert.equal(audit.ready,true);
+});
+
+test("collection trust rejects a collection year copied from the wrong edition",()=>{
+ const audit=collectionTrustAudit(
+  {collectionId:"COL-FUENTE-GRAN-FUMADA-2022",name:"La Gran Fumada",releaseYear:2023},
+  [],
+  [],
+ );
+ assert.equal(audit.checks.find(check=>check.id==="edition")?.status,"Attention");
+ assert.equal(audit.ready,false);
 });
