@@ -1,5 +1,6 @@
 import { matchCollectionRequirements } from "@/lib/collection-matching";
 import { collectionTemplates } from "@/lib/collection-templates";
+import { collectionComponentMarketEvidence } from "@/lib/collection-market-evidence";
 import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
 
 export type CollectionValuePoint = {
@@ -20,6 +21,9 @@ export type CollectionDashboardSummary = {
   valueHistory: CollectionValuePoint[];
   valueEvidence: "Collection record" | "Researched template" | "Component inventory" | "Pending";
   valueAsOf?: string;
+  retailCoverage: number;
+  marketCoverage: number;
+  completedSaleCoverage: number;
 };
 
 const normalized = (value: string) =>
@@ -56,14 +60,11 @@ export function summarizeCollection(
   valuations: Valuation[],
 ): CollectionDashboardSummary {
   const members = inventory.filter((item) => item.collectionId === collection.collectionId);
-  const latestByItem = new Map<string, Valuation>();
-  for (const valuation of [...valuations].sort((a, b) => a.valuationDate.localeCompare(b.valuationDate))) {
-    latestByItem.set(valuation.inventoryId, valuation);
-  }
   const componentValue = members.reduce((sum, item) => {
-    const valuation = latestByItem.get(item.inventoryId);
-    return sum + (valuation?.marketValue ?? item.retailValue ?? 0) * (item.currentQty ?? 0);
+    const evidence = collectionComponentMarketEvidence(item, inventory, valuations);
+    return sum + (evidence.valueUnit ?? 0) * (item.currentQty ?? 0);
   }, 0);
+  const componentEvidence = members.map(item => collectionComponentMarketEvidence(item, inventory, valuations));
   const template = collectionTemplateFor(collection);
   const matches = collectionRequirementMatches(collection, members);
   const expectedComponents = collection.expectedComponents ?? template?.expectedComponents;
@@ -115,5 +116,8 @@ export function summarizeCollection(
     valueHistory,
     valueEvidence,
     valueAsOf: collection.valuationDate ?? template?.valueAsOf,
+    retailCoverage: componentEvidence.filter(evidence => evidence.retailUnit !== undefined).length,
+    marketCoverage: componentEvidence.filter(evidence => evidence.marketUnit !== undefined).length,
+    completedSaleCoverage: componentEvidence.filter(evidence => evidence.completedSale !== undefined).length,
   };
 }

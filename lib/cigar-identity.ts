@@ -18,7 +18,7 @@ export type CanonicalCigarIdentity = {
   complete: boolean;
 };
 
-const placeholder = /^(unknown|n\/a|na|none|tbd|unspecified|not specified)$/i;
+const placeholder = /^(unknown|n\/a|na|none|tbd|unspecified|not specified|vitola to verify|identity to verify)$/i;
 
 export function normalizeIdentityPart(value: unknown) {
   return String(value ?? "")
