@@ -1,5 +1,6 @@
 import { requireEnv } from "./config";
 import { consumeOneInventory, normalizeInventory } from "./inventory-model";
+import { applyRetailValuationToInventory } from "./retail-pricing";
 import type { ActivityInput } from "./activity-model";
 import type { AlertDelivery, CatalogCigar, CigarCollection, EnvironmentalSensor, Humidor, HumidorReading, InventoryActivity, InventoryItem, SmokingLog, Valuation } from "./types";
 
@@ -202,13 +203,14 @@ export async function recordValuation(value: Valuation): Promise<void> {
   const inventoryRow = inventorySheet.rows.find((row) => rowToInventory(row, inventorySheet.columns).inventoryId === value.inventoryId);
   if (!inventoryRow) throw new Error(`Inventory ID ${value.inventoryId} was not found`);
   const before = rowToInventory(inventoryRow, inventorySheet.columns);
-  const after = value.replacementValue === undefined ? before : { ...before, retailValue: value.replacementValue };
-  if (value.replacementValue !== undefined) await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(after,inventorySheet.columns)}]) });
+  const updatesInventory = value.replacementValue !== undefined || value.replacementSticksPerBox !== undefined;
+  const after = applyRetailValuationToInventory(before, value);
+  if (updatesInventory) await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(after,inventorySheet.columns)}]) });
   try {
     const cells=recordCells([["Valuation ID",value.valuationId],["Inventory ID",value.inventoryId],["Valuation Date",value.valuationDate],["Retail Replacement Value",value.replacementValue],["Market Value",value.marketValue],["Market Evidence Type",value.marketEvidenceType],["Market Range Low",value.marketRangeLow],["Market Range High",value.marketRangeHigh],["Asking Price",value.askingPrice],["Asking Price Source",value.askingPriceSource],["Asking Price Source URL",value.askingPriceSourceUrl],["Comparable Count",value.comparableCount],["Last Sale Value",value.lastSaleValue],["Last Sale Date",value.lastSaleDate],["Last Sale Venue",value.lastSaleVenue],["Last Sale Source URL",value.lastSaleSourceUrl],["Source",value.source],["Source URL",value.sourceUrl],["Confidence",value.confidence],["Notes",value.notes]],valuationSheet.columns);
     await request(`/sheets/${requireEnv("SMARTSHEET_VALUATIONS_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify([{toBottom:true,cells}])});
   } catch (error) {
-    if (value.replacementValue !== undefined) await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(before,inventorySheet.columns)}]) }).catch(()=>undefined);
+    if (updatesInventory) await request(`/sheets/${sheetId()}/rows`, { method:"PUT", body:JSON.stringify([{id:inventoryRow.id,cells:cellsFor(before,inventorySheet.columns)}]) }).catch(()=>undefined);
     throw error;
   }
 }

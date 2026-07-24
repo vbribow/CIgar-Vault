@@ -4,6 +4,7 @@ import { ValuationSchema } from "@/lib/records-model";
 import { getValuations, recordValuation } from "@/lib/smartsheet";
 import { loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
+import { applyRetailValuationToInventory } from "@/lib/retail-pricing";
 import { saveOwnedRecord } from "@/lib/user-data";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
@@ -20,7 +21,11 @@ export async function POST(request: Request) {
   try {
     const item = ValuationSchema.parse(await request.json());
     if (await saveOwnedRecord("valuations",item.valuationId,item)) {
-      if(item.replacementValue!==undefined){const inventory=(await loadInventory()).find(record=>record.inventoryId===item.inventoryId);if(inventory)await saveOwnedRecord("inventory",inventory.inventoryId,{...inventory,retailValue:item.replacementValue});}
+      if(item.replacementValue!==undefined||item.replacementSticksPerBox!==undefined){
+        const inventory=(await loadInventory()).find(record=>record.inventoryId===item.inventoryId);
+        if(!inventory)throw new Error(`Inventory ID ${item.inventoryId} was not found`);
+        await saveOwnedRecord("inventory",inventory.inventoryId,applyRetailValuationToInventory(inventory,item));
+      }
       return NextResponse.json({ data: item }, { status: 201 });
     }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

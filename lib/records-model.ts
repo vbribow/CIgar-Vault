@@ -9,7 +9,8 @@ export const SmokingLogSchema = z.object({
 
 export const ValuationSchema = z.object({
   valuationId: z.string().trim().min(1).max(100), inventoryId: z.string().trim().min(1).max(100), valuationDate: z.iso.date(),
-  replacementValue: z.coerce.number().nonnegative().optional(), marketValue: z.coerce.number().nonnegative().optional(), source: z.string().max(500).optional(),
+  replacementValue: z.coerce.number().nonnegative().optional(), replacementSticksPerBox: z.coerce.number().int().positive().optional(),
+  marketValue: z.coerce.number().nonnegative().optional(), source: z.string().max(500).optional(),
   marketEvidenceType: z.enum(["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]).optional(),
   marketRangeLow: z.coerce.number().nonnegative().optional(), marketRangeHigh: z.coerce.number().nonnegative().optional(),
   askingPrice: z.coerce.number().nonnegative().optional(), askingPriceSource: z.string().max(500).optional(), askingPriceSourceUrl: z.string().url().optional().or(z.literal("")),
