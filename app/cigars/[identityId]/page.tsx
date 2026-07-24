@@ -5,6 +5,7 @@ import { cigarAdvisorHref } from "@/lib/cigar-advisor-links";
 import { buildCigarStory } from "@/lib/cigar-story";
 import { loadCollections, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
+import { canonicalCatalogHref } from "@/lib/canonical-cigar-record";
 import "./story.css";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,7 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
       <article><span>Published reviews</span><strong>{story.publishedAverage ?? "—"}</strong><small>{story.ratings.length} sourced score{story.ratings.length === 1 ? "" : "s"}</small></article>
     </section>
 
-    <section className="section card storyChapter"><div><div className="eyebrow">The cigar in your collection</div><h2>One identity, every connected chapter.</h2><p>{representative.provenanceNotes || representative.notes || `This ${story.identity.vitola} is preserved as part of your private Cedriva record. Add the people, place, acquisition, or occasion behind it to preserve why it matters.`}</p></div><div className="storyActions"><Link href={`/inventory/${representative.inventoryId}`}>Document provenance <b>→</b></Link><Link href={`/valuations?inventoryId=${representative.inventoryId}`}>Research value <b>→</b></Link><Link href={`/community`}>See community perspective <b>→</b></Link><Link href={`/learn`}>Learn with context <b>→</b></Link></div></section>
+    <section className="section card storyChapter"><div><div className="eyebrow">The cigar in your collection</div><h2>One identity, every connected chapter.</h2><p>{representative.provenanceNotes || representative.notes || `This ${story.identity.vitola} is preserved as part of your private Cedriva record. Add the people, place, acquisition, or occasion behind it to preserve why it matters.`}</p></div><div className="storyActions"><Link href={canonicalCatalogHref(representative.catalogId || story.identity.identityId)}>Open canonical record <b>→</b></Link><Link href={`/inventory/${representative.inventoryId}`}>Document provenance <b>→</b></Link><Link href={`/valuations?inventoryId=${representative.inventoryId}`}>Research value <b>→</b></Link><Link href={`/learn`}>Learn with context <b>→</b></Link></div></section>
 
     <section className="storyColumns">
       <article className="section card"><div className="eyebrow">Owned lots</div><h2>{story.lots.length} connected</h2>{story.lots.map(item => <Link className="storyRow" href={`/inventory/${item.inventoryId}`} key={item.inventoryId}><span><strong>{item.inventoryId}</strong><small>{item.packaging || "Packaging not documented"}{item.collectionId ? ` · ${item.collectionId}` : ""}</small></span><b>{item.currentQty ?? "—"} →</b></Link>)}</article>
