@@ -40,11 +40,15 @@ test("blending learning teaches the complete discipline and uses sourced blender
   for (const principle of ["Strength, body, and flavor are not synonyms", "Wrapper", "Binder", "Filler", "The recipe is the blend", "Profile standard"]) {
     assert.match(blending, new RegExp(principle));
   }
-  for (const blender of ["José “Pepín” García", "Jaime García", "Carlos “Carlito” Fuente Jr.", "Nicholas Melillo"]) {
+  for (const blender of ["José “Pepín” García", "Jaime García", "Carlos “Carlito” Fuente Jr.", "Nicholas Melillo", "Nick Perdomo Jr.", "Erik Espinosa", "Ernesto Perez-Carrillo", "Litto Gomez", "A.J. Fernandez", "Willy Herrera", "José “Jochy” Blanco", "Christian Eiroa"]) {
     assert.match(blending, new RegExp(blender));
   }
+  assert.match(blending, /living blender archive · 12 studies/);
+  assert.match(blending, /Industry titles vary/);
   assert.match(blending, /This is not a ranking or a hall of fame/);
   assert.match(blending, /Company claims are labeled as company claims/);
+  assert.match(blending, /Documented style signals/);
+  assert.match(blending, /Collaborative authorship/);
   assert.match(learn, /href="\/learn\/blending"/);
 });
 
