@@ -21,7 +21,8 @@ test("collection pairing does not invent a smoke-now leader without evidence",()
  assert.ok(ranked.every(candidate=>candidate.detail.includes("will not invent")));
 });
 
-test("Cigar Somm recovers a collection relationship from a generated inventory id",()=>{
+test("Cigar Somm never infers collection mode from a cigar identity or generated inventory id",()=>{
  const collections=[{collectionId:"COL-FUENTE-PADRON-LEGENDS",name:"Fuente & Padrón Legends",releaseYear:2022,memberIds:[]}];
- assert.equal(inferSommCollectionId({...padron,collectionId:undefined,inventoryId:"INV-FUENTE-PADRON-LEGENDS-C01"},collections),"COL-FUENTE-PADRON-LEGENDS");
+ assert.equal(inferSommCollectionId({...padron,inventoryId:"INV-FUENTE-PADRON-LEGENDS-C01"},collections),"");
+ assert.equal(inferSommCollectionId({...padron,collectionId:undefined,inventoryId:"SINGLE-LEGENDS-CIGAR"},collections),"");
 });

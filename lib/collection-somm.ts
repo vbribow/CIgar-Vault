@@ -10,16 +10,13 @@ export type CollectionSommCandidate = {
 const key = (value: string) => value.toLowerCase().replace(/^(inv|col)-/,"").replace(/-c\d+$/,"").replace(/[^a-z0-9]+/g,"");
 
 export function inferSommCollectionId(selected: InventoryItem | undefined, collections: CigarCollection[]) {
-  if (!selected) return "";
-  if (selected.collectionId && collections.some(collection => collection.collectionId === selected.collectionId)) return selected.collectionId;
-  const inventoryKey = key(selected.inventoryId);
-  const idMatch = collections.find(collection => inventoryKey.includes(key(collection.collectionId)));
-  if (idMatch) return idMatch.collectionId;
-  const identityKey = key(`${selected.brand} ${selected.line}`);
-  return collections.find(collection => {
-    const nameKey = key(collection.name);
-    return nameKey.length >= 7 && identityKey.includes(nameKey);
-  })?.collectionId || "";
+  // Inventory identity and collection context are different facts. A cigar can
+  // be owned both inside a presentation and as a standalone stick, so neither
+  // its name, generated ID, nor saved collection link may force collection
+  // mode. Only an explicit collectionId in the page URL opens that workflow.
+  void selected;
+  void collections;
+  return "";
 }
 
 const validYear = (value: InventoryItem["vintage"]) => {

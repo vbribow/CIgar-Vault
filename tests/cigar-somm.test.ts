@@ -44,6 +44,7 @@ test("Cigar Somm requires explicit confirmation when a linked cigar belongs to a
   const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
   assert.match(page,/params\.collectionId\|\|inferSommCollectionId\(selected,collections\)/);
   assert.match(component,/collectionChoiceRequired=Boolean\(initialCollectionId\)&&collectionCandidates\.length>1/);
+  assert.match(component,/setCollectionChoiceConfirmed\]=useState\(!initialCollectionId\)/);
   assert.match(component,/Confirm the exact cigar before analysis/);
   assert.match(component,/Choose the exact collection cigar above/);
   assert.match(component,/collectionChoiceConfirmed:source==="manual"\|\|collectionChoiceConfirmed/);
