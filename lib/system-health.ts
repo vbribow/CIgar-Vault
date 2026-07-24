@@ -12,6 +12,7 @@ export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:s
   {id:"sommelier-research",name:"Master Somm research",path:"/api/sommelier-knowledge/research",schedule:"0 15 * * 2",nextDescription:"Tuesday at 15:00 UTC · founder review required"},
 ];
 export function configurationChecks(environment:Record<string,string|undefined>):HealthCheck[]{const has=(...names:string[])=>names.every(name=>Boolean(environment[name]?.trim()));return[
+  {id:"data-authority",name:"Data authority contract",description:"Private vault ownership and explicit migration direction",status:dataAuthorityIsUnambiguous()?"Ready":"Attention",detail:dataAuthorityIsUnambiguous()?"Signed-in Supabase vaults are authoritative; Smartsheet is an explicit founder migration source only":"One or more record kinds has an ambiguous authority rule",href:"/data-model"},
   {id:"supabase",name:"Private account database",description:"Authentication and private vault records",status:has("NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY","SUPABASE_SERVICE_ROLE_KEY")?"Ready":"Attention",detail:has("NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY","SUPABASE_SERVICE_ROLE_KEY")?"Public and scheduled-service credentials configured":"One or more Supabase credentials are missing"},
   {id:"smartsheet",name:"Smartsheet master",description:"Founder inventory and supporting sheets",status:has("SMARTSHEET_ACCESS_TOKEN","SMARTSHEET_INVENTORY_SHEET_ID")?"Ready":"Attention",detail:has("SMARTSHEET_ACCESS_TOKEN","SMARTSHEET_INVENTORY_SHEET_ID")?"Access token and inventory sheet configured":"Access token or inventory sheet ID is missing"},
   {id:"openai",name:"Research intelligence",description:"Catalog, pricing, ratings, and photo identification",status:has("OPENAI_API_KEY")?"Ready":"Attention",detail:has("OPENAI_API_KEY")?"OpenAI research is configured":"OPENAI_API_KEY is missing"},
@@ -48,3 +49,4 @@ export function readableError(error:unknown){
   }
   return typeof error==="string"?error:"Run failed";
 }
+import { dataAuthorityIsUnambiguous } from "./data-authority";

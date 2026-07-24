@@ -1,8 +1,9 @@
 import type { DataMode } from "./config";
 import { dataMode } from "./config";
+import { dataAuthorityFor, type VaultRecordKind } from "./data-authority";
 import { createClient, supabaseConfigured } from "./supabase/server";
 
-export type VaultRecordKind = "inventory"|"collections"|"humidors"|"readings"|"sensors"|"valuations"|"ratings"|"rating-drafts"|"smokes"|"activities"|"wishlist"|"integrity"|"system-runs";
+export type { VaultRecordKind } from "./data-authority";
 
 async function accountContext() {
   if (!supabaseConfigured()) return undefined;
@@ -15,7 +16,7 @@ export async function accountDataMode(): Promise<DataMode> { return await accoun
 
 export async function loadOwnedRecords<T>(kind: VaultRecordKind, fallback: () => Promise<T[]>): Promise<T[]> {
   const context = await accountContext();
-  if (!context) return fallback();
+  if (!context) return dataAuthorityFor(kind, false) === "smartsheet-founder-master" ? fallback() : [];
   const { data, error } = await context.supabase.from("vault_records").select("payload").eq("kind", kind).order("record_id");
   if (error) throw error;
   return (data ?? []).map(row => row.payload as T);
