@@ -34,7 +34,9 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
     const retailLot = item.retailValue === undefined || quantity === undefined ? undefined : item.retailValue * quantity;
     const changePercent = latestUnit === undefined || previousUnit === undefined || previousUnit === 0 ? undefined : Math.round((latestUnit - previousUnit) / previousUnit * 1000) / 10;
     const freshness = valuationFreshness(latest?.valuationDate, now);
-    const priorityScore = (freshness === "Never valued" ? 400 : freshness === "Stale" ? 300 : freshness === "Due soon" ? 150 : 0)
+    const priorityScore = (item.retailValue === undefined ? 500 : 0)
+      + (latest?.marketValue === undefined ? 120 : 0)
+      + (freshness === "Never valued" ? 400 : freshness === "Stale" ? 300 : freshness === "Due soon" ? 150 : 0)
       + (latest?.sourceUrl ? 0 : 80)
       + Math.min(100, Math.round((marketLot ?? retailLot ?? 0) / 100));
     return { item, latest, previous, latestUnit, previousUnit, marketLot, retailLot, changePercent, freshness, records, priorityScore };
@@ -44,7 +46,12 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
   const retailReplacementValue = rows.reduce((sum, row) => sum + (row.retailLot ?? 0), 0);
   return {
     rows,
-    reviewQueue: [...rows].filter(row => row.freshness !== "Current" || !row.latest?.sourceUrl).sort((a, b) => b.priorityScore - a.priorityScore),
+    reviewQueue: [...rows].filter(row =>
+      row.item.retailValue === undefined
+      || row.latest?.marketValue === undefined
+      || row.freshness !== "Current"
+      || !row.latest?.sourceUrl
+    ).sort((a, b) => b.priorityScore - a.priorityScore),
     totals: {
       documentedMarketValue,
       retailReplacementValue,

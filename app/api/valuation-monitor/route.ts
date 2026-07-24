@@ -1,16 +1,66 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { authorizeSensorSync } from "@/lib/config";
+import { authorizeSensorSync,dataMode } from "@/lib/config";
 import { researchInventoryValuation } from "@/lib/valuation-research";
 import { inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationCostEstimate,valuationMonitorPriority,valuationNeedsMonitoring } from "@/lib/valuation-monitor";
+import { getInventory,getValuations,recordValuation } from "@/lib/smartsheet";
 import type { InventoryItem,Valuation } from "@/lib/types";
 export const maxDuration=300;
 
 type OwnedGroup={inventory:InventoryItem[];valuations:Valuation[]};
 type ValuationWork={userId:string;item:InventoryItem;cached?:Valuation};
 
+function completionValuation(item:InventoryItem,research:Awaited<ReturnType<typeof researchInventoryValuation>>,cached=false):Valuation{
+  const supported=Boolean(research.sourceUrl)&&/^(High|Medium)$/i.test(research.confidence)&&(research.replacementValue!==null||research.marketValue!==null);
+  const stamp=new Date().toISOString().replace(/\D/g,"").slice(0,14);
+  return{
+    valuationId:`VAL-AUTO-${item.inventoryId}-${stamp}`.slice(0,190),
+    inventoryId:item.inventoryId,
+    valuationDate:research.evidenceDate,
+    replacementValue:supported?research.replacementValue??undefined:undefined,
+    marketValue:supported?research.marketValue??undefined:undefined,
+    lastSaleValue:supported?research.lastSaleValue??undefined:undefined,
+    lastSaleDate:supported?research.lastSaleDate??undefined:undefined,
+    lastSaleVenue:supported?research.lastSaleVenue??undefined:undefined,
+    lastSaleSourceUrl:supported?research.lastSaleSourceUrl??undefined:undefined,
+    source:supported?research.source:"Automated research — insufficient evidence",
+    sourceUrl:research.sourceUrl||undefined,
+    confidence:research.confidence,
+    notes:`${cached?"Shared exact-match evidence.":"Automated scheduled research."} ${supported?"":"Insufficient evidence; defer research for 180 days."} ${research.notes}`,
+  };
+}
+
+async function monitorSmartsheet(request:Request){
+  const[inventory,valuations]=await Promise.all([getInventory(),getValuations()]);
+  const eligible=inventory.filter(item=>valuationNeedsMonitoring(item,valuations)).sort((a,b)=>valuationMonitorPriority(b)-valuationMonitorPriority(a));
+  const candidates=inventory.flatMap(item=>{const valuation=valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]});
+  const requested=Number(new URL(request.url).searchParams.get("limit"));
+  const batchSize=Number.isInteger(requested)&&requested>0?Math.min(requested,valuationBatchSize()):valuationBatchSize();
+  const work=eligible.slice(0,batchSize).map(item=>({item,cached:reusableValuation(item,candidates)}));
+  const outcomes=await inValuationBatches(work,async row=>{
+    try{
+      const research=row.cached?{
+        replacementValue:row.cached.replacementValue??null,marketValue:row.cached.marketValue??null,lastSaleValue:row.cached.lastSaleValue??null,
+        lastSaleDate:row.cached.lastSaleDate??null,lastSaleVenue:row.cached.lastSaleVenue??null,lastSaleSourceUrl:row.cached.lastSaleSourceUrl??null,
+        source:row.cached.source||"Shared valuation evidence",sourceUrl:row.cached.sourceUrl||"",confidence:(row.cached.confidence||"Medium") as "High"|"Medium"|"Low",
+        evidenceDate:row.cached.valuationDate,notes:`Reused current evidence for an exact cigar identity. ${row.cached.notes||""}`,comparables:[],
+      }:await researchInventoryValuation(row.item);
+      const valuation=completionValuation(row.item,research,Boolean(row.cached));
+      await recordValuation(valuation);
+      const supported=valuation.replacementValue!==undefined||valuation.marketValue!==undefined;
+      return{inventoryId:row.item.inventoryId,status:supported?(row.cached?"cached":"updated"):"unsupported",confidence:research.confidence};
+    }catch(error){return{inventoryId:row.item.inventoryId,status:"failed",error:error instanceof Error?error.message:"Failed"}}
+  },2);
+  const completed=outcomes.filter(outcome=>outcome.status!=="failed").length;
+  return NextResponse.json({data:{mode:"smartsheet",checked:outcomes.length,batchSize,researched:outcomes.filter(outcome=>outcome.status==="updated"||outcome.status==="unsupported").length,cached:outcomes.filter(outcome=>outcome.status==="cached").length,remainingEligible:Math.max(0,eligible.length-completed),outcomes}});
+}
+
 export async function GET(request:Request){
   if(!authorizeSensorSync(request))return NextResponse.json({error:"Unauthorized"},{status:401});
+  if(dataMode()==="smartsheet"){
+    try{return await monitorSmartsheet(request)}
+    catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Valuation monitoring failed"},{status:502})}
+  }
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if(!url||!serviceKey)return NextResponse.json({error:"Scheduled valuation monitoring requires SUPABASE_SERVICE_ROLE_KEY"},{status:503});
   try{

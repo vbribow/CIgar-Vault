@@ -9,6 +9,7 @@ import { MarketSignal, SignalLegend, confidenceTone, freshnessTone } from "@/com
 import { RetailPricingControls } from "@/components/retail-pricing-controls";
 import { retailBoxValue } from "@/lib/retail-pricing";
 import { TrustMark } from "@/components/trust-mark";
+import { ValuationCompletionPanel } from "@/components/valuation-completion-panel";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -96,6 +97,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
       </section>
       <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>Source-finding and normalization assisted by Cedriva AI</span></div><a href="/trust">Understand the evidence labels →</a></aside>
       <SignalLegend />
+      <ValuationCompletionPanel items={intelligence.reviewQueue.map(row=>row.item)} mode={mode}/>
       <RetailPricingControls items={inventory} mode={mode} initialInventoryId={filters.inventoryId} />
       <ValuationResearchPanel items={intelligence.reviewQueue.map((row)=>row.item)} mode={mode}/>
 

@@ -22,6 +22,8 @@ export function valuationNeedsMonitoring(item:InventoryItem,valuations:Valuation
   if((item.currentQty??0)<=0||!valuationIdentityReady(item))return false;
   const latest=valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];
   if(!latest?.valuationDate)return true;
+  const insufficient=/insufficient|unsupported|no defensible|not available|not found/i.test(latest.notes||"");
+  if(!insufficient&&(item.retailValue===undefined||latest.replacementValue===undefined))return true;
   const parsed=new Date(`${latest.valuationDate}T00:00:00Z`);
   if(Number.isNaN(parsed.getTime()))return true;
   return Math.floor((now.getTime()-parsed.getTime())/DAY_MS)>=valuationRefreshDays(item,latest);
@@ -32,11 +34,13 @@ export function reusableValuation(item:InventoryItem,candidates:Array<{item:Inve
   return candidates.filter(candidate=>valuationIdentityKey(candidate.item)===key&&candidate.valuation.replacementValue!==undefined&&Boolean(candidate.valuation.sourceUrl)&&/^(High|Medium)$/i.test(candidate.valuation.confidence??"")&&!valuationNeedsMonitoring(candidate.item,[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
 }
 
-export function valuationMonitorPriority(item:InventoryItem){return (item.retailValue??0)*(item.currentQty??0)+(item.priority==="High"?10_000:0)}
+export function valuationMonitorPriority(item:InventoryItem){
+  return(item.retailValue===undefined?50_000:0)+(item.priority==="High"?10_000:0)+(item.retailValue??0)*(item.currentQty??0);
+}
 
 export function valuationBatchSize(value=process.env.VALUATION_BATCH_SIZE){
-  const parsed=Number(value||3);
-  return Number.isFinite(parsed)?Math.min(6,Math.max(1,Math.floor(parsed))):3;
+  const parsed=Number(value||6);
+  return Number.isFinite(parsed)?Math.min(6,Math.max(1,Math.floor(parsed))):6;
 }
 
 export function valuationCostEstimate(value=process.env.VALUATION_ESTIMATED_COST_USD){const parsed=Number(value||0.02);return Number.isFinite(parsed)&&parsed>0?parsed:0.02}
