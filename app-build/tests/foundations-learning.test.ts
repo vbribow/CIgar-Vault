@@ -43,7 +43,7 @@ test("blending learning teaches the complete discipline and uses sourced blender
   for (const blender of ["José “Pepín” García", "Jaime García", "Carlos “Carlito” Fuente Jr.", "Nicholas Melillo", "Nick Perdomo Jr.", "Erik Espinosa", "Ernesto Perez-Carrillo", "Litto Gomez", "A.J. Fernandez", "Willy Herrera", "José “Jochy” Blanco", "Christian Eiroa"]) {
     assert.match(blending, new RegExp(blender));
   }
-  assert.match(blending, /living blender archive · 20 studies/);
+  assert.match(blending, /living blender archive · 21 studies/);
   assert.match(blending, /Industry titles vary/);
   assert.match(blending, /This is not a ranking or a hall of fame/);
   assert.match(blending, /Company claims are labeled as company claims/);
@@ -53,10 +53,10 @@ test("blending learning teaches the complete discipline and uses sourced blender
 });
 
 test("blending learning includes a sourced boutique and craft chapter", () => {
-  for (const blender of ["Steve Saka", "Kyle Gellis", "Skip Martin", "Pete Johnson", "Dion Giolito", "Michael Herklots", "James Brown", "Jon Huber"]) {
+  for (const blender of ["Steve Saka", "Kyle Gellis", "Skip Martin", "Pete Johnson", "Dion Giolito", "Michael Herklots", "Francisco “Chico” Rivas", "James Brown", "Jon Huber"]) {
     assert.match(blending, new RegExp(blender));
   }
-  assert.match(blending, /Boutique chapter · 8 independent and craft voices/);
+  assert.match(blending, /Boutique chapter · 9 independent and craft voices/);
   assert.match(blending, /“Boutique” has no universal production threshold/);
   assert.match(blending, /Brand founder, blender, tobacco grower, factory owner, and production partner may be different people/);
   assert.match(blending, /availability alone proves neither craftsmanship nor quality/);
@@ -64,8 +64,8 @@ test("blending learning includes a sourced boutique and craft chapter", () => {
 });
 
 test("every blender profile identifies who manufactures the cigars", () => {
-  assert.equal(blending.match(/manufacturing:/g)?.length, 20);
-  assert.equal(blending.match(/factorySource:/g)?.length, 20);
+  assert.equal(blending.match(/manufacturing:/g)?.length, 21);
+  assert.equal(blending.match(/factorySource:/g)?.length, 21);
   assert.match(blending, /The name on the band may not be the name over the factory door/);
   assert.match(blending, /Who makes the cigars\?/);
   assert.match(blending, /manufacturer by release period instead of silently rewriting history/);
@@ -73,6 +73,8 @@ test("every blender profile identifies who manufactures the cigars", () => {
   for (const manufacturer of ["My Father Cigars S.A.", "Tabacalera A. Fuente y Cia.", "Tabacalera A.J. Fernandez", "La Zona", "Casa Carrillo", "La Gran Fabrica Drew Estate", "Tabacalera Palma", "Joya de Nicaragua", "El Titan de Bronze", "Nica Sueño", "TABSA", "Raíces Cubanas", "Plasencia", "Quesada", "Fábrica Oveja Negra", "Tabacalera Pichardo", "NACSA"]) {
     assert.match(blending, new RegExp(manufacturer));
   }
+  assert.match(blending, /Manufactura Rivas/);
+  assert.match(blending, /authorship hidden behind the band/);
 });
 
 test("blending learning explains how leaf identity, cultivation, and processing affect taste", () => {
