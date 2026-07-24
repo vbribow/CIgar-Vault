@@ -27,6 +27,10 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
     setEntryMode(mode);
     setRating(current => ({ ...blankRating, displayName: current.displayName, score: current.score, review: current.review }));
   }
+  function showTab(next:"board"|"ratings"){
+    setTab(next);
+    window.requestAnimationFrame(()=>document.querySelector(".communityTabs")?.scrollIntoView({behavior:"smooth",block:"start"}));
+  }
   async function load() {
     setLoading(true);
     try {
@@ -89,8 +93,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   </>;
 
   return <>
-    <section className="communityMetrics"><article><strong>{data.posts.length}</strong><span>recent discussions</span></article><article><strong>{data.ratingCount}</strong><span>collector ratings</span></article><article><strong>{data.top25.length}</strong><span>ranked cigars</span></article></section>
-    <section className="communityTabs"><button className={tab === "board" ? "active" : ""} onClick={() => setTab("board")}>Message board</button><button className={tab === "ratings" ? "active" : ""} onClick={() => setTab("ratings")}>Top 25 cigars</button></section>
+    <section className="communityMetrics" aria-label="Community activity"><button type="button" onClick={()=>showTab("board")} aria-label={`View ${data.posts.length} recent discussions`}><strong>{data.posts.length}</strong><span>recent discussions</span><small>Open message board →</small></button><button type="button" onClick={()=>showTab("ratings")} aria-label={`View ${data.ratingCount} collector ratings`}><strong>{data.ratingCount}</strong><span>collector ratings</span><small>Open ratings →</small></button><button type="button" onClick={()=>showTab("ratings")} aria-label={`View ${data.top25.length} ranked cigars`}><strong>{data.top25.length}</strong><span>ranked cigars</span><small>Open Top 25 →</small></button></section>
+    <section className="communityTabs"><button type="button" className={tab === "board" ? "active" : ""} aria-pressed={tab==="board"} onClick={() => showTab("board")}>Message board</button><button type="button" className={tab === "ratings" ? "active" : ""} aria-pressed={tab==="ratings"} onClick={() => showTab("ratings")}>Top 25 cigars</button></section>
     {message && <output className="communityMessage">{message}{message.includes("administrator review") && <small>Your contribution is private while it waits in the <a href="/ai-administrator">AI Administrator review queue</a>.</small>}</output>}
     <aside className="communityTrust"><TrustMark kind="Community" compact/><span>Posts, reviews, and Top 25 scores reflect collector experience—not official product facts.</span><a href="/trust">How Cedriva labels trust →</a></aside>
     {(data.myContributions.posts.length>0||data.myContributions.ratings.length>0)&&<section className="contributionTracker"><div className="sectionHead"><div><div className="eyebrow">Your contributions</div><h2>Publication status</h2><p>Track each submission from review through publication. Founder notes appear here when a correction is needed.</p></div><a className="button secondary" href="/ai-administrator">Founder review</a></div><div>{[...data.myContributions.posts.map(item=>({id:item.id,kind:"Discussion",label:item.title,status:item.status,reason:item.moderationReason,createdAt:item.createdAt})),...data.myContributions.ratings.map(item=>({id:item.id,kind:"Rating",label:`${item.brand} ${item.line} ${item.vitola} · ${item.score}`,status:item.status,reason:item.moderationReason,createdAt:item.createdAt}))].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(item=><article key={`${item.kind}-${item.id}`}><div><span>{item.kind}</span><strong>{item.label}</strong><small>{new Date(item.createdAt).toLocaleString()}</small></div><b data-status={item.status}>{communityStatusLabel(item.status)}</b>{item.status==="changes"&&item.reason&&<p>{item.reason}</p>}</article>)}</div></section>}
