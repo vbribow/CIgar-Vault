@@ -5,6 +5,7 @@ import { partnerAdmin } from "@/lib/partner-platform";
 import { CampaignInput, campaignLaunchBlockers, partnerCan, type PartnerRole } from "@/lib/partner-model";
 import { PartnerInvitationInput, buildWorkspaceMetrics, createInvitationToken, invitationExpiresAt, safeMembership } from "@/lib/partner-workspace";
 import { ReadinessSubmission, readinessSummary } from "@/lib/partner-readiness";
+import { IndustryProfileInput, IndustryPublicationInput, industryCanSubmit, industryRevision } from "@/lib/industry-hub";
 
 const WorkspaceRequest=z.discriminatedUnion("action",[
   z.object({action:z.literal("createCampaign"),data:CampaignInput}),
@@ -13,6 +14,10 @@ const WorkspaceRequest=z.discriminatedUnion("action",[
   z.object({action:z.literal("changeMemberRole"),partnerId:z.string().uuid(),membershipId:z.string().uuid(),role:z.enum(["owner","administrator","editor","analyst","viewer"])}),
   z.object({action:z.literal("revokeMember"),partnerId:z.string().uuid(),membershipId:z.string().uuid()}),
   z.object({action:z.literal("submitReadiness"),data:ReadinessSubmission}),
+  z.object({action:z.literal("saveIndustryProfile"),data:IndustryProfileInput}),
+  z.object({action:z.literal("submitIndustryProfile"),partnerId:z.string().uuid()}),
+  z.object({action:z.literal("saveIndustryPublication"),data:IndustryPublicationInput}),
+  z.object({action:z.literal("submitIndustryPublication"),partnerId:z.string().uuid(),publicationId:z.string().uuid()}),
 ]);
 
 async function authenticatedUser(){
@@ -49,7 +54,7 @@ export async function GET(){
     const accessible=(membershipRows||[]).filter(row=>!(row.partners as unknown as{collaboration_locked?:boolean})?.collaboration_locked);
     if(!accessible.length)return NextResponse.json({data:{workspaces:[]}});
     const partnerIds=accessible.map(row=>row.partner_id);
-    const[campaigns,clicks,attributions,conversions,commissions,members,readiness]=await Promise.all([
+    const[campaigns,clicks,attributions,conversions,commissions,members,readiness,industryProfiles,industryPublications]=await Promise.all([
       admin.from("partner_campaigns").select("id,partner_id,name,code,channel,status,starts_at,ends_at,attribution_window_days,commission_type,commission_rate,hold_days,approved_at,activated_at").in("partner_id",partnerIds).order("created_at",{ascending:false}),
       admin.from("partner_clicks").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
       admin.from("partner_attributions").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
@@ -57,8 +62,10 @@ export async function GET(){
       admin.from("partner_commissions").select("campaign_id,partner_id,amount_cents,status").in("partner_id",partnerIds).limit(10000),
       admin.from("partner_memberships").select("*").in("partner_id",partnerIds).neq("status","revoked").order("created_at",{ascending:true}),
       admin.from("partner_readiness_items").select("*").in("partner_id",partnerIds).order("created_at",{ascending:true}),
+      admin.from("industry_profiles").select("*").in("partner_id",partnerIds),
+      admin.from("industry_publications").select("*").in("partner_id",partnerIds).order("updated_at",{ascending:false}),
     ]);
-    const error=[campaigns,clicks,attributions,conversions,commissions,members,readiness].find(result=>result.error)?.error;
+    const error=[campaigns,clicks,attributions,conversions,commissions,members,readiness,industryProfiles,industryPublications].find(result=>result.error)?.error;
     if(error)throw error;
     const now=new Date().toISOString();
     await admin.from("partner_memberships").update({last_accessed_at:now,updated_at:now}).in("id",accessible.map(row=>row.id));
@@ -88,6 +95,10 @@ export async function GET(){
           return partnerCan(role,"partner.manage")?safe:{...safe,email:""};
         }),
         readiness:{items:ownReadiness,summary:readinessSummary(ownReadiness)},
+        industry:{
+          profile:(industryProfiles.data||[]).find(item=>item.partner_id===row.partner_id)||null,
+          publications:(industryPublications.data||[]).filter(item=>item.partner_id===row.partner_id),
+        },
       };
     });
     return NextResponse.json({data:{workspaces}});
@@ -102,8 +113,67 @@ export async function POST(request:Request){
   try{
     const input=WorkspaceRequest.parse(await request.json());
     const admin=adminOrThrow();
-    const partnerId=input.action==="createCampaign"||input.action==="submitReadiness"?input.data.partnerId:input.action==="inviteMember"?input.data.partnerId:input.partnerId;
+    let partnerId:string;
+    switch(input.action){
+      case"createCampaign":case"submitReadiness":case"saveIndustryProfile":case"saveIndustryPublication":partnerId=input.data.partnerId;break;
+      case"inviteMember":partnerId=input.data.partnerId;break;
+      default:partnerId=input.partnerId;
+    }
     const access=await requireMembership(admin,user.id,partnerId);
+    if(input.action==="saveIndustryProfile"){
+      if(!partnerCan(access.role,"readiness.submit"))throw new Error("Your role cannot edit the official organization profile");
+      const{data:existing}=await admin.from("industry_profiles").select("*").eq("partner_id",partnerId).maybeSingle();
+      if(existing&&!industryCanSubmit(existing.status))throw new Error("This profile is locked while Cedriva reviews it");
+      const now=new Date().toISOString(),payload={...input.data,partnerId:undefined};
+      const{data,error}=await admin.from("industry_profiles").upsert({
+        partner_id:partnerId,status:"draft",trust_level:"Official",draft_payload:payload,
+        review_note:null,reviewed_by:null,submitted_at:null,approved_at:null,updated_at:now,
+      },{onConflict:"partner_id"}).select().single();
+      if(error)throw error;
+      await admin.from("industry_revisions").insert(industryRevision({partnerId,entityType:"profile",entityId:data.id,action:"draft.saved",actor:`partner:${user.id}`,snapshot:payload}));
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"industry.profile_draft_saved",subject_type:"industry_profile",subject_id:data.id,details:{}});
+      return NextResponse.json({data});
+    }
+    if(input.action==="submitIndustryProfile"){
+      const{data:profile,error:profileError}=await admin.from("industry_profiles").select("*").eq("partner_id",partnerId).single();
+      if(profileError)throw profileError;
+      if(!industryCanSubmit(profile.status))throw new Error("This profile cannot be submitted from its current status");
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("industry_profiles").update({status:"submitted",submitted_at:now,review_note:null,updated_at:now}).eq("id",profile.id).select().single();
+      if(error)throw error;
+      await admin.from("industry_revisions").insert(industryRevision({partnerId,entityType:"profile",entityId:data.id,action:"submitted",actor:`partner:${user.id}`,snapshot:data.draft_payload}));
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"industry.profile_submitted",subject_type:"industry_profile",subject_id:data.id,details:{}});
+      return NextResponse.json({data});
+    }
+    if(input.action==="saveIndustryPublication"){
+      if(!partnerCan(access.role,"readiness.submit"))throw new Error("Your role cannot prepare official newsroom content");
+      const payload={...input.data,partnerId:undefined,publicationId:undefined},now=new Date().toISOString();
+      let data;
+      if(input.data.publicationId){
+        const{data:existing,error:lookupError}=await admin.from("industry_publications").select("*").eq("id",input.data.publicationId).eq("partner_id",partnerId).single();
+        if(lookupError)throw lookupError;
+        if(!industryCanSubmit(existing.status))throw new Error("This publication is locked while Cedriva reviews it");
+        const result=await admin.from("industry_publications").update({publication_type:input.data.type,status:"draft",draft_payload:payload,review_note:null,reviewed_by:null,submitted_at:null,approved_at:null,updated_at:now}).eq("id",existing.id).select().single();
+        if(result.error)throw result.error;data=result.data;
+      }else{
+        const result=await admin.from("industry_publications").insert({partner_id:partnerId,publication_type:input.data.type,status:"draft",trust_level:"Official",draft_payload:payload,created_by:user.id}).select().single();
+        if(result.error)throw result.error;data=result.data;
+      }
+      await admin.from("industry_revisions").insert(industryRevision({partnerId,entityType:"publication",entityId:data.id,action:"draft.saved",actor:`partner:${user.id}`,snapshot:payload}));
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"industry.publication_draft_saved",subject_type:"industry_publication",subject_id:data.id,details:{type:data.publication_type}});
+      return NextResponse.json({data});
+    }
+    if(input.action==="submitIndustryPublication"){
+      const{data:item,error:itemError}=await admin.from("industry_publications").select("*").eq("id",input.publicationId).eq("partner_id",partnerId).single();
+      if(itemError)throw itemError;
+      if(!industryCanSubmit(item.status))throw new Error("This publication cannot be submitted from its current status");
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("industry_publications").update({status:"submitted",submitted_at:now,review_note:null,updated_at:now}).eq("id",item.id).select().single();
+      if(error)throw error;
+      await admin.from("industry_revisions").insert(industryRevision({partnerId,entityType:"publication",entityId:data.id,action:"submitted",actor:`partner:${user.id}`,snapshot:data.draft_payload}));
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"industry.publication_submitted",subject_type:"industry_publication",subject_id:data.id,details:{type:data.publication_type}});
+      return NextResponse.json({data});
+    }
     if(input.action==="submitReadiness"){
       if(!partnerCan(access.role,"readiness.submit"))throw new Error("Your role cannot submit readiness evidence");
       const now=new Date().toISOString();
