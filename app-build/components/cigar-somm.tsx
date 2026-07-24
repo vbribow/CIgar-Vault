@@ -6,8 +6,8 @@ import type{CigarSommAnswer}from"@/lib/cigar-somm";
 const prompts=["How will this cigar develop while I smoke it?","What should I pair with this cigar after dinner?","Choose a coffee and a zero-proof pairing.","Should I smoke this now or continue aging it?"];
 const identity=(item:InventoryItem)=>`${item.brand} · ${item.line} · ${item.vitola}${item.vintage?` · ${item.vintage}`:""}`;
 
-export function CigarSomm({inventory,initialInventoryId=""}:{inventory:InventoryItem[];initialInventoryId?:string}){
- const[source,setSource]=useState<"inventory"|"manual">(initialInventoryId?"inventory":"inventory"),[selectedId,setSelectedId]=useState(initialInventoryId),[manualName,setManualName]=useState(""),[search,setSearch]=useState(""),[result,setResult]=useState<CigarSommAnswer>(),[question,setQuestion]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
+export function CigarSomm({inventory,initialInventoryId="",initialQuestion=""}:{inventory:InventoryItem[];initialInventoryId?:string;initialQuestion?:string}){
+ const[source,setSource]=useState<"inventory"|"manual">(initialInventoryId?"inventory":"inventory"),[selectedId,setSelectedId]=useState(initialInventoryId),[manualName,setManualName]=useState(""),[search,setSearch]=useState(""),[result,setResult]=useState<CigarSommAnswer>(),[question,setQuestion]=useState(initialQuestion),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const available=useMemo(()=>inventory.filter(item=>(item.currentQty??0)>0).sort((a,b)=>identity(a).localeCompare(identity(b))),[inventory]);
  const matches=useMemo(()=>{const words=search.toLowerCase().trim().split(/\s+/).filter(Boolean);return available.filter(item=>words.every(word=>identity(item).toLowerCase().includes(word))).slice(0,30)},[available,search]);
  const selected=available.find(item=>item.inventoryId===selectedId),ready=source==="inventory"?Boolean(selected):manualName.trim().length>=3;
