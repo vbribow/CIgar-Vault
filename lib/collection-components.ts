@@ -1,7 +1,7 @@
 import type { CollectionTemplate } from "./collection-templates";
 import type { CigarCollection, InventoryItem } from "./types";
 import { canonicalBrand } from "./brand-directory";
-import { canonicalCigarIdentity } from "./cigar-identity";
+import { canonicalCigarIdentity, cigarIdentityKey } from "./cigar-identity";
 import { standardVitolas } from "./vitolas";
 
 const evidenceOnly = /^(original|numbered|one of).*\b(box|case|book|packaging|humidor)\b/i;
@@ -28,6 +28,14 @@ export type CollectionComponentIdentity = {
   quantity: number;
   needsIdentityReview: boolean;
 };
+
+function knownRetailValue(candidate: InventoryItem, inventory: InventoryItem[]) {
+  const identity = cigarIdentityKey(candidate);
+  return inventory
+    .filter(item => item.retailValue !== undefined && cigarIdentityKey(item) === identity)
+    .sort((a, b) => Number(Boolean(b.provenanceNotes)) - Number(Boolean(a.provenanceNotes)))[0]
+    ?.retailValue;
+}
 
 export function collectionComponentIdentity(requirement: string, template: CollectionTemplate): CollectionComponentIdentity {
   const countMatch = requirement.match(/^(\d+)\s+(.+)$/);
@@ -67,7 +75,8 @@ export function collectionComponentDrafts(collection: CigarCollection, template:
     const inventoryId = `INV-${slug(collection.collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
     if (existing.has(inventoryId)) return [];
     const canonical = canonicalCigarIdentity({ ...identity, vintage: template.releaseYear });
-    return [{ inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, vintage: template.releaseYear, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${template.sourceLabel}: ${template.sourceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem];
+    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, vintage: template.releaseYear, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${template.sourceLabel}: ${template.sourceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
+    return [{ ...draft, retailValue: knownRetailValue(draft, inventory) }];
   });
 }
 
@@ -83,12 +92,16 @@ export function collectionComponentRepairs(collection: CigarCollection, template
     if (!existing || !legacyGenerated) return [];
     const identity = collectionComponentIdentity(requirement, template);
     const canonical = canonicalCigarIdentity({ ...identity, vintage: template.releaseYear });
-    return [{
+    const repaired = {
       ...existing,
       catalogId: canonical.identityId,
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
+    };
+    return [{
+      ...repaired,
+      retailValue: repaired.retailValue ?? knownRetailValue(repaired, inventory),
       status: identity.needsIdentityReview ? "Review" : existing.status === "Review" ? "Preserve" : existing.status,
       notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}`,
     } satisfies InventoryItem];

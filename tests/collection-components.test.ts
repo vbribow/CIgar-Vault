@@ -29,6 +29,31 @@ test("requirements fulfilled by reusable inventory are not duplicated", () => {
   assert.deepEqual(drafts.map(item => item.vitola), ["Lancero"]);
 });
 
+test("new collection components inherit known retail from the exact same cigar identity", () => {
+  const known = {
+    inventoryId: "INV-KNOWN",
+    brand: "Arturo Fuente",
+    line: "Test Set",
+    vitola: "Double Corona",
+    retailValue: 42,
+  };
+  const [draft] = collectionComponentDrafts(collection, template, [known]);
+  assert.equal(draft.retailValue, 42);
+  assert.equal(draft.looseStickQty, 20);
+});
+
+test("nearby vitolas never share retail automatically", () => {
+  const nearby = {
+    inventoryId: "INV-KNOWN",
+    brand: "Arturo Fuente",
+    line: "Test Set",
+    vitola: "Robusto",
+    retailValue: 42,
+  };
+  const [draft] = collectionComponentDrafts(collection, template, [nearby]);
+  assert.equal(draft.retailValue, undefined);
+});
+
 test("collection components preserve exact named families and mark unresolved vitolas for review", () => {
   const fuente = { ...template, requirements: ["OpusX Angel’s Share Fuente Fuente"] };
   assert.deepEqual(collectionComponentIdentity(fuente.requirements[0], fuente), {

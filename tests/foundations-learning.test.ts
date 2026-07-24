@@ -11,7 +11,7 @@ test("the Curious pathway opens a dedicated beginner journey", () => {
 });
 
 test("foundations teach the complete first-cigar experience in plain language", () => {
-  for (const lesson of ["Choose with confidence", "Know what you are holding", "Cut only what you need", "Light patiently", "Slow down and notice", "Store what remains"]) {
+  for (const lesson of ["Choose with confidence", "Know what you are holding", "Cut only what you need", "Light patiently", "Slow down and notice", "Store what remains", "Handle common problems calmly", "Share the culture respectfully"]) {
     assert.match(foundations, new RegExp(lesson));
   }
   assert.match(foundations, /Strength and flavor are not the same thing/);

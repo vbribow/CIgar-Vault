@@ -70,6 +70,28 @@ const lessons = [
       ["Separate strong odors", "Tobacco absorbs surrounding aromas. Keep cigars away from food, cleaners, and scented materials."],
     ],
   },
+  {
+    number: "07",
+    title: "Handle common problems calmly",
+    promise: "Make small corrections without turning the ritual into work.",
+    points: [
+      ["A tight draw", "Pause before cutting again. Gently massage the firm area; if needed, remove only a tiny additional amount from the cap."],
+      ["An uneven burn", "Let the slower side catch up first. If it does not, briefly touch up only the unlit edge."],
+      ["Heat or bitterness", "Set the cigar down for a few minutes. Slower draws usually restore a cooler, more balanced experience."],
+      ["A cigar goes out", "Tap away loose ash, gently clear the stale smoke, and toast the foot again. Relighting is normal."],
+    ],
+  },
+  {
+    number: "08",
+    title: "Share the culture respectfully",
+    promise: "Enjoy the ritual while respecting the people and place around you.",
+    points: [
+      ["Follow the setting", "Smoke only where it is legal and welcomed. Ask before lighting when the expectations are unclear."],
+      ["Respect the craft", "Price, rarity, and scores do not decide whether someone’s taste is valid."],
+      ["Welcome questions", "Knowledge is most valuable when it helps another collector feel included."],
+      ["Leave the space well", "Use an ashtray, dispose of remnants responsibly, and thank the people who hosted the experience."],
+    ],
+  },
 ] as const;
 
 const firstVisit = [
@@ -89,7 +111,7 @@ export default function FoundationsPage() {
         <p className="lede">No posturing. No vocabulary test. Learn only what helps you choose thoughtfully, enjoy comfortably, and ask your next question with confidence.</p>
         <div className="ctaRow"><a className="button" href="#lesson-1">Start the first lesson</a><a className="button secondary" href="#first-visit">Prepare for a shop visit</a></div>
       </div>
-      <aside><span>Your starting point</span><strong>6 short lessons</strong><small>About 15 minutes to build the foundations. Return whenever you need a reminder.</small></aside>
+      <aside><span>Your starting point</span><strong>8 short lessons</strong><small>About 20 minutes to build the foundations. Return whenever you need a reminder.</small></aside>
     </section>
 
     <section className="foundationPromise">
