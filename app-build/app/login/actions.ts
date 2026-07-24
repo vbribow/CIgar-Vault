@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { appOrigin } from "@/lib/app-origin";
+import { claimPartnerReferral } from "@/lib/partner-platform";
 
 const safeNext = (value: FormDataEntryValue | null) => typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/";
 const failure = (message: string, mode: string, next: string) => `/login?mode=${mode}&next=${encodeURIComponent(next)}&error=${encodeURIComponent(message)}`;
@@ -28,6 +29,7 @@ export async function signUp(formData: FormData) {
   const origin = appOrigin((await headers()).get("origin") || "", productionHost);
   const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: `${origin}/auth/callback?next=${next}` } });
   if (error) redirect(failure(error.message, "signup", next));
+  if (data.user) await claimPartnerReferral(data.user.id);
   if (!data.session) redirect("/login?mode=signin&notice=Check%20your%20email%20to%20confirm%20your%20account.");
   redirect(next);
 }
