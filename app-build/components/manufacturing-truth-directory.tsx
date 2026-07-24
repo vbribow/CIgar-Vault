@@ -54,16 +54,15 @@ export function ManufacturingTruthDirectory({ records }: { records: Manufacturin
 const coverageStatuses: ("All statuses" | BrandManufacturingStatus)[] = ["All statuses", "Factory verified", "Country verified", "Research needed"];
 
 export function ManufacturingCoverageIndex({ records }: { records: BrandManufacturingCoverage[] }) {
-  const [query, setQuery] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("All manufacturers");
   const [status, setStatus] = useState<(typeof coverageStatuses)[number]>("All statuses");
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const filtered = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
     return records.filter((record) => {
-      const matchesQuery = !needle || [record.brand, record.primaryRegion, record.segment, record.manufacturing].join(" ").toLocaleLowerCase().includes(needle);
-      return matchesQuery && (status === "All statuses" || record.status === status);
+      const matchesBrand = selectedBrand === "All manufacturers" || record.brand === selectedBrand;
+      return matchesBrand && (status === "All statuses" || record.status === status);
     });
-  }, [query, records, status]);
+  }, [records, selectedBrand, status]);
   const counts = Object.fromEntries(coverageStatuses.slice(1).map((item) => [item, records.filter((record) => record.status === item).length]));
 
   return <>
@@ -74,7 +73,7 @@ export function ManufacturingCoverageIndex({ records }: { records: BrandManufact
       <article><strong>{counts["Research needed"]}</strong><span>visible evidence gaps</span></article>
     </div>
     <div className="coverageControls">
-      <label><span>Search all brands</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, region, or known factory" /></label>
+      <label><span>Choose a cigar manufacturer</span><select value={selectedBrand} onChange={(event) => setSelectedBrand(event.target.value)}><option>All manufacturers</option>{records.map((record) => <option key={record.brand} value={record.brand}>{record.brand} · {record.primaryRegion}</option>)}</select></label>
       <label><span>Evidence status</span><select value={status} onChange={(event) => setStatus(event.target.value as (typeof coverageStatuses)[number])}>{coverageStatuses.map((item) => <option key={item}>{item}</option>)}</select></label>
       <output aria-live="polite"><strong>{filtered.length}</strong><span>brand record{filtered.length === 1 ? "" : "s"}</span></output>
     </div>
