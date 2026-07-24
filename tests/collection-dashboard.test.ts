@@ -98,4 +98,5 @@ test("does not estimate a humidor residual until every included cigar has retail
 test("blocks a researched collection when its saved release year identifies another edition",()=>{
  assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2022",name:"La Gran Fumada",releaseYear:2023}),"Saved release year 2023 does not match the researched 2022 edition.");
  assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2022",name:"La Gran Fumada",releaseYear:2022}),undefined);
+ assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2023",name:"La Gran Fumada Vol. II",releaseYear:"2023" as unknown as number}),undefined);
 });
