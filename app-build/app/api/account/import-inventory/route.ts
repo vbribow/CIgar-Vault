@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { InventoryInputSchema,normalizeInventory } from "@/lib/inventory-model";
 import { MAX_IMPORT_BYTES,parseInventoryFile } from "@/lib/inventory-import";
 import { deleteOwnedRecord,importOwnedRecords,loadAccountRecords,saveOwnedRecord } from "@/lib/user-data";
-import type { InventoryItem } from "@/lib/types";
+import { copiedValuation,reusableValuation } from "@/lib/valuation-monitor";
+import type { InventoryItem,Valuation } from "@/lib/types";
 
 export const runtime="nodejs";
 function reply(error:unknown,status=400){return NextResponse.json({error:error instanceof Error?error.message:"Import failed"},{status})}
@@ -22,19 +23,33 @@ export async function POST(request:Request){
   if(body.action==="commit"){
    if(!Array.isArray(body.items)||!body.items.length)return reply(new Error("Select at least one valid row"));
    if(body.items.length>5000)return reply(new Error("Import is limited to 5000 rows"),413);
-   const items:InventoryItem[]=body.items.map((value:unknown)=>normalizeInventory(InventoryInputSchema.parse(value)));
+   const parsedItems:InventoryItem[]=body.items.map((value:unknown)=>normalizeInventory(InventoryInputSchema.parse(value)));
    const existingIds=new Set(existing.map((item:InventoryItem)=>item.inventoryId));
-   if(items.some((item:InventoryItem)=>existingIds.has(item.inventoryId)))return reply(new Error("One or more inventory IDs already exist. Preview the file again."),409);
+   if(parsedItems.some((item:InventoryItem)=>existingIds.has(item.inventoryId)))return reply(new Error("One or more inventory IDs already exist. Preview the file again."),409);
+   const valuations=await loadAccountRecords<Valuation>("valuations")||[];
+   const candidates=existing.flatMap(item=>{const valuation=valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]});
+   const shared:Valuation[]=[];
+   const items=parsedItems.map(item=>{
+    if(item.retailValue!==undefined)return item;
+    const reusable=reusableValuation(item,candidates);
+    if(!reusable)return item;
+    shared.push(copiedValuation(item,reusable));
+    return{...item,retailValue:reusable.replacementValue};
+   });
    const batchId=`IMPORT-BATCH-${new Date().toISOString()}-${crypto.randomUUID()}`;
-   await importOwnedRecords(items.map((item:InventoryItem)=>({kind:"inventory" as const,recordId:item.inventoryId,payload:item})));
-   await saveOwnedRecord("integrity",batchId,{action:"inventory-spreadsheet-import",batchId,fileName:String(body.fileName||"upload"),inventoryIds:items.map((item:InventoryItem)=>item.inventoryId),count:items.length,createdAt:new Date().toISOString()});
-   return NextResponse.json({data:{batchId,imported:items.length}});
+   await importOwnedRecords([
+    ...items.map((item:InventoryItem)=>({kind:"inventory" as const,recordId:item.inventoryId,payload:item})),
+    ...shared.map(value=>({kind:"valuations" as const,recordId:value.valuationId,payload:value})),
+   ]);
+   await saveOwnedRecord("integrity",batchId,{action:"inventory-spreadsheet-import",batchId,fileName:String(body.fileName||"upload"),inventoryIds:items.map((item:InventoryItem)=>item.inventoryId),valuationIds:shared.map(value=>value.valuationId),count:items.length,createdAt:new Date().toISOString()});
+   return NextResponse.json({data:{batchId,imported:items.length,valuedImmediately:shared.length,valuationStatus:shared.length===items.length?"All uploaded cigars received current exact-match values.":"Remaining cigars entered the priority research queue."}});
   }
   if(body.action==="rollback"){
    const audits=await loadAccountRecords<Record<string,unknown>>("integrity");
    const audit=audits?.find(value=>value.batchId===body.batchId&&value.action==="inventory-spreadsheet-import");
    if(!audit||!Array.isArray(audit.inventoryIds))return reply(new Error("Import batch was not found"),404);
    await Promise.all(audit.inventoryIds.map(id=>deleteOwnedRecord("inventory",String(id))));
+   if(Array.isArray(audit.valuationIds))await Promise.all(audit.valuationIds.map(id=>deleteOwnedRecord("valuations",String(id))));
    await saveOwnedRecord("integrity",String(body.batchId),{...audit,action:"inventory-spreadsheet-import-rolled-back",rolledBackAt:new Date().toISOString()});
    return NextResponse.json({data:{removed:audit.inventoryIds.length}});
   }

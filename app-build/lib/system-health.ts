@@ -7,7 +7,7 @@ export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:s
   {id:"sensor-sync",name:"Sensor synchronization",path:"/api/sensor-sync",schedule:"0 * * * *",nextDescription:"Hourly at minute 0"},
   {id:"catalog-discovery",name:"Catalog discovery",path:"/api/catalog-discovery/run",schedule:"0 12 * * 1",nextDescription:"Monday at 12:00 UTC"},
   {id:"wishlist-monitor",name:"Wishlist monitoring",path:"/api/wishlist-monitor",schedule:"30 13 * * *",nextDescription:"Daily at 13:30 UTC"},
-  {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"0 14 * * *",nextDescription:"Daily at 14:00 UTC · up to 3 due lots"},
+  {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"0 */6 * * *",nextDescription:"Every 6 hours · new uploads first · up to 6 due lots"},
   {id:"rating-monitor",name:"Professional rating coverage",path:"/api/rating-monitor",schedule:"30 14 * * 0",nextDescription:"Sunday at 14:30 UTC"},
   {id:"sommelier-research",name:"Master Somm research",path:"/api/sommelier-knowledge/research",schedule:"0 15 * * 2",nextDescription:"Tuesday at 15:00 UTC · founder review required"},
 ];
