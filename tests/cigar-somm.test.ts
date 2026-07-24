@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { CigarSommAnswerSchema, CigarSommQuestionSchema } from "../lib/cigar-somm";
 
@@ -9,3 +10,10 @@ test("Cigar Somm requires either an inventory selection or manual cigar",()=>{as
 test("Cigar Somm answers preserve tasting analysis, personalization, four pairing paths, and sources",()=>{const pairing={name:"Espresso",style:"Medium roast",why:"Matches toasted flavors",service:"Serve warm"};const value=CigarSommAnswerSchema.parse({answer:"A balanced pairing set.",cigarContext:"Test cigar",confidence:"Medium",personalization:{used:true,signals:["Prefers medium strength"],explanation:"Adjusted to the collector's recorded taste."},tastingProfile:{body:"Medium-full",strength:"Medium",coreNotes:["cedar","cocoa"],development:["Creamy opening","Pepper builds"],evidence:"Conservative synthesis of cited reviews."},basis:["General pairing principles"],coffee:[pairing],spirits:[{...pairing,name:"Aged rum"}],cocktails:[{...pairing,name:"Rum Old Fashioned"}],nonAlcoholic:[{...pairing,name:"Sparkling mineral water"}],sources:[{title:"Official product page",url:"https://example.com/cigar",publisher:"Example Cigars",supports:"Blend composition"}],cautions:["Pairing is subjective"]});assert.equal(value.personalization.used,true);assert.equal(value.tastingProfile.coreNotes.length,2);assert.equal(value.coffee.length,1);assert.equal(value.spirits.length,1);assert.equal(value.cocktails.length,1);assert.equal(value.nonAlcoholic.length,1);assert.equal(value.sources.length,1)});
 
 test("Cigar Somm rejects empty questions",()=>{assert.equal(CigarSommQuestionSchema.safeParse({question:""}).success,false)});
+
+test("Cigar Somm shows research progress and releases stalled requests",()=>{
+  const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
+  assert.match(component,/Researching · \$\{elapsed\}s/);
+  assert.match(component,/30–90 seconds/);
+  assert.match(component,/AbortSignal\.timeout\(105_000\)/);
+});
