@@ -29,6 +29,7 @@ export type CollectionDashboardSummary = {
   marketCoverage: number;
   completedSaleCoverage: number;
   excludedAssignedLots: string[];
+  editionIssue?: string;
 };
 
 const normalized = (value: string) =>
@@ -48,6 +49,13 @@ export function collectionTemplateFor(collection: CigarCollection) {
 
 export function collectionMatchMinimum(template: (typeof collectionTemplates)[number]) {
   return ["TPL-FUENTE-PADRON-LEGENDS","TPL-PADRON-COLLECTION"].includes(template.templateId) ? 0.45 : 0.72;
+}
+
+export function collectionEditionIssue(collection:CigarCollection){
+  const template=collectionTemplateFor(collection);
+  if(!template?.releaseYear)return undefined;
+  if(!collection.releaseYear)return`Confirm the ${template.releaseYear} release year before using this edition template.`;
+  return collection.releaseYear===template.releaseYear?undefined:`Saved release year ${collection.releaseYear} does not match the researched ${template.releaseYear} edition.`;
 }
 
 export function collectionRequirementMatches(collection: CigarCollection, members: InventoryItem[]) {
@@ -70,6 +78,7 @@ export function summarizeCollection(
 ): CollectionDashboardSummary {
   const assignedMembers = inventory.filter((item) => item.collectionId === collection.collectionId);
   const template = collectionTemplateFor(collection);
+  const editionIssue=collectionEditionIssue(collection);
   const matches = collectionRequirementMatches(collection, assignedMembers);
   const verifiedIds = new Set(matches.flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
   const members = template ? assignedMembers.filter(item=>verifiedIds.has(item.inventoryId)) : assignedMembers;
@@ -156,5 +165,6 @@ export function summarizeCollection(
     marketCoverage: componentEvidence.filter(evidence => evidence.marketUnit !== undefined).length,
     completedSaleCoverage: componentEvidence.filter(evidence => evidence.completedSale !== undefined).length,
     excludedAssignedLots,
+    editionIssue,
   };
 }
