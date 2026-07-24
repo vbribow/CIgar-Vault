@@ -5,6 +5,14 @@ import type { BrandResearchItem } from "@/lib/brand-research";
 import { brandResearchBrief } from "@/lib/brand-research";
 import type { BrandResearchReport } from "@/lib/brand-research-report";
 
+type ResearchJob = {
+  id: string;
+  status: "queued" | "in_progress" | "completed";
+  report?: BrandResearchReport;
+};
+
+const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
 export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
   const brief = brandResearchBrief(item);
   const [report, setReport] = useState<BrandResearchReport | null>(null);
@@ -23,7 +31,18 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Brand research failed");
-      setReport(result.data);
+      let job = result.data as ResearchJob;
+      const deadline = Date.now() + 8 * 60_000;
+      while (job.status !== "completed") {
+        if (Date.now() >= deadline) throw new Error("Research is still running. Try this brand again in a moment.");
+        await wait(2_500);
+        const statusResponse = await fetch(`/api/brand-research?id=${encodeURIComponent(job.id)}`, { cache: "no-store" });
+        const statusResult = await statusResponse.json();
+        if (!statusResponse.ok) throw new Error(statusResult.error || "Brand research status failed");
+        job = statusResult.data as ResearchJob;
+      }
+      if (!job.report) throw new Error("Brand research completed without a report");
+      setReport(job.report);
       setMessage("Research complete. Review every claim and source before publication.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Brand research failed");
