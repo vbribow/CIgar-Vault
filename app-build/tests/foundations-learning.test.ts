@@ -48,6 +48,18 @@ test("blending learning teaches the complete discipline and uses sourced blender
   assert.match(learn, /href="\/learn\/blending"/);
 });
 
+test("blending learning explains how leaf identity, cultivation, and processing affect taste", () => {
+  for (const lesson of ["Seed", "Terroir", "Priming", "Volado", "Seco", "Viso", "Ligero", "Medio tiempo", "Shade-grown", "Sun-grown", "What is a Maduro?", "Connecticut Shade", "Connecticut Broadleaf", "Habano", "Corojo", "Cameroon", "Sumatra", "Mexican San Andrés"]) {
+    assert.match(blending, new RegExp(lesson, "i"));
+  }
+  assert.match(blending, /The binder is part of the flavor system/);
+  assert.match(blending, /no honest universal percentage/);
+  assert.match(blending, /It is not one seed/);
+  assert.match(blending, /It is not merely a color/);
+  assert.match(blending, /It is not automatically strong/);
+  assert.match(blending, /common collector and producer associations, not a flavor guarantee/);
+});
+
 test("foundations teach the complete first-cigar experience in plain language", () => {
   for (const lesson of ["Choose with confidence", "Know what you are holding", "Cut only what you need", "Light patiently", "Slow down and notice", "Store what remains", "Handle common problems calmly", "Share the culture respectfully"]) {
     assert.match(foundations, new RegExp(lesson));
