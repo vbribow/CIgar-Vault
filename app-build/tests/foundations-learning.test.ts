@@ -5,6 +5,7 @@ import test from "node:test";
 const learn = readFileSync(new URL("../app/learn/page.tsx", import.meta.url), "utf8");
 const foundations = readFileSync(new URL("../app/learn/foundations/page.tsx", import.meta.url), "utf8");
 const seedToSmoke = readFileSync(new URL("../app/learn/seed-to-smoke/page.tsx", import.meta.url), "utf8");
+const restingAndAging = readFileSync(new URL("../app/learn/resting-and-aging/page.tsx", import.meta.url), "utf8");
 const vitolas = readFileSync(new URL("../app/learn/vitolas/page.tsx", import.meta.url), "utf8");
 const blending = readFileSync(new URL("../app/learn/blending/page.tsx", import.meta.url), "utf8");
 const manufacturingTruth = readFileSync(new URL("../app/learn/manufacturing-truth/page.tsx", import.meta.url), "utf8");
@@ -102,6 +103,19 @@ test("foundations teach the complete first-cigar experience in plain language", 
   assert.match(foundations, /Strength and flavor are not the same thing/);
   assert.match(foundations, /Questions are part of the culture/);
   assert.match(foundations, /intended only for adults of legal age/);
+});
+
+test("resting and aging education separates recovery from deliberate cellar time", () => {
+  for (const lesson of ["3–7 days", "2–4 weeks", "4–8+ weeks", "Recovery and equilibrium", "Planned development over time", "30–90 days", "1–3 years", "5–10 years", "10+ years", "Age with a hypothesis"]) {
+    assert.ok(restingAndAging.includes(lesson));
+  }
+  assert.match(restingAndAging, /Stability before time/);
+  assert.match(restingAndAging, /There is no universal number/);
+  assert.match(restingAndAging, /Time can soften and integrate, but it can also reduce intensity/);
+  assert.match(restingAndAging, /Habanos publishes an aging standard/);
+  assert.match(restingAndAging, /intended only for adults of legal age/);
+  assert.match(learn, /href="\/learn\/resting-and-aging"/);
+  assert.match(seedToSmoke, /href="\/learn\/resting-and-aging"/);
 });
 
 test("learning routes form a connected curriculum around manufacturing truth", () => {
