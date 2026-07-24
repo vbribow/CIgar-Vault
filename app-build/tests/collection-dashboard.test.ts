@@ -50,3 +50,24 @@ test("lists missing template components", () => {
   assert.equal(result.missingComponents.length, 4);
   assert.ok(result.missingComponents.includes("Family Reserve"));
 });
+
+test("subtracts fully priced original cigars from a humidor collection retail price", () => {
+  const collection = { collectionId:"COL-FUENTE-PURPLE-DREAM", name:"Big Purple Dream Humidor" };
+  const quantities=[10,6,10,10,10,10,10,10,20,10];
+  const inventory=quantities.map((originalQty,index)=>({
+    inventoryId:`P${index}`,brand:"Arturo Fuente",line:`OpusX component ${index}`,vitola:"Original release",
+    originalQty,currentQty:Math.max(0,originalQty-1),retailValue:50,collectionId:collection.collectionId,
+  }));
+  const result=summarizeCollection(collection,inventory,[]);
+  assert.equal(result.wholeValue,12975);
+  assert.equal(result.cigarRetailValue,5300);
+  assert.equal(result.humidorValue,7675);
+  assert.equal(result.humidorValueStatus,"Calculated");
+});
+
+test("does not estimate a humidor residual until every included cigar has retail evidence", () => {
+  const collection = { collectionId:"COL-FUENTE-PURPLE-DREAM", name:"Big Purple Dream Humidor" };
+  const result=summarizeCollection(collection,[{inventoryId:"P1",brand:"Arturo Fuente",line:"Purple Rain",vitola:"Diadema",originalQty:10,currentQty:10,collectionId:collection.collectionId}],[]);
+  assert.equal(result.humidorValue,undefined);
+  assert.equal(result.humidorValueStatus,"Awaiting complete cigar retail values");
+});

@@ -10,8 +10,12 @@ export type CollectionValuePoint = {
 
 export type CollectionDashboardSummary = {
   componentValue: number;
+  cigarRetailValue: number;
   wholeValue: number;
   premium: number;
+  isHumidorCollection: boolean;
+  humidorValue?: number;
+  humidorValueStatus: "Not applicable" | "Calculated" | "Awaiting complete cigar retail values" | "Whole-set retail needed";
   ownedComponents: number;
   expectedComponents?: number;
   expectedCigars?: number;
@@ -66,6 +70,11 @@ export function summarizeCollection(
   }, 0);
   const componentEvidence = members.map(item => collectionComponentMarketEvidence(item, inventory, valuations));
   const template = collectionTemplateFor(collection);
+  const isHumidorCollection = /\bhumidor\b/i.test(`${collection.name} ${collection.edition ?? ""} ${template?.packaging ?? ""}`);
+  const cigarRetailValue = members.reduce((sum, item, index) => {
+    const originalCount = item.originalQty ?? item.currentQty ?? 0;
+    return sum + (componentEvidence[index].retailUnit ?? 0) * originalCount;
+  }, 0);
   const matches = collectionRequirementMatches(collection, members);
   const expectedComponents = collection.expectedComponents ?? template?.expectedComponents;
   const ownedComponents = template
@@ -103,13 +112,32 @@ export function summarizeCollection(
       : componentValue > 0
         ? "Component inventory"
         : "Pending";
+  const expectedCigars = collection.expectedCigars ?? template?.expectedCigars;
+  const originalCigars = members.reduce((sum,item)=>sum+(item.originalQty??item.currentQty??0),0);
+  const hasCompleteCigarRetail = members.length > 0
+    && componentEvidence.every(evidence => evidence.retailUnit !== undefined)
+    && (expectedCigars === undefined || originalCigars >= expectedCigars);
+  const humidorValue = isHumidorCollection && valueEvidence !== "Pending" && hasCompleteCigarRetail
+    ? Math.max(0, wholeValue - cigarRetailValue)
+    : undefined;
+  const humidorValueStatus = !isHumidorCollection
+    ? "Not applicable"
+    : valueEvidence === "Pending"
+      ? "Whole-set retail needed"
+      : hasCompleteCigarRetail
+        ? "Calculated"
+        : "Awaiting complete cigar retail values";
   return {
     componentValue,
+    cigarRetailValue,
     wholeValue,
     premium: wholeValue - componentValue,
+    isHumidorCollection,
+    humidorValue,
+    humidorValueStatus,
     ownedComponents,
     expectedComponents,
-    expectedCigars: collection.expectedCigars ?? template?.expectedCigars,
+    expectedCigars,
     expectedContents: template?.requirements ?? [],
     completionPercent,
     missingComponents,
