@@ -8,6 +8,10 @@ import { ProductEvent } from "@/components/product-event";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
+import {
+  insuranceQuestions,
+  insuranceResources,
+} from "@/lib/insurance-resources";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -205,6 +209,51 @@ export default async function ReportsPage() {
               <strong>{count ? `${count} to resolve →` : "Complete ✓"}</strong>
             </a>
           ))}
+        </div>
+      </section>
+
+      <section className="reportSection insuranceResources">
+        <div className="sectionHead">
+          <div>
+            <div className="eyebrow">Coverage resources</div>
+            <h2>Start an informed insurance conversation</h2>
+          </div>
+          <span className="small">United States · availability varies</span>
+        </div>
+        <p className="insuranceIntro">
+          These companies publicly discuss coverage for collectibles or
+          valuable collections. Cedriva has not verified that every policy
+          covers cigars. Ask the carrier or a licensed broker to confirm cigar
+          eligibility and exclusions in writing before relying on coverage.
+        </p>
+        <div className="insurerGrid">
+          {insuranceResources.map((resource) => (
+            <article key={resource.name}>
+              <span>{resource.category}</span>
+              <h3>{resource.name}</h3>
+              <p>{resource.description}</p>
+              <small>{resource.considerations}</small>
+              <a
+                className="textLink"
+                href={resource.href}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Visit official coverage page ↗
+              </a>
+            </article>
+          ))}
+        </div>
+        <div className="insuranceQuestions">
+          <div>
+            <div className="eyebrow">Before purchasing</div>
+            <h3>Questions to ask the insurer</h3>
+          </div>
+          <ol>
+            {insuranceQuestions.map((question) => (
+              <li key={question}>{question}</li>
+            ))}
+          </ol>
         </div>
       </section>
 
