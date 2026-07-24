@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { baselineCommunityModeration,communityCigarKey,communityTop25,type CommunityRating } from "../lib/community";
+import { baselineCommunityModeration,communityCigarKey,communityStatusLabel,communityTop25,type CommunityRating } from "../lib/community";
 import { readFileSync } from "node:fs";
 
 const rating=(id:string,score:number,overrides:Partial<CommunityRating>={}):CommunityRating=>({id,displayName:"Collector",brand:"Arturo Fuente",line:"OpusX",vitola:"Petite Lancero",score,review:"Excellent construction",status:"active",createdAt:"2026-07-22T00:00:00.000Z",cigarKey:"arturo-fuente|opusx|petite-lancero|",...overrides});
@@ -9,3 +9,25 @@ test("Top 25 ranks average score before rating volume",()=>{const rankings=commu
 test("hidden and review ratings never affect public rankings",()=>assert.equal(communityTop25([rating("1",100,{status:"review"}),rating("2",99,{status:"hidden"})]).length,0));
 test("community safety blocks transactions and reviews contact details",()=>{assert.equal(baselineCommunityModeration("DM me to buy this box").decision,"block");assert.equal(baselineCommunityModeration("Email me for details").decision,"review");assert.equal(baselineCommunityModeration("How do you stabilize a cabinet humidor?").decision,"allow")});
 test("reviewed contributions explain where founder moderation happens",()=>assert.match(readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8"),/AI Administrator review queue/));
+test("contributors can track publication status and founder correction notes",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ const route=readFileSync(new URL("../app/api/community/route.ts",import.meta.url),"utf8");
+ assert.equal(communityStatusLabel("active"),"Published");
+ assert.equal(communityStatusLabel("review"),"Under Review");
+ assert.equal(communityStatusLabel("changes"),"Needs Changes");
+ assert.match(component,/Your contributions/);
+ assert.match(component,/Founder notes appear here/);
+ assert.match(route,/myContributions/);
+ assert.match(route,/eq\("user_id",userId\)/);
+});
+test("founder moderation supports publish, requested changes, and non-publication",()=>{
+ const route=readFileSync(new URL("../app/api/ai-administrator/route.ts",import.meta.url),"utf8");
+ const component=readFileSync(new URL("../components/ai-administrator.tsx",import.meta.url),"utf8");
+ const migration=readFileSync(new URL("../supabase/migrations/202607240001_community_contribution_status.sql",import.meta.url),"utf8");
+ assert.match(route,/z\.enum\(\["active","changes","hidden"\]\)/);
+ assert.match(route,/Tell the contributor what needs to change/);
+ assert.match(component,/Approve & publish/);
+ assert.match(component,/Request changes/);
+ assert.match(component,/Founder note/);
+ assert.match(migration,/'active','review','changes','hidden'/);
+});
