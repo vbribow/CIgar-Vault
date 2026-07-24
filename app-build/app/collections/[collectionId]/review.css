@@ -1,0 +1,7 @@
+.collectionAssignmentReview{display:grid;gap:9px;margin-top:18px;padding:18px;border:1px solid #78483e;border-radius:14px;background:#211310}
+.collectionAssignmentReview>div p{margin:5px 0;color:var(--muted)}
+.collectionAssignmentReview article{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.collectionAssignmentReview article span{display:grid;gap:3px}
+.collectionAssignmentReview article small{color:var(--muted)}
+.collectionAssignmentReview output{color:var(--gold2)}
+@media(max-width:700px){.collectionAssignmentReview article{grid-template-columns:1fr}.collectionAssignmentReview article .button{width:100%}}

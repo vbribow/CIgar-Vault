@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadActivities, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
+import { loadActivities, loadCollections, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
 import { InventoryRecordTools } from "@/components/inventory-record-tools";
 import { buildCigarTimeline,estimateAging } from "@/lib/collection-intelligence";
@@ -20,10 +20,11 @@ export default async function CigarPage({
   const item = items.find((i) => i.inventoryId === inventoryId);
   if (!item) notFound();
   const mode = await accountDataMode();
-  const [smokes, valuations, activities, ratings] =
+  const [smokes, valuations, activities, ratings, collections] =
     mode === "mock"
-      ? [[], [], [], []]
-      : await Promise.all([loadSmokingLogs(), loadValuations(), loadActivities(), loadRatings()]);
+      ? [[], [], [], [], []]
+      : await Promise.all([loadSmokingLogs(), loadValuations(), loadActivities(), loadRatings(), loadCollections()]);
+  const parentCollection=collections.find(collection=>collection.collectionId===item.collectionId);
   const history = smokes.filter((s) => s.inventoryId === inventoryId);
   const values = valuations.filter((v) => v.inventoryId === inventoryId);
   const latestValue = [...values].sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];
@@ -58,6 +59,7 @@ export default async function CigarPage({
             {item.vitola}
             {item.vintage ? ` · ${item.vintage}` : ""}
           </span>
+          {item.collectionId&&<a className="inventoryCollectionTag" href={`/collections/${encodeURIComponent(item.collectionId)}`}>Part of {parentCollection?.name||item.collectionId} →</a>}
         </div>
         <div className="scoreCard">
           <small>Personal collection score</small>

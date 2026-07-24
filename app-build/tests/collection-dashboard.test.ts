@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeCollection } from "../lib/collection-dashboard";
+import { collectionEditionIssue, summarizeCollection } from "../lib/collection-dashboard";
 
 test("summarizes whole value, premium, completeness, and history", () => {
   const collection = {
@@ -83,4 +83,9 @@ test("does not estimate a humidor residual until every included cigar has retail
   const result=summarizeCollection(collection,[{inventoryId:"P1",brand:"Arturo Fuente",line:"Purple Rain",vitola:"Diadema",originalQty:10,currentQty:10,collectionId:collection.collectionId}],[]);
   assert.equal(result.humidorValue,undefined);
   assert.equal(result.humidorValueStatus,"Awaiting complete cigar retail values");
+});
+
+test("blocks a researched collection when its saved release year identifies another edition",()=>{
+ assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2022",name:"La Gran Fumada",releaseYear:2023}),"Saved release year 2023 does not match the researched 2022 edition.");
+ assert.equal(collectionEditionIssue({collectionId:"COL-FUENTE-GRAN-FUMADA-2022",name:"La Gran Fumada",releaseYear:2022}),undefined);
 });
