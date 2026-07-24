@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { existingRetailPriceForBasis, knownRetailPriceSuggestions, normalizeManualRetailPrice, retailBoxValue } from "../lib/retail-pricing";
+import { applyRetailValuationToInventory, existingRetailPriceForBasis, knownRetailPriceSuggestions, normalizeManualRetailPrice, retailBoxValue } from "../lib/retail-pricing";
 import type { InventoryItem, Valuation } from "../lib/types";
 
 const priced: InventoryItem = { inventoryId: "I-1", brand: "Padrón", line: "1964 Anniversary", vitola: "Exclusivo", vintage: 2024, currentQty: 5, sticksPerBox: 10 };
@@ -23,6 +23,16 @@ test("manual box pricing normalizes to a reusable per-cigar value", () => {
   assert.deepEqual(normalizeManualRetailPrice({ basis: "Full box", price: 320, sticksPerBox: 10 }), { unitPrice: 32, boxPrice: 320 });
   assert.deepEqual(normalizeManualRetailPrice({ basis: "Per cigar", price: 32, sticksPerBox: 10 }), { unitPrice: 32, boxPrice: 320 });
   assert.throws(() => normalizeManualRetailPrice({ basis: "Full box", price: 320 }), /number of cigars/i);
+});
+
+test("a manual full-box valuation saves unit price and box quantity into inventory", () => {
+  const updated = applyRetailValuationToInventory(
+    { ...priced, retailValue: undefined, sticksPerBox: undefined },
+    { replacementValue: 32, replacementSticksPerBox: 10 },
+  );
+  assert.equal(updated.retailValue, 32);
+  assert.equal(updated.sticksPerBox, 10);
+  assert.equal(retailBoxValue(updated), 320);
 });
 
 test("autofill uses only sourced exact-match retail evidence and preserves existing prices", () => {

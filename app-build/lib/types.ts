@@ -41,6 +41,7 @@ export type Valuation = {
   inventoryId: string;
   valuationDate: string;
   replacementValue?: number;
+  replacementSticksPerBox?: number;
   marketValue?: number;
   marketEvidenceType?: "Verified completed sale" | "Estimated market range" | "Observed asking price" | "Insufficient evidence";
   marketRangeLow?: number;

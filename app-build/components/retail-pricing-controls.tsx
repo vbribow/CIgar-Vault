@@ -51,7 +51,8 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
     event.preventDefault(); setBusy("manual"); setMessage("");
     try {
       if (!selected) throw new Error("Choose a cigar.");
-      const values = normalizeManualRetailPrice({ basis, price: Number(price), sticksPerBox: sticksPerBox ? Number(sticksPerBox) : selected.sticksPerBox });
+      const savedSticksPerBox = sticksPerBox ? Number(sticksPerBox) : selected.sticksPerBox;
+      const values = normalizeManualRetailPrice({ basis, price: Number(price), sticksPerBox: savedSticksPerBox });
       const response = await fetch("/api/valuations", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(writeKey ? { "x-founder-key": writeKey } : {}) },
@@ -60,6 +61,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
           inventoryId: selected.inventoryId,
           valuationDate: today(),
           replacementValue: Math.round(values.unitPrice * 100) / 100,
+          replacementSticksPerBox: savedSticksPerBox,
           source: source.trim() || "Collector manual retail entry",
           sourceUrl: sourceUrl.trim() || undefined,
           confidence: sourceUrl.trim() ? "Medium" : "Community",
@@ -71,7 +73,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Manual price save failed");
       setPrice(inputValue(basis === "Per cigar" ? values.unitPrice : values.boxPrice));
-      setMessage(`Saved ${money(values.unitPrice)} per cigar${values.boxPrice === undefined ? "" : ` · ${money(values.boxPrice)} per box`}. The saved value remains visible here.`);
+      setMessage(`Saved to inventory: ${money(values.unitPrice)} per cigar${values.boxPrice === undefined ? "" : ` · ${money(values.boxPrice)} per box across ${savedSticksPerBox} cigars`}.`);
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Manual price save failed");
