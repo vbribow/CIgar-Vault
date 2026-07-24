@@ -4,7 +4,7 @@ import { updateSupabaseSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   // Private Sites deployments already enforce owner authentication.
   if (process.env.SITES_DEPLOYMENT === "true") return NextResponse.next();
-  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname === "/constitution" || request.nextUrl.pathname === "/manifesto" || request.nextUrl.pathname === "/data-model" || request.nextUrl.pathname === "/learn/seed-to-smoke" || request.nextUrl.pathname === "/learn/vitolas" || request.nextUrl.pathname.startsWith("/auth/");
+  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname === "/constitution" || request.nextUrl.pathname === "/manifesto" || request.nextUrl.pathname === "/data-model" || request.nextUrl.pathname === "/learn/seed-to-smoke" || request.nextUrl.pathname === "/learn/vitolas" || request.nextUrl.pathname === "/learn/blending" || request.nextUrl.pathname.startsWith("/auth/");
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return updateSupabaseSession(request);
 
   // Keep account recovery reachable during a configuration or provider outage.

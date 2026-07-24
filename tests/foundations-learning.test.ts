@@ -6,6 +6,7 @@ const learn = readFileSync(new URL("../app/learn/page.tsx", import.meta.url), "u
 const foundations = readFileSync(new URL("../app/learn/foundations/page.tsx", import.meta.url), "utf8");
 const seedToSmoke = readFileSync(new URL("../app/learn/seed-to-smoke/page.tsx", import.meta.url), "utf8");
 const vitolas = readFileSync(new URL("../app/learn/vitolas/page.tsx", import.meta.url), "utf8");
+const blending = readFileSync(new URL("../app/learn/blending/page.tsx", import.meta.url), "utf8");
 
 test("the Curious pathway opens a dedicated beginner journey", () => {
   assert.match(learn, /"\/learn\/seed-to-smoke","Follow tobacco from seed to smoke"/);
@@ -30,6 +31,21 @@ test("vitola learning teaches measurement, shape, construction, and naming uncer
   assert.match(vitolas, /useful reference ranges—not universal laws/);
   assert.match(vitolas, /Size does not mechanically determine strength, quality, or flavor/);
   assert.match(learn, /href="\/learn\/vitolas"/);
+});
+
+test("blending learning teaches the complete discipline and uses sourced blender profiles", () => {
+  for (const lesson of ["Define the intention", "Understand the leaf library", "Taste components", "Build the architecture", "Prototype and compare", "Adapt the vitola", "Prove repeatability", "Steward the blend"]) {
+    assert.match(blending, new RegExp(lesson));
+  }
+  for (const principle of ["Strength, body, and flavor are not synonyms", "Wrapper", "Binder", "Filler", "The recipe is the blend", "Profile standard"]) {
+    assert.match(blending, new RegExp(principle));
+  }
+  for (const blender of ["José “Pepín” García", "Jaime García", "Carlos “Carlito” Fuente Jr.", "Nicholas Melillo"]) {
+    assert.match(blending, new RegExp(blender));
+  }
+  assert.match(blending, /This is not a ranking or a hall of fame/);
+  assert.match(blending, /Company claims are labeled as company claims/);
+  assert.match(learn, /href="\/learn\/blending"/);
 });
 
 test("foundations teach the complete first-cigar experience in plain language", () => {
