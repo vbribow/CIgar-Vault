@@ -27,15 +27,19 @@ export default async function HumidorsPage() {
           </p>
         </div>
         <div className="climateLegend">
-          <strong>User-controlled targets</strong>
+          <strong>Start with evidence. Adjust with experience.</strong>
           <span>
-            Cedriva suggests starting values, but you decide the temperature
-            and humidity ranges.
+            Most New World cigars: 65–70°F and 65–69% RH. Official Habanos
+            guidance: 61–64°F and 65–70% RH.
           </span>
-          <a className="textLink" href="/learn/resting-and-aging">Learn why stability matters →</a>
+          <a className="textLink" href="/learn/humidor-climate">Understand temperature, humidity, and time →</a>
         </div>
       </section>
       <WorkspaceGuide items={[{label:"Set",title:"Choose climate targets",detail:"Temperature and humidity ranges remain under collector control."},{label:"Connect",title:"Add readings or sensors",detail:"Use manual records, Tempi history, or configured cloud connections.",href:"/sensors"},{label:"Protect",title:"Act on value at risk",detail:"Alerts connect environmental exceptions to the inventory stored inside."}]}/>
+      <section className="humidorEducation">
+        <div><div className="eyebrow">Climate education in context</div><h2>Protect the trend—not a folklore number.</h2><p>A brief door-opening spike is different from a month of heat. Learn how temperature and relative humidity interact, what New World cigars and Habanos call for, and how to correct a problem without shocking the tobacco.</p></div>
+        <div><span><b>New World start</b><strong>65–70°F · 65–69% RH</strong></span><span><b>Official Habanos</b><strong>61–64°F · 65–70% RH</strong></span><a className="button secondary" href="/learn/humidor-climate">Open the complete climate lesson</a></div>
+      </section>
       <ClimateAlertDashboard
         humidors={humidors}
         readings={readings}

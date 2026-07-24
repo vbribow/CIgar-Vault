@@ -6,6 +6,7 @@ const learn = readFileSync(new URL("../app/learn/page.tsx", import.meta.url), "u
 const foundations = readFileSync(new URL("../app/learn/foundations/page.tsx", import.meta.url), "utf8");
 const seedToSmoke = readFileSync(new URL("../app/learn/seed-to-smoke/page.tsx", import.meta.url), "utf8");
 const restingAndAging = readFileSync(new URL("../app/learn/resting-and-aging/page.tsx", import.meta.url), "utf8");
+const humidorClimate = readFileSync(new URL("../app/learn/humidor-climate/page.tsx", import.meta.url), "utf8");
 const vitolas = readFileSync(new URL("../app/learn/vitolas/page.tsx", import.meta.url), "utf8");
 const blending = readFileSync(new URL("../app/learn/blending/page.tsx", import.meta.url), "utf8");
 const manufacturingTruth = readFileSync(new URL("../app/learn/manufacturing-truth/page.tsx", import.meta.url), "utf8");
@@ -116,6 +117,18 @@ test("resting and aging education separates recovery from deliberate cellar time
   assert.match(restingAndAging, /intended only for adults of legal age/);
   assert.match(learn, /href="\/learn\/resting-and-aging"/);
   assert.match(seedToSmoke, /href="\/learn\/resting-and-aging"/);
+});
+
+test("humidor climate education distinguishes New World guidance from the official Habanos standard", () => {
+  for (const lesson of ["65–70°F", "65–69% RH", "61–64°F", "65–70% RH", "Most New World cigars", "Habanos", "Mixed collection", "Relative humidity is relative to temperature", "Warm + humid", "Minutes to hours", "Months to years", "Trend before reaction"]) {
+    assert.ok(humidorClimate.includes(lesson));
+  }
+  assert.match(humidorClimate, /not a universal law/);
+  assert.match(humidorClimate, /clearly identified inference/);
+  assert.match(humidorClimate, /cigarette-beetle development/);
+  assert.match(humidorClimate, /intended only for adults of legal age/);
+  assert.match(learn, /href="\/learn\/humidor-climate"/);
+  assert.match(restingAndAging, /href="\/learn\/humidor-climate"/);
 });
 
 test("learning routes form a connected curriculum around manufacturing truth", () => {
