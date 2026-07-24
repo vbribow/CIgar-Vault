@@ -23,3 +23,18 @@ test("calculates unit change and prioritizes stale evidence", () => {
   assert.equal(result.rows[0].freshness, "Stale");
   assert.equal(result.reviewQueue.length, 1);
 });
+
+test("keeps retail replacement separate from documented aftermarket value and reports coverage",()=>{
+ const inventory:InventoryItem[]=[
+  {inventoryId:"R",brand:"Padron",line:"1964",vitola:"Exclusivo",currentQty:10,retailValue:20},
+  {inventoryId:"M",brand:"Cohiba",line:"Siglo IV",vitola:"Corona Gorda",currentQty:5,retailValue:50},
+ ];
+ const valuations:Valuation[]=[{valuationId:"V",inventoryId:"M",valuationDate:"2026-07-01",replacementValue:50,marketValue:70,lastSaleValue:75,lastSaleDate:"2026-06-01",lastSaleSourceUrl:"https://example.com/sold",sourceUrl:"https://example.com/value"}];
+ const result=buildValuationIntelligence(inventory,valuations,new Date("2026-07-21"));
+ assert.equal(result.totals.retailReplacementValue,450);
+ assert.equal(result.totals.documentedMarketValue,350);
+ assert.equal(result.totals.retailCoveragePercent,100);
+ assert.equal(result.totals.marketCoveragePercent,50);
+ assert.equal(result.totals.saleCoveragePercent,50);
+ assert.deepEqual(result.rows[0].missingEvidence,["Aftermarket estimate","Completed sale","Linked source"]);
+});
