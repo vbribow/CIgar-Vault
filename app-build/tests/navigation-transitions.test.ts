@@ -11,7 +11,8 @@ test("primary Cedriva navigation preserves the application shell", () => {
   assert.match(navigation, /<Link href="\/inventory"/);
 });
 
-test("the Collections button uses a prefetched client transition", () => {
-  assert.match(inventory, /<Link className="button secondary" href="\/collections" prefetch>/);
-  assert.doesNotMatch(inventory, /<a className="button secondary" href="\/collections"/);
+test("the Valuable Collections workspace uses a prefetched client transition", () => {
+  assert.match(inventory, /<Link href="\/collections" prefetch>/);
+  assert.match(inventory, /Valuable Collections/);
+  assert.doesNotMatch(inventory, /<a[^>]+href="\/collections"/);
 });

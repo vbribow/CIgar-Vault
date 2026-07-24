@@ -40,6 +40,16 @@ test("uses researched template value while keeping unsupported values visibly pe
   assert.equal(unsupported.valueEvidence, "Pending");
 });
 
+test("researched edition counts override stale provisional collection counts", () => {
+  const result = summarizeCollection(
+    { collectionId:"COL-FUENTE-PURPLE-DREAM", name:"Big Purple Dream Humidor", expectedComponents:2, expectedCigars:2 },
+    [],
+    [],
+  );
+  assert.equal(result.expectedComponents,10);
+  assert.equal(result.expectedCigars,106);
+});
+
 test("lists missing template components", () => {
   const result = summarizeCollection(
     { collectionId: "COL-PADRON-COLLECTION", name: "Padrón Collection" },
