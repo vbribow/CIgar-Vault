@@ -24,7 +24,7 @@ const unitMoney = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
 });
 
-export default async function ValuationsPage({ searchParams }: { searchParams: Promise<{ inventoryId?: string }> }) {
+export default async function ValuationsPage({ searchParams }: { searchParams: Promise<{ inventoryId?: string;collectionId?:string }> }) {
   const mode = await accountDataMode();
   const filters = await searchParams;
   const [inventory, valuations] = await Promise.all([
@@ -33,6 +33,8 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
   ]);
   const intelligence = buildValuationIntelligence(inventory, valuations);
   const { totals } = intelligence;
+  const scopedInventory=filters.collectionId?inventory.filter(item=>item.collectionId===filters.collectionId):inventory;
+  const completionQueue=intelligence.reviewQueue.filter(row=>!filters.collectionId||row.item.collectionId===filters.collectionId);
 
   return (
     <main className="shell wideShell valuationWorkspace">
@@ -106,9 +108,10 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
         </div>
       </section>
       <SignalLegend />
-      <ValuationCompletionPanel items={intelligence.reviewQueue.map(row=>row.item)} mode={mode}/>
-      <RetailPricingControls items={inventory} mode={mode} initialInventoryId={filters.inventoryId} />
-      <ValuationResearchPanel items={intelligence.reviewQueue.map((row)=>row.item)} mode={mode}/>
+      {filters.collectionId&&<section className="collectionValuationScope"><div><div className="eyebrow">Collection completion</div><h2>{completionQueue.length} component lot{completionQueue.length===1?"":"s"} still need value work</h2><p>This workspace is limited to the selected collection. Exact-match evidence is reused first; uncertain prices remain visibly pending.</p></div><a className="button secondary" href={`/collections/${encodeURIComponent(filters.collectionId)}`}>Back to collection</a></section>}
+      <ValuationCompletionPanel items={completionQueue.map(row=>row.item)} mode={mode}/>
+      <RetailPricingControls items={scopedInventory} mode={mode} initialInventoryId={filters.inventoryId} />
+      <ValuationResearchPanel items={completionQueue.map((row)=>row.item)} mode={mode}/>
 
       <section className="section valuationQueue">
         <div className="sectionHead">
