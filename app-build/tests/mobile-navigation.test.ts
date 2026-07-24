@@ -11,6 +11,7 @@ test("collections remain directly reachable through the mobile Vault and invento
   assert.match(inventory, /View collections/);
 });
 
-test("mobile navigation begins with collector purposes",()=>{
-  for(const label of["Home","Discover","Document","Vault","Explore"])assert.match(navigation,new RegExp(`<small>${label}<\\/small>`));
+test("mobile navigation keeps Cigar Somm prominent",()=>{
+  for(const label of["Home","Discover","Document","Vault","Somm"])assert.match(navigation,new RegExp(`<small>${label}<\\/small>`));
+  assert.match(navigation, />Cigar Somm<\/Link>/);
 });

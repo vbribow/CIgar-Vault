@@ -21,7 +21,7 @@ export const productDomains:ProductDomain[]=[
   {id:"review",label:"Review",promise:"Learn from trustworthy experience—your own and others'.",href:"/records",links:[
     {href:"/records",label:"Smoking journal",description:"Remember tasting experiences and how cigars develop"},
     {href:"/ratings",label:"Published reviews",description:"Compare attributable professional scores"},
-    {href:"/cigar-somm",label:"Cedriva AI advisor",description:"Explore tasting profiles and thoughtful pairings"},
+    {href:"/cigar-somm",label:"Cigar Somm",description:"Explore tasting profiles and coffee, spirit, cocktail, and nonalcoholic pairings"},
   ]},
   {id:"market",label:"Market",promise:"Understand value without reducing the culture to speculation.",href:"/valuations",links:[
     {href:"/valuations",label:"Collection values",description:"Research retail replacement and market evidence"},
@@ -47,8 +47,8 @@ export const productDomains:ProductDomain[]=[
     {href:"/data-model",label:"How Cedriva understands a cigar",description:"Follow identity, release, provenance, evidence, and collector history"},
     {href:"/sommelier-library",label:"Curated knowledge",description:"Review the evidence library behind Cedriva AI"},
   ]},
-  {id:"ai",label:"Cedriva AI",promise:"Elevate collector judgment with trusted, personal guidance.",href:"/cigar-somm",links:[
-    {href:"/cigar-somm",label:"Consult Cedriva AI",description:"Ask about one cigar, its profile, readiness, and pairings"},
+  {id:"ai",label:"Cigar Somm",promise:"Elevate collector judgment with trusted, personal guidance powered by Cedriva AI.",href:"/cigar-somm",links:[
+    {href:"/cigar-somm",label:"Open Cigar Somm",description:"Choose one cigar for its profile, readiness, and complete pairing plan"},
     {href:"/intelligence",label:"Collection intelligence",description:"Understand patterns, priorities, and evidence gaps"},
     {href:"/acquisitions",label:"Collection goals",description:"See documented pieces that would complete a set"},
   ]},
