@@ -24,7 +24,7 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
   const fullName = String(formData.get("fullName") || "").trim();
-  const next = "/account";
+  const next = safeNext(formData.get("next")) === "/" ? "/account" : safeNext(formData.get("next"));
   const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   const origin = appOrigin((await headers()).get("origin") || "", productionHost);
   const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: `${origin}/auth/callback?next=${next}` } });

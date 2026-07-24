@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authorizeWrite } from "@/lib/config";
 import { CampaignInput, PartnerInput, campaignLaunchBlockers } from "@/lib/partner-model";
 import { partnerAdmin } from "@/lib/partner-platform";
+import { PartnerInvitationInput, createInvitationToken, invitationExpiresAt, safeMembership } from "@/lib/partner-workspace";
 
 const RequestBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("createPartner"), data: PartnerInput }),
@@ -20,6 +21,9 @@ const RequestBody = z.discriminatedUnion("action", [
   z.object({ action:z.literal("pauseCampaign"),id:z.string().uuid(),confirmation:z.string(),emergency:z.boolean().default(false) }),
   z.object({ action:z.literal("emergencyPausePartner"),id:z.string().uuid(),confirmation:z.string() }),
   z.object({ action:z.literal("unlockPartnerCampaigns"),id:z.string().uuid(),confirmation:z.string(),note:z.string().trim().min(10).max(1000) }),
+  z.object({action:z.literal("inviteMember"),data:PartnerInvitationInput}),
+  z.object({action:z.literal("changeMemberRole"),id:z.string().uuid(),role:z.enum(["owner","administrator","editor","analyst","viewer"])}),
+  z.object({action:z.literal("revokeMember"),id:z.string().uuid()}),
   z.object({
     action: z.literal("createPayout"),
     partnerId: z.string().uuid(),
@@ -75,7 +79,7 @@ export async function GET(request: Request) {
   if (!authorizeWrite(request)) return NextResponse.json({ error: "Founder authorization required" }, { status: 401 });
   try {
     const admin = adminOrThrow();
-    const [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents] = await Promise.all([
+    const [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships] = await Promise.all([
       admin.from("partners").select("*").order("created_at", { ascending: false }),
       admin.from("partner_campaigns").select("*,partners(name)").order("created_at", { ascending: false }),
       admin.from("partner_clicks").select("id,campaign_id,created_at").limit(10000),
@@ -85,8 +89,9 @@ export async function GET(request: Request) {
       admin.from("partner_payouts").select("*").order("created_at", { ascending: false }).limit(1000),
       admin.from("partner_campaign_approvals").select("*").order("created_at",{ascending:false}).limit(500),
       admin.from("partner_audit_events").select("*").order("created_at",{ascending:false}).limit(500),
+      admin.from("partner_memberships").select("*").order("created_at",{ascending:false}).limit(1000),
     ]);
-    const error = [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents].find(result => result.error)?.error;
+    const error = [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships].find(result => result.error)?.error;
     if (error) throw error;
     const confirmed = (conversions.data || []).filter(row => row.status === "confirmed");
     const commissionRows = commissions.data || [];
@@ -97,6 +102,7 @@ export async function GET(request: Request) {
       payouts: payouts.data || [],
       approvals:approvals.data||[],
       auditEvents:auditEvents.data||[],
+      memberships:(memberships.data||[]).map(row=>({...safeMembership(row),partnerId:row.partner_id})),
       summary: {
         activePartners: (partners.data || []).filter(row => row.status === "active").length,
         activeCampaigns: (campaigns.data || []).filter(row => row.status === "active").length,
@@ -225,6 +231,41 @@ export async function POST(request: Request) {
       if(updateError)throw updateError;
       await admin.from("partner_audit_events").insert({partner_id:partner.id,action:"partner.campaign_lock_removed",subject_type:"partner",subject_id:partner.id,details:{note:input.note}});
       return NextResponse.json({data});
+    }
+    if(input.action==="inviteMember"){
+      const{data:partner,error:partnerError}=await admin.from("partners").select("id,slug,collaboration_locked,collaboration_lock_reason").eq("id",input.data.partnerId).single();
+      if(partnerError)throw partnerError;
+      if(partner.collaboration_locked)throw new Error(partner.collaboration_lock_reason||"Collaboration is founder-locked for this partner");
+      const{token,hash}=createInvitationToken(),expiresAt=invitationExpiresAt(input.data.expiresInDays);
+      const{data,error}=await admin.from("partner_memberships").insert({
+        partner_id:partner.id,invited_email:input.data.email,display_name:input.data.displayName,role:input.data.role,status:"invited",
+        invited_by:"founder",invitation_token_hash:hash,invitation_expires_at:expiresAt,
+      }).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partner.id,action:"membership.invited",subject_type:"membership",subject_id:data.id,details:{role:data.role,expiresAt}});
+      return NextResponse.json({data:{...safeMembership(data),partnerId:partner.id,invitationPath:`/partners/invite/${token}`}},{status:201});
+    }
+    if(input.action==="changeMemberRole"){
+      const{data:existing,error:lookupError}=await admin.from("partner_memberships").select("id,partner_id").eq("id",input.id).neq("status","revoked").single();
+      if(lookupError)throw lookupError;
+      const{data:partner}=await admin.from("partners").select("collaboration_locked,collaboration_lock_reason").eq("id",existing.partner_id).single();
+      if(partner?.collaboration_locked)throw new Error(partner.collaboration_lock_reason||"Collaboration is founder-locked for this partner");
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("partner_memberships").update({role:input.role,updated_at:now}).eq("id",input.id).neq("status","revoked").select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:data.partner_id,action:"membership.role_changed",subject_type:"membership",subject_id:data.id,details:{role:data.role}});
+      return NextResponse.json({data:{...safeMembership(data),partnerId:data.partner_id}});
+    }
+    if(input.action==="revokeMember"){
+      const{data:existing,error:lookupError}=await admin.from("partner_memberships").select("id,partner_id").eq("id",input.id).single();
+      if(lookupError)throw lookupError;
+      const{data:partner}=await admin.from("partners").select("collaboration_locked,collaboration_lock_reason").eq("id",existing.partner_id).single();
+      if(partner?.collaboration_locked)throw new Error(partner.collaboration_lock_reason||"Collaboration is founder-locked for this partner");
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("partner_memberships").update({status:"revoked",revoked_at:now,invitation_token_hash:null,updated_at:now}).eq("id",input.id).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:data.partner_id,action:"membership.revoked",subject_type:"membership",subject_id:data.id,details:{}});
+      return NextResponse.json({data:{...safeMembership(data),partnerId:data.partner_id}});
     }
     if (input.action === "createPayout") {
       if (input.periodStart > input.periodEnd) throw new Error("Payout start date must be before its end date");

@@ -1,0 +1,157 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createClient, supabaseConfigured } from "@/lib/supabase/server";
+import { partnerAdmin } from "@/lib/partner-platform";
+import { CampaignInput, campaignLaunchBlockers, partnerCan, type PartnerRole } from "@/lib/partner-model";
+import { PartnerInvitationInput, buildWorkspaceMetrics, createInvitationToken, invitationExpiresAt, safeMembership } from "@/lib/partner-workspace";
+
+const WorkspaceRequest=z.discriminatedUnion("action",[
+  z.object({action:z.literal("createCampaign"),data:CampaignInput}),
+  z.object({action:z.literal("submitCampaign"),partnerId:z.string().uuid(),campaignId:z.string().uuid()}),
+  z.object({action:z.literal("inviteMember"),data:PartnerInvitationInput}),
+  z.object({action:z.literal("changeMemberRole"),partnerId:z.string().uuid(),membershipId:z.string().uuid(),role:z.enum(["owner","administrator","editor","analyst","viewer"])}),
+  z.object({action:z.literal("revokeMember"),partnerId:z.string().uuid(),membershipId:z.string().uuid()}),
+]);
+
+async function authenticatedUser(){
+  if(!supabaseConfigured())return undefined;
+  const supabase=await createClient();
+  const{data:{user}}=await supabase.auth.getUser();
+  return user||undefined;
+}
+function adminOrThrow(){
+  const admin=partnerAdmin();
+  if(!admin)throw new Error("Partner workspace database is not configured");
+  return admin;
+}
+
+async function requireMembership(admin:ReturnType<typeof adminOrThrow>,userId:string,partnerId:string){
+  const{data,error}=await admin.from("partner_memberships")
+    .select("*,partners(id,name,slug,status,campaigns_locked,campaign_lock_reason,collaboration_locked,collaboration_lock_reason,disclosure_text)")
+    .eq("user_id",userId).eq("partner_id",partnerId).eq("status","active").single();
+  if(error)throw new Error("You do not have active access to this partner workspace");
+  const partner=data.partners as unknown as Record<string,unknown>;
+  if(partner.collaboration_locked)throw new Error(String(partner.collaboration_lock_reason||"This workspace is founder-locked"));
+  return{membership:data,partner,role:data.role as PartnerRole};
+}
+
+export async function GET(){
+  const user=await authenticatedUser();
+  if(!user)return NextResponse.json({error:"Sign in to open a partner workspace"},{status:401});
+  try{
+    const admin=adminOrThrow();
+    const{data:membershipRows,error:membershipError}=await admin.from("partner_memberships")
+      .select("*,partners(id,name,slug,partner_type,status,campaigns_locked,collaboration_locked)")
+      .eq("user_id",user.id).eq("status","active");
+    if(membershipError)throw membershipError;
+    const accessible=(membershipRows||[]).filter(row=>!(row.partners as unknown as{collaboration_locked?:boolean})?.collaboration_locked);
+    if(!accessible.length)return NextResponse.json({data:{workspaces:[]}});
+    const partnerIds=accessible.map(row=>row.partner_id);
+    const[campaigns,clicks,attributions,conversions,commissions,members]=await Promise.all([
+      admin.from("partner_campaigns").select("id,partner_id,name,code,channel,status,starts_at,ends_at,attribution_window_days,commission_type,commission_rate,hold_days,approved_at,activated_at").in("partner_id",partnerIds).order("created_at",{ascending:false}),
+      admin.from("partner_clicks").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
+      admin.from("partner_attributions").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
+      admin.from("partner_conversions").select("campaign_id,partner_id,net_revenue_cents,status").in("partner_id",partnerIds).limit(10000),
+      admin.from("partner_commissions").select("campaign_id,partner_id,amount_cents,status").in("partner_id",partnerIds).limit(10000),
+      admin.from("partner_memberships").select("*").in("partner_id",partnerIds).neq("status","revoked").order("created_at",{ascending:true}),
+    ]);
+    const error=[campaigns,clicks,attributions,conversions,commissions,members].find(result=>result.error)?.error;
+    if(error)throw error;
+    const now=new Date().toISOString();
+    await admin.from("partner_memberships").update({last_accessed_at:now,updated_at:now}).in("id",accessible.map(row=>row.id));
+    await admin.from("partner_audit_events").insert(accessible.map(row=>({partner_id:row.partner_id,actor:`partner:${user.id}`,action:"workspace.accessed",subject_type:"workspace",subject_id:row.partner_id,details:{role:row.role}})));
+    const workspaces=accessible.map(row=>{
+      const partner=row.partners as unknown as Record<string,unknown>;
+      const ownCampaigns=(campaigns.data||[]).filter(item=>item.partner_id===row.partner_id);
+      const role=row.role as PartnerRole;
+      return{
+        partner:{id:row.partner_id,name:String(partner.name),slug:String(partner.slug),partnerType:String(partner.partner_type),status:String(partner.status)},
+        role,
+        permissions:{
+          createCampaign:partnerCan(role,"campaign.create"),editCampaign:partnerCan(role,"campaign.edit"),submitForReview:partnerCan(role,"campaign.review"),
+          manageTeam:partnerCan(role,"partner.manage"),viewPayouts:partnerCan(role,"payouts.view"),approve:false,launch:false,pause:false,
+        },
+        campaigns:ownCampaigns,
+        metrics:buildWorkspaceMetrics(ownCampaigns.map(item=>item.id),{
+          clicks:(clicks.data||[]).filter(item=>item.partner_id===row.partner_id),
+          attributions:(attributions.data||[]).filter(item=>item.partner_id===row.partner_id),
+          conversions:(conversions.data||[]).filter(item=>item.partner_id===row.partner_id),
+          commissions:(commissions.data||[]).filter(item=>item.partner_id===row.partner_id),
+        }),
+        members:(members.data||[]).filter(item=>item.partner_id===row.partner_id).map(item=>{
+          const safe=safeMembership(item);
+          return partnerCan(role,"partner.manage")?safe:{...safe,email:""};
+        }),
+      };
+    });
+    return NextResponse.json({data:{workspaces}});
+  }catch(error){
+    return NextResponse.json({error:error instanceof Error?error.message:"Partner workspace unavailable"},{status:502});
+  }
+}
+
+export async function POST(request:Request){
+  const user=await authenticatedUser();
+  if(!user)return NextResponse.json({error:"Sign in to collaborate"},{status:401});
+  try{
+    const input=WorkspaceRequest.parse(await request.json());
+    const admin=adminOrThrow();
+    const partnerId=input.action==="createCampaign"?input.data.partnerId:input.action==="inviteMember"?input.data.partnerId:input.partnerId;
+    const access=await requireMembership(admin,user.id,partnerId);
+    if(input.action==="createCampaign"){
+      if(!partnerCan(access.role,"campaign.create"))throw new Error("Your role cannot create campaigns");
+      if(access.partner.campaigns_locked)throw new Error(String(access.partner.campaign_lock_reason||"Campaign work is founder-locked"));
+      const{data,error}=await admin.from("partner_campaigns").insert({
+        partner_id:partnerId,name:input.data.name,code:input.data.code,channel:input.data.channel,destination_path:input.data.destinationPath,
+        attribution_window_days:input.data.attributionWindowDays,commission_type:input.data.commissionType,commission_rate:input.data.commissionRate,
+        hold_days:input.data.holdDays,starts_at:input.data.startsAt,ends_at:input.data.endsAt,terms_confirmed:input.data.termsConfirmed,
+        disclosure_approved:input.data.disclosureApproved,audience_consent_confirmed:input.data.audienceConsentConfirmed,privacy_reviewed:input.data.privacyReviewed,status:"draft",
+      }).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,campaign_id:data.id,actor:`partner:${user.id}`,action:"campaign.partner_draft_created",subject_type:"campaign",subject_id:data.id,details:{role:access.role,code:data.code}});
+      return NextResponse.json({data},{status:201});
+    }
+    if(input.action==="submitCampaign"){
+      if(!partnerCan(access.role,"campaign.review"))throw new Error("Your role cannot submit campaigns for founder review");
+      const{data:campaign,error:campaignError}=await admin.from("partner_campaigns").select("*").eq("id",input.campaignId).eq("partner_id",partnerId).single();
+      if(campaignError)throw campaignError;
+      if(!["draft","paused"].includes(campaign.status))throw new Error("Only draft or paused campaigns can return to founder review");
+      const blockers=campaignLaunchBlockers({
+        partnerStatus:String(access.partner.status),campaignsLocked:Boolean(access.partner.campaigns_locked),disclosureText:String(access.partner.disclosure_text||""),
+        commissionRate:Number(campaign.commission_rate),startsAt:campaign.starts_at,endsAt:campaign.ends_at,termsConfirmed:Boolean(campaign.terms_confirmed),
+        disclosureApproved:Boolean(campaign.disclosure_approved),audienceConsentConfirmed:Boolean(campaign.audience_consent_confirmed),privacyReviewed:Boolean(campaign.privacy_reviewed),
+      });
+      if(blockers.length)throw new Error(`Campaign is incomplete: ${blockers.join("; ")}`);
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("partner_campaigns").update({status:"review",approved_at:null,approved_by:null,approval_note:null,approval_fingerprint:null,activated_at:null,updated_at:now}).eq("id",campaign.id).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,campaign_id:campaign.id,actor:`partner:${user.id}`,action:"campaign.partner_submitted_for_review",subject_type:"campaign",subject_id:campaign.id,details:{role:access.role}});
+      return NextResponse.json({data});
+    }
+    if(input.action==="inviteMember"){
+      if(!partnerCan(access.role,"partner.manage"))throw new Error("Only a workspace owner can invite team members");
+      const{token,hash}=createInvitationToken(),expiresAt=invitationExpiresAt(input.data.expiresInDays);
+      const{data,error}=await admin.from("partner_memberships").insert({partner_id:partnerId,invited_email:input.data.email,display_name:input.data.displayName,role:input.data.role,status:"invited",invited_by:user.id,invitation_token_hash:hash,invitation_expires_at:expiresAt}).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"membership.invited",subject_type:"membership",subject_id:data.id,details:{role:data.role,expiresAt}});
+      return NextResponse.json({data:{...safeMembership(data),invitationPath:`/partners/invite/${token}`}},{status:201});
+    }
+    const{data:target,error:targetError}=await admin.from("partner_memberships").select("*").eq("id",input.membershipId).eq("partner_id",partnerId).single();
+    if(targetError)throw targetError;
+    if(!partnerCan(access.role,"partner.manage"))throw new Error("Only a workspace owner can manage team roles");
+    if(target.user_id===user.id)throw new Error("Ask the Cedriva founder to change or revoke your own owner access");
+    if(input.action==="changeMemberRole"){
+      const{data,error}=await admin.from("partner_memberships").update({role:input.role,updated_at:new Date().toISOString()}).eq("id",target.id).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"membership.role_changed",subject_type:"membership",subject_id:data.id,details:{role:data.role}});
+      return NextResponse.json({data:safeMembership(data)});
+    }
+    const now=new Date().toISOString();
+    const{data,error}=await admin.from("partner_memberships").update({status:"revoked",revoked_at:now,invitation_token_hash:null,updated_at:now}).eq("id",target.id).select().single();
+    if(error)throw error;
+    await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"membership.revoked",subject_type:"membership",subject_id:data.id,details:{}});
+    return NextResponse.json({data:safeMembership(data)});
+  }catch(error){
+    return NextResponse.json({error:error instanceof Error?error.message:"Invalid workspace operation"},{status:422});
+  }
+}
