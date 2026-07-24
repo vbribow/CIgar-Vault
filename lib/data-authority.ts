@@ -15,7 +15,7 @@ export const vaultRecordKinds = [
 ] as const;
 
 export type VaultRecordKind = typeof vaultRecordKinds[number];
-export type DataAuthority = "supabase-private-vault" | "smartsheet-founder-master" | "none";
+export type DataAuthority = "supabase-private-vault" | "none";
 
 export type DataAuthorityRule = {
   kind: VaultRecordKind;
@@ -25,7 +25,7 @@ export type DataAuthorityRule = {
   conflictRule: string;
 };
 
-const smartsheetFallback = new Set<VaultRecordKind>([
+const smartsheetMigrationKinds = new Set<VaultRecordKind>([
   "inventory",
   "collections",
   "humidors",
@@ -42,9 +42,9 @@ export const vaultDataAuthority: Record<VaultRecordKind, DataAuthorityRule> = Ob
     {
       kind,
       signedInAuthority: "supabase-private-vault",
-      signedOutFallback: smartsheetFallback.has(kind) ? "smartsheet-founder-master" : "none",
-      migrationDirection: smartsheetFallback.has(kind) ? "explicit-smartsheet-to-supabase" : "none",
-      conflictRule: "A signed-in collector's Supabase record wins. Smartsheet is never merged or copied over it automatically.",
+      signedOutFallback: "none",
+      migrationDirection: smartsheetMigrationKinds.has(kind) ? "explicit-smartsheet-to-supabase" : "none",
+      conflictRule: "A signed-in collector's Supabase record wins. Smartsheet migration may add missing records but never overwrite or merge an existing account record automatically.",
     },
   ]),
 ) as Record<VaultRecordKind, DataAuthorityRule>;
@@ -59,6 +59,7 @@ export function dataAuthorityIsUnambiguous() {
     const rule = vaultDataAuthority[kind];
     return rule.kind === kind
       && rule.signedInAuthority === "supabase-private-vault"
+      && rule.signedOutFallback === "none"
       && rule.migrationDirection !== ("bidirectional" as string);
   });
 }

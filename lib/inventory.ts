@@ -1,5 +1,4 @@
 import seed from "@/data/inventory.json";
-import { getInventory } from "./smartsheet";
 import { InventoryItem } from "./types";
 import { dataMode } from "./config";
 import { normalizeInventory } from "./inventory-model";
@@ -12,5 +11,7 @@ export async function loadInventory(): Promise<InventoryItem[]> {
   const accountInventory = await loadAccountRecords<InventoryItem>("inventory");
   if (accountInventory !== undefined) return accountInventory.map(normalizeInventory);
   if (dataMode() === "mock") return (seed as InventoryItem[]).map(normalizeInventory);
-  return (await getInventory()).map(normalizeInventory);
+  // The founder Smartsheet is an explicit migration/operations source, never
+  // an anonymous production fallback for a collector's private Vault.
+  return [];
 }

@@ -16,9 +16,9 @@ test("every private record kind has exactly one signed-in authority", () => {
   assert.equal(dataAuthorityIsUnambiguous(), true);
 });
 
-test("Smartsheet is a fallback only for legacy founder record groups", () => {
-  assert.equal(dataAuthorityFor("inventory", false), "smartsheet-founder-master");
-  assert.equal(dataAuthorityFor("collections", false), "smartsheet-founder-master");
+test("private records have no signed-out production fallback", () => {
+  assert.equal(dataAuthorityFor("inventory", false), "none");
+  assert.equal(dataAuthorityFor("collections", false), "none");
   assert.equal(dataAuthorityFor("wishlist", false), "none");
   assert.equal(dataAuthorityFor("integrity", false), "none");
   assert.equal(vaultDataAuthority.inventory.migrationDirection, "explicit-smartsheet-to-supabase");
@@ -27,6 +27,6 @@ test("Smartsheet is a fallback only for legacy founder record groups", () => {
 test("the authority contract never permits implicit bidirectional synchronization", () => {
   for (const rule of Object.values(vaultDataAuthority)) {
     assert.notEqual(rule.migrationDirection, "bidirectional");
-    assert.match(rule.conflictRule, /never merged or copied over it automatically/);
+    assert.match(rule.conflictRule, /never overwrite or merge an existing account record automatically/);
   }
 });

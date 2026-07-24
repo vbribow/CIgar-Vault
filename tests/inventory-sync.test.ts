@@ -11,15 +11,15 @@ const inventoryApi = await readFile(
   "utf8",
 );
 
-test("signed-in account inventory is resolved before mock or Smartsheet data", () => {
+test("signed-in account inventory is resolved before mock data with no anonymous Smartsheet fallback", () => {
   const accountLookup = inventorySource.indexOf("loadAccountRecords");
   const mockLookup = inventorySource.indexOf('dataMode() === "mock"');
-  const masterLookup = inventorySource.indexOf("getInventory()");
 
   assert.ok(accountLookup >= 0);
   assert.ok(mockLookup > accountLookup);
-  assert.ok(masterLookup > mockLookup);
+  assert.equal(inventorySource.includes('from "./smartsheet"'), false);
   assert.match(inventorySource, /accountInventory !== undefined/);
+  assert.match(inventorySource, /return \[\];/);
 });
 
 test("inventory refresh reports account mode and disables intermediary caching", () => {
