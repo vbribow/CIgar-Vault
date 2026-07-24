@@ -107,6 +107,7 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
+      vintage: template.releaseYear ?? existing.vintage,
     };
     return [{
       ...repaired,
