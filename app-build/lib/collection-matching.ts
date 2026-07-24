@@ -5,7 +5,7 @@ const tokens = (value: string) => new Set(value.toLowerCase().normalize("NFD").r
 
 export type RequirementMatch = { requirement: string; inventoryId?: string; label?: string; score: number };
 
-export function matchCollectionRequirements(requirements: string[], inventory: InventoryItem[]): RequirementMatch[] {
+export function matchCollectionRequirements(requirements: string[], inventory: InventoryItem[], minimumScore=0.45): RequirementMatch[] {
   const candidates = requirements.map((requirement, index) => {
     const expected = tokens(requirement);
     const ranked = inventory.map((item) => {
@@ -20,7 +20,7 @@ export function matchCollectionRequirements(requirements: string[], inventory: I
   const results: RequirementMatch[] = requirements.map((requirement) => ({ requirement, score: 0 }));
   const strongestFirst = [...candidates].sort((a, b) => (b.ranked[0]?.score || 0) - (a.ranked[0]?.score || 0));
   for (const candidate of strongestFirst) {
-    const best = candidate.ranked.find(({ item, score }) => score >= 0.45 && !assigned.has(item.inventoryId));
+    const best = candidate.ranked.find(({ item, score }) => score >= minimumScore && !assigned.has(item.inventoryId));
     if (!best) {
       results[candidate.index] = { requirement: candidate.requirement, score: candidate.ranked[0]?.score || 0 };
       continue;

@@ -17,7 +17,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     if (!collection) return NextResponse.json({ error: "Collection not found" }, { status: 404 });
     const template = collectionTemplateFor(collection);
     if (!template) return NextResponse.json({ error: "This collection needs a researched contents template before inventory can be populated." }, { status: 409 });
-    const used = new Set<string>(), reusable = matchCollectionRequirements(template.requirements, inventory).flatMap(match => {
+    const existingMembers = inventory.filter(item => item.collectionId === collection.collectionId);
+    const used = new Set<string>(), reusable = matchCollectionRequirements(template.requirements, existingMembers,0.8).flatMap(match => {
       const item = match.inventoryId ? inventory.find(candidate => candidate.inventoryId === match.inventoryId) : undefined;
       if (!item || used.has(item.inventoryId) || (item.collectionId && item.collectionId !== collection.collectionId)) return [];
       used.add(item.inventoryId); return [{ requirement: match.requirement, item: { ...item, collectionId: collection.collectionId } }];

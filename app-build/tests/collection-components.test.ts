@@ -64,6 +64,26 @@ test("collection components preserve exact named families and mark unresolved vi
   assert.equal(unresolved.needsIdentityReview, true);
 });
 
+test("Dream to Dynasty preserves partner-facing brands and exact named cigars", () => {
+  const dream = {
+    ...template,
+    name: "From Dream to Dynasty Collection",
+    releaseYear: 2024,
+    requirements: [
+      "Ashton ESG 20-Year Salute",
+      "J.C. Newman Diamond Crown Perfecto",
+      "Fuente Fuente OpusX BBMF Natural",
+    ],
+  };
+  assert.deepEqual(collectionComponentIdentity(dream.requirements[0], dream), {
+    brand: "Ashton", line: "Ashton ESG", vitola: "20-Year Salute", quantity: 1, needsIdentityReview: false,
+  });
+  assert.equal(collectionComponentIdentity(dream.requirements[1], dream).brand, "Diamond Crown");
+  assert.deepEqual(collectionComponentIdentity(dream.requirements[2], dream), {
+    brand: "Arturo Fuente", line: "OpusX", vitola: "BBMF Natural", quantity: 1, needsIdentityReview: false,
+  });
+});
+
 test("legacy generated component rows are repaired without changing collector quantities", () => {
   const legacy = {
     inventoryId: "INV-TEST-C02", collectionId: "COL-TEST", brand: "Arturo Fuente", line: "Test Set",

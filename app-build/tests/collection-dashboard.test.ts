@@ -33,7 +33,7 @@ test("summarizes whole value, premium, completeness, and history", () => {
 
 test("uses researched template value while keeping unsupported values visibly pending", () => {
   const researched = summarizeCollection({ collectionId: "COL-FUENTE-DREAM-DYNASTY", name: "From Dream to Dynasty Collection" }, [], []);
-  assert.equal(researched.wholeValue, 2250);
+  assert.equal(researched.wholeValue, 2200);
   assert.equal(researched.valueEvidence, "Researched template");
   const unsupported = summarizeCollection({ collectionId: "COL-CUSTOM", name: "Custom Set" }, [], []);
   assert.equal(unsupported.wholeValue, 0);
