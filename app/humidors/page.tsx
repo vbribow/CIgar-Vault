@@ -32,6 +32,7 @@ export default async function HumidorsPage() {
             Cedriva suggests starting values, but you decide the temperature
             and humidity ranges.
           </span>
+          <a className="textLink" href="/learn/resting-and-aging">Learn why stability matters →</a>
         </div>
       </section>
       <WorkspaceGuide items={[{label:"Set",title:"Choose climate targets",detail:"Temperature and humidity ranges remain under collector control."},{label:"Connect",title:"Add readings or sensors",detail:"Use manual records, Tempi history, or configured cloud connections.",href:"/sensors"},{label:"Protect",title:"Act on value at risk",detail:"Alerts connect environmental exceptions to the inventory stored inside."}]}/>
