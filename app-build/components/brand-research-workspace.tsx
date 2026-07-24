@@ -7,7 +7,6 @@ import type { BrandResearchReport } from "@/lib/brand-research-report";
 
 export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
   const brief = brandResearchBrief(item);
-  const [key, setKey] = useState("");
   const [report, setReport] = useState<BrandResearchReport | null>(null);
   const [message, setMessage] = useState("");
   const [running, setRunning] = useState(false);
@@ -19,7 +18,7 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
     try {
       const response = await fetch("/api/brand-research", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-founder-key": key },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ brand: item.brand }),
       });
       const result = await response.json();
@@ -50,8 +49,9 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
     <section className="brandResearchRunner">
       <div><div className="eyebrow">Live source research</div><h2>Build the evidence report.</h2><p>Cedriva searches primary and established trade sources, keeps line-level factory relationships separate, and returns unresolved questions without guessing.</p></div>
       <div className="brandResearchRunControls">
-        <label><span>Founder write key</span><input type="password" value={key} onChange={(event) => setKey(event.target.value)} placeholder="Required to run research" /></label>
-        <button className="button" type="button" disabled={!key || running} onClick={runResearch}>{running ? "Researching trusted sources…" : `Research ${item.brand}`}</button>
+        <span className="brandResearchAuthorization">Signed-in Cedriva research workspace</span>
+        <button className="button" type="button" disabled={running} onClick={runResearch}>{running ? "Researching trusted sources…" : `Research ${item.brand}`}</button>
+        <small>The report is a review draft. Nothing publishes automatically.</small>
         {message && <output aria-live="polite">{message}</output>}
       </div>
     </section>
