@@ -22,6 +22,10 @@ export function brandResearchBrief(item: BrandResearchItem) {
   };
 }
 
+export function brandResearchHref(brand: string) {
+  return `/catalog-discovery/brand?name=${encodeURIComponent(brand)}`;
+}
+
 export const brandResearchSources = [
   {
     name: "Official manufacturer newsrooms",
