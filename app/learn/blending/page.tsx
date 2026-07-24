@@ -189,6 +189,109 @@ const profileSources = [
   },
 ] as const;
 
+const boutiqueProfiles = [
+  {
+    initials: "SS",
+    name: "Steve Saka",
+    house: "Dunbarton Tobacco & Trust",
+    verified: "Dunbarton identifies Saka as its founder, ligador, and catador de puros. After leading Drew Estate from 2005 to 2013, he founded the family company in 2015 to direct leaf, blend, and production decisions without compromise.",
+    study: "Study his use of deeply fermented dark tobaccos, narrow production specifications, and dedicated teams at partner factories. StillWell Star adds a different lesson: collaboration with pipe-tobacco specialists can create a new form without treating novelty as the purpose.",
+    project: "Compare Sobremesa, Mi Querida, and Sin Compromiso in similar formats, then examine StillWell Star separately. Track texture, fermentation character, combustion, and whether each project expresses a different intention rather than one house formula.",
+    themes: ["Dark-tobacco fluency", "Uncompromising specification", "Directed factory partnerships"],
+    source: "https://www.dunbartoncigars.com/about/",
+    label: "Official Dunbarton history",
+    source2: "https://www.dunbartoncigars.com/marca/stillwell-star/",
+    label2: "Official StillWell Star record",
+  },
+  {
+    initials: "KG",
+    name: "Kyle Gellis",
+    house: "Warped Cigars",
+    verified: "Warped records that Gellis founded the company in 2007, learned manufacturing and blending in Little Havana, and personally blends the portfolio through disclosed partnerships with factories including El Titan de Bronze and Aganorsa.",
+    study: "His documented point of view favors Cuban-inspired balance, traditional ring gauges, transparent production relationships, and construction detail. La Colmena’s entubado bunch, triple cap, covered foot, and limited daily output make craft choices visible rather than abstract.",
+    project: "Compare La Colmena with an Aganorsa-made Warped project such as The Devil’s Hands or Upper Realm. Ask what remains consistent when factory, tobacco mix, and intensity change.",
+    themes: ["Cuban-inspired balance", "Traditional proportions", "Transparent factory authorship"],
+    source: "https://www.warpedcigars.com/story",
+    label: "Official Warped story",
+    source2: "https://www.warpedcigars.com/cigar-brands/la-colmena",
+    label2: "Official La Colmena record",
+  },
+  {
+    initials: "SM",
+    name: "Skip Martin",
+    house: "RoMa Craft Tobac",
+    verified: "RoMa Craft defines its method as “Tobacco. Talent. Time.” In a direct industry interview, co-founder Skip Martin describes the company as craft rather than boutique: intentionally small, hands-on, and focused on high-quality raw material and direct relationships.",
+    study: "This is a case study in scale as a production choice, not a prestige claim. CroMagnon, Neanderthal, Intemperance, and the broader portfolio show how a compact factory can pursue differentiated blends inside traditional cigar making.",
+    project: "Compare CroMagnon and Neanderthal in related sizes, then add an Intemperance expression. Record density, combustion, intensity, and the role of format before deciding that the darkest or strongest cigar best represents the house.",
+    themes: ["Craft-scale control", "Tobacco · talent · time", "Direct collector relationship"],
+    source: "https://romacrafttobac.com/",
+    label: "Official RoMa Craft philosophy",
+    source2: "https://tobaccobusiness.com/a-crafted-business-plan-roma-craft-tobac/",
+    label2: "Direct Skip Martin interview",
+  },
+  {
+    initials: "PJ",
+    name: "Pete Johnson",
+    house: "Tatuaje",
+    verified: "In a direct interview, Johnson describes moving from cigar retail toward creating his own brand and meeting José “Pepín” García at the beginning of Tatuaje. The record is collaborative: Johnson’s product vision and García-family tobacco and factory knowledge developed together.",
+    study: "Tatuaje is useful for studying Cuban-inspired proportions, recurring house ideas, and limited-series storytelling without confusing a brand founder with a solitary factory author. The partnership itself is part of the blend history.",
+    project: "Compare a Tatuaje Brown Label vitola with Cabaiguan and one Monster-series release. Separate construction, wrapper effect, blend development, and narrative presentation in your notes.",
+    themes: ["García-family collaboration", "Cuban-inspired structure", "Limited-series storytelling"],
+    source: "https://www.cigar.com/articles-lifestyle/an_interview_with_pete_johnson.html",
+    label: "Direct Pete Johnson interview",
+  },
+  {
+    initials: "DG",
+    name: "Dion Giolito",
+    house: "Illusione",
+    verified: "Illusione’s official portfolio states that tobaccos for Original Documents are personally selected, graded, and blended by Giolito, with Nicaraguan Criollo ’98 and Corojo ’99 drawn from multiple regions and primings.",
+    study: "Study the discipline of a tightly edited portfolio: Corojo- and Criollo-led Nicaraguan structure, deliberate priming choices, classic sizes, and concentrated flavor that should not be reduced to a simple strength label.",
+    project: "Compare Original Documents with another Illusione line in a similar ring gauge. Log aroma, texture, sweetness, mineral or earth character, transitions, and nicotine separately.",
+    themes: ["Personal leaf selection", "Corojo and Criollo structure", "Concentrated complexity"],
+    source: "https://www.illusionecigars.com/portfolio-item/odm-double-gordo/",
+    label: "Official Illusione blend record",
+  },
+  {
+    initials: "MH",
+    name: "Michael Herklots",
+    house: "Ferio Tego",
+    verified: "Herklots and Brendon Scott formed Ferio Tego after Nat Sherman’s closure and preserved several established blends alongside new work. In a direct interview, Herklots describes blends as stories with an intentional opening, middle, and ending.",
+    study: "His framework treats texture, smoke behavior, and narrative development as seriously as flavor descriptors. He also cautions against assuming the wrapper is simply the dominant flavor, describing how it can shape and balance the complete experience.",
+    project: "Compare Ferio Tego Elegancia and Generoso, then study a preserved Timeless blend. Map the opening, middle, finish, mouthfeel, pace, and structural role of the wrapper.",
+    themes: ["Blend as narrative", "Texture and behavior", "Legacy stewardship"],
+    source: "https://cigarpress.com/michael-herklots-interview/",
+    label: "Direct Michael Herklots interview",
+    source2: "https://www.si.com/golf/news/ferio-tego-rising-from-the-cigar-ashes",
+    label2: "Ferio Tego company history",
+  },
+  {
+    initials: "JB",
+    name: "James Brown",
+    house: "Black Label Trading Co. · Black Works Studio",
+    verified: "Fábrica Oveja Negra records that James and Angela Brown live in Nicaragua and manage the factory they opened to control the full making process. Its factory program identifies James as master blender and teaches guests by tasting filler components before composing a blend.",
+    study: "The house joins small-batch production with a recognizable visual language, but the useful lesson is technical: factory ownership can give an independent maker tighter control over experimentation, tobacco preparation, construction, and release scale.",
+    project: "Compare a core Black Label Trading Co. cigar with a Black Works Studio release. Record how wrapper, closed-foot or cap construction, strength, spice, and presentation support—or distract from—the blend.",
+    themes: ["Small-batch factory control", "Art and tobacco", "Experimental construction"],
+    source: "https://ovejanegracigars.com/pages/factory",
+    label: "Official Oveja Negra factory record",
+    source2: "https://ovejanegracigars.com/blogs/news/blk-wks-killer-bee-connecticut",
+    label2: "Official Killer Bee blend note",
+  },
+  {
+    initials: "JH",
+    name: "Jon Huber",
+    house: "Crowned Heads",
+    verified: "Crowned Heads’ records describe Huber and his partners developing Four Kicks with Ernesto Perez-Carrillo and Tabacalera La Alianza. The official history makes the division of authorship visible: Crowned Heads supplied concept and direction while an experienced manufacturing partner helped realize the blend.",
+    study: "Study brand narrative as a genuine design brief. Four Kicks is described as moving from a bold opening through complexity and finesse to a clean finish; later projects connect tobacco and blend structure to music, place, memory, and limited materials.",
+    project: "Compare Four Kicks with J.D. Howard Reserve or Tennessee Waltz. First taste blind if possible; then decide whether the documented story accurately prepares the collector for the cigar’s development.",
+    themes: ["Concept-led blending", "Manufacturing collaboration", "Place and music as narrative"],
+    source: "https://www.crownedheads.com/the-story-behind-four-kicks/",
+    label: "Official Four Kicks story",
+    source2: "https://www.crownedheads.com/pr/CrownedHeadsPR_08.04.2011.pdf",
+    label2: "Official launch record",
+  },
+] as const;
+
 const myths = [
   ["“The wrapper is most of the flavor.”", "Its influence matters, but the entire blend combusts together. Proportion, leaf chemistry, placement, construction, and the collector’s pace all shape perception."],
   ["“Darker means stronger.”", "Color is not a dependable strength scale. Seed, priming, growing conditions, fermentation, and blend proportion are more informative."],
@@ -332,7 +435,7 @@ export default function BlendingPage() {
       </section>
 
       <section className="blenderProfiles" id="profiles">
-        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 12 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
+        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 20 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
         <div className="profileGrid">{profileSources.map((profile)=><article key={profile.name}>
           <header><span>{profile.initials}</span><div><small>{profile.house}</small><h3>{profile.name}</h3></div></header>
           <dl>
@@ -344,6 +447,30 @@ export default function BlendingPage() {
           <div className="profileSources"><a href={profile.source} target="_blank" rel="noreferrer">{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer">{profile.label2} ↗</a>}</div>
         </article>)}</div>
         <div className="profilePolicy"><strong>Profile standard</strong><p>Biographical facts require attributable sources. Company claims are labeled as company claims. Cedriva analysis is labeled as analysis. Sensory reputation is never presented as biography, and living craft is never reduced to an unsourced legend.</p></div>
+      </section>
+
+      <section className="boutiqueProfiles" id="boutique-blenders">
+        <div className="boutiqueIntroduction">
+          <div><div className="eyebrow">Boutique chapter · 8 independent and craft voices</div><h2>Small scale can create room for a sharper point of view.</h2></div>
+          <div><p>“Boutique” has no universal production threshold, and it is not a quality grade. Some respected makers prefer <em>independent</em> or <em>craft</em>; RoMa Craft explicitly uses the latter. Cedriva uses this chapter to study focused portfolios, hands-on direction, small-batch factories, and close manufacturing partnerships—not scarcity as a status symbol.</p><a className="textLink" href="#boutique-study">Learn how to read the roles ↓</a></div>
+        </div>
+        <div className="boutiquePrinciples" id="boutique-study">
+          <article><span>01</span><h3>Identify the roles</h3><p>Brand founder, blender, tobacco grower, factory owner, and production partner may be different people. Credit each one accurately.</p></article>
+          <article><span>02</span><h3>Verify the factory</h3><p>A partner factory is not a footnote. Its leaf library, teams, processes, and judgment help determine what a concept can become.</p></article>
+          <article><span>03</span><h3>Look past scarcity</h3><p>Limited output can reflect rare leaf or careful capacity, but availability alone proves neither craftsmanship nor quality.</p></article>
+          <article><span>04</span><h3>Follow the point of view</h3><p>Compare several projects to find repeated choices in format, structure, fermentation, texture, storytelling, and balance.</p></article>
+        </div>
+        <div className="profileGrid">{boutiqueProfiles.map((profile)=><article key={profile.name}>
+          <header><span>{profile.initials}</span><div><small>{profile.house}</small><h3>{profile.name}</h3></div></header>
+          <dl>
+            <div><dt>Verified record</dt><dd>{profile.verified}</dd></div>
+            <div><dt>Documented style signals</dt><dd>{profile.study}</dd></div>
+            <div><dt>Collector fieldwork</dt><dd>{profile.project}</dd></div>
+          </dl>
+          <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
+          <div className="profileSources"><a href={profile.source} target="_blank" rel="noreferrer">{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer">{profile.label2} ↗</a>}</div>
+        </article>)}</div>
+        <div className="profilePolicy"><strong>A note on authorship</strong><p>A compelling independent brand may be highly personal and still be collaborative. Cedriva names the manufacturing partner whenever the record supports it, because honoring the factory, rollers, tobacco teams, and blender is more truthful than constructing a lone-genius story.</p></div>
       </section>
 
       <section className="readingBlend">

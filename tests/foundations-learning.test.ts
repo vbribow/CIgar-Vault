@@ -43,13 +43,24 @@ test("blending learning teaches the complete discipline and uses sourced blender
   for (const blender of ["José “Pepín” García", "Jaime García", "Carlos “Carlito” Fuente Jr.", "Nicholas Melillo", "Nick Perdomo Jr.", "Erik Espinosa", "Ernesto Perez-Carrillo", "Litto Gomez", "A.J. Fernandez", "Willy Herrera", "José “Jochy” Blanco", "Christian Eiroa"]) {
     assert.match(blending, new RegExp(blender));
   }
-  assert.match(blending, /living blender archive · 12 studies/);
+  assert.match(blending, /living blender archive · 20 studies/);
   assert.match(blending, /Industry titles vary/);
   assert.match(blending, /This is not a ranking or a hall of fame/);
   assert.match(blending, /Company claims are labeled as company claims/);
   assert.match(blending, /Documented style signals/);
   assert.match(blending, /Collaborative authorship/);
   assert.match(learn, /href="\/learn\/blending"/);
+});
+
+test("blending learning includes a sourced boutique and craft chapter", () => {
+  for (const blender of ["Steve Saka", "Kyle Gellis", "Skip Martin", "Pete Johnson", "Dion Giolito", "Michael Herklots", "James Brown", "Jon Huber"]) {
+    assert.match(blending, new RegExp(blender));
+  }
+  assert.match(blending, /Boutique chapter · 8 independent and craft voices/);
+  assert.match(blending, /“Boutique” has no universal production threshold/);
+  assert.match(blending, /Brand founder, blender, tobacco grower, factory owner, and production partner may be different people/);
+  assert.match(blending, /availability alone proves neither craftsmanship nor quality/);
+  assert.match(blending, /honoring the factory, rollers, tobacco teams, and blender/);
 });
 
 test("blending learning explains how leaf identity, cultivation, and processing affect taste", () => {
