@@ -47,7 +47,8 @@ export function collectionTemplateFor(collection: CigarCollection) {
 
 export function collectionRequirementMatches(collection: CigarCollection, members: InventoryItem[]) {
   const template = collectionTemplateFor(collection);
-  const rawMatches = template ? matchCollectionRequirements(template.requirements, members) : [];
+  const minimumScore=template?.templateId==="TPL-FUENTE-DREAM-DYNASTY"?0.8:0.45;
+  const rawMatches = template ? matchCollectionRequirements(template.requirements, members,minimumScore) : [];
   const assignedInventory = new Set<string>();
   return rawMatches.map((match) => {
     if (!match.inventoryId || assignedInventory.has(match.inventoryId)) {
@@ -63,19 +64,23 @@ export function summarizeCollection(
   inventory: InventoryItem[],
   valuations: Valuation[],
 ): CollectionDashboardSummary {
-  const members = inventory.filter((item) => item.collectionId === collection.collectionId);
+  const assignedMembers = inventory.filter((item) => item.collectionId === collection.collectionId);
+  const template = collectionTemplateFor(collection);
+  const matches = collectionRequirementMatches(collection, assignedMembers);
+  const verifiedIds = new Set(matches.flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
+  const members = template?.templateId==="TPL-FUENTE-DREAM-DYNASTY"
+    ? assignedMembers.filter(item=>verifiedIds.has(item.inventoryId))
+    : assignedMembers;
   const componentValue = members.reduce((sum, item) => {
     const evidence = collectionComponentMarketEvidence(item, inventory, valuations);
     return sum + (evidence.valueUnit ?? 0) * (item.currentQty ?? 0);
   }, 0);
   const componentEvidence = members.map(item => collectionComponentMarketEvidence(item, inventory, valuations));
-  const template = collectionTemplateFor(collection);
   const isHumidorCollection = /\bhumidor\b/i.test(`${collection.name} ${collection.edition ?? ""} ${template?.packaging ?? ""}`);
   const cigarRetailValue = members.reduce((sum, item, index) => {
     const originalCount = item.originalQty ?? item.currentQty ?? 0;
     return sum + (componentEvidence[index].retailUnit ?? 0) * originalCount;
   }, 0);
-  const matches = collectionRequirementMatches(collection, members);
   const expectedComponents = collection.expectedComponents ?? template?.expectedComponents;
   const ownedComponents = template
     ? matches.filter((match) => Boolean(match.inventoryId)).length
