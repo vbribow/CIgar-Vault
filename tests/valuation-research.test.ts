@@ -37,4 +37,5 @@ test("valuation research never treats owned quantity as original packaging", () 
   const source=readFileSync(new URL("../lib/valuation-research.ts",import.meta.url),"utf8");
   assert.match(source,/current owned quantity is inventory balance only/);
   assert.match(source,/Never treat it as an original box count/);
+  assert.match(source,/residual humidor value separately/);
 });
