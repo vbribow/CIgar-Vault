@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { brandCoverageWithCatalog, brandResearchBacklog, brandResearchSources, classifyDiscovery } from "../lib/brand-research";
+import { brandCoverageWithCatalog, brandResearchBacklog, brandResearchBrief, brandResearchSources, classifyDiscovery } from "../lib/brand-research";
 
 const catalog = [{ catalogId: "CAT-1", brand: "Example Cigars", line: "Original", vitola: "Toro" }];
 
@@ -16,6 +16,14 @@ test("research backlog puts unresolved boutique brands first and names missing e
   assert.equal(backlog[0].priority, "Boutique priority");
   assert.ok(backlog.every((item) => item.missing.length >= 3));
   assert.ok(brandResearchSources.some((source) => source.name.includes("Tobacco Plus Expo")));
+});
+
+test("every backlog record produces a brand-specific research brief", () => {
+  const [item] = brandResearchBacklog();
+  const brief = brandResearchBrief(item);
+  assert.match(brief.question, new RegExp(item.brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  assert.equal(brief.sourceOrder.length, 3);
+  assert.match(brief.publicationRule, /never extend evidence/i);
 });
 
 test("approved catalog evidence expands public coverage without inventing factories", () => {
