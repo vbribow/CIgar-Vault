@@ -47,7 +47,7 @@ export function CollectionCompletionControl({collectionId,mode,missingComponents
       <span data-complete={retailMissing===0}><b>{retailMissing===0?"✓":retailMissing}</b> retail price{retailMissing===1?"":"s"} missing</span>
     </div>
     <div className="collectionCompletionActions">
-      {missingComponents>0&&<button className="button" type="button" disabled={busy||mode==="mock"} onClick={reconcile}>{busy?"Reconciling collection…":"Complete This Collection"}</button>}
+      {(missingComponents>0||identityReview>0)&&<button className="button" type="button" disabled={busy||mode==="mock"} onClick={reconcile}>{busy?"Reconciling collection…":missingComponents>0?"Complete This Collection":"Refresh Researched Identities"}</button>}
       {retailMissing>0&&<Link className={`button ${missingComponents>0?"secondary":""}`} href={`/valuations?collectionId=${encodeURIComponent(collectionId)}`}>Finish value research</Link>}
       {ready&&<Link className="button secondary" href={`/valuations?collectionId=${encodeURIComponent(collectionId)}`}>Review value evidence</Link>}
     </div>
