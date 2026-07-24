@@ -1,9 +1,7 @@
-import { isCubanInventory } from "./cuban-verification";
 import { canonicalCigarIdentity, cigarIdentityKey } from "./cigar-identity";
 import type { InventoryItem, Valuation } from "./types";
 
 const DAY_MS=86_400_000;
-const rarePattern=/vintage|rare|limited|collector|collection|presentation|discontinued|anniversary|opus|forbidden|edici[oó]n|reserva|reserve|regional|exclusive/i;
 
 export type ValuationUsageEvent={created_at:string;properties?:{estimatedCostUsd?:number;cached?:boolean}};
 
@@ -15,7 +13,7 @@ export function valuationIdentityReady(item:InventoryItem){return canonicalCigar
 
 export function valuationRefreshDays(item:InventoryItem,latest?:Valuation){
   if(latest?.marketValue===undefined&&latest?.replacementValue===undefined&&/insufficient|unsupported|no defensible/i.test(latest?.notes||""))return 180;
-  return isCubanInventory(item)||item.priority==="High"||rarePattern.test(`${item.line} ${item.vitola} ${item.packaging||""} ${item.notes||""}`)?60:120;
+  return 30;
 }
 
 export function valuationNeedsMonitoring(item:InventoryItem,valuations:Valuation[],now=new Date()){
@@ -32,6 +30,16 @@ export function valuationNeedsMonitoring(item:InventoryItem,valuations:Valuation
 export function reusableValuation(item:InventoryItem,candidates:Array<{item:InventoryItem;valuation:Valuation}>,now=new Date()){
   const key=valuationIdentityKey(item);
   return candidates.filter(candidate=>valuationIdentityKey(candidate.item)===key&&candidate.valuation.replacementValue!==undefined&&Boolean(candidate.valuation.sourceUrl)&&/^(High|Medium)$/i.test(candidate.valuation.confidence??"")&&!valuationNeedsMonitoring(candidate.item,[candidate.valuation],now)).sort((a,b)=>b.valuation.valuationDate.localeCompare(a.valuation.valuationDate))[0]?.valuation;
+}
+
+export function copiedValuation(item:InventoryItem,source:Valuation,now=new Date()):Valuation{
+  return{
+    ...source,
+    valuationId:`VAL-SHARED-${item.inventoryId}-${now.toISOString().replace(/\D/g,"").slice(0,14)}`.slice(0,190),
+    inventoryId:item.inventoryId,
+    valuationDate:now.toISOString().slice(0,10),
+    notes:`Exact-identity value reused during inventory upload. ${source.notes||""}`.trim(),
+  };
 }
 
 export function valuationMonitorPriority(item:InventoryItem){
