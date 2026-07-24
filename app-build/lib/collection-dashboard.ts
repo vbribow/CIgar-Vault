@@ -60,7 +60,11 @@ export function collectionEditionIssue(collection:CigarCollection){
 
 export function collectionRequirementMatches(collection: CigarCollection, members: InventoryItem[]) {
   const template = collectionTemplateFor(collection);
-  const rawMatches = template ? matchCollectionRequirements(template.requirements, members,collectionMatchMinimum(template)) : [];
+  // A linked record is not proof that a cigar is still present. Collection
+  // completion represents current owned contents, while zero-quantity records
+  // remain available elsewhere as historical collection evidence.
+  const ownedMembers = members.filter(item => (item.currentQty ?? 0) > 0);
+  const rawMatches = template ? matchCollectionRequirements(template.requirements, ownedMembers,collectionMatchMinimum(template)) : [];
   const assignedInventory = new Set<string>();
   return rawMatches.map((match) => {
     if (!match.inventoryId || assignedInventory.has(match.inventoryId)) {

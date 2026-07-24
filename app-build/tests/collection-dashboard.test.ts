@@ -61,6 +61,18 @@ test("lists missing template components", () => {
   assert.ok(result.missingComponents.includes("Family Reserve"));
 });
 
+test("zero-quantity links remain historical evidence but do not make a collection complete", () => {
+  const collection = { collectionId:"COL-PADRON-COLLECTION", name:"Padrón Collection" };
+  const result=summarizeCollection(collection,[{
+    inventoryId:"EMPTY",brand:"Padrón",line:"1964 Anniversary Series",vitola:"Exclusivo",
+    currentQty:0,collectionId:collection.collectionId,
+  }],[]);
+  assert.equal(result.completionPercent,0);
+  assert.equal(result.ownedComponents,0);
+  assert.equal(result.missingComponents.length,5);
+  assert.deepEqual(result.excludedAssignedLots,["EMPTY"]);
+});
+
 test("researched collections exclude incorrectly assigned cigars from completion and value", () => {
   const collection = { collectionId:"COL-PADRON-COLLECTION", name:"Padrón Collection" };
   const inventory = [
