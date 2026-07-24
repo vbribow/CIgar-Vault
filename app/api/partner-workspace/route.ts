@@ -4,6 +4,7 @@ import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { partnerAdmin } from "@/lib/partner-platform";
 import { CampaignInput, campaignLaunchBlockers, partnerCan, type PartnerRole } from "@/lib/partner-model";
 import { PartnerInvitationInput, buildWorkspaceMetrics, createInvitationToken, invitationExpiresAt, safeMembership } from "@/lib/partner-workspace";
+import { ReadinessSubmission, readinessSummary } from "@/lib/partner-readiness";
 
 const WorkspaceRequest=z.discriminatedUnion("action",[
   z.object({action:z.literal("createCampaign"),data:CampaignInput}),
@@ -11,6 +12,7 @@ const WorkspaceRequest=z.discriminatedUnion("action",[
   z.object({action:z.literal("inviteMember"),data:PartnerInvitationInput}),
   z.object({action:z.literal("changeMemberRole"),partnerId:z.string().uuid(),membershipId:z.string().uuid(),role:z.enum(["owner","administrator","editor","analyst","viewer"])}),
   z.object({action:z.literal("revokeMember"),partnerId:z.string().uuid(),membershipId:z.string().uuid()}),
+  z.object({action:z.literal("submitReadiness"),data:ReadinessSubmission}),
 ]);
 
 async function authenticatedUser(){
@@ -47,15 +49,16 @@ export async function GET(){
     const accessible=(membershipRows||[]).filter(row=>!(row.partners as unknown as{collaboration_locked?:boolean})?.collaboration_locked);
     if(!accessible.length)return NextResponse.json({data:{workspaces:[]}});
     const partnerIds=accessible.map(row=>row.partner_id);
-    const[campaigns,clicks,attributions,conversions,commissions,members]=await Promise.all([
+    const[campaigns,clicks,attributions,conversions,commissions,members,readiness]=await Promise.all([
       admin.from("partner_campaigns").select("id,partner_id,name,code,channel,status,starts_at,ends_at,attribution_window_days,commission_type,commission_rate,hold_days,approved_at,activated_at").in("partner_id",partnerIds).order("created_at",{ascending:false}),
       admin.from("partner_clicks").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
       admin.from("partner_attributions").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
       admin.from("partner_conversions").select("campaign_id,partner_id,net_revenue_cents,status").in("partner_id",partnerIds).limit(10000),
       admin.from("partner_commissions").select("campaign_id,partner_id,amount_cents,status").in("partner_id",partnerIds).limit(10000),
       admin.from("partner_memberships").select("*").in("partner_id",partnerIds).neq("status","revoked").order("created_at",{ascending:true}),
+      admin.from("partner_readiness_items").select("*").in("partner_id",partnerIds).order("created_at",{ascending:true}),
     ]);
-    const error=[campaigns,clicks,attributions,conversions,commissions,members].find(result=>result.error)?.error;
+    const error=[campaigns,clicks,attributions,conversions,commissions,members,readiness].find(result=>result.error)?.error;
     if(error)throw error;
     const now=new Date().toISOString();
     await admin.from("partner_memberships").update({last_accessed_at:now,updated_at:now}).in("id",accessible.map(row=>row.id));
@@ -64,12 +67,14 @@ export async function GET(){
       const partner=row.partners as unknown as Record<string,unknown>;
       const ownCampaigns=(campaigns.data||[]).filter(item=>item.partner_id===row.partner_id);
       const role=row.role as PartnerRole;
+      const ownReadiness=(readiness.data||[]).filter(item=>item.partner_id===row.partner_id);
       return{
         partner:{id:row.partner_id,name:String(partner.name),slug:String(partner.slug),partnerType:String(partner.partner_type),status:String(partner.status)},
         role,
         permissions:{
           createCampaign:partnerCan(role,"campaign.create"),editCampaign:partnerCan(role,"campaign.edit"),submitForReview:partnerCan(role,"campaign.review"),
           manageTeam:partnerCan(role,"partner.manage"),viewPayouts:partnerCan(role,"payouts.view"),approve:false,launch:false,pause:false,
+          submitReadiness:partnerCan(role,"readiness.submit"),
         },
         campaigns:ownCampaigns,
         metrics:buildWorkspaceMetrics(ownCampaigns.map(item=>item.id),{
@@ -82,6 +87,7 @@ export async function GET(){
           const safe=safeMembership(item);
           return partnerCan(role,"partner.manage")?safe:{...safe,email:""};
         }),
+        readiness:{items:ownReadiness,summary:readinessSummary(ownReadiness)},
       };
     });
     return NextResponse.json({data:{workspaces}});
@@ -96,8 +102,19 @@ export async function POST(request:Request){
   try{
     const input=WorkspaceRequest.parse(await request.json());
     const admin=adminOrThrow();
-    const partnerId=input.action==="createCampaign"?input.data.partnerId:input.action==="inviteMember"?input.data.partnerId:input.partnerId;
+    const partnerId=input.action==="createCampaign"||input.action==="submitReadiness"?input.data.partnerId:input.action==="inviteMember"?input.data.partnerId:input.partnerId;
     const access=await requireMembership(admin,user.id,partnerId);
+    if(input.action==="submitReadiness"){
+      if(!partnerCan(access.role,"readiness.submit"))throw new Error("Your role cannot submit readiness evidence");
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("partner_readiness_items").update({
+        status:"submitted",partner_note:input.data.note,evidence_url:input.data.evidenceUrl||null,
+        submitted_by:user.id,submitted_at:now,founder_note:null,reviewed_by:null,reviewed_at:null,updated_at:now,
+      }).eq("id",input.data.itemId).eq("partner_id",partnerId).in("status",["pending","submitted","changes_requested"]).select().single();
+      if(error)throw error;
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"partner.readiness_submitted",subject_type:"readiness",subject_id:data.id,details:{itemKey:data.item_key,evidenceProvided:Boolean(input.data.evidenceUrl)}});
+      return NextResponse.json({data});
+    }
     if(input.action==="createCampaign"){
       if(!partnerCan(access.role,"campaign.create"))throw new Error("Your role cannot create campaigns");
       if(access.partner.campaigns_locked)throw new Error(String(access.partner.campaign_lock_reason||"Campaign work is founder-locked"));

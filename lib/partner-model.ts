@@ -35,12 +35,12 @@ export type PartnerInputValue = z.infer<typeof PartnerInput>;
 export type CampaignInputValue = z.infer<typeof CampaignInput>;
 
 export type PartnerRole = "owner" | "administrator" | "editor" | "analyst" | "viewer";
-export type PartnerPermission = "partner.manage" | "campaign.create" | "campaign.edit" | "campaign.review" | "campaign.approve" | "campaign.launch" | "campaign.pause" | "analytics.view" | "payouts.view";
+export type PartnerPermission = "partner.manage" | "readiness.submit" | "campaign.create" | "campaign.edit" | "campaign.review" | "campaign.approve" | "campaign.launch" | "campaign.pause" | "analytics.view" | "payouts.view";
 
 const partnerRolePermissions:Record<PartnerRole,readonly PartnerPermission[]>={
-  owner:["partner.manage","campaign.create","campaign.edit","campaign.review","analytics.view","payouts.view"],
-  administrator:["campaign.create","campaign.edit","campaign.review","analytics.view","payouts.view"],
-  editor:["campaign.create","campaign.edit","analytics.view"],
+  owner:["partner.manage","readiness.submit","campaign.create","campaign.edit","campaign.review","analytics.view","payouts.view"],
+  administrator:["readiness.submit","campaign.create","campaign.edit","campaign.review","analytics.view","payouts.view"],
+  editor:["readiness.submit","campaign.create","campaign.edit","analytics.view"],
   analyst:["analytics.view","payouts.view"],
   viewer:["analytics.view"],
 };
