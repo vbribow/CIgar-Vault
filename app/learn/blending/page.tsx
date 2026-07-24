@@ -319,6 +319,22 @@ const boutiqueProfiles = [
     label2: "Ferio Tego company history",
   },
   {
+    initials: "CR",
+    name: "Francisco “Chico” Rivas",
+    house: "Manufactura Rivas · Dominican Republic",
+    manufacturing: "Independent factory production. Published trade records identify Rivas as the owner of Manufactura Rivas in the Dominican Republic, a small factory also referenced in the trade as the “Top Secret Nest.” It manufactures Chico’s work and contract projects for outside brand owners; the factory credit must be verified for each release.",
+    factorySource: "https://www.neptunecigar.com/caminos-cigar",
+    factoryLabel: "Caminos manufacturer and Rivas biography",
+    verified: "Industry profiles describe Rivas as a Dominican master blender with more than three decades in cigar making and prior blending work at Quesada Cigars. Robert Caldwell directly identifies Chico as a manufacturer he trusted for Caldwell and Lost & Found projects.",
+    study: "Rivas is an important study in authorship hidden behind the band: Dominican tobacco fluency, small-factory quality control, proprietary fermentation choices, and contract blends that may become better known than the person or factory that made them.",
+    project: "Compare a Caminos or Dos Jotas cigar with SP1014 Love n’ Passion and a Caldwell Chico White or Gold project when available. Record the named brand owner, blender, actual manufacturer, tobacco origins, processing claims, and what remains recognizably Dominican across the projects.",
+    themes: ["Dominican tobacco fluency", "Independent factory authorship", "Contract blending transparency"],
+    source: "https://www.smokingpipes.com/smokingpipesblog/single.cfm/post/smoke-rings-caldwell-cigars",
+    label: "Direct Caldwell manufacturing interview",
+    source2: "https://humolatino.com/dos-jotas-el-surgimiento-de-un-clasico/",
+    label2: "Dos Jotas and Chico Rivas profile",
+  },
+  {
     initials: "JB",
     name: "James Brown",
     house: "Black Label Trading Co. · Black Works Studio",
@@ -509,7 +525,7 @@ export default function BlendingPage() {
       </section>
 
       <section className="blenderProfiles" id="profiles">
-        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 20 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
+        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 21 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
         <div className="profileGrid">{profileSources.map((profile)=><article key={profile.name}>
           <header><span>{profile.initials}</span><div><small>{profile.house}</small><h3>{profile.name}</h3></div></header>
           <dl>
@@ -526,7 +542,7 @@ export default function BlendingPage() {
 
       <section className="boutiqueProfiles" id="boutique-blenders">
         <div className="boutiqueIntroduction">
-          <div><div className="eyebrow">Boutique chapter · 8 independent and craft voices</div><h2>Small scale can create room for a sharper point of view.</h2></div>
+          <div><div className="eyebrow">Boutique chapter · 9 independent and craft voices</div><h2>Small scale can create room for a sharper point of view.</h2></div>
           <div><p>“Boutique” has no universal production threshold, and it is not a quality grade. Some respected makers prefer <em>independent</em> or <em>craft</em>; RoMa Craft explicitly uses the latter. Cedriva uses this chapter to study focused portfolios, hands-on direction, small-batch factories, and close manufacturing partnerships—not scarcity as a status symbol.</p><a className="textLink" href="#boutique-study">Learn how to read the roles ↓</a></div>
         </div>
         <div className="boutiquePrinciples" id="boutique-study">
