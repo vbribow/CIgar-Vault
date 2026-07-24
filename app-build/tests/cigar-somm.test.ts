@@ -1,13 +1,21 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { CigarSommAnswerSchema, CigarSommQuestionSchema, cleanSommText, sommLeadSummary, uniqueSommItems } from "../lib/cigar-somm";
+import { CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, requireCompletePairings, sommLeadSummary, uniqueSommItems } from "../lib/cigar-somm";
 
 test("Cigar Somm accepts an inventory-grounded pairing question",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I pair with this after dinner?",inventoryId:"INV-1",occasion:"After dinner",includeAlcohol:true});assert.equal(value.inventoryId,"INV-1");assert.equal(value.includeAlcohol,true)});
 test("Cigar Somm accepts a manually entered cigar without adding inventory",()=>{const value=CigarSommQuestionSchema.parse({question:"Analyze this cigar",cigarName:"Arturo Fuente OpusX Lost City Double Robusto",includeAlcohol:true});assert.equal(value.cigarName,"Arturo Fuente OpusX Lost City Double Robusto");assert.equal(value.inventoryId,undefined)});
 test("Cigar Somm requires either an inventory selection or manual cigar",()=>{assert.equal(CigarSommQuestionSchema.safeParse({question:"Analyze this cigar",includeAlcohol:true}).success,false)});
 
 test("Cigar Somm answers preserve tasting analysis, personalization, four pairing paths, and sources",()=>{const pairing={name:"Espresso",style:"Medium roast",why:"Matches toasted flavors",service:"Serve warm"};const value=CigarSommAnswerSchema.parse({answer:"A balanced pairing set.",cigarContext:"Test cigar",confidence:"Medium",personalization:{used:true,signals:["Prefers medium strength"],explanation:"Adjusted to the collector's recorded taste."},tastingProfile:{body:"Medium-full",strength:"Medium",coreNotes:["cedar","cocoa"],development:["Creamy opening","Pepper builds"],evidence:"Conservative synthesis of cited reviews."},basis:["General pairing principles"],coffee:[pairing],spirits:[{...pairing,name:"Aged rum"}],cocktails:[{...pairing,name:"Rum Old Fashioned"}],nonAlcoholic:[{...pairing,name:"Sparkling mineral water"}],sources:[{title:"Official product page",url:"https://example.com/cigar",publisher:"Example Cigars",supports:"Blend composition"}],cautions:["Pairing is subjective"]});assert.equal(value.personalization.used,true);assert.equal(value.tastingProfile.coreNotes.length,2);assert.equal(value.coffee.length,1);assert.equal(value.spirits.length,1);assert.equal(value.cocktails.length,1);assert.equal(value.nonAlcoholic.length,1);assert.equal(value.sources.length,1)});
+
+test("Cigar Somm requires every requested pairing category",()=>{
+ const pairing={name:"Espresso",style:"Medium roast",why:"Matches toasted flavors",service:"Serve warm"};
+ const answer=CigarSommAnswerSchema.parse({answer:"Pair carefully.",cigarContext:"Padrón Legends Carlos A. Fuente, Sr. Box-pressed Churchill",confidence:"Developing",personalization:{used:false,signals:[],explanation:"General guidance."},tastingProfile:{body:"Full",strength:"Medium-full",coreNotes:["cocoa"],development:["cedar"],evidence:"Conservative expectation."},basis:["Intensity"],coffee:[],spirits:[],cocktails:[],nonAlcoholic:[pairing],sources:[],cautions:[]});
+ assert.throws(()=>requireCompletePairings(answer,true),/coffee, spirits, cocktails/);
+ assert.equal(cigarSommJsonSchemaFor(true).properties.spirits.minItems,1);
+ assert.equal("minItems" in cigarSommJsonSchemaFor(false).properties.spirits,false);
+});
 
 test("Cigar Somm rejects empty questions",()=>{assert.equal(CigarSommQuestionSchema.safeParse({question:""}).success,false)});
 test("Cigar Somm presents verbose markdown research as a concise clean lead",()=>{
@@ -43,6 +51,8 @@ test("Cigar Somm requests verified named spirit bottlings and discloses editoria
  const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
  assert.match(library,/real, currently documented bottlings/);
  assert.match(library,/official producer\/importer page/);
+ assert.match(library,/IDENTITY LOCK/);
+ assert.match(library,/never merge their maker, construction, blend, review evidence, or tasting notes/);
  assert.match(component,/Specific spirits/);
  assert.match(component,/not sponsorships or endorsements/);
 });
