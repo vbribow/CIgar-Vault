@@ -63,6 +63,18 @@ test("blending learning includes a sourced boutique and craft chapter", () => {
   assert.match(blending, /honoring the factory, rollers, tobacco teams, and blender/);
 });
 
+test("every blender profile identifies who manufactures the cigars", () => {
+  assert.equal(blending.match(/manufacturing:/g)?.length, 20);
+  assert.equal(blending.match(/factorySource:/g)?.length, 20);
+  assert.match(blending, /The name on the band may not be the name over the factory door/);
+  assert.match(blending, /Who makes the cigars\?/);
+  assert.match(blending, /manufacturer by release period instead of silently rewriting history/);
+  assert.match(blending, /If the factory is undisclosed or unverified, Cedriva says exactly that/);
+  for (const manufacturer of ["My Father Cigars S.A.", "Tabacalera A. Fuente y Cia.", "Tabacalera A.J. Fernandez", "La Zona", "Casa Carrillo", "La Gran Fabrica Drew Estate", "Tabacalera Palma", "Joya de Nicaragua", "El Titan de Bronze", "Nica Sueño", "TABSA", "Raíces Cubanas", "Plasencia", "Quesada", "Fábrica Oveja Negra", "Tabacalera Pichardo", "NACSA"]) {
+    assert.match(blending, new RegExp(manufacturer));
+  }
+});
+
 test("blending learning explains how leaf identity, cultivation, and processing affect taste", () => {
   for (const lesson of ["Seed", "Terroir", "Priming", "Volado", "Seco", "Viso", "Ligero", "Medio tiempo", "Shade-grown", "Sun-grown", "What is a Maduro?", "Connecticut Shade", "Connecticut Broadleaf", "Habano", "Corojo", "Cameroon", "Sumatra", "Mexican San Andrés"]) {
     assert.match(blending, new RegExp(lesson, "i"));
