@@ -12,6 +12,7 @@ test("complete collections create linked inventory lots with stated quantities",
   assert.equal(drafts[0].looseStickQty, 20);
   assert.equal(drafts[0].collectionId, "COL-TEST");
   assert.equal(drafts[0].vitola, "Double Corona");
+  assert.equal(drafts[0].vintage, undefined);
   assert.match(drafts[0].catalogId ?? "", /^CIG-/);
   assert.equal(drafts[1].looseStickQty, 1);
   assert.equal(drafts[1].line, "OpusX");
@@ -95,7 +96,7 @@ test("legacy generated component rows are repaired without changing collector qu
   assert.equal(repairs[0].line, "OpusX");
   assert.equal(repairs[0].vitola, "Lancero");
   assert.equal(repairs[0].currentQty, 3);
-  assert.equal(repairs[0].vintage, 2024);
+  assert.equal(repairs[0].vintage, 2022);
   assert.equal(repairs[0].photoLink, legacy.photoLink);
   assert.match(repairs[0].catalogId ?? "", /^CIG-/);
 });

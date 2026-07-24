@@ -84,8 +84,8 @@ export function collectionComponentDrafts(collection: CigarCollection, template:
     const identity = collectionComponentIdentity(requirement, template);
     const inventoryId = `INV-${slug(collection.collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
     if (existing.has(inventoryId)) return [];
-    const canonical = canonicalCigarIdentity({ ...identity, vintage: template.releaseYear });
-    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, vintage: template.releaseYear, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${template.sourceLabel}: ${template.sourceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
+    const canonical = canonicalCigarIdentity(identity);
+    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${template.sourceLabel}: ${template.sourceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
     return [{ ...draft, retailValue: knownRetailValue(draft, inventory) }];
   });
 }
@@ -100,14 +100,13 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       && existing.notes?.includes("Expected component:");
     if (!existing || !legacyGenerated) return [];
     const identity = collectionComponentIdentity(requirement, template);
-    const canonical = canonicalCigarIdentity({ ...identity, vintage: template.releaseYear });
+    const canonical = canonicalCigarIdentity({ ...identity, vintage: existing.vintage });
     const repaired = {
       ...existing,
       catalogId: canonical.identityId,
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
-      vintage: template.releaseYear ?? existing.vintage,
     };
     return [{
       ...repaired,
