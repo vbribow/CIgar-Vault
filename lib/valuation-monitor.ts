@@ -12,7 +12,7 @@ export function valuationIdentityKey(item:InventoryItem){return cigarIdentityKey
 export function valuationIdentityReady(item:InventoryItem){return canonicalCigarIdentity(item).complete}
 
 export function valuationRefreshDays(item:InventoryItem,latest?:Valuation){
-  if(latest?.marketValue===undefined&&latest?.replacementValue===undefined&&/insufficient|unsupported|no defensible/i.test(latest?.notes||""))return 180;
+  if(latest?.marketEvidenceType==="Insufficient evidence"||(latest?.marketValue===undefined&&latest?.replacementValue===undefined&&/insufficient|unsupported|no defensible/i.test(latest?.notes||"")))return 180;
   return 30;
 }
 
@@ -20,7 +20,7 @@ export function valuationNeedsMonitoring(item:InventoryItem,valuations:Valuation
   if((item.currentQty??0)<=0||!valuationIdentityReady(item))return false;
   const latest=valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];
   if(!latest?.valuationDate)return true;
-  const insufficient=/insufficient|unsupported|no defensible|not available|not found/i.test(latest.notes||"");
+  const insufficient=latest.marketEvidenceType==="Insufficient evidence"||/insufficient|unsupported|no defensible|not available|not found/i.test(latest.notes||"");
   if(!insufficient&&(item.retailValue===undefined||latest.replacementValue===undefined))return true;
   const parsed=new Date(`${latest.valuationDate}T00:00:00Z`);
   if(Number.isNaN(parsed.getTime()))return true;

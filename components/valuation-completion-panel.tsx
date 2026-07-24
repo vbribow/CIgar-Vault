@@ -22,6 +22,8 @@ export function ValuationCompletionPanel({items,mode}:{items:InventoryItem[];mod
       await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({
         valuationId:`VAL-COMPLETE-${item.inventoryId}-${Date.now().toString(36).toUpperCase()}`.slice(0,190),
         inventoryId:item.inventoryId,valuationDate:draft.evidenceDate,replacementValue:draft.replacementValue??undefined,marketValue:draft.marketValue??undefined,
+        marketEvidenceType:draft.marketEvidenceType,marketRangeLow:draft.marketRangeLow??undefined,marketRangeHigh:draft.marketRangeHigh??undefined,
+        askingPrice:draft.askingPrice??undefined,askingPriceSource:draft.askingPriceSource||undefined,askingPriceSourceUrl:draft.askingPriceSourceUrl||undefined,comparableCount:draft.comparables.length,
         lastSaleValue:draft.lastSaleValue??undefined,lastSaleDate:draft.lastSaleDate??undefined,lastSaleVenue:draft.lastSaleVenue??undefined,lastSaleSourceUrl:draft.lastSaleSourceUrl??undefined,
         source:draft.source,sourceUrl:draft.sourceUrl,confidence:draft.confidence,notes:`Cedriva valuation completion batch. ${draft.notes}`,
       })}));

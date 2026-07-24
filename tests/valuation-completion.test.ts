@@ -22,3 +22,11 @@ test("scheduled completion supports the live Smartsheet master inventory",()=>{
   assert.match(monitor,/getInventory\(\),getValuations\(\)/);
   assert.match(monitor,/recordValuation\(valuation\)/);
 });
+
+test("scheduled completion preserves asking, range, sale, and insufficient-evidence distinctions",()=>{
+  assert.match(monitor,/marketEvidenceType:research\.marketEvidenceType/);
+  assert.match(monitor,/askingPrice:research\.askingPriceSourceUrl/);
+  assert.match(monitor,/marketRangeLow:supported/);
+  assert.match(monitor,/lastSaleValue:research\.lastSaleSourceUrl/);
+  assert.match(monitor,/Insufficient aftermarket evidence/);
+});

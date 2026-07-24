@@ -10,7 +10,16 @@ export const SmokingLogSchema = z.object({
 export const ValuationSchema = z.object({
   valuationId: z.string().trim().min(1).max(100), inventoryId: z.string().trim().min(1).max(100), valuationDate: z.iso.date(),
   replacementValue: z.coerce.number().nonnegative().optional(), marketValue: z.coerce.number().nonnegative().optional(), source: z.string().max(500).optional(),
+  marketEvidenceType: z.enum(["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]).optional(),
+  marketRangeLow: z.coerce.number().nonnegative().optional(), marketRangeHigh: z.coerce.number().nonnegative().optional(),
+  askingPrice: z.coerce.number().nonnegative().optional(), askingPriceSource: z.string().max(500).optional(), askingPriceSourceUrl: z.string().url().optional().or(z.literal("")),
+  comparableCount: z.coerce.number().int().nonnegative().max(100).optional(),
   lastSaleValue: z.coerce.number().nonnegative().optional(), lastSaleDate: z.iso.date().optional(), lastSaleVenue: z.string().max(500).optional(),
   lastSaleSourceUrl: z.string().url().optional().or(z.literal("")),
   sourceUrl: z.string().url().optional().or(z.literal("")), confidence: z.string().max(100).optional(), notes: z.string().max(4000).optional(),
-}).strict();
+}).strict()
+  .refine(value => value.marketRangeLow === undefined || value.marketRangeHigh === undefined || value.marketRangeLow <= value.marketRangeHigh, { message:"Market range low must not exceed market range high" })
+  .refine(value => value.marketEvidenceType !== "Verified completed sale" || Boolean(value.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl), { message:"Verified completed-sale evidence requires value, date, and direct proof" })
+  .refine(value => value.marketEvidenceType !== "Estimated market range" || Boolean(value.marketValue !== undefined && value.marketRangeLow !== undefined && value.marketRangeHigh !== undefined && (value.comparableCount ?? 0) >= 2), { message:"An estimated market range requires a value, range, and at least two comparables" })
+  .refine(value => value.marketEvidenceType !== "Observed asking price" || Boolean(value.askingPrice !== undefined && value.askingPriceSourceUrl && value.marketValue === undefined), { message:"An observed asking price requires a linked asking price and cannot be saved as market value" })
+  .refine(value => value.marketEvidenceType !== "Insufficient evidence" || value.marketValue === undefined, { message:"Insufficient evidence cannot carry a market value" });
