@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import { SmokingLogSchema } from "@/lib/records-model";
-import { getSmokingLogs, recordSmokingLog } from "@/lib/smartsheet";
+import { addSmokingLog, getSmokingLogs, recordSmokingLog } from "@/lib/smartsheet";
 import { loadSmokingLogs } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { consumeOneInventory } from "@/lib/inventory-model";
@@ -20,15 +20,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const item = SmokingLogSchema.parse(await request.json());
+    const manual = item.inventoryId === "MANUAL";
+    const inventory = manual ? undefined : (await loadInventory()).find(record => record.inventoryId === item.inventoryId);
+    if (!manual && !inventory) throw new Error("Inventory lot was not found");
     if(await saveOwnedRecord("smokes",item.smokeId,item)){
-      const inventory=(await loadInventory()).find(record=>record.inventoryId===item.inventoryId);
-      if(!inventory)throw new Error("Inventory lot was not found");
-      await saveOwnedRecord("inventory",inventory.inventoryId,consumeOneInventory(inventory));
+      if(inventory)await saveOwnedRecord("inventory",inventory.inventoryId,consumeOneInventory(inventory));
       return NextResponse.json({ data: item }, { status: 201 });
     }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in mock mode" }, { status: 409 });
-    await recordSmokingLog(item);
+    if(manual)await addSmokingLog(item);else await recordSmokingLog(item);
     return NextResponse.json({ data: item }, { status: 201 });
   } catch (e) {
     return NextResponse.json(
