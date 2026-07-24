@@ -3,6 +3,7 @@ import { InventoryInputSchema,normalizeInventory } from "@/lib/inventory-model";
 import { MAX_IMPORT_BYTES,parseInventoryFile } from "@/lib/inventory-import";
 import { deleteOwnedRecord,importOwnedRecords,loadAccountRecords,saveOwnedRecord } from "@/lib/user-data";
 import { copiedValuation,reusableValuation } from "@/lib/valuation-monitor";
+import { getInventory,getValuations } from "@/lib/smartsheet";
 import type { InventoryItem,Valuation } from "@/lib/types";
 
 export const runtime="nodejs";
@@ -26,8 +27,13 @@ export async function POST(request:Request){
    const parsedItems:InventoryItem[]=body.items.map((value:unknown)=>normalizeInventory(InventoryInputSchema.parse(value)));
    const existingIds=new Set(existing.map((item:InventoryItem)=>item.inventoryId));
    if(parsedItems.some((item:InventoryItem)=>existingIds.has(item.inventoryId)))return reply(new Error("One or more inventory IDs already exist. Preview the file again."),409);
-   const valuations=await loadAccountRecords<Valuation>("valuations")||[];
-   const candidates=existing.flatMap(item=>{const valuation=valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]});
+   const [valuations,sharedInventory,sharedValuations]=await Promise.all([
+    loadAccountRecords<Valuation>("valuations").then(value=>value||[]),
+    getInventory().catch(()=>[]),
+    getValuations().catch(()=>[]),
+   ]);
+   const allInventory=[...existing,...sharedInventory],allValuations=[...valuations,...sharedValuations];
+   const candidates=allInventory.flatMap(item=>{const valuation=allValuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]});
    const shared:Valuation[]=[];
    const items=parsedItems.map(item=>{
     if(item.retailValue!==undefined)return item;

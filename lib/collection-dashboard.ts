@@ -28,6 +28,7 @@ export type CollectionDashboardSummary = {
   retailCoverage: number;
   marketCoverage: number;
   completedSaleCoverage: number;
+  excludedAssignedLots: string[];
 };
 
 const normalized = (value: string) =>
@@ -45,10 +46,13 @@ export function collectionTemplateFor(collection: CigarCollection) {
   });
 }
 
+export function collectionMatchMinimum(template: (typeof collectionTemplates)[number]) {
+  return ["TPL-FUENTE-PADRON-LEGENDS","TPL-PADRON-COLLECTION"].includes(template.templateId) ? 0.45 : 0.72;
+}
+
 export function collectionRequirementMatches(collection: CigarCollection, members: InventoryItem[]) {
   const template = collectionTemplateFor(collection);
-  const minimumScore=template?.templateId==="TPL-FUENTE-DREAM-DYNASTY"?0.8:0.45;
-  const rawMatches = template ? matchCollectionRequirements(template.requirements, members,minimumScore) : [];
+  const rawMatches = template ? matchCollectionRequirements(template.requirements, members,collectionMatchMinimum(template)) : [];
   const assignedInventory = new Set<string>();
   return rawMatches.map((match) => {
     if (!match.inventoryId || assignedInventory.has(match.inventoryId)) {
@@ -68,9 +72,8 @@ export function summarizeCollection(
   const template = collectionTemplateFor(collection);
   const matches = collectionRequirementMatches(collection, assignedMembers);
   const verifiedIds = new Set(matches.flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
-  const members = template?.templateId==="TPL-FUENTE-DREAM-DYNASTY"
-    ? assignedMembers.filter(item=>verifiedIds.has(item.inventoryId))
-    : assignedMembers;
+  const members = template ? assignedMembers.filter(item=>verifiedIds.has(item.inventoryId)) : assignedMembers;
+  const excludedAssignedLots = template ? assignedMembers.filter(item=>!verifiedIds.has(item.inventoryId)).map(item=>item.inventoryId) : [];
   const componentValue = members.reduce((sum, item) => {
     const evidence = collectionComponentMarketEvidence(item, inventory, valuations);
     return sum + (evidence.valueUnit ?? 0) * (item.currentQty ?? 0);
@@ -152,5 +155,6 @@ export function summarizeCollection(
     retailCoverage: componentEvidence.filter(evidence => evidence.retailUnit !== undefined).length,
     marketCoverage: componentEvidence.filter(evidence => evidence.marketUnit !== undefined).length,
     completedSaleCoverage: componentEvidence.filter(evidence => evidence.completedSale !== undefined).length,
+    excludedAssignedLots,
   };
 }
