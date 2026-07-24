@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { collectionTemplates } from "../lib/collection-templates";
 import { matchCollectionRequirements } from "../lib/collection-matching";
+import { summarizeCollection } from "../lib/collection-dashboard";
 
 const dream=collectionTemplates.find(template=>template.templateId==="TPL-FUENTE-DREAM-DYNASTY")!;
 
@@ -25,4 +26,14 @@ test("a partial OpusX name cannot be assigned to a different Dream to Dynasty co
     {inventoryId:"WRONG",brand:"Arturo Fuente",line:"OpusX",vitola:"Lost City Toro"},
   ],0.8);
   assert.equal(match.inventoryId,undefined);
+});
+
+test("an incorrectly attached cigar is excluded from Dream to Dynasty completion and value",()=>{
+  const collection={collectionId:"COL-FUENTE-DREAM-DYNASTY",name:"From Dream to Dynasty Collection"};
+  const inventory=[{inventoryId:"WRONG",collectionId:collection.collectionId,brand:"Arturo Fuente",line:"OpusX",vitola:"Petite Lancero",currentQty:1,retailValue:100}];
+  const summary=summarizeCollection(collection,inventory,[]);
+  assert.equal(summary.ownedComponents,0);
+  assert.equal(summary.componentValue,0);
+  assert.equal(summary.cigarRetailValue,0);
+  assert.equal(summary.missingComponents.length,22);
 });
