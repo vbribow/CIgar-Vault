@@ -63,3 +63,21 @@ export function dataAuthorityIsUnambiguous() {
       && rule.migrationDirection !== ("bidirectional" as string);
   });
 }
+
+export function scheduledVaultAuthority(
+  env: Partial<Record<string, string | undefined>>,
+) {
+  const supabaseReady = Boolean(
+    env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+      env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
+  );
+  if (supabaseReady) return "supabase-private-vault" as const;
+  if (
+    env.USE_MOCK_DATA === "false" &&
+    env.SMARTSHEET_ACCESS_TOKEN?.trim() &&
+    env.SMARTSHEET_INVENTORY_SHEET_ID?.trim()
+  ) {
+    return "smartsheet-legacy-operations" as const;
+  }
+  return "unavailable" as const;
+}
