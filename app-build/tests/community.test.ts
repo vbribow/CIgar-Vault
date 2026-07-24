@@ -31,3 +31,12 @@ test("founder moderation supports publish, requested changes, and non-publicatio
  assert.match(component,/Founder note/);
  assert.match(migration,/'active','review','changes','hidden'/);
 });
+test("community activity metrics are real accessible navigation controls",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.match(component,/function showTab\(next:"board"\|"ratings"\)/);
+ assert.match(component,/aria-label=\{`View \$\{data\.posts\.length\} recent discussions`\}/);
+ assert.match(component,/aria-label=\{`View \$\{data\.ratingCount\} collector ratings`\}/);
+ assert.match(component,/onClick=\{\(\)=>showTab\("board"\)\}/);
+ assert.match(component,/onClick=\{\(\)=>showTab\("ratings"\)\}/);
+ assert.match(component,/aria-pressed=\{tab==="ratings"\}/);
+});
