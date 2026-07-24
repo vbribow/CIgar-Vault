@@ -24,6 +24,12 @@ test("completion records uncertain research once and defers duplicate paid searc
   assert.match(page,/valuationNeedsMonitoring\(row\.item,valuations\)/);
 });
 
+test("completion refuses paid valuation research before exact cigar identity is resolved",()=>{
+  const page=readFileSync(new URL("../app/valuations/page.tsx",import.meta.url),"utf8");
+  assert.match(page,/row\.item\.status!==\"Review\"/);
+  assert.ok(page.includes("&&!/verify|unknown/i.test(row.item.vitola)"));
+});
+
 test("scheduled completion supports the live Smartsheet master inventory",()=>{
   assert.match(monitor,/dataMode\(\)==="smartsheet"/);
   assert.match(monitor,/getInventory\(\),getValuations\(\)/);
