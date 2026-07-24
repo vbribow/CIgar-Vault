@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { ManufacturingCoverageIndex, ManufacturingTruthDirectory } from "@/components/manufacturing-truth-directory";
 import { allBrandManufacturingCoverage, manufacturingFactories, manufacturingRegions, manufacturingTruthRecords } from "@/lib/manufacturing-truth";
+import { brandCoverageWithCatalog } from "@/lib/brand-research";
+import { getCatalog } from "@/lib/smartsheet";
+import { dataMode } from "@/lib/config";
 import "./manufacturing-truth.css";
 
 export const metadata: Metadata = {
@@ -16,7 +19,13 @@ const identityLayers = [
   ["Provenance", "Preserves the sources, confidence, corrections, and chain of custody behind each claim."],
 ] as const;
 
-export default function ManufacturingTruthPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ManufacturingTruthPage() {
+  let coverage = allBrandManufacturingCoverage;
+  if (dataMode() !== "mock") {
+    try { coverage = brandCoverageWithCatalog(await getCatalog()); } catch { coverage = allBrandManufacturingCoverage; }
+  }
   return <main className="shell manufacturingTruthPage">
     <section className="truthHero">
       <div><div className="eyebrow">Cedriva Learn · Manufacturing Truth</div><h1>The name on the band is only the beginning.</h1><p className="lede">Collectors deserve to know who owned the idea, who shaped the blend, which factory made the cigar, where the tobacco came from, and how confidently each fact is known.</p><div className="ctaRow"><a className="button" href="#all-brands">Search every brand</a><a className="button secondary" href="#directory">Open deep records</a></div></div>
@@ -38,8 +47,8 @@ export default function ManufacturingTruthPage() {
     </section>
 
     <section className="coverageSection" id="all-brands">
-      <div className="truthSectionHead"><div><div className="eyebrow">Complete Cedriva brand universe · {allBrandManufacturingCoverage.length} records</div><h2>No cigar disappears because its factory is unknown.</h2></div><p>Every premium brand currently represented in Cedriva has a manufacturing record. Verified factories are named. Official Cuban portfolio records retain country-level evidence. Unresolved factories remain visible as research work—not empty space and never a guess.</p></div>
-      <ManufacturingCoverageIndex records={allBrandManufacturingCoverage} />
+      <div className="truthSectionHead"><div><div className="eyebrow">Complete Cedriva brand universe · {coverage.length} records</div><h2>No cigar disappears because its factory is unknown.</h2></div><p>Every premium brand currently represented in Cedriva has a manufacturing record. Founder-approved discoveries join this index automatically. Verified factories are named; unresolved factories remain visible as research work—not empty space and never a guess.</p></div>
+      <ManufacturingCoverageIndex records={coverage} />
     </section>
 
     <section className="truthDirectorySection" id="directory">
@@ -59,7 +68,7 @@ export default function ManufacturingTruthPage() {
 
     <section className="truthMethod" id="research-standard">
       <div><div className="eyebrow">How Cedriva protects the record</div><h2>Corrections strengthen trust.</h2></div>
-      <div><p>Each manufacturing claim carries a source type, confidence level, and verification date. When production changes, Cedriva preserves the previous relationship by release period rather than silently replacing it.</p><p>A brand-level factory is only inherited by a cigar when the evidence supports that relationship. A line, vitola, release year, or market exception can override it. When a factory is undisclosed, disputed, or supported only by indirect evidence, the record says so. Accuracy comes before completeness.</p><div className="ctaRow"><a className="button" href="/catalog">Review detailed cigars</a><a className="button secondary" href="/learn/blending#profiles">Meet the blenders</a></div></div>
+      <div><p>Each manufacturing claim carries a source type, confidence level, and verification date. When production changes, Cedriva preserves the previous relationship by release period rather than silently replacing it.</p><p>A brand-level factory is only inherited by a cigar when the evidence supports that relationship. A line, vitola, release year, or market exception can override it. When a factory is undisclosed, disputed, or supported only by indirect evidence, the record says so. Accuracy comes before completeness.</p><div className="ctaRow"><a className="button" href="/catalog">Review detailed cigars</a><a className="button secondary" href="/catalog-discovery#research-backlog">Open research backlog</a><a className="button secondary" href="/learn/blending#profiles">Meet the blenders</a></div></div>
     </section>
   </main>;
 }
