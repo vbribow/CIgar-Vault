@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { collectionTemplates } from "../lib/collection-templates";
+import { collectionComponentIdentity } from "../lib/collection-components";
 import { matchCollectionRequirements } from "../lib/collection-matching";
 import { summarizeCollection } from "../lib/collection-dashboard";
 
@@ -19,6 +20,18 @@ test("Dream to Dynasty uses the documented 2024 Collection XXII contents",()=>{
   assert.ok(dream.requirements.includes("Casa Fuente Lancero"));
   assert.ok(dream.requirements.includes("Fuente Fuente OpusX Rising X"));
   assert.ok(dream.requirements.includes("J.C. Newman Diamond Crown Perfecto"));
+});
+
+test("Dream to Dynasty uses measured physical vitolas without confusing product names for sizes",()=>{
+  const components=dream.requirements.map(requirement=>collectionComponentIdentity(requirement,dream));
+  assert.equal(components.length,22);
+  assert.ok(components.every(component=>component.needsIdentityReview===false));
+  assert.ok(components.every(component=>component.vitola!=="Size to verify"));
+  assert.deepEqual(components.find(component=>component.line==="Hemingway Classic"),{
+    brand:"Arturo Fuente",line:"Hemingway Classic",vitola:"Perfecto (7 × 48)",quantity:1,needsIdentityReview:false,
+  });
+  assert.equal(components.find(component=>component.line==="ESG 20-Year Salute")?.vitola,"Churchill (6.75 × 49)");
+  assert.equal(components.find(component=>component.line==="OpusX Angel’s Share Fuente Fuente")?.vitola,"5.625 × 46");
 });
 
 test("a partial OpusX name cannot be assigned to a different Dream to Dynasty component",()=>{

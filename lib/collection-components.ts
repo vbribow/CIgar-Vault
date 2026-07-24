@@ -40,6 +40,8 @@ function knownRetailValue(candidate: InventoryItem, inventory: InventoryItem[]) 
 export function collectionComponentIdentity(requirement: string, template: CollectionTemplate): CollectionComponentIdentity {
   const countMatch = requirement.match(/^(\d+)\s+(.+)$/);
   const quantity = countMatch ? Number(countMatch[1]) : /^\bsix\b/i.test(requirement) ? 6 : 1;
+  const documented = template.componentEvidence?.find(component => component.requirement === requirement);
+  if (documented) return { brand: documented.brand, line: documented.line, vitola: documented.vitola, quantity, needsIdentityReview: false };
   let description = (countMatch?.[2] || requirement)
     .replace(/\s+cigars?(?:,.*)?$/i, "")
     .replace(/,\s*\d+\s*(?:ring gauge|(?:\d+\s*)?\/?\d*\s*[×x]\s*\d+.*)$/i, "")
