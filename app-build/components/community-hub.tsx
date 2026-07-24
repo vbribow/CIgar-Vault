@@ -120,17 +120,17 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <Link href="/community?tab=ratings#top-25" onClick={()=>setTab("ratings")} aria-label={`View ${data.top25.length} ranked cigars`}>
 <strong>{data.top25.length}</strong>
 <span>ranked cigars</span>
-<small>Explore the living Top 25 →</small>
+<small>Explore the Cedriva 25 →</small>
 </Link>
 </section>
     <section className="communityTabs">
 <button type="button" className={tab === "board" ? "active" : ""} aria-pressed={tab==="board"} onClick={() => showTab("board")}>Message board</button>
-<button type="button" className={tab === "ratings" ? "active" : ""} aria-pressed={tab==="ratings"} onClick={() => showTab("ratings")}>Top 25 cigars</button>
+<button type="button" className={tab === "ratings" ? "active" : ""} aria-pressed={tab==="ratings"} onClick={() => showTab("ratings")}>Cedriva 25</button>
 </section>
     {message && <output className="communityMessage">{message}{message.includes("administrator review") && <small>Your contribution is private while it waits in the <a href="/ai-administrator">AI Administrator review queue</a>.</small>}</output>}
     <aside className="communityTrust">
 <TrustMark kind="Community" compact/>
-<span>Posts, reviews, and Top 25 scores reflect collector experience—not official product facts.</span>
+<span>Posts, reviews, and Cedriva 25 scores reflect collector experience—not official product facts.</span>
 <a href="/trust">How Cedriva labels trust →</a>
 </aside>
     {(data.myContributions.posts.length>0||data.myContributions.ratings.length>0)&&<section className="contributionTracker">
@@ -193,7 +193,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <div className="sectionHead">
 <div>
 <div className="eyebrow">Community consensus</div>
-<h2>The living Top 25</h2>
+<h2>The Cedriva 25</h2>
 <p>Ranked by average collector score, then rating volume. Only published member ratings count; retailer promotion never does.</p>
 </div>
 </div>
@@ -205,7 +205,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </div>
 <b>{item.averageScore}</b>
 <small>{item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"}</small>
-</article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the Top 25 without invented scores or promotional placement.</p></div>}</section>
+</article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the Cedriva 25 without invented scores or promotional placement.</p></div>}</section>
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating}>
 <div className="eyebrow">Rate a cigar</div>
 <h2>Document your experience</h2>
