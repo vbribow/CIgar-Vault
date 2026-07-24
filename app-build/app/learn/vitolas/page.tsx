@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo";
 import "./vitolas.css";
 
-export const metadata: Metadata = {
-  title: "Understanding Vitolas",
-  description: "Learn how cigar length, ring gauge, shape, factory names, and commercial names work—and how vitola changes construction and the smoking experience.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "Understanding Vitolas",
+  "Learn how cigar length, ring gauge, shape, factory names, and commercial names work—and how vitola changes construction and the smoking experience.",
+  "/learn/vitolas",
+);
 
 const commonVitolas = [
   { name: "Petit Corona", measure: "About 4½ × 40–42", length: 58, gauge: 18, note: "Compact, traditional proportions with a relatively high wrapper-to-filler relationship." },

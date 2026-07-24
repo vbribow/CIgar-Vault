@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo";
 import "./humidor-climate.css";
 
-export const metadata: Metadata = {
-  title: "Humidor Temperature & Humidity",
-  description:
-    "Learn practical temperature and relative-humidity ranges for New World cigars and Habanos, how climate changes a cigar over time, and how to correct problems safely.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "Humidor Temperature & Humidity",
+  "Learn practical temperature and relative-humidity ranges for New World cigars and Habanos, how climate changes a cigar over time, and how to correct problems safely.",
+  "/learn/humidor-climate",
+);
 
 const humidityBands = [
   ["Below 60% RH", "Drying risk", "Tobacco loses moisture, wrappers become brittle, and cigars may burn faster, hotter, and harsher. Prolonged severe dryness can permanently diminish aroma."],

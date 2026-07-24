@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { manufacturingTruthHrefForHouse } from "@/lib/manufacturing-truth";
+import { publicPageMetadata } from "@/lib/seo";
 import "./blending.css";
 
-export const metadata: Metadata = {
-  title: "Blending & Master Blenders",
-  description: "Learn how premium cigar blends are designed, tested, adapted, and protected—and study the documented work of influential master blenders.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "Blending & Master Blenders",
+  "Learn how premium cigar blends are designed, tested, adapted, and protected—and study the documented work of influential master blenders.",
+  "/learn/blending",
+);
 
 const blenderWork = [
   ["Define the intention", "The process begins with a purpose: an experience, a brand identity, a price and production target, or a tobacco story worth expressing. “Strong” or “mild” is not a complete brief."],

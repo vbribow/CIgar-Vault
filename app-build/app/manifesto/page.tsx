@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo";
 import "./manifesto.css";
 
-export const metadata:Metadata={
-  title:"The Cedriva Manifesto",
-  description:"A declaration for everyone who believes premium cigars are a culture worth preserving.",
-};
+export const metadata:Metadata=publicPageMetadata(
+  "The Cedriva Manifesto",
+  "A declaration for everyone who believes premium cigars are a culture worth preserving.",
+  "/manifesto",
+);
 
 const declarations=[
   ["We believe the cigar is only the beginning.","Behind every leaf is a farmer. Behind every blend is a point of view. Behind every box is the work of hands, families, factories, and generations."],

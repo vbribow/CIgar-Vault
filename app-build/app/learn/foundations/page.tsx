@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { publicPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Cigar Foundations",
-  description: "A welcoming, plain-language introduction to choosing, preparing, enjoying, and caring for a first premium cigar.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "Cigar Foundations",
+  "A welcoming, plain-language introduction to choosing, preparing, enjoying, and caring for a first premium cigar.",
+  "/learn/foundations",
+);
 
 const lessons = [
   {

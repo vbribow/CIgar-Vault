@@ -4,12 +4,14 @@ import { allBrandManufacturingCoverage, manufacturingFactories, manufacturingReg
 import { brandCoverageWithCatalog } from "@/lib/brand-research";
 import { getCatalog } from "@/lib/smartsheet";
 import { dataMode } from "@/lib/config";
+import { publicPageMetadata } from "@/lib/seo";
 import "./manufacturing-truth.css";
 
-export const metadata: Metadata = {
-  title: "Who Actually Makes the Cigar?",
-  description: "Follow premium cigar authorship from brand owner and blender to the actual factory, production relationship, tobacco regions, release history, and supporting evidence.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "Who Actually Makes the Cigar?",
+  "Follow premium cigar authorship from brand owner and blender to the actual factory, production relationship, tobacco regions, release history, and supporting evidence.",
+  "/learn/manufacturing-truth",
+);
 
 const identityLayers = [
   ["Brand owner", "Owns or stewards the commercial name. Ownership does not prove who blended or manufactured the cigar."],

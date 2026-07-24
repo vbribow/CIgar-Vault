@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo";
 import "./seed-to-smoke.css";
 
-export const metadata: Metadata = {
-  title: "Seed to Smoke",
-  description: "Follow premium cigar tobacco from seed, soil, and harvest through curing, fermentation, blending, rolling, quality control, aging, and the collector.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "Seed to Smoke",
+  "Follow premium cigar tobacco from seed, soil, and harvest through curing, fermentation, blending, rolling, quality control, aging, and the collector.",
+  "/learn/seed-to-smoke",
+);
 
 const journey = [
   {
