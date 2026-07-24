@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { GlobalSearch } from "@/components/global-search";
 import { CedrivaMark } from "@/components/cedriva-mark";
 
@@ -12,8 +13,8 @@ export function AppNavigation() {
   const pathname = usePathname();
   const publicPaths = ["/manifesto", "/constitution", "/login", "/recover", "/reset-password"];
   if (publicPaths.some((path) => matches(pathname, path))) return <header className="publicHeader"><div className="publicHeaderInner">
-    <a className="appBrand" href="/" aria-label="Cedriva home"><CedrivaMark/><span><strong>Cedriva</strong><small>Preserve · Honor · Grow</small></span></a>
-    <nav aria-label="Public navigation"><a href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</a><a href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</a><a href="/login" className="button secondary">Sign in</a></nav>
+    <Link className="appBrand" href="/" aria-label="Cedriva home"><CedrivaMark/><span><strong>Cedriva</strong><small>Preserve · Honor · Grow</small></span></Link>
+    <nav aria-label="Public navigation"><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><Link href="/login" className="button secondary">Sign in</Link></nav>
   </div></header>;
   const moreLinks=[
     ["/records","Review","Learn from your own experience and trusted voices"],
@@ -24,17 +25,17 @@ export function AppNavigation() {
   ] as const;
   const moreActive=moreLinks.some(([href])=>matches(pathname,href));
   return <><header className="appHeader"><div className="appHeaderInner">
-    <a className="appBrand" href="/" aria-label="Cedriva home"><CedrivaMark/><span><strong>Cedriva</strong><small>Premium cigar culture</small></span></a>
+    <Link className="appBrand" href="/" aria-label="Cedriva home"><CedrivaMark/><span><strong>Cedriva</strong><small>Premium cigar culture</small></span></Link>
     <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
-      <a href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</a>
-      <a href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</a>
-      <a href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")||matches(pathname,"/humidors")?"active":undefined}>Vault</a>
-      <a href="/learn" className={matches(pathname,"/learn")||matches(pathname,"/sommelier-library")?"active":undefined}>Learn</a>
-      <a href="/community" className={matches(pathname,"/community")?"active":undefined}>Community</a>
-      <a href="/cigar-somm" className={matches(pathname,"/cigar-somm")||matches(pathname,"/intelligence")?"active":undefined}>Cedriva AI</a>
-      <details className={`navGroup ${moreActive?"active":""}`}><summary>More<span aria-hidden="true">⌄</span></summary><div className="navMenu">{moreLinks.map(([href,label,description])=><a href={href} className={matches(pathname,href)?"active":undefined} key={href}><strong>{label}</strong><small>{description}</small></a>)}</div></details>
-      <a href="/notifications" className={matches(pathname, "/notifications") ? "active" : undefined}>Inbox</a>
-      <a href="/account" className={matches(pathname, "/account") ? "active" : undefined}>Account</a>
+      <Link href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</Link>
+      <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>
+      <Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")||matches(pathname,"/humidors")?"active":undefined}>Vault</Link>
+      <Link href="/learn" className={matches(pathname,"/learn")||matches(pathname,"/sommelier-library")?"active":undefined}>Learn</Link>
+      <Link href="/community" className={matches(pathname,"/community")?"active":undefined}>Community</Link>
+      <Link href="/cigar-somm" className={matches(pathname,"/cigar-somm")||matches(pathname,"/intelligence")?"active":undefined}>Cedriva AI</Link>
+      <details className={`navGroup ${moreActive?"active":""}`}><summary>More<span aria-hidden="true">⌄</span></summary><div className="navMenu">{moreLinks.map(([href,label,description])=><Link href={href} className={matches(pathname,href)?"active":undefined} key={href}><strong>{label}</strong><small>{description}</small></Link>)}</div></details>
+      <Link href="/notifications" className={matches(pathname, "/notifications") ? "active" : undefined}>Inbox</Link>
+      <Link href="/account" className={matches(pathname, "/account") ? "active" : undefined}>Account</Link>
     </nav>
-  </div></header><nav className="mobileNav" aria-label="Mobile navigation"><a href="/" className={pathname==="/"?"active":undefined}><span>⌂</span><small>Home</small></a><a href="/discover" className={matches(pathname,"/discover")?"active":undefined}><span>◇</span><small>Discover</small></a><a href="/inventory#mobile-intake" className="mobileAdd"><span>＋</span><small>Document</small></a><a href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")?"active":undefined}><span>▦</span><small>Vault</small></a><a href="/explore" className={matches(pathname,"/explore")||matches(pathname,"/learn")?"active":undefined}><span>•••</span><small>Explore</small></a></nav></>;
+  </div></header><nav className="mobileNav" aria-label="Mobile navigation"><Link href="/" className={pathname==="/"?"active":undefined}><span>⌂</span><small>Home</small></Link><Link href="/discover" className={matches(pathname,"/discover")?"active":undefined}><span>◇</span><small>Discover</small></Link><Link href="/inventory#mobile-intake" className="mobileAdd"><span>＋</span><small>Document</small></Link><Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")?"active":undefined}><span>▦</span><small>Vault</small></Link><Link href="/explore" className={matches(pathname,"/explore")||matches(pathname,"/learn")?"active":undefined}><span>•••</span><small>Explore</small></Link></nav></>;
 }
