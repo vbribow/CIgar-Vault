@@ -1,13 +1,15 @@
 import type { EnvironmentalSensor,Humidor,HumidorReading,InventoryItem } from "./types";
+import { climateIntelligence } from "./climate-intelligence";
 
 export type ClimateSeverity="Good"|"Attention"|"Critical"|"Offline";
-export type ClimateAlert={id:string;humidorId:string;severity:Exclude<ClimateSeverity,"Good">;kind:"Temperature"|"Humidity"|"Battery"|"Sensor";message:string;recordedAt?:string};
+export type ClimateAlert={id:string;humidorId:string;severity:Exclude<ClimateSeverity,"Good">;kind:"Temperature"|"Humidity"|"Battery"|"Sensor";message:string;recordedAt?:string;durationLabel?:string;guidance?:string;consequence?:string};
 
 const ageHours=(iso:string|undefined,now:Date)=>iso?Math.max(0,(now.getTime()-new Date(iso).getTime())/3_600_000):Infinity;
 const money=(items:InventoryItem[],humidorId:string)=>items.filter(i=>i.storageLocationId===humidorId).reduce((sum,i)=>sum+(i.retailValue??0)*(i.currentQty??0),0);
 
 export function climateHealth(humidor:Humidor,readings:HumidorReading[],sensors:EnvironmentalSensor[],inventory:InventoryItem[],now=new Date()){
   const rows=readings.filter(r=>r.humidorId===humidor.humidorId).sort((a,b)=>b.recordedAt.localeCompare(a.recordedAt));
+  const intelligence=climateIntelligence(humidor,readings,now);
   const devices=sensors.filter(s=>s.humidorId===humidor.humidorId);
   const latest=rows[0];
   const sensor=devices.find(s=>s.sensorId===latest?.sensorId)||devices[0];
@@ -18,12 +20,12 @@ export function climateHealth(humidor:Humidor,readings:HumidorReading[],sensors:
   const battery=latest?.batteryPercent??sensor?.batteryPercent;
   if(battery!==undefined&&battery<=20)alerts.push({id:`${humidor.humidorId}-battery`,humidorId:humidor.humidorId,severity:battery<=10?"Critical":"Attention",kind:"Battery",message:`Sensor battery is ${battery}%`,recordedAt:latest?.recordedAt});
   if(latest){
-    if(latest.temperatureF<humidor.minTempF||latest.temperatureF>humidor.maxTempF){const gap=latest.temperatureF<humidor.minTempF?humidor.minTempF-latest.temperatureF:latest.temperatureF-humidor.maxTempF;alerts.push({id:`${humidor.humidorId}-temperature`,humidorId:humidor.humidorId,severity:gap>3?"Critical":"Attention",kind:"Temperature",message:`${latest.temperatureF}°F is outside ${humidor.minTempF}–${humidor.maxTempF}°F`,recordedAt:latest.recordedAt});}
-    if(latest.humidity<humidor.minHumidity||latest.humidity>humidor.maxHumidity){const gap=latest.humidity<humidor.minHumidity?humidor.minHumidity-latest.humidity:latest.humidity-humidor.maxHumidity;alerts.push({id:`${humidor.humidorId}-humidity`,humidorId:humidor.humidorId,severity:gap>5?"Critical":"Attention",kind:"Humidity",message:`${latest.humidity}% RH is outside ${humidor.minHumidity}–${humidor.maxHumidity}%`,recordedAt:latest.recordedAt});}
+    if(latest.temperatureF<humidor.minTempF||latest.temperatureF>humidor.maxTempF){const gap=latest.temperatureF<humidor.minTempF?humidor.minTempF-latest.temperatureF:latest.temperatureF-humidor.maxTempF;alerts.push({id:`${humidor.humidorId}-temperature`,humidorId:humidor.humidorId,severity:gap>3||intelligence.sustained?"Critical":"Attention",kind:"Temperature",message:`${latest.temperatureF}°F is outside ${humidor.minTempF}–${humidor.maxTempF}°F`,recordedAt:latest.recordedAt,durationLabel:intelligence.state,guidance:intelligence.action,consequence:intelligence.consequence});}
+    if(latest.humidity<humidor.minHumidity||latest.humidity>humidor.maxHumidity){const gap=latest.humidity<humidor.minHumidity?humidor.minHumidity-latest.humidity:latest.humidity-humidor.maxHumidity;alerts.push({id:`${humidor.humidorId}-humidity`,humidorId:humidor.humidorId,severity:gap>5||intelligence.sustained?"Critical":"Attention",kind:"Humidity",message:`${latest.humidity}% RH is outside ${humidor.minHumidity}–${humidor.maxHumidity}%`,recordedAt:latest.recordedAt,durationLabel:intelligence.state,guidance:intelligence.action,consequence:intelligence.consequence});}
   }
   const severity:ClimateSeverity=alerts.some(a=>a.severity==="Critical")?"Critical":alerts.some(a=>a.severity==="Offline")?"Offline":alerts.length?"Attention":"Good";
   const storedValue=money(inventory,humidor.humidorId);
-  return{humidor,latest,sensor,rows,alerts,severity,hoursSinceReading,battery,storedValue,valueAtRisk:severity==="Attention"||severity==="Critical"?storedValue:0,unmonitoredValue:severity==="Offline"?storedValue:0};
+  return{humidor,latest,sensor,rows,alerts,severity,hoursSinceReading,battery,storedValue,valueAtRisk:severity==="Attention"||severity==="Critical"?storedValue:0,unmonitoredValue:severity==="Offline"?storedValue:0,intelligence};
 }
 
 export function historicalClimateAlerts(humidors:Humidor[],readings:HumidorReading[],limit=20):ClimateAlert[]{
