@@ -8,6 +8,8 @@ const seedToSmoke = readFileSync(new URL("../app/learn/seed-to-smoke/page.tsx", 
 const vitolas = readFileSync(new URL("../app/learn/vitolas/page.tsx", import.meta.url), "utf8");
 const blending = readFileSync(new URL("../app/learn/blending/page.tsx", import.meta.url), "utf8");
 const manufacturingTruth = readFileSync(new URL("../app/learn/manufacturing-truth/page.tsx", import.meta.url), "utf8");
+const rootProxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
+const supabaseProxy = readFileSync(new URL("../lib/supabase/proxy.ts", import.meta.url), "utf8");
 
 test("the Curious pathway opens a dedicated beginner journey", () => {
   assert.match(learn, /"\/learn\/seed-to-smoke","Follow tobacco from seed to smoke"/);
@@ -113,4 +115,9 @@ test("learning routes form a connected curriculum around manufacturing truth", (
   assert.match(manufacturingTruth, /Actual factory/);
   assert.match(manufacturingTruth, /Release/);
   assert.match(manufacturingTruth, /Provenance/);
+});
+
+test("the complete Cedriva learning curriculum remains publicly accessible", () => {
+  assert.match(rootProxy, /pathname\.startsWith\("\/learn\/"\)/);
+  assert.match(supabaseProxy, /pathname\.startsWith\("\/learn\/"\)/);
 });
