@@ -18,7 +18,16 @@ export function ValuationCompletionPanel({items,mode}:{items:InventoryItem[];mod
       const headers={"Content-Type":"application/json",...(key?{"x-founder-key":key}:{})};
       const researched=await json(await fetch("/api/valuation-research",{method:"POST",headers,body:JSON.stringify({inventoryId:item.inventoryId})}));
       const draft=researched.data;
-      if(!draft.sourceUrl||draft.confidence==="Low"||(draft.replacementValue===null&&draft.marketValue===null))return{inventoryId:item.inventoryId,status:"review",message:"Research needs human review before saving."};
+      if(!draft.sourceUrl||draft.confidence==="Low"||(draft.replacementValue===null&&draft.marketValue===null)){
+        await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({
+          valuationId:`VAL-REVIEW-${item.inventoryId}-${Date.now().toString(36).toUpperCase()}`.slice(0,190),
+          inventoryId:item.inventoryId,valuationDate:draft.evidenceDate,marketEvidenceType:"Insufficient evidence",
+          comparableCount:draft.comparables.length,source:draft.source||"Cedriva research review",
+          sourceUrl:draft.sourceUrl||undefined,confidence:draft.confidence,
+          notes:`Insufficient evidence; held for human review and deferred from repeated automated research. ${draft.notes}`,
+        })}));
+        return{inventoryId:item.inventoryId,status:"review",message:"Research needs human review before saving."};
+      }
       await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({
         valuationId:`VAL-COMPLETE-${item.inventoryId}-${Date.now().toString(36).toUpperCase()}`.slice(0,190),
         inventoryId:item.inventoryId,valuationDate:draft.evidenceDate,replacementValue:draft.replacementValue??undefined,marketValue:draft.marketValue??undefined,

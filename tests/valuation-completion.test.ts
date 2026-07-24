@@ -17,6 +17,13 @@ test("completion only saves source-backed medium or high confidence evidence",()
   assert.match(panel,/\/api\/valuations/);
 });
 
+test("completion records uncertain research once and defers duplicate paid searches",()=>{
+  assert.match(panel,/marketEvidenceType:"Insufficient evidence"/);
+  assert.match(panel,/held for human review and deferred from repeated automated research/);
+  const page=readFileSync(new URL("../app/valuations/page.tsx",import.meta.url),"utf8");
+  assert.match(page,/valuationNeedsMonitoring\(row\.item,valuations\)/);
+});
+
 test("scheduled completion supports the live Smartsheet master inventory",()=>{
   assert.match(monitor,/dataMode\(\)==="smartsheet"/);
   assert.match(monitor,/getInventory\(\),getValuations\(\)/);
