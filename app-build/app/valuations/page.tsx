@@ -11,6 +11,7 @@ import { retailBoxValue } from "@/lib/retail-pricing";
 import { TrustMark } from "@/components/trust-mark";
 import { ValuationCompletionPanel } from "@/components/valuation-completion-panel";
 import { marketRangeText } from "@/lib/valuation-evidence";
+import { valuationNeedsMonitoring } from "@/lib/valuation-monitor";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -34,7 +35,10 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
   const intelligence = buildValuationIntelligence(inventory, valuations);
   const { totals } = intelligence;
   const scopedInventory=filters.collectionId?inventory.filter(item=>item.collectionId===filters.collectionId):inventory;
-  const completionQueue=intelligence.reviewQueue.filter(row=>!filters.collectionId||row.item.collectionId===filters.collectionId);
+  const completionQueue=intelligence.reviewQueue.filter(row=>
+    (!filters.collectionId||row.item.collectionId===filters.collectionId)
+    &&valuationNeedsMonitoring(row.item,valuations)
+  );
 
   return (
     <main className="shell wideShell valuationWorkspace">
