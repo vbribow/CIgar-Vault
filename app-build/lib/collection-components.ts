@@ -55,7 +55,7 @@ export function collectionComponentIdentity(requirement: string, template: Colle
   description = description.replace(/^(?:-made\s+cigars?\s+honoring\s+)/i, "Legends ").replace(/\s+cigars?$/i, "").trim();
   if(brand==="Ashton"){
     const family=description.match(/^(ESG|VSG)\s+(.+)$/i);
-    if(family)return{brand,line:`Ashton ${family[1].toUpperCase()}`,vitola:family[2],quantity,needsIdentityReview:false};
+    if(family)return{brand,line:`Ashton ${family[1].toUpperCase()} ${family[2]}`,vitola:"Size to verify",quantity,needsIdentityReview:true};
   }
 
   const standard = [...standardVitolas].sort((a, b) => b.length - a.length).find(value => new RegExp(`\\b${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(description));
@@ -70,9 +70,9 @@ export function collectionComponentIdentity(requirement: string, template: Colle
   const family = familyPrefixes.find(value => description.toLocaleLowerCase().startsWith(value.toLocaleLowerCase()));
   if (family) {
     const namedVitola = description.slice(family.length).trim();
-    return { brand, line: family, vitola: namedVitola || "Vitola to verify", quantity, needsIdentityReview: !namedVitola };
+    return { brand, line: [family,namedVitola].filter(Boolean).join(" "), vitola: "Size to verify", quantity, needsIdentityReview: true };
   }
-  return { brand, line: description || template.edition || template.name, vitola: "Vitola to verify", quantity, needsIdentityReview: true };
+  return { brand, line: description || template.edition || template.name, vitola: "Size to verify", quantity, needsIdentityReview: true };
 }
 
 export function collectionComponentDrafts(collection: CigarCollection, template: CollectionTemplate, inventory: InventoryItem[], fulfilledRequirements = new Set<string>()) {
