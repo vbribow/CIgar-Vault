@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ManufacturingTruthRecord } from "@/lib/manufacturing-truth";
+import type { BrandManufacturingCoverage, BrandManufacturingStatus, ManufacturingTruthRecord } from "@/lib/manufacturing-truth";
 
 const relationships = ["All relationships", "Vertically integrated", "Company-owned factory", "Partner-owned factory", "Directed contract production", "Mixed production"] as const;
 
@@ -51,3 +51,39 @@ export function ManufacturingTruthDirectory({ records }: { records: Manufacturin
   </>;
 }
 
+const coverageStatuses: ("All statuses" | BrandManufacturingStatus)[] = ["All statuses", "Factory verified", "Country verified", "Research needed"];
+
+export function ManufacturingCoverageIndex({ records }: { records: BrandManufacturingCoverage[] }) {
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<(typeof coverageStatuses)[number]>("All statuses");
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase();
+    return records.filter((record) => {
+      const matchesQuery = !needle || [record.brand, record.primaryRegion, record.segment, record.manufacturing].join(" ").toLocaleLowerCase().includes(needle);
+      return matchesQuery && (status === "All statuses" || record.status === status);
+    });
+  }, [query, records, status]);
+  const counts = Object.fromEntries(coverageStatuses.slice(1).map((item) => [item, records.filter((record) => record.status === item).length]));
+
+  return <>
+    <div className="coverageMetrics">
+      <article><strong>{records.length}</strong><span>brands represented</span></article>
+      <article><strong>{counts["Factory verified"]}</strong><span>factory verified</span></article>
+      <article><strong>{counts["Country verified"]}</strong><span>official country records</span></article>
+      <article><strong>{counts["Research needed"]}</strong><span>visible evidence gaps</span></article>
+    </div>
+    <div className="coverageControls">
+      <label><span>Search all brands</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, region, or known factory" /></label>
+      <label><span>Evidence status</span><select value={status} onChange={(event) => setStatus(event.target.value as (typeof coverageStatuses)[number])}>{coverageStatuses.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <output aria-live="polite"><strong>{filtered.length}</strong><span>brand record{filtered.length === 1 ? "" : "s"}</span></output>
+    </div>
+    <div className="coverageIndex">
+      {filtered.map((record) => <article key={record.brand} data-status={record.status}>
+        <div><span>{record.primaryRegion} · {record.segment}</span><h3>{record.brand}</h3></div>
+        <div className="coverageStatus"><strong>{record.status}</strong><span>{record.evidence}</span></div>
+        <p>{record.manufacturing}</p>
+        <div className="coverageLinks"><a href={record.href}>{record.recordId ? "Open verified system" : record.status === "Country verified" ? "Review coverage rule" : "Review research standard"} →</a>{record.sourceUrl && <a href={record.sourceUrl} target="_blank" rel="noreferrer">Source ↗</a>}</div>
+      </article>)}
+    </div>
+  </>;
+}

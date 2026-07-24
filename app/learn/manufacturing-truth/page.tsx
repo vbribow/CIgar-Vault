@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { ManufacturingTruthDirectory } from "@/components/manufacturing-truth-directory";
-import { manufacturingFactories, manufacturingRegions, manufacturingTruthRecords } from "@/lib/manufacturing-truth";
+import { ManufacturingCoverageIndex, ManufacturingTruthDirectory } from "@/components/manufacturing-truth-directory";
+import { allBrandManufacturingCoverage, manufacturingFactories, manufacturingRegions, manufacturingTruthRecords } from "@/lib/manufacturing-truth";
 import "./manufacturing-truth.css";
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ const identityLayers = [
 export default function ManufacturingTruthPage() {
   return <main className="shell manufacturingTruthPage">
     <section className="truthHero">
-      <div><div className="eyebrow">Cedriva Learn · Manufacturing Truth</div><h1>The name on the band is only the beginning.</h1><p className="lede">Collectors deserve to know who owned the idea, who shaped the blend, which factory made the cigar, where the tobacco came from, and how confidently each fact is known.</p><div className="ctaRow"><a className="button" href="#directory">Search the directory</a><a className="button secondary" href="#how-to-read">Learn to read the roles</a></div></div>
+      <div><div className="eyebrow">Cedriva Learn · Manufacturing Truth</div><h1>The name on the band is only the beginning.</h1><p className="lede">Collectors deserve to know who owned the idea, who shaped the blend, which factory made the cigar, where the tobacco came from, and how confidently each fact is known.</p><div className="ctaRow"><a className="button" href="#all-brands">Search every brand</a><a className="button secondary" href="#directory">Open deep records</a></div></div>
       <aside><span>The Cedriva rule</span><blockquote>Credit every hand the evidence allows us to name.</blockquote><p>A partner factory is not a footnote. Contract production is not a secret by definition. Uncertainty is not failure when it is stated honestly.</p></aside>
     </section>
 
@@ -37,8 +37,13 @@ export default function ManufacturingTruthPage() {
       </div>
     </section>
 
+    <section className="coverageSection" id="all-brands">
+      <div className="truthSectionHead"><div><div className="eyebrow">Complete Cedriva brand universe · {allBrandManufacturingCoverage.length} records</div><h2>No cigar disappears because its factory is unknown.</h2></div><p>Every premium brand currently represented in Cedriva has a manufacturing record. Verified factories are named. Official Cuban portfolio records retain country-level evidence. Unresolved factories remain visible as research work—not empty space and never a guess.</p></div>
+      <ManufacturingCoverageIndex records={allBrandManufacturingCoverage} />
+    </section>
+
     <section className="truthDirectorySection" id="directory">
-      <div className="truthSectionHead"><div><div className="eyebrow">Living evidence directory · {manufacturingTruthRecords.length} records</div><h2>Follow the cigar beyond the label.</h2></div><p>This first verified collection prioritizes companies represented in Cedriva’s blender archive. It is a foundation—not a claim that every brand has already been documented.</p></div>
+      <div className="truthSectionHead"><div><div className="eyebrow">Deep manufacturing systems · {manufacturingTruthRecords.length} verified records</div><h2>Follow the cigar beyond the label.</h2></div><p>These records have enough evidence to connect ownership, creative authorship, actual production, history, and a release-level rule. They supply manufacturing truth to every matching cigar in Cedriva’s live catalog.</p></div>
       <ManufacturingTruthDirectory records={manufacturingTruthRecords} />
     </section>
 
@@ -52,9 +57,9 @@ export default function ManufacturingTruthPage() {
       <div>{manufacturingRegions.map(([name, body], index) => <article key={name}><span>{String(index + 1).padStart(2, "0")}</span><h3>{name}</h3><p>{body}</p></article>)}</div>
     </section>
 
-    <section className="truthMethod">
+    <section className="truthMethod" id="research-standard">
       <div><div className="eyebrow">How Cedriva protects the record</div><h2>Corrections strengthen trust.</h2></div>
-      <div><p>Each manufacturing claim carries a source type, confidence level, and verification date. When production changes, Cedriva preserves the previous relationship by release period rather than silently replacing it.</p><p>When a factory is undisclosed, disputed, or supported only by indirect evidence, the record says so. Accuracy comes before completeness.</p><div className="ctaRow"><a className="button" href="/learn/blending#profiles">Meet the blenders</a><a className="button secondary" href="/learn/seed-to-smoke">Follow the people and craft</a></div></div>
+      <div><p>Each manufacturing claim carries a source type, confidence level, and verification date. When production changes, Cedriva preserves the previous relationship by release period rather than silently replacing it.</p><p>A brand-level factory is only inherited by a cigar when the evidence supports that relationship. A line, vitola, release year, or market exception can override it. When a factory is undisclosed, disputed, or supported only by indirect evidence, the record says so. Accuracy comes before completeness.</p><div className="ctaRow"><a className="button" href="/catalog">Review detailed cigars</a><a className="button secondary" href="/learn/blending#profiles">Meet the blenders</a></div></div>
     </section>
   </main>;
 }

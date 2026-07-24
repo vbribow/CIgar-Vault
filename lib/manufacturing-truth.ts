@@ -1,3 +1,5 @@
+import { cigarBrands } from "./brand-directory";
+
 export type ManufacturingRelationship =
   | "Vertically integrated"
   | "Company-owned factory"
@@ -486,3 +488,86 @@ export function manufacturingTruthHrefForHouse(house: string) {
   const match = houseRecordMap.find(([name]) => house.includes(name));
   return match ? `/learn/manufacturing-truth#${match[1]}` : "/learn/manufacturing-truth";
 }
+
+export type BrandManufacturingStatus = "Factory verified" | "Country verified" | "Research needed";
+export type BrandManufacturingCoverage = {
+  brand: string;
+  primaryRegion: string;
+  segment: string;
+  status: BrandManufacturingStatus;
+  manufacturing: string;
+  evidence: string;
+  href: string;
+  recordId?: string;
+  sourceUrl?: string;
+};
+
+const brandRecordIds: Record<string, string> = {
+  "a.j. fernandez": "aj-fernandez",
+  "arturo fuente": "arturo-fuente",
+  "black label trading co.": "ovejanegracigars",
+  "black works studio": "ovejanegracigars",
+  "c.l.e. plus": "cle",
+  "crowned heads": "crowned-heads",
+  "don pepin garcia": "my-father",
+  "drew estate": "drew-estate",
+  "drew estate acid": "drew-estate",
+  "dunbarton tobacco & trust": "dunbarton",
+  "e.p. carrillo": "casa-carrillo",
+  "espinosa": "espinosa",
+  "ferio tego": "ferio-tego",
+  "foundation": "foundation",
+  "illusione": "illusione",
+  "la flor dominicana": "la-flor-dominicana",
+  "la galera": "la-galera",
+  "liga privada": "drew-estate",
+  "my father": "my-father",
+  "nica rustica": "drew-estate",
+  "perdomo": "perdomo",
+  "plasencia": "plasencia",
+  "roma craft": "roma-craft",
+  "tatuaje": "tatuaje",
+  "warped": "warped",
+};
+
+function normalizedBrand(value: string) {
+  return value.trim().toLocaleLowerCase().replace(/[’‘]/g, "'");
+}
+
+export function manufacturingCoverageForBrand(brand: string): BrandManufacturingCoverage {
+  const directoryBrand = cigarBrands.find((item) => normalizedBrand(item.name) === normalizedBrand(brand));
+  const recordId = brandRecordIds[normalizedBrand(brand)];
+  const record = recordId ? manufacturingTruthRecords.find((item) => item.id === recordId) : undefined;
+  if (record) return {
+    brand,
+    primaryRegion: directoryBrand?.region || record.factoryCountries.join(" · "),
+    segment: directoryBrand?.segment || "Documented",
+    status: "Factory verified",
+    manufacturing: record.factories.join(" · "),
+    evidence: `${record.trustLevel} · ${record.confidence} confidence · checked ${record.checkedAt}`,
+    href: `/learn/manufacturing-truth#${record.id}`,
+    recordId: record.id,
+    sourceUrl: record.sourceUrl,
+  };
+  if (directoryBrand?.segment === "Habanos") return {
+    brand,
+    primaryRegion: "Cuba",
+    segment: "Habanos",
+    status: "Country verified",
+    manufacturing: "Cuban production verified; exact factory and release period still require product-level evidence",
+    evidence: "Official Habanos portfolio · factory unresolved",
+    href: "/learn/manufacturing-truth#all-brands",
+    sourceUrl: "https://www.habanos.com/en/the-habanos-brands-academia/",
+  };
+  return {
+    brand,
+    primaryRegion: directoryBrand?.region || "Unclassified",
+    segment: directoryBrand?.segment || "Unclassified",
+    status: "Research needed",
+    manufacturing: "Brand is represented; the actual factory has not yet met Cedriva’s publication standard",
+    evidence: "Open evidence gap · no factory inferred from brand region",
+    href: "/learn/manufacturing-truth#research-standard",
+  };
+}
+
+export const allBrandManufacturingCoverage = cigarBrands.map((brand) => manufacturingCoverageForBrand(brand.name));

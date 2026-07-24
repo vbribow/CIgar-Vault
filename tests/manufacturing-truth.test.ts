@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
-import { manufacturingFactories, manufacturingRegions, manufacturingTruthHrefForHouse, manufacturingTruthRecords } from "../lib/manufacturing-truth";
+import { cigarBrands } from "../lib/brand-directory";
+import { allBrandManufacturingCoverage, manufacturingCoverageForBrand, manufacturingFactories, manufacturingRegions, manufacturingTruthHrefForHouse, manufacturingTruthRecords } from "../lib/manufacturing-truth";
+
+const catalogPage = readFileSync(new URL("../app/catalog/page.tsx", import.meta.url), "utf8");
 
 test("manufacturing truth records separate ownership, authorship, factories, and evidence", () => {
   assert.equal(manufacturingTruthRecords.length, 21);
@@ -37,4 +41,23 @@ test("factory and regional learning connect back to evidence records", () => {
   for (const factory of manufacturingFactories) assert.ok(recordIds.has(factory.record));
   assert.equal(manufacturingTruthHrefForHouse("Manufactura Rivas · Dominican Republic"), "/learn/manufacturing-truth#manufactura-rivas");
   assert.equal(manufacturingTruthHrefForHouse("Unknown future house"), "/learn/manufacturing-truth");
+});
+
+test("every brand in Cedriva receives a manufacturing coverage record", () => {
+  assert.equal(cigarBrands.length, 162);
+  assert.equal(allBrandManufacturingCoverage.length, cigarBrands.length);
+  assert.equal(new Set(allBrandManufacturingCoverage.map((record) => record.brand)).size, cigarBrands.length);
+  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Factory verified").length, 25);
+  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Country verified").length, 27);
+  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Research needed").length, 110);
+  assert.equal(manufacturingCoverageForBrand("Perdomo").recordId, "perdomo");
+  assert.equal(manufacturingCoverageForBrand("Cohiba").status, "Country verified");
+  assert.equal(manufacturingCoverageForBrand("Unknown future brand").status, "Research needed");
+});
+
+test("every detailed catalog cigar renders a manufacturing status", () => {
+  assert.match(catalogPage, /manufacturingCoverageForBrand\(item\.brand\)/);
+  assert.match(catalogPage, /manufacturing\.status/);
+  assert.match(catalogPage, /manufacturing\.manufacturing/);
+  assert.match(catalogPage, /Manufacturing truth/);
 });
