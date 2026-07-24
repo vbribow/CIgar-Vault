@@ -21,6 +21,9 @@ export async function POST(request: Request) {
     const report = await researchBrandManufacturing(brand);
     return NextResponse.json({ data: report });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Brand research failed" }, { status: 502 });
+    const message = error instanceof Error && (error.name === "TimeoutError" || /aborted due to timeout/i.test(error.message))
+      ? "The source search took too long. Try the brand again; no draft was published."
+      : error instanceof Error ? error.message : "Brand research failed";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
