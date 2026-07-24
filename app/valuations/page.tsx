@@ -73,26 +73,24 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           <small>Confirmed unit retail × quantity</small>
         </article>
         <article>
-          <span>Current</span>
-          <strong>{totals.current}</strong>
-          <small>Reviewed within 120 days</small>
+          <span>Retail coverage</span>
+          <strong>{totals.retailCoveragePercent}%</strong>
+          <small>{totals.retailCovered} of {totals.totalLots} lots</small>
         </article>
         <article>
-          <span>Due or stale</span>
-          <strong>{totals.dueSoon + totals.stale}</strong>
-          <small>
-            {totals.dueSoon} due soon · {totals.stale} over 180 days
-          </small>
+          <span>Aftermarket coverage</span>
+          <strong>{totals.marketCoveragePercent}%</strong>
+          <small>{totals.marketCovered} of {totals.totalLots} lots</small>
         </article>
         <article>
-          <span>Never valued</span>
-          <strong>{totals.neverValued}</strong>
-          <small>Need first market evidence</small>
+          <span>Verified-sale coverage</span>
+          <strong>{totals.saleCoveragePercent}%</strong>
+          <small>{totals.saleCovered} exact completed sales</small>
         </article>
         <article>
-          <span>Traceable sources</span>
-          <strong>{totals.sourced}</strong>
-          <small>Latest records with source links</small>
+          <span>Research queue</span>
+          <strong>{intelligence.reviewQueue.length}</strong>
+          <small>{totals.neverValued} never valued · {totals.dueSoon + totals.stale} aging</small>
         </article>
       </section>
       <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>Source-finding and normalization assisted by Cedriva AI</span></div><a href="/trust">Understand the evidence labels →</a></aside>
@@ -145,12 +143,13 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                       ? "Linked evidence ✓"
                       : "Source link needed"}
                   </small>
+                  <small>{row.missingEvidence.join(" · ") || "Evidence complete"}</small>
                 </div>
                 <a
                   className="button secondary"
-                  href={`/records?inventoryId=${row.item.inventoryId}`}
+                  href={`/inventory/${row.item.inventoryId}#value-evidence`}
                 >
-                  Refresh
+                  Why / refresh
                 </a>
               </article>
             ))}
@@ -209,9 +208,9 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                     </td>
                     <td>{row.item.currentQty ?? "—"}</td>
                     <td>
-                      {row.item.retailValue === undefined
+                      {row.retailUnit === undefined
                         ? "—"
-                        : unitMoney.format(row.item.retailValue)}
+                        : unitMoney.format(row.retailUnit)}
                     </td>
                     <td>
                       {retailBoxValue(row.item) === undefined
@@ -220,11 +219,11 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                       {row.item.sticksPerBox !== undefined && <small>{row.item.sticksPerBox} cigars</small>}
                     </td>
                     <td>
-                      {row.latestUnit === undefined ? (
+                      {row.marketUnit === undefined ? (
                         "—"
                       ) : (
                         <>
-                          {unitMoney.format(row.latestUnit)}
+                          {unitMoney.format(row.marketUnit)}
                           <small>{row.latest?.valuationDate}</small>
                         </>
                       )}
