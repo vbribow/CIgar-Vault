@@ -5,6 +5,7 @@ import test from "node:test";
 const learn = readFileSync(new URL("../app/learn/page.tsx", import.meta.url), "utf8");
 const foundations = readFileSync(new URL("../app/learn/foundations/page.tsx", import.meta.url), "utf8");
 const seedToSmoke = readFileSync(new URL("../app/learn/seed-to-smoke/page.tsx", import.meta.url), "utf8");
+const vitolas = readFileSync(new URL("../app/learn/vitolas/page.tsx", import.meta.url), "utf8");
 
 test("the Curious pathway opens a dedicated beginner journey", () => {
   assert.match(learn, /"\/learn\/seed-to-smoke","Follow tobacco from seed to smoke"/);
@@ -18,6 +19,17 @@ test("Seed to Smoke teaches agriculture, craft, roller development, and source d
   assert.match(seedToSmoke, /qualification systems differ by country, era, and factory/);
   assert.match(seedToSmoke, /not as a universal credential/);
   assert.match(seedToSmoke, /Honor the craft without turning legend into fact/);
+});
+
+test("vitola learning teaches measurement, shape, construction, and naming uncertainty", () => {
+  for (const lesson of ["Length", "Ring gauge", "Parejos", "Figurados", "Petit Corona", "Robusto", "Churchill", "Lancero", "Belicoso", "Perfecto", "Salomón", "Culebra"]) {
+    assert.match(vitolas, new RegExp(lesson));
+  }
+  assert.match(vitolas, /vitola de galera/);
+  assert.match(vitolas, /vitola de salida/);
+  assert.match(vitolas, /useful reference ranges—not universal laws/);
+  assert.match(vitolas, /Size does not mechanically determine strength, quality, or flavor/);
+  assert.match(learn, /href="\/learn\/vitolas"/);
 });
 
 test("foundations teach the complete first-cigar experience in plain language", () => {
