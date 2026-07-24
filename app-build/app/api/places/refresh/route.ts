@@ -1,0 +1,9 @@
+import { NextResponse } from "next/server";
+import { createClient as createAdmin } from "@supabase/supabase-js";
+import { authorizeSensorSync } from "@/lib/config";
+export async function GET(request:Request){
+ if(!authorizeSensorSync(request))return NextResponse.json({error:"Unauthorized"},{status:401});
+ const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),key=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),googleKey=process.env.GOOGLE_PLACES_API_KEY?.trim();
+ if(!url||!key||!googleKey)return NextResponse.json({error:"Monthly location verification is not configured"},{status:503});
+ try{const db=createAdmin(url,key,{auth:{persistSession:false,autoRefreshToken:false}});const{data,error}=await db.from("community_locations").select("google_place_id,last_verified_at").or(`last_verified_at.is.null,last_verified_at.lt.${new Date(Date.now()-30*86_400_000).toISOString()}`).limit(100);if(error)throw error;const outcomes=[];for(const row of data||[]){const response=await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(row.google_place_id)}`,{headers:{"X-Goog-Api-Key":googleKey,"X-Goog-FieldMask":"id,businessStatus"},cache:"no-store"});const checkedAt=new Date().toISOString();await db.from("location_verification_events").insert({google_place_id:row.google_place_id,checked_at:checkedAt,outcome:response.ok?"reachable":"attention",detail:response.ok?"Google place record reached; public data remains live-only.":`Place lookup returned ${response.status}.`});if(response.ok)await db.from("community_locations").update({last_verified_at:checkedAt}).eq("google_place_id",row.google_place_id);outcomes.push({googlePlaceId:row.google_place_id,status:response.ok?"verified":"attention"})}return NextResponse.json({data:{checked:outcomes.length,outcomes}})}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Monthly location verification failed"},{status:502})}
+}

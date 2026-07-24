@@ -26,6 +26,7 @@ export function AppNavigation() {
     ["/industry/registry","Product Registry","Official products, releases, packaging, and canonical records"],
     ["/provenance-graph","Provenance Graph","See how every cigar connects to people, place, time, and evidence"],
     ["/briefing","Daily Briefing","Review proactive collection and industry intelligence"],
+    ["/places","Cigar Places","Find lounges, cigar bars, and retailers with transparent ratings"],
     ["/partner-platform","Partner Network","Manage attribution, commissions, and industry relationships"],
     ["/partner-workspace","Partner Workspace","Collaborate inside your organization’s private workspace"],
     ["/pricing","Reserve","Explore deeper intelligence and service"],
@@ -39,7 +40,7 @@ export function AppNavigation() {
       <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>
       <Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")||matches(pathname,"/humidors")?"active":undefined}>Vault</Link>
       <Link href="/learn" className={matches(pathname,"/learn")||matches(pathname,"/sommelier-library")||matches(pathname,"/data-model")?"active":undefined}>Learn</Link>
-      <Link href="/community" className={matches(pathname,"/community")?"active":undefined}>Community</Link>
+      <Link href="/community" className={matches(pathname,"/community")||matches(pathname,"/places")?"active":undefined}>Community</Link>
       <Link href="/cigar-somm" className={matches(pathname,"/cigar-somm")||matches(pathname,"/intelligence")?"active":undefined}>Cigar Somm</Link>
       <details className={`navGroup ${moreActive?"active":""}`}><summary>More<span aria-hidden="true">⌄</span></summary><div className="navMenu">{moreLinks.map(([href,label,description])=><Link href={href} className={matches(pathname,href)?"active":undefined} key={href}><strong>{label}</strong><small>{description}</small></Link>)}</div></details>
       <Link href="/notifications" className={matches(pathname, "/notifications") ? "active" : undefined}>Inbox</Link>
