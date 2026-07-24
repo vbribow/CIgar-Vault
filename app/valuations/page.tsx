@@ -37,6 +37,8 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
   const scopedInventory=filters.collectionId?inventory.filter(item=>item.collectionId===filters.collectionId):inventory;
   const completionQueue=intelligence.reviewQueue.filter(row=>
     (!filters.collectionId||row.item.collectionId===filters.collectionId)
+    &&row.item.status!=="Review"
+    &&!/verify|unknown/i.test(row.item.vitola)
     &&valuationNeedsMonitoring(row.item,valuations)
   );
 
