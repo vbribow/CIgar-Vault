@@ -7,6 +7,7 @@ import { partnerAdmin } from "@/lib/partner-platform";
 import { PartnerInvitationInput, createInvitationToken, invitationExpiresAt, safeMembership } from "@/lib/partner-workspace";
 import { ReadinessReview, readinessSeedRows, readinessSummary } from "@/lib/partner-readiness";
 import { industryRevision } from "@/lib/industry-hub";
+import { registryRevision } from "@/lib/industry-registry";
 
 const RequestBody = z.discriminatedUnion("action", [
   z.object({ action: z.literal("createPartner"), data: PartnerInput }),
@@ -34,6 +35,9 @@ const RequestBody = z.discriminatedUnion("action", [
   z.object({action:z.literal("reviewIndustryPublication"),partnerId:z.string().uuid(),publicationId:z.string().uuid(),decision:z.enum(["approved","changes_requested"]),note:z.string().trim().min(10).max(2000)}),
   z.object({action:z.literal("publishIndustryPublication"),partnerId:z.string().uuid(),publicationId:z.string().uuid(),confirmation:z.string()}),
   z.object({action:z.literal("archiveIndustryPublication"),partnerId:z.string().uuid(),publicationId:z.string().uuid(),confirmation:z.string(),note:z.string().trim().min(10).max(2000)}),
+  z.object({action:z.literal("reviewIndustryRegistry"),partnerId:z.string().uuid(),recordId:z.string().uuid(),decision:z.enum(["approved","changes_requested"]),note:z.string().trim().min(10).max(2000)}),
+  z.object({action:z.literal("publishIndustryRegistry"),partnerId:z.string().uuid(),recordId:z.string().uuid(),confirmation:z.string()}),
+  z.object({action:z.literal("archiveIndustryRegistry"),partnerId:z.string().uuid(),recordId:z.string().uuid(),confirmation:z.string(),note:z.string().trim().min(10).max(2000)}),
   z.object({
     action: z.literal("createPayout"),
     partnerId: z.string().uuid(),
@@ -48,9 +52,9 @@ const RequestBody = z.discriminatedUnion("action", [
   }),
 ]);
 type RequestInput=z.infer<typeof RequestBody>;
-type IndustryFounderInput=Extract<RequestInput,{action:"reviewIndustryProfile"|"publishIndustryProfile"|"suspendIndustryProfile"|"reviewIndustryPublication"|"publishIndustryPublication"|"archiveIndustryPublication"}>;
+type IndustryFounderInput=Extract<RequestInput,{action:"reviewIndustryProfile"|"publishIndustryProfile"|"suspendIndustryProfile"|"reviewIndustryPublication"|"publishIndustryPublication"|"archiveIndustryPublication"|"reviewIndustryRegistry"|"publishIndustryRegistry"|"archiveIndustryRegistry"}>;
 function isIndustryFounderInput(input:RequestInput):input is IndustryFounderInput{
-  return["reviewIndustryProfile","publishIndustryProfile","suspendIndustryProfile","reviewIndustryPublication","publishIndustryPublication","archiveIndustryPublication"].includes(input.action);
+  return["reviewIndustryProfile","publishIndustryProfile","suspendIndustryProfile","reviewIndustryPublication","publishIndustryPublication","archiveIndustryPublication","reviewIndustryRegistry","publishIndustryRegistry","archiveIndustryRegistry"].includes(input.action);
 }
 
 function adminOrThrow() {
@@ -94,7 +98,7 @@ export async function GET(request: Request) {
   if (!authorizeWrite(request)) return NextResponse.json({ error: "Founder authorization required" }, { status: 401 });
   try {
     const admin = adminOrThrow();
-    const [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships, readiness, industryProfiles, industryPublications, industryRevisions] = await Promise.all([
+    const [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships, readiness, industryProfiles, industryPublications, industryRevisions, industryRegistry, industryRegistryRevisions] = await Promise.all([
       admin.from("partners").select("*").order("created_at", { ascending: false }),
       admin.from("partner_campaigns").select("*,partners(name)").order("created_at", { ascending: false }),
       admin.from("partner_clicks").select("id,campaign_id,created_at").limit(10000),
@@ -109,6 +113,8 @@ export async function GET(request: Request) {
       admin.from("industry_profiles").select("*").order("updated_at",{ascending:false}).limit(1000),
       admin.from("industry_publications").select("*").order("updated_at",{ascending:false}).limit(2000),
       admin.from("industry_revisions").select("*").order("created_at",{ascending:false}).limit(1000),
+      admin.from("industry_registry_records").select("*").order("updated_at",{ascending:false}).limit(5000),
+      admin.from("industry_registry_revisions").select("*").order("created_at",{ascending:false}).limit(5000),
     ]);
     const error = [partners, campaigns, clicks, attributions, conversions, commissions, payouts, approvals, auditEvents, memberships, readiness, industryProfiles, industryPublications, industryRevisions].find(result => result.error)?.error;
     if (error) throw error;
@@ -126,6 +132,8 @@ export async function GET(request: Request) {
       industryProfiles:industryProfiles.data||[],
       industryPublications:industryPublications.data||[],
       industryRevisions:industryRevisions.data||[],
+      industryRegistry:industryRegistry.error?[]:industryRegistry.data||[],
+      industryRegistryRevisions:industryRegistryRevisions.error?[]:industryRegistryRevisions.data||[],
       summary: {
         activePartners: (partners.data || []).filter(row => row.status === "active").length,
         activeCampaigns: (campaigns.data || []).filter(row => row.status === "active").length,
@@ -382,6 +390,39 @@ export async function POST(request: Request) {
         if(error)throw error;
         await admin.from("industry_revisions").insert(industryRevision({partnerId:partner.id,entityType:"publication",entityId:data.id,action:"founder.archived",actor,snapshot:{note:input.note}}));
         await admin.from("partner_audit_events").insert({partner_id:partner.id,action:"industry.publication_archived",subject_type:"industry_publication",subject_id:data.id,details:{note:input.note}});
+        return NextResponse.json({data});
+      }
+      if(input.action==="reviewIndustryRegistry"){
+        const{data:item,error:itemError}=await admin.from("industry_registry_records").select("*").eq("id",input.recordId).eq("partner_id",partner.id).single();
+        if(itemError)throw itemError;
+        if(item.status!=="submitted")throw new Error("The registry record must be submitted before founder review");
+        if(input.decision==="approved"){
+          const{data:profile}=await admin.from("industry_profiles").select("published_payload,status").eq("partner_id",partner.id).maybeSingle();
+          if(!profile?.published_payload||profile.status==="suspended")throw new Error("Publish the verified organization profile before approving official registry records");
+        }
+        const{data,error}=await admin.from("industry_registry_records").update({status:input.decision,reviewed_by:actor,review_note:input.note,approved_at:input.decision==="approved"?now:null,updated_at:now}).eq("id",item.id).select().single();
+        if(error)throw error;
+        await admin.from("industry_registry_revisions").insert(registryRevision({partnerId:partner.id,recordId:data.id,recordType:data.record_type,action:`founder.${input.decision}`,actor,snapshot:{note:input.note,draft:data.draft_payload}}));
+        await admin.from("partner_audit_events").insert({partner_id:partner.id,action:`industry.registry_${input.decision}`,subject_type:"industry_registry",subject_id:data.id,details:{note:input.note,recordType:data.record_type}});
+        return NextResponse.json({data});
+      }
+      if(input.action==="publishIndustryRegistry"){
+        const{data:item,error:itemError}=await admin.from("industry_registry_records").select("*").eq("id",input.recordId).eq("partner_id",partner.id).single();
+        if(itemError)throw itemError;
+        if(item.status!=="approved")throw new Error("The registry record requires separate founder approval before publication");
+        if(input.confirmation!==`PUBLISH RECORD ${item.id}`)throw new Error(`Type PUBLISH RECORD ${item.id} exactly`);
+        const{data,error}=await admin.from("industry_registry_records").update({status:"published",published_payload:item.draft_payload,published_at:now,updated_at:now}).eq("id",item.id).select().single();
+        if(error)throw error;
+        await admin.from("industry_registry_revisions").insert(registryRevision({partnerId:partner.id,recordId:data.id,recordType:data.record_type,action:"founder.published",actor,snapshot:data.published_payload}));
+        await admin.from("partner_audit_events").insert({partner_id:partner.id,action:"industry.registry_published",subject_type:"industry_registry",subject_id:data.id,details:{recordType:data.record_type}});
+        return NextResponse.json({data});
+      }
+      if(input.action==="archiveIndustryRegistry"){
+        if(input.confirmation!==`ARCHIVE RECORD ${input.recordId}`)throw new Error(`Type ARCHIVE RECORD ${input.recordId} exactly`);
+        const{data,error}=await admin.from("industry_registry_records").update({status:"archived",reviewed_by:actor,review_note:input.note,updated_at:now}).eq("id",input.recordId).eq("partner_id",partner.id).select().single();
+        if(error)throw error;
+        await admin.from("industry_registry_revisions").insert(registryRevision({partnerId:partner.id,recordId:data.id,recordType:data.record_type,action:"founder.archived",actor,snapshot:{note:input.note}}));
+        await admin.from("partner_audit_events").insert({partner_id:partner.id,action:"industry.registry_archived",subject_type:"industry_registry",subject_id:data.id,details:{note:input.note,recordType:data.record_type}});
         return NextResponse.json({data});
       }
       throw new Error("Unsupported Industry Hub action");

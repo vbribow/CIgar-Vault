@@ -6,6 +6,7 @@ import { CampaignInput, campaignLaunchBlockers, partnerCan, type PartnerRole } f
 import { PartnerInvitationInput, buildWorkspaceMetrics, createInvitationToken, invitationExpiresAt, safeMembership } from "@/lib/partner-workspace";
 import { ReadinessSubmission, readinessSummary } from "@/lib/partner-readiness";
 import { IndustryProfileInput, IndustryPublicationInput, industryCanSubmit, industryRevision } from "@/lib/industry-hub";
+import { IndustryPackagingInput, IndustryProductInput, IndustryReleaseInput, registryCanSubmit, registryRevision } from "@/lib/industry-registry";
 
 const WorkspaceRequest=z.discriminatedUnion("action",[
   z.object({action:z.literal("createCampaign"),data:CampaignInput}),
@@ -18,6 +19,10 @@ const WorkspaceRequest=z.discriminatedUnion("action",[
   z.object({action:z.literal("submitIndustryProfile"),partnerId:z.string().uuid()}),
   z.object({action:z.literal("saveIndustryPublication"),data:IndustryPublicationInput}),
   z.object({action:z.literal("submitIndustryPublication"),partnerId:z.string().uuid(),publicationId:z.string().uuid()}),
+  z.object({action:z.literal("saveIndustryProduct"),data:IndustryProductInput}),
+  z.object({action:z.literal("saveIndustryRelease"),data:IndustryReleaseInput}),
+  z.object({action:z.literal("saveIndustryPackaging"),data:IndustryPackagingInput}),
+  z.object({action:z.literal("submitIndustryRegistry"),partnerId:z.string().uuid(),recordId:z.string().uuid()}),
 ]);
 
 async function authenticatedUser(){
@@ -54,7 +59,7 @@ export async function GET(){
     const accessible=(membershipRows||[]).filter(row=>!(row.partners as unknown as{collaboration_locked?:boolean})?.collaboration_locked);
     if(!accessible.length)return NextResponse.json({data:{workspaces:[]}});
     const partnerIds=accessible.map(row=>row.partner_id);
-    const[campaigns,clicks,attributions,conversions,commissions,members,readiness,industryProfiles,industryPublications]=await Promise.all([
+    const[campaigns,clicks,attributions,conversions,commissions,members,readiness,industryProfiles,industryPublications,industryRegistry]=await Promise.all([
       admin.from("partner_campaigns").select("id,partner_id,name,code,channel,status,starts_at,ends_at,attribution_window_days,commission_type,commission_rate,hold_days,approved_at,activated_at").in("partner_id",partnerIds).order("created_at",{ascending:false}),
       admin.from("partner_clicks").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
       admin.from("partner_attributions").select("campaign_id,partner_id").in("partner_id",partnerIds).limit(10000),
@@ -64,6 +69,7 @@ export async function GET(){
       admin.from("partner_readiness_items").select("*").in("partner_id",partnerIds).order("created_at",{ascending:true}),
       admin.from("industry_profiles").select("*").in("partner_id",partnerIds),
       admin.from("industry_publications").select("*").in("partner_id",partnerIds).order("updated_at",{ascending:false}),
+      admin.from("industry_registry_records").select("*").in("partner_id",partnerIds).order("updated_at",{ascending:false}),
     ]);
     const error=[campaigns,clicks,attributions,conversions,commissions,members,readiness,industryProfiles,industryPublications].find(result=>result.error)?.error;
     if(error)throw error;
@@ -98,6 +104,7 @@ export async function GET(){
         industry:{
           profile:(industryProfiles.data||[]).find(item=>item.partner_id===row.partner_id)||null,
           publications:(industryPublications.data||[]).filter(item=>item.partner_id===row.partner_id),
+          registryRecords:industryRegistry.error?[]:(industryRegistry.data||[]).filter(item=>item.partner_id===row.partner_id),
         },
       };
     });
@@ -115,11 +122,41 @@ export async function POST(request:Request){
     const admin=adminOrThrow();
     let partnerId:string;
     switch(input.action){
-      case"createCampaign":case"submitReadiness":case"saveIndustryProfile":case"saveIndustryPublication":partnerId=input.data.partnerId;break;
+      case"createCampaign":case"submitReadiness":case"saveIndustryProfile":case"saveIndustryPublication":case"saveIndustryProduct":case"saveIndustryRelease":case"saveIndustryPackaging":partnerId=input.data.partnerId;break;
       case"inviteMember":partnerId=input.data.partnerId;break;
       default:partnerId=input.partnerId;
     }
     const access=await requireMembership(admin,user.id,partnerId);
+    if(input.action==="saveIndustryProduct"||input.action==="saveIndustryRelease"||input.action==="saveIndustryPackaging"){
+      if(!partnerCan(access.role,"readiness.submit"))throw new Error("Your role cannot edit official registry records");
+      const recordType=input.action==="saveIndustryProduct"?"product":input.action==="saveIndustryRelease"?"release":"packaging";
+      const payload={...input.data,partnerId:undefined,recordId:undefined},now=new Date().toISOString();
+      let data;
+      if(input.data.recordId){
+        const{data:existing,error:lookupError}=await admin.from("industry_registry_records").select("*").eq("id",input.data.recordId).eq("partner_id",partnerId).eq("record_type",recordType).single();
+        if(lookupError)throw lookupError;
+        if(!registryCanSubmit(existing.status))throw new Error("This registry record is locked while Cedriva reviews it");
+        const result=await admin.from("industry_registry_records").update({status:"draft",draft_payload:payload,review_note:null,reviewed_by:null,submitted_at:null,approved_at:null,updated_at:now}).eq("id",existing.id).select().single();
+        if(result.error)throw result.error;data=result.data;
+      }else{
+        const result=await admin.from("industry_registry_records").insert({partner_id:partnerId,record_type:recordType,status:"draft",trust_level:"Official",draft_payload:payload,created_by:user.id}).select().single();
+        if(result.error)throw result.error;data=result.data;
+      }
+      await admin.from("industry_registry_revisions").insert(registryRevision({partnerId,recordId:data.id,recordType,action:"draft.saved",actor:`partner:${user.id}`,snapshot:payload}));
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:`industry.${recordType}_draft_saved`,subject_type:"industry_registry",subject_id:data.id,details:{recordType}});
+      return NextResponse.json({data});
+    }
+    if(input.action==="submitIndustryRegistry"){
+      const{data:item,error:itemError}=await admin.from("industry_registry_records").select("*").eq("id",input.recordId).eq("partner_id",partnerId).single();
+      if(itemError)throw itemError;
+      if(!registryCanSubmit(item.status))throw new Error("This registry record cannot be submitted from its current status");
+      const now=new Date().toISOString();
+      const{data,error}=await admin.from("industry_registry_records").update({status:"submitted",submitted_at:now,review_note:null,updated_at:now}).eq("id",item.id).select().single();
+      if(error)throw error;
+      await admin.from("industry_registry_revisions").insert(registryRevision({partnerId,recordId:data.id,recordType:data.record_type,action:"submitted",actor:`partner:${user.id}`,snapshot:data.draft_payload}));
+      await admin.from("partner_audit_events").insert({partner_id:partnerId,actor:`partner:${user.id}`,action:"industry.registry_submitted",subject_type:"industry_registry",subject_id:data.id,details:{recordType:data.record_type}});
+      return NextResponse.json({data});
+    }
     if(input.action==="saveIndustryProfile"){
       if(!partnerCan(access.role,"readiness.submit"))throw new Error("Your role cannot edit the official organization profile");
       const{data:existing}=await admin.from("industry_profiles").select("*").eq("partner_id",partnerId).maybeSingle();
