@@ -3,6 +3,7 @@ import { accountDataMode } from "@/lib/user-data";
 import { humidorInsights } from "@/lib/humidor-insights";
 import { loadInventory } from "@/lib/inventory";
 import { loadHumidorReadings, loadHumidors } from "@/lib/data";
+import { climateIntelligence } from "@/lib/climate-intelligence";
 import "../humidors.css";
 import "./detail.css";
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function HumidorDetailPage({
   const humidor = humidors.find((h) => h.humidorId === humidorId);
   if (!humidor) notFound();
   const insight = humidorInsights(humidor, readings);
+  const intelligence = climateIntelligence(humidor, readings);
   const members = inventory.filter((i) => i.storageLocationId === humidorId);
   const quantity = members.reduce((n, i) => n + (i.currentQty || 0), 0);
   const value = members.reduce(
@@ -44,7 +46,7 @@ export default async function HumidorDetailPage({
       <section className="detailClimateHero">
         <div>
           <div className="eyebrow">
-            {humidor.type || "Humidor"} ·{" "}
+            {intelligence.profile.label} profile · {humidor.type || "Humidor"} ·{" "}
             {humidor.location || "Location not set"}
           </div>
           <h1>{humidor.name}</h1>
@@ -104,6 +106,16 @@ export default async function HumidorDetailPage({
       <section className="climateContextLink">
         <div><div className="eyebrow">Interpret this environment</div><strong>One reading is a moment. The trend is the climate.</strong><p>Compare this humidor’s selected targets with New World and official Habanos guidance, then learn what sustained heat, dryness, or excess moisture can do over time.</p></div>
         <a className="button secondary" href="/learn/humidor-climate">Open climate education</a>
+      </section>
+      <section className={`climateStewardship ${intelligence.sustained?"sustained":""}`}>
+        <div className="stewardshipLead"><div className="eyebrow">Climate stewardship · {intelligence.profile.authority}</div><h2>{intelligence.state}</h2><p>{intelligence.summary}</p>{intelligence.consequence&&<blockquote>{intelligence.consequence}</blockquote>}{intelligence.action&&<div className="recommendedAction"><span>Recommended response</span><strong>{intelligence.action}</strong></div>}</div>
+        <div className="exposureLedger">
+          <div><span>Warm exposure</span><strong>{intelligence.exposureHours.tooWarm}h</strong><small>Estimated from observed readings</small></div>
+          <div><span>Dry exposure</span><strong>{intelligence.exposureHours.tooDry}h</strong><small>Estimated from observed readings</small></div>
+          <div><span>Humid exposure</span><strong>{intelligence.exposureHours.tooHumid}h</strong><small>Estimated from observed readings</small></div>
+          <div><span>Current streak</span><strong>{intelligence.consecutiveReadings}</strong><small>Consecutive observed exceptions</small></div>
+        </div>
+        <small className="exposureMethod">Exposure estimates cap gaps between readings so sparse manual logs are not presented as continuous sensor evidence.</small>
       </section>
       <section className="climateAnalytics">
         <article className="card trendPanel">
