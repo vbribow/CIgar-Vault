@@ -8,6 +8,7 @@ const seedToSmoke = readFileSync(new URL("../app/learn/seed-to-smoke/page.tsx", 
 const vitolas = readFileSync(new URL("../app/learn/vitolas/page.tsx", import.meta.url), "utf8");
 const blending = readFileSync(new URL("../app/learn/blending/page.tsx", import.meta.url), "utf8");
 const manufacturingTruth = readFileSync(new URL("../app/learn/manufacturing-truth/page.tsx", import.meta.url), "utf8");
+const manufacturingDirectory = readFileSync(new URL("../components/manufacturing-truth-directory.tsx", import.meta.url), "utf8");
 const rootProxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
 const supabaseProxy = readFileSync(new URL("../lib/supabase/proxy.ts", import.meta.url), "utf8");
 
@@ -118,6 +119,9 @@ test("learning routes form a connected curriculum around manufacturing truth", (
   assert.match(manufacturingTruth, /Complete Cedriva brand universe/);
   assert.match(manufacturingTruth, /allBrandManufacturingCoverage/);
   assert.match(manufacturingTruth, /No cigar disappears because its factory is unknown/);
+  assert.match(manufacturingDirectory, /Choose a cigar manufacturer/);
+  assert.match(manufacturingDirectory, /records\.map\(\(record\) => <option/);
+  assert.match(manufacturingDirectory, /All manufacturers/);
 });
 
 test("the complete Cedriva learning curriculum remains publicly accessible", () => {
