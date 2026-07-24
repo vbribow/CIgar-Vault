@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { TrustMark } from "@/components/trust-mark";
 import { loadPublicIndustry } from "@/lib/industry-public";
 import { publicationTypeLabel } from "@/lib/industry-hub";
+import { publicPageMetadata } from "@/lib/seo";
 import "./industry.css";
 
 export const dynamic="force-dynamic";
-export const metadata:Metadata={title:"Industry Hub",description:"Official manufacturer profiles, announcements, product launches, packaging changes, and alerts—clearly sourced and reviewed by Cedriva."};
+export const metadata:Metadata=publicPageMetadata("Industry Hub","Official manufacturer profiles, announcements, product launches, packaging changes, and alerts—clearly sourced and reviewed by Cedriva.","/industry");
 
 export default async function IndustryHubPage(){
   const{profiles,publications,registryRecords}=await loadPublicIndustry();

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo";
 import "./data-model.css";
 
-export const metadata: Metadata = {
-  title: "How Cedriva Understands a Cigar",
-  description: "Explore Cedriva’s collector-centered model for cigar identity, releases, ownership, provenance, evidence, and legacy.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "How Cedriva Understands a Cigar",
+  "Explore Cedriva’s collector-centered model for cigar identity, releases, ownership, provenance, evidence, and legacy.",
+  "/data-model",
+);
 
 const identityLayers = [
   ["Organization", "Who owns, produces, imports, distributes, or represents it?"],

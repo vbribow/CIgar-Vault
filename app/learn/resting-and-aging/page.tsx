@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo";
 import "./resting-and-aging.css";
 
-export const metadata: Metadata = {
-  title: "Resting & Aging Cigars",
-  description:
-    "Learn why newly arrived cigars benefit from rest, how long acclimation can take, and how deliberate long-term aging differs from simple storage.",
-};
+export const metadata: Metadata = publicPageMetadata(
+  "Resting & Aging Cigars",
+  "Learn why newly arrived cigars benefit from rest, how long acclimation can take, and how deliberate long-term aging differs from simple storage.",
+  "/learn/resting-and-aging",
+);
 
 const arrivalWindows = [
   {

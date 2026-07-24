@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cedrivaPrinciples } from "@/lib/cedriva-constitution";
-export const metadata:Metadata={title:"The Cedriva Constitution",description:"Cedriva’s purpose, commitments, and promise to premium cigar culture."};
+import { publicPageMetadata } from "@/lib/seo";
+export const metadata:Metadata=publicPageMetadata("The Cedriva Constitution","Cedriva’s purpose, commitments, and promise to premium cigar culture.","/constitution");
 const commitments=[
   ["New collectors","Every expert was once a beginner. Questions are welcomed, learning is celebrated, and every collector deserves to belong from day one."],
   ["Experienced collectors","Experience deserves respect. Cedriva amplifies expertise with advanced tools worthy of the world’s finest collections."],

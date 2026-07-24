@@ -5,10 +5,11 @@ import { loadCatalog } from "@/lib/catalog";
 import { buildCanonicalCigarRecord, canonicalCatalogHref } from "@/lib/canonical-cigar-record";
 import type { IndustryPackagingPayload, IndustryProductPayload, IndustryReleasePayload } from "@/lib/industry-registry";
 import { TrustMark } from "@/components/trust-mark";
+import { publicPageMetadata } from "@/lib/seo";
 import "./registry.css";
 
 export const dynamic="force-dynamic";
-export const metadata:Metadata={title:"Official Product & Release Registry",description:"Official products, releases, packaging revisions, and evidence-aware canonical cigar records."};
+export const metadata:Metadata=publicPageMetadata("Official Product & Release Registry","Official products, releases, packaging revisions, and evidence-aware canonical cigar records.","/industry/registry");
 
 export default async function IndustryRegistryPage(){
   const[inventory,industry]=await Promise.all([loadInventory(),loadPublicIndustry()]);

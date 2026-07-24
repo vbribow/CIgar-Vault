@@ -3,13 +3,16 @@ import type { Metadata } from "next";
 import { TrustMark } from "@/components/trust-mark";
 import { loadPublicIndustry } from "@/lib/industry-public";
 import { publicationTypeLabel } from "@/lib/industry-hub";
+import { publicPageMetadata } from "@/lib/seo";
 import "../industry.css";
 
 export const dynamic="force-dynamic";
 
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
   const{slug}=await params,{profiles}=await loadPublicIndustry(),profile=profiles.find(item=>item.slug===slug);
-  return profile?{title:profile.payload.displayName,description:profile.payload.summary}:{title:"Industry profile"};
+  return profile
+    ? publicPageMetadata(profile.payload.displayName,profile.payload.summary,`/industry/${profile.slug}`)
+    : {title:"Industry profile",robots:{index:false,follow:false}};
 }
 
 export default async function IndustryProfilePage({params}:{params:Promise<{slug:string}>}){
