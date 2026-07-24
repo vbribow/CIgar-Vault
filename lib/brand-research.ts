@@ -9,6 +9,19 @@ export type BrandResearchItem = BrandManufacturingCoverage & {
   missing: string[];
 };
 
+export function brandResearchBrief(item: BrandResearchItem) {
+  const countryKnown = item.status === "Country verified";
+  return {
+    question: countryKnown
+      ? `Which factory made each documented ${item.brand} release, and during which production period?`
+      : `Who owns ${item.brand}, who shaped its cigars, and which factory actually manufactured each release?`,
+    sourceOrder: countryKnown
+      ? ["Official product or regional-release record", "Dated packaging, box code, or factory documentation", "Corroborating historical or trade source"]
+      : ["Official brand or manufacturer profile", "Direct factory, distributor, or launch announcement", "Corroborating interview or established trade report"],
+    publicationRule: "Record the owner, creative authorship, actual factory, release or line, production period, source date, and confidence separately. Never extend evidence from one cigar to the entire brand.",
+  };
+}
+
 export const brandResearchSources = [
   {
     name: "Official manufacturer newsrooms",
