@@ -12,6 +12,6 @@ test("collections remain directly reachable through the mobile Vault and invento
 });
 
 test("mobile navigation keeps Cigar Somm prominent",()=>{
-  for(const label of["Home","Discover","Document","Vault","Somm"])assert.match(navigation,new RegExp(`<small>${label}<\\/small>`));
+  for(const label of["Home","Community","Document","Vault","Somm"])assert.match(navigation,new RegExp(`<small>${label}<\\/small>`));
   assert.match(navigation, />Cigar Somm<\/Link>/);
 });
