@@ -57,10 +57,10 @@ test("nearby vitolas never share retail automatically", () => {
 test("collection components preserve exact named families and mark unresolved vitolas for review", () => {
   const fuente = { ...template, requirements: ["OpusX Angel’s Share Fuente Fuente"] };
   assert.deepEqual(collectionComponentIdentity(fuente.requirements[0], fuente), {
-    brand: "Arturo Fuente", line: "OpusX Angel’s Share", vitola: "Fuente Fuente", quantity: 1, needsIdentityReview: false,
+    brand: "Arturo Fuente", line: "OpusX Angel’s Share Fuente Fuente", vitola: "Size to verify", quantity: 1, needsIdentityReview: true,
   });
   const unresolved = collectionComponentIdentity("Family Reserve", { ...template, maker: "Padrón" });
-  assert.equal(unresolved.vitola, "Vitola to verify");
+  assert.equal(unresolved.vitola, "Size to verify");
   assert.equal(unresolved.needsIdentityReview, true);
 });
 
@@ -76,11 +76,11 @@ test("Dream to Dynasty preserves partner-facing brands and exact named cigars", 
     ],
   };
   assert.deepEqual(collectionComponentIdentity(dream.requirements[0], dream), {
-    brand: "Ashton", line: "Ashton ESG", vitola: "20-Year Salute", quantity: 1, needsIdentityReview: false,
+    brand: "Ashton", line: "Ashton ESG 20-Year Salute", vitola: "Size to verify", quantity: 1, needsIdentityReview: true,
   });
   assert.equal(collectionComponentIdentity(dream.requirements[1], dream).brand, "Diamond Crown");
   assert.deepEqual(collectionComponentIdentity(dream.requirements[2], dream), {
-    brand: "Arturo Fuente", line: "OpusX", vitola: "BBMF Natural", quantity: 1, needsIdentityReview: false,
+    brand: "Arturo Fuente", line: "OpusX BBMF Natural", vitola: "Size to verify", quantity: 1, needsIdentityReview: true,
   });
 });
 

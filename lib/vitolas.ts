@@ -10,7 +10,17 @@ export const standardVitolas = [
   "Toro Extra", "Toro Gordo", "Toro Grande", "Torpedo"
 ] as const;
 
+const normalized=(value:string)=>value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+export function isPhysicalVitola(value:string){
+  const candidate=normalized(value);
+  return standardVitolas.some(vitola=>{
+    const name=normalized(vitola);
+    return candidate===name||candidate.startsWith(`${name} (`)||candidate.startsWith(`${name} —`);
+  })||/\b\d+(?:\.\d+)?\s*(?:in(?:ches)?|[″"]|×|x)\s*\d{2}\b/i.test(value);
+}
+
 export function vitolaOptions(catalogVitolas: string[] = [], includeStandards = true) {
-  return [...new Set([...(includeStandards ? standardVitolas : []), ...catalogVitolas].map((value) => value.trim()).filter(Boolean))]
+  const catalog=includeStandards?catalogVitolas:catalogVitolas.filter(isPhysicalVitola);
+  return [...new Set([...(includeStandards ? standardVitolas : []), ...catalog].map((value) => value.trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b));
 }
