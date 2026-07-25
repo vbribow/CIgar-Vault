@@ -74,7 +74,6 @@ test("community activity metrics are real accessible navigation controls",()=>{
  assert.match(component,/aria-label=\{`View \$\{data\.ratingCount\} collector ratings`\}/);
  assert.match(component,/href="\/community\?tab=board#recent-discussions"/);
  assert.match(component,/href="\/community\?tab=ratings#rate-a-cigar"/);
- assert.match(component,/href="\/community\?tab=ratings#top-25"/);
  assert.doesNotMatch(component,/aria-pressed=\{tab==="ratings"\}/);
 });
 test("community destinations lead to substantive, distinct content",()=>{
@@ -90,8 +89,9 @@ test("Cedriva 25 is the prominent default community destination",()=>{
  const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");
  const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
  assert.match(page,/initialTab=\{tab==="board"\?"board":"ratings"\}/);
- assert.match(component,/className="cedriva25Metric"/);
- assert.ok(component.indexOf("cedriva25Metric")<component.indexOf("recent discussions"));
- assert.match(component,/The community benchmark/);
+ assert.match(page,/className="cedriva25Hero"/);
+ assert.match(page,/href="\/community\?tab=ratings#top-25"/);
+ assert.match(page,/The community benchmark/);
+ assert.doesNotMatch(component,/cedriva25Metric/);
  assert.match(page,/The Cedriva Collectors’ Lounge/);
 });
