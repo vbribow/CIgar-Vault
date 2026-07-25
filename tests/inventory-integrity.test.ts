@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findDuplicateInventoryIds, integritySummary, reconcileInventory } from "../lib/inventory-integrity";
+import { findDuplicateInventoryIds, integritySummary, reconcileInventory, restorableFromMaster } from "../lib/inventory-integrity";
 import type { InventoryItem } from "../lib/types";
 
 const lot = (inventoryId: string, currentQty = 10): InventoryItem => ({ inventoryId, brand: "Cohiba", line: "Linea 1492", vitola: "Siglo IV", currentQty });
@@ -15,4 +15,9 @@ test("summarizes alignment and detects duplicate IDs", () => {
     const result = reconcileInventory([lot("A"), lot("B")], [lot("A")]);
     assert.deepEqual(integritySummary(result), { total: 2, matched: 1, mismatched: 0, masterOnly: 1, accountOnly: 0, score: 50 });
     assert.deepEqual(findDuplicateInventoryIds([lot("A"), lot("A"), lot("B")]), [{ inventoryId: "A", count: 2 }]);
+});
+
+test("legacy recovery restores only records missing from the authoritative account", () => {
+    const result = reconcileInventory([lot("A"), lot("B"), lot("C", 20)], [lot("A"), lot("C", 19), lot("D")]);
+    assert.deepEqual(restorableFromMaster(result).map(item => item.inventoryId), ["B"]);
 });

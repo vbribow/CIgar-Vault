@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getInventory } from "@/lib/smartsheet";
-import { importOwnedRecords, saveOwnedRecord } from "@/lib/user-data";
+import type { InventoryItem } from "@/lib/types";
+import { importOwnedRecords, loadAccountRecords, saveOwnedRecord } from "@/lib/user-data";
 
 const Body = z.object({ inventoryIds: z.array(z.string().trim().min(1)).min(1).max(500) });
 
@@ -9,7 +10,15 @@ export async function POST(request: Request) {
   try {
     const { inventoryIds } = Body.parse(await request.json());
     const selected = new Set(inventoryIds);
-    const master = (await getInventory()).filter(item => selected.has(item.inventoryId));
+    const [masterInventory, accountInventory] = await Promise.all([
+      getInventory(),
+      loadAccountRecords<InventoryItem>("inventory"),
+    ]);
+    if (!accountInventory) return NextResponse.json({ error: "Sign in before restoring inventory" }, { status: 401 });
+    const existing = new Set(accountInventory.map(item => item.inventoryId));
+    const conflicts = inventoryIds.filter(id => existing.has(id));
+    if (conflicts.length) return NextResponse.json({ error: `Existing Cedriva records cannot be overwritten: ${conflicts.join(", ")}` }, { status: 409 });
+    const master = masterInventory.filter(item => selected.has(item.inventoryId));
     const missing = inventoryIds.filter(id => !master.some(item => item.inventoryId === id));
     if (missing.length) return NextResponse.json({ error: `Not found in Smartsheet: ${missing.join(", ")}` }, { status: 409 });
     const restored = await importOwnedRecords(master.map(payload => ({ kind: "inventory" as const, recordId: payload.inventoryId, payload })));
