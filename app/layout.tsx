@@ -16,6 +16,7 @@ export async function generateMetadata():Promise<Metadata>{
   const description=cedrivaDescription;
   return{
     metadataBase:origin,
+    applicationName:"Cedriva",
     title:{default:title,template:"%s · Cedriva"},
     description,
     authors:[{name:"Cedriva"}],
@@ -26,7 +27,8 @@ export async function generateMetadata():Promise<Metadata>{
     verification:process.env.GOOGLE_SITE_VERIFICATION?{google:process.env.GOOGLE_SITE_VERIFICATION}:undefined,
     manifest:"/manifest.webmanifest",
     appleWebApp:{capable:true,statusBarStyle:"black-translucent",title:"Cedriva"},
-    icons:{icon:[{url:"/cedriva-mark.svg",type:"image/svg+xml"},{url:"/icons/cedriva-192.png",sizes:"192x192",type:"image/png"}],apple:[{url:"/icons/cedriva-192.png",sizes:"192x192",type:"image/png"}]},
+    icons:{icon:[{url:"/cedriva-mark.svg",type:"image/svg+xml"},{url:"/icons/cedriva-app-192-v4.png",sizes:"192x192",type:"image/png"}],apple:[{url:"/icons/cedriva-apple-180-v4.png",sizes:"180x180",type:"image/png"}]},
+    other:{"mobile-web-app-capable":"yes","apple-mobile-web-app-title":"Cedriva"},
     openGraph:{type:"website",url:origin,title,description,siteName:"Cedriva",images:[{url:new URL("/og.png",origin),width:1659,height:948,alt:"Cedriva — preserve, honor, and grow premium cigar culture"}]},
     twitter:{card:"summary_large_image",title,description,images:[new URL("/og.png",origin)]},
   };
