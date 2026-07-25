@@ -147,6 +147,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </section>}
     {tab === "board" ? <div className="communityLayout">
       <section id="recent-discussions">
+<aside className="communityAgeNotice"><strong>21+ collector community</strong><span>Education and discussion only. Marketplace transactions are not permitted.</span></aside>
 <div className="sectionHead">
 <div>
 <div className="eyebrow">Collector conversation</div>

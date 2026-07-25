@@ -95,3 +95,11 @@ test("Cedriva 25 is the prominent default community destination",()=>{
  assert.doesNotMatch(component,/cedriva25Metric/);
  assert.match(page,/The Cedriva Collectors’ Lounge/);
 });
+test("age and marketplace notice appears with message-board participation",()=>{
+ const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.doesNotMatch(page,/21\+ collector community/);
+ assert.match(component,/communityAgeNotice/);
+ assert.match(component,/21\+ collector community/);
+ assert.match(component,/Marketplace transactions are not permitted/);
+});
