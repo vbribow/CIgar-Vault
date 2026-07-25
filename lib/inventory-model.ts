@@ -82,6 +82,12 @@ export function applyTotalQuantityCorrection(item: InventoryInput,total:number):
   return{...rest,originalQty:total+(item.smokedQty??0),currentQty:total};
 }
 
+export function manualInventoryId(now=Date.now(),random=Math.random()){
+  const time=now.toString(36).toUpperCase();
+  const suffix=Math.floor(random*0xFFFFFF).toString(36).toUpperCase().padStart(5,"0").slice(-5);
+  return `INV-${time}-${suffix}`;
+}
+
 export function inventoryCompleteness(item: InventoryItem): number {
   const fields = [item.originalQty, item.currentQty, item.retailValue, item.vintage, item.storageLocationId];
   return Math.round((fields.filter((value) => value !== undefined && value !== "").length / fields.length) * 100);

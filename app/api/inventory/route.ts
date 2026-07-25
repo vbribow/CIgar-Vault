@@ -8,13 +8,13 @@ import {
   normalizeInventory,
 } from "@/lib/inventory-model";
 import { addInventoryRow, getInventory, getValuations, recordValuation } from "@/lib/smartsheet";
-import { accountDataMode, saveOwnedRecord } from "@/lib/user-data";
+import { accountDataMode, createOwnedRecords } from "@/lib/user-data";
 import { applyReusableValuations } from "@/lib/valuation-monitor";
 
 function errorResponse(error: unknown) {
   if (error instanceof ZodError)
     return NextResponse.json(
-      { error: "Invalid inventory data", issues: error.issues },
+      { error: `Check the highlighted inventory details: ${error.issues.map(issue => `${issue.path.join(".") || "record"} — ${issue.message}`).join("; ")}`, issues: error.issues },
       { status: 422 },
     );
   const message = error instanceof Error ? error.message : "Unknown error";
@@ -45,10 +45,15 @@ export async function POST(request: Request) {
       getInventory().catch(()=>[]),
       getValuations().catch(()=>[]),
     ]);
+    if([...inventory,...sharedInventory].some(item=>item.inventoryId===draft.inventoryId)){
+      return NextResponse.json({error:`${draft.inventoryId} already exists. Open that record to update it, or leave the reference blank so Cedriva can create a new one.`},{status:409});
+    }
     const immediate=applyReusableValuations([draft],[...inventory,...sharedInventory],[...valuations,...sharedValuations]);
     const item=immediate.items[0];
-    if (await saveOwnedRecord("inventory", item.inventoryId, item)) {
-      await Promise.all(immediate.valuations.map(value=>saveOwnedRecord("valuations",value.valuationId,value)));
+    if (await createOwnedRecords([
+      {kind:"inventory",recordId:item.inventoryId,payload:item},
+      ...immediate.valuations.map(value=>({kind:"valuations" as const,recordId:value.valuationId,payload:value})),
+    ])) {
       return NextResponse.json({ data:item,valuation:{valuedImmediately:immediate.valuedImmediately,status:immediate.valuedImmediately?"Exact-match value applied":"Priority research queued"} }, { status:201 });
     }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

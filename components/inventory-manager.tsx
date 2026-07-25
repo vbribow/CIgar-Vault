@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { applyTotalQuantityCorrection, inventoryCompleteness } from "@/lib/inventory-model";
+import { applyTotalQuantityCorrection, inventoryCompleteness, manualInventoryId } from "@/lib/inventory-model";
 import type { DataMode } from "@/lib/config";
 import type { CigarCollection, InventoryItem, ProfessionalRating } from "@/lib/types";
 import { lotRetailValue, retailBoxValue } from "@/lib/valuation";
@@ -17,6 +17,7 @@ import { InventoryCorrectionAssistant } from "@/components/inventory-correction-
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
+const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","score","action","habanosSealPhotoLink","notes"]);
 
 export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialMissing = "all", initialStorage = "all" }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialMissing?: string; initialStorage?: string }) {
   const [items, setItems] = useState(initialItems);
@@ -58,7 +59,15 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     event.preventDefault(); setSaving(true); setMessage("");
     const form = new FormData(event.currentTarget);
     const payload: Record<string, unknown> = editing ? { ...editing } : {};
-    for (const [key, value] of form.entries()) if (key !== "writeKey" && key !== "quickTotal" && value !== "") payload[key] = numberFields.has(key) ? Number(value) : value;
+    for (const [key, value] of form.entries()) {
+      if(key==="writeKey"||key==="quickTotal")continue;
+      if(value===""){
+        if(editing&&clearableFields.has(key))delete payload[key as keyof typeof payload];
+        continue;
+      }
+      payload[key]=numberFields.has(key)?Number(value):value;
+    }
+    if(!editing&&!String(payload.inventoryId||"").trim())payload.inventoryId=manualInventoryId();
     if (editing && editMode === "year" && String(form.get("vintage") || "").trim() === "") delete payload.vintage;
     const quickTotal=String(form.get("quickTotal")||"").trim();
     if(quickTotal!=="")Object.assign(payload,applyTotalQuantityCorrection(payload as InventoryItem,Number(quickTotal)),{fullBoxQty:undefined,sticksPerBox:undefined,looseStickQty:undefined});
@@ -73,7 +82,9 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Save failed");
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
-      setEditing(null); setDraft(null); setMessage(`${id} saved.`); event.currentTarget.reset();
+      const savedId=String(result.data.inventoryId||id);
+      const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";
+      setEditing(null); setDraft(null); setMessage(`${savedId} saved and synchronized.${valuationStatus}`); event.currentTarget.reset();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
@@ -151,7 +162,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
 
     <section className={`section editor ${editing?"editingEditor":""}`}><div className="sectionHead"><div><div className="eyebrow">{editing&&editMode==="quantity"?"Quantity correction":editing&&editMode==="year"?"Production information":"Inventory editor"}</div><h2>{editing ? `${editMode==="quantity"?"Correct quantity":editMode==="year"?"Add production / release year":"Edit"} · ${editing.brand} ${editing.line}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{editing&&editMode==="quantity"?"Enter full boxes, cigars per box, and loose sticks. Total owned recalculates automatically when saved.":editing&&editMode==="year"?"Enter the four-digit production year or official release year. Leave it blank when the year is not known.":mode === "mock" ? "Preview only: connect a data source to enable writes." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && <button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>}</div>
       <form key={formItem.inventoryId || "new"} className={`inventoryForm ${focusedQuantity||focusedYear?"focusedInventoryForm":""}`} onSubmit={submit}>
-        {showAll&&<><label><span>Inventory ID *</span><input name="inventoryId" required defaultValue={formItem.inventoryId} readOnly={Boolean(editing)} /></label><CatalogFields item={formItem} catalog={catalog} /></>}
+        {showAll&&<><label><span>Inventory reference</span><input name="inventoryId" defaultValue={formItem.inventoryId} readOnly={Boolean(editing)} placeholder="Created automatically"/><small>{editing?"Permanent record reference.":"Optional—leave blank and Cedriva will create a unique reference."}</small></label><CatalogFields item={formItem} catalog={catalog} /></>}
         {(showAll||focusedYear)&&<label className={focusedYear?"yearField":undefined}><span>Production / release year</span><input name="vintage" type="number" min="1800" max="2200" inputMode="numeric" placeholder="Example: 2024" defaultValue={formItem.vintage} autoFocus={focusedYear}/><small>Use the box production year or the collection’s official release year.</small></label>}
         {focusedQuantity&&<label className="quantityField quickTotalField"><span>Correct total cigars now</span><input name="quickTotal" type="number" min="0" step="1" placeholder={String(formItem.currentQty??0)} inputMode="numeric" autoFocus/><small>Fastest option: enter the total currently owned. This replaces the box/loose breakdown.</small></label>}
         {(showAll||focusedQuantity)&&<><label className="quantityField"><span>Full boxes owned</span><input name="fullBoxQty" type="number" min="0" step="1" defaultValue={formItem.fullBoxQty} /></label><label className="quantityField"><span>Cigars per box</span><input name="sticksPerBox" type="number" min="1" step="1" defaultValue={formItem.sticksPerBox ?? (suggestedFormat?.sizes.length === 1 ? suggestedFormat.sizes[0] : undefined)} placeholder={formItem.knownBoxSizes || suggestedFormat?.sizes.join(", ") || "e.g. 10, 12, 20, 25"} /></label><label className="quantityField"><span>Loose sticks owned</span><input name="looseStickQty" type="number" min="0" step="1" defaultValue={formItem.looseStickQty} /></label></>}
@@ -161,7 +172,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
         <label><span>Status</span><select name="status" defaultValue={formItem.status}><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label>
         <label><span>Priority</span><input name="priority" defaultValue={formItem.priority} /></label>
         <label><span>Storage location</span><input name="storageLocationId" defaultValue={formItem.storageLocationId} /></label>
-        <label><span>Collection ID</span><input name="collectionId" defaultValue={formItem.collectionId} placeholder="Assign in Collections" /></label>
+        <label><span>Collection membership</span><select name="collectionId" defaultValue={formItem.collectionId||""}><option value="">Standalone cigar / not assigned</option>{formItem.collectionId&&!collections.some(collection=>collection.collectionId===formItem.collectionId)&&<option value={formItem.collectionId}>{formItem.collectionId} · Current assignment</option>}{collections.map(collection=><option value={collection.collectionId} key={collection.collectionId}>{collection.name}{collection.releaseYear?` · ${collection.releaseYear}`:""}</option>)}</select><small>Choose only when this physical lot belongs to that presentation or set.</small></label>
         <label><span>Box code</span><input name="boxCode" defaultValue={formItem.boxCode} placeholder="Factory and date code" /></label>
         <label><span>Habanos seal photo URL</span><input name="habanosSealPhotoLink" type="url" defaultValue={formItem.habanosSealPhotoLink} placeholder="https://…" /></label>
         <label className="verificationCheck"><span>Habanos verification</span><span className="checkRow"><input name="habanosVerified" type="checkbox" defaultChecked={formItem.habanosVerified} /> Verified on Habanos.com</span><small>Requires both a box code and seal photo.</small></label>
