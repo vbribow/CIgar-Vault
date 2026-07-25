@@ -75,7 +75,7 @@ test("community activity metrics are real accessible navigation controls",()=>{
  assert.match(component,/href="\/community\?tab=board#recent-discussions"/);
  assert.match(component,/href="\/community\?tab=ratings#rate-a-cigar"/);
  assert.match(component,/href="\/community\?tab=ratings#top-25"/);
- assert.match(component,/aria-pressed=\{tab==="ratings"\}/);
+ assert.doesNotMatch(component,/aria-pressed=\{tab==="ratings"\}/);
 });
 test("community destinations lead to substantive, distinct content",()=>{
  const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
