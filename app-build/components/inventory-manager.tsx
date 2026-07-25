@@ -92,9 +92,17 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   async function remove(item: InventoryItem) {
     const writeKey = window.prompt("Founder write key");
     if (writeKey === null || !window.confirm(`Delete ${item.inventoryId}? This cannot be undone.`)) return;
-    const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, { method: "DELETE", headers: { "x-founder-key": writeKey } });
-    if (response.ok) { setItems((current) => current.filter((candidate) => candidate.inventoryId !== item.inventoryId)); setEditing(null); setMessage(`${item.inventoryId} deleted.`); }
-    else { const result = await response.json(); setMessage(result.error || "Delete failed"); }
+    setMessage("");
+    try {
+      const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, { method: "DELETE", headers: { "x-founder-key": writeKey } });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Delete failed");
+      setItems((current) => current.filter((candidate) => candidate.inventoryId !== item.inventoryId));
+      setEditing(null);
+      setMessage(`${item.inventoryId} deleted.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Delete failed. Check your connection and try again.");
+    }
   }
 
   function toggleSelected(inventoryId: string) {
