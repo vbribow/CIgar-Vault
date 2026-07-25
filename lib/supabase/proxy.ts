@@ -17,7 +17,7 @@ export async function updateSupabaseSession(request: NextRequest) {
       },
     },
   );
-  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname === "/constitution" || request.nextUrl.pathname === "/manifesto" || request.nextUrl.pathname === "/data-model" || request.nextUrl.pathname === "/industry" || request.nextUrl.pathname.startsWith("/industry/") || request.nextUrl.pathname === "/learn" || request.nextUrl.pathname.startsWith("/learn/") || request.nextUrl.pathname.startsWith("/auth/") || request.nextUrl.pathname.startsWith("/partners/invite/");
+  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname === "/privacy" || request.nextUrl.pathname === "/terms" || request.nextUrl.pathname === "/beta-agreement" || request.nextUrl.pathname === "/constitution" || request.nextUrl.pathname === "/manifesto" || request.nextUrl.pathname === "/data-model" || request.nextUrl.pathname === "/industry" || request.nextUrl.pathname.startsWith("/industry/") || request.nextUrl.pathname === "/learn" || request.nextUrl.pathname.startsWith("/learn/") || request.nextUrl.pathname.startsWith("/auth/") || request.nextUrl.pathname.startsWith("/partners/invite/");
   let claims;
   try {
     const { data, error } = await supabase.auth.getClaims();
