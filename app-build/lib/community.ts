@@ -6,15 +6,25 @@ export const CommunityRatingInput=z.object({displayName:z.string().trim().min(2)
 export type CommunityContributionStatus="active"|"review"|"changes"|"hidden";
 export type CommunityPost=z.infer<typeof CommunityPostInput>&{id:string;createdAt:string;status:CommunityContributionStatus;moderationReason?:string};
 export type CommunityRating=z.infer<typeof CommunityRatingInput>&{id:string;createdAt:string;status:CommunityContributionStatus;cigarKey:string;userId?:string;moderationReason?:string};
-export type CommunityRanking={rank:number;cigarKey:string;brand:string;line:string;vitola:string;vintage?:string|number;averageScore:number;weightedScore:number;ratingCount:number};
+export type CommunityRanking={rank:number;cigarKey:string;brand:string;line:string;vitola:string;vintage?:string|number;averageScore:number;weightedScore:number;ratingCount:number;confidence:"provisional"|"developing"|"established"};
 
 export function communityCigarKey(value:Pick<CommunityRating,"brand"|"line"|"vitola"|"vintage">){return cigarIdentityKey(value)}
 const roundScore=(value:number)=>Math.round(value*10)/10;
 const collectorKey=(rating:CommunityRating)=>rating.userId||`display:${rating.displayName.trim().toLowerCase()}`;
+const isEligibleRating=(rating:CommunityRating)=>rating.status==="active"&&Number.isInteger(rating.score)&&rating.score>=1&&rating.score<=100&&Boolean(rating.brand.trim()&&rating.line.trim()&&rating.vitola.trim());
+
+function latestCollectorRatings(ratings:CommunityRating[]){
+  const unique=new Map<string,CommunityRating>();
+  for(const rating of ratings.filter(isEligibleRating)){
+    const key=`${collectorKey(rating)}|${communityCigarKey(rating)}`;
+    const current=unique.get(key);
+    if(!current||rating.createdAt>current.createdAt||(rating.createdAt===current.createdAt&&rating.id>current.id))unique.set(key,rating);
+  }
+  return [...unique.values()];
+}
 
 export function communityPersonalTop10(ratings:CommunityRating[]):CommunityRanking[]{
-  return ratings
-    .filter(value=>value.status==="active")
+  return latestCollectorRatings(ratings)
     .sort((a,b)=>b.score-a.score||b.createdAt.localeCompare(a.createdAt)||communityCigarKey(a).localeCompare(communityCigarKey(b)))
     .slice(0,10)
     .map((value,index)=>({
@@ -26,12 +36,13 @@ export function communityPersonalTop10(ratings:CommunityRating[]):CommunityRanki
       vintage:value.vintage,
       averageScore:value.score,
       weightedScore:value.score,
-      ratingCount:1
+      ratingCount:1,
+      confidence:"provisional"
     }));
 }
 
 export function communityTop25(ratings:CommunityRating[]):CommunityRanking[]{
-  const active=ratings.filter(value=>value.status==="active");
+  const active=latestCollectorRatings(ratings);
   const byCollector=new Map<string,CommunityRating[]>();
   for(const rating of active){
     const key=collectorKey(rating);
@@ -48,13 +59,15 @@ export function communityTop25(ratings:CommunityRating[]):CommunityRanking[]{
     const key=communityCigarKey(rating);
     groups.set(key,[...(groups.get(key)||[]),rating]);
   }
-  return [...groups.entries()].map(([cigarKey,values])=>{
+  const calculated=[...groups.entries()].map(([cigarKey,values])=>{
     const first=values[0];
-    const weightedScore=roundScore(values.reduce((sum,value)=>{
+    const contributions=values.map(value=>{
       const personalRank=topTenRank.get(`${collectorKey(value)}|${cigarKey}`);
       const preferenceSignal=personalRank ? 101-personalRank : value.score;
-      return sum+(value.score*.8+preferenceSignal*.2);
-    },0)/values.length);
+      const collectorRatingCount=byCollector.get(collectorKey(value))?.length||1;
+      const preferenceWeight=.2*Math.min(collectorRatingCount/10,1);
+      return value.score*(1-preferenceWeight)+preferenceSignal*preferenceWeight;
+    });
     return {
       rank:0,
       cigarKey,
@@ -63,10 +76,19 @@ export function communityTop25(ratings:CommunityRating[]):CommunityRanking[]{
       vitola:first.vitola,
       vintage:first.vintage,
       averageScore:roundScore(values.reduce((sum,value)=>sum+value.score,0)/values.length),
-      weightedScore,
-      ratingCount:values.length
+      weightedScore:roundScore(contributions.reduce((sum,value)=>sum+value,0)/contributions.length),
+      ratingCount:values.length,
+      confidence:(values.length>=10?"established":values.length>=3?"developing":"provisional") as CommunityRanking["confidence"],
+      contributions
     };
-  }).sort((a,b)=>b.weightedScore-a.weightedScore||b.averageScore-a.averageScore||b.ratingCount-a.ratingCount||a.brand.localeCompare(b.brand)).slice(0,25).map((value,index)=>({...value,rank:index+1}));
+  });
+  const allContributions=calculated.flatMap(value=>value.contributions);
+  const communityMean=allContributions.length?allContributions.reduce((sum,value)=>sum+value,0)/allContributions.length:0;
+  const priorWeight=3;
+  return calculated.map(value=>({
+    ...value,
+    weightedScore:roundScore((value.contributions.reduce((sum,score)=>sum+score,0)+communityMean*priorWeight)/(value.ratingCount+priorWeight))
+  })).sort((a,b)=>b.weightedScore-a.weightedScore||b.averageScore-a.averageScore||b.ratingCount-a.ratingCount||a.brand.localeCompare(b.brand)).slice(0,25).map(({contributions:_,...value},index)=>({...value,rank:index+1}));
 }
 export function communityStatusLabel(status:CommunityContributionStatus){return status==="active"?"Published":status==="review"?"Under Review":status==="changes"?"Needs Changes":"Not Published"}
 
