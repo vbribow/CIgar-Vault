@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { appOrigin } from "@/lib/app-origin";
 import { claimPartnerReferral } from "@/lib/partner-platform";
+import { requireBetaInvitation } from "@/lib/beta-access";
 
 const safeNext = (value: FormDataEntryValue | null) => typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/";
 const failure = (message: string, mode: string, next: string) => `/login?mode=${mode}&next=${encodeURIComponent(next)}&error=${encodeURIComponent(message)}`;
@@ -24,10 +25,25 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
   const fullName = String(formData.get("fullName") || "").trim();
+  const ageConfirmed = formData.get("ageConfirmation") === "on";
+  const termsAccepted = formData.get("termsAcceptance") === "on";
+  const privacyAccepted = formData.get("privacyAcceptance") === "on";
   const next = safeNext(formData.get("next")) === "/" ? "/account" : safeNext(formData.get("next"));
+  if (!ageConfirmed) redirect(failure("Confirm that you are of legal age where you live and at least 21.", "signup", next));
+  if (!termsAccepted || !privacyAccepted) redirect(failure("Accept the Beta Agreement, Terms, and Privacy Notice to continue.", "signup", next));
+  try {
+    await requireBetaInvitation(email);
+  } catch (error) {
+    redirect(failure(error instanceof Error ? error.message : "Private beta enrollment is unavailable.", "signup", next));
+  }
   const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   const origin = appOrigin((await headers()).get("origin") || "", productionHost);
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: `${origin}/auth/callback?next=${next}` } });
+  const consentedAt = new Date().toISOString();
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: {
+    full_name: fullName,
+    age_confirmed_at: consentedAt,
+    cedriva_consent_version: "beta-1.0-2026-07-24",
+  }, emailRedirectTo: `${origin}/auth/callback?next=${next}` } });
   if (error) redirect(failure(error.message, "signup", next));
   if (data.user) await claimPartnerReferral(data.user.id);
   if (!data.session) redirect("/login?mode=signin&notice=Check%20your%20email%20to%20confirm%20your%20account.");
