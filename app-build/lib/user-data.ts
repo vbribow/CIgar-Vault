@@ -38,6 +38,20 @@ export async function saveOwnedRecord(kind: VaultRecordKind, recordId: string, p
   return true;
 }
 
+export async function createOwnedRecords(records:Array<{kind:VaultRecordKind;recordId:string;payload:unknown}>):Promise<boolean>{
+  const context=await accountContext();
+  if(!context)return false;
+  if(!records.length)return true;
+  const now=new Date().toISOString();
+  const rows=records.map(record=>({user_id:context.user.id,kind:record.kind,record_id:record.recordId,payload:record.payload,updated_at:now}));
+  const{error}=await context.supabase.from("vault_records").insert(rows);
+  if(error){
+    if(error.code==="23505")throw new Error("One of these records already exists. Refresh your Vault before trying again.");
+    throw error;
+  }
+  return true;
+}
+
 export async function deleteOwnedRecord(kind: VaultRecordKind, recordId: string): Promise<boolean> {
   const context = await accountContext();
   if (!context) return false;

@@ -36,6 +36,7 @@ export async function PUT(request: Request, context: Context) {
   try {
     const { inventoryId } = await context.params;
     const existing = (await loadInventory()).find(candidate => candidate.inventoryId === inventoryId);
+    if (!existing) return NextResponse.json({ error: `${inventoryId} was not found. Refresh your Vault before trying again.` }, { status: 404 });
     const item = normalizeInventory(parseInventoryUpdate(await request.json(), existing));
     if (item.inventoryId !== inventoryId)
       return NextResponse.json(
