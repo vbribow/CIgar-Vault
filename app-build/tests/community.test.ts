@@ -67,3 +67,11 @@ test("community destinations lead to substantive, distinct content",()=>{
  assert.match(component,/id="top-25"/);
  assert.match(component,/retailer promotion never does/);
 });
+test("Cedriva 25 is the prominent default community destination",()=>{
+ const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.match(page,/initialTab=\{tab==="board"\?"board":"ratings"\}/);
+ assert.match(component,/className="cedriva25Metric"/);
+ assert.ok(component.indexOf("cedriva25Metric")<component.indexOf("recent discussions"));
+ assert.match(component,/The community benchmark/);
+});

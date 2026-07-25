@@ -107,6 +107,12 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 
   return <>
     <section className="communityMetrics" aria-label="Community activity">
+<Link className="cedriva25Metric" href="/community?tab=ratings#top-25" onClick={()=>setTab("ratings")} aria-label={`Explore the Cedriva 25 with ${data.top25.length} ranked cigars`}>
+<span className="eyebrow">The community benchmark</span>
+<strong>Cedriva 25</strong>
+<span>{data.top25.length ? `${data.top25.length} cigars currently ranked` : "Built from published collector experience"}</span>
+<small>Explore the ranking and shape it with your palate →</small>
+</Link>
 <Link href="/community?tab=board#recent-discussions" onClick={()=>setTab("board")} aria-label={`View ${data.posts.length} recent discussions`}>
 <strong>{data.posts.length}</strong>
 <span>recent discussions</span>
@@ -116,11 +122,6 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <strong>{data.ratingCount}</strong>
 <span>collector ratings</span>
 <small>Rate from your Vault →</small>
-</Link>
-<Link href="/community?tab=ratings#top-25" onClick={()=>setTab("ratings")} aria-label={`View ${data.top25.length} ranked cigars`}>
-<strong>{data.top25.length}</strong>
-<span>ranked cigars</span>
-<small>Explore the Cedriva 25 →</small>
 </Link>
 </section>
     <section className="communityTabs">
