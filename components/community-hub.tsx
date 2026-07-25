@@ -213,7 +213,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <div>
 <div className="eyebrow">Community consensus</div>
 <h2>The Cedriva 25</h2>
-<p>Each collector contributes one score per cigar. Cedriva blends 80% of that score with a 20% personal Top 10 preference signal, then uses rating volume as a tie-breaker. Only published ratings count; retailer promotion never does.</p>
+<p>Each collector contributes one current score per cigar. A mature personal Top 10 can contribute up to 20% preference context; early lists receive proportionally less weight. Cedriva also adjusts small samples toward the community average so one rating cannot imply broad consensus. Only published ratings count.</p>
 </div>
 </div>
 <div className="rankingList">{data.top25.map(item => <article key={item.cigarKey}>
@@ -223,7 +223,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
 <b>{item.weightedScore}</b>
-<small>Cedriva score · {item.averageScore} average · {item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"}</small>
+<small>Cedriva score · {item.averageScore} average · {item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"} · {item.confidence}</small>
 </article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the Cedriva 25 without invented scores or promotional placement.</p></div>}</section>
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating}>
 <div className="eyebrow">Rate a cigar</div>

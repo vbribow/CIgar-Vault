@@ -23,6 +23,25 @@ test("Cedriva 25 blends raw scores with each collector's Top 10 preference",()=>
  assert.equal(rankings[1].weightedScore,95.9);
  assert.equal(rankings[1].ratingCount,2);
 });
+test("Cedriva 25 counts only the latest valid score from each collector and cigar",()=>{
+ const rankings=communityTop25([
+  rating("old",100,{userId:"collector-1",createdAt:"2026-01-01T00:00:00.000Z"}),
+  rating("new",90,{userId:"collector-1",createdAt:"2026-07-01T00:00:00.000Z"}),
+  rating("invalid",101,{userId:"collector-2"})
+ ]);
+ assert.equal(rankings.length,1);
+ assert.equal(rankings[0].averageScore,90);
+ assert.equal(rankings[0].ratingCount,1);
+ assert.equal(rankings[0].confidence,"provisional");
+});
+test("personal preference weight grows only as a collector's list matures",()=>{
+ const newCollector=communityTop25([rating("one",60,{userId:"new-collector"})])[0];
+ const matureRatings=Array.from({length:10},(_,index)=>rating(`m${index}`,60-index,{userId:"mature-collector",line:`Line ${index}`,cigarKey:`cigar-${index}`}));
+ const matureCollector=communityTop25(matureRatings).find(item=>item.line==="Line 0");
+ assert.ok(newCollector.weightedScore<61);
+ assert.ok(matureCollector);
+ assert.equal(matureCollector.averageScore,60);
+});
 test("hidden and review ratings never affect public rankings",()=>assert.equal(communityTop25([rating("1",100,{status:"review"}),rating("2",99,{status:"hidden"})]).length,0));
 test("community safety blocks transactions and reviews contact details",()=>{assert.equal(baselineCommunityModeration("DM me to buy this box").decision,"block");assert.equal(baselineCommunityModeration("Email me for details").decision,"review");assert.equal(baselineCommunityModeration("How do you stabilize a cabinet humidor?").decision,"allow")});
 test("reviewed contributions explain where founder moderation happens",()=>assert.match(readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8"),/AI Administrator review queue/));
@@ -65,7 +84,7 @@ test("community destinations lead to substantive, distinct content",()=>{
  assert.match(component,/id="rate-a-cigar"/);
  assert.match(component,/Your score enters the ranking only after publication/);
  assert.match(component,/id="top-25"/);
- assert.match(component,/retailer promotion never does/);
+ assert.match(component,/one rating cannot imply broad consensus/);
 });
 test("Cedriva 25 is the prominent default community destination",()=>{
  const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");
