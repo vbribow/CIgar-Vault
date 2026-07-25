@@ -7,10 +7,11 @@ test("vitola selector covers standard parejos and figurados", () => {
     assert.ok(standardVitolas.includes(value as typeof standardVitolas[number]));
 });
 
-test("catalog vitolas extend the standard dropdown without duplicates", () => {
-  const options = vitolaOptions(["Robusto", "Rare Estate 1992", "Rare Estate 1992"]);
+test("catalog vitolas extend the standard dropdown without admitting cigar or release names", () => {
+  const options = vitolaOptions(["Robusto", "Toro — 6 × 52", "Rare Estate 1992", "Rare Estate 1992"]);
   assert.equal(options.filter((value) => value === "Robusto").length, 1);
-  assert.equal(options.filter((value) => value === "Rare Estate 1992").length, 1);
+  assert.equal(options.filter((value) => value === "Toro — 6 × 52").length, 1);
+  assert.equal(options.includes("Rare Estate 1992"), false);
 });
 
 test("a cigar-specific dropdown never invents unavailable vitolas", () => {
