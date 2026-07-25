@@ -93,4 +93,5 @@ test("Cedriva 25 is the prominent default community destination",()=>{
  assert.match(component,/className="cedriva25Metric"/);
  assert.ok(component.indexOf("cedriva25Metric")<component.indexOf("recent discussions"));
  assert.match(component,/The community benchmark/);
+ assert.match(page,/The Cedriva Collectors’ Lounge/);
 });
