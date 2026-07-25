@@ -126,7 +126,6 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </section>
     <section className="communityTabs">
 <button type="button" className={tab === "board" ? "active" : ""} aria-pressed={tab==="board"} onClick={() => showTab("board")}>Message board</button>
-<button type="button" className={tab === "ratings" ? "active" : ""} aria-pressed={tab==="ratings"} onClick={() => showTab("ratings")}>Cedriva 25</button>
 </section>
     {message && <output className="communityMessage">{message}{message.includes("administrator review") && <small>Your contribution is private while it waits in the <a href="/ai-administrator">AI Administrator review queue</a>.</small>}</output>}
     <aside className="communityTrust">
