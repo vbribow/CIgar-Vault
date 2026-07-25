@@ -73,3 +73,7 @@ export function integritySummary(items: IntegrityItem[]) {
     score: items.length ? Math.round((matched / items.length) * 100) : 100,
   };
 }
+
+export function restorableFromMaster(items: IntegrityItem[]) {
+  return items.filter(item => item.status === "master-only");
+}
