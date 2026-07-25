@@ -6,8 +6,8 @@ import { communityStatusLabel, type CommunityPost, type CommunityRanking, type C
 import type { CommunityRatingInventoryOption } from "@/lib/community-rating-options";
 import { TrustMark } from "@/components/trust-mark";
 
-type CommunityData = { posts: CommunityPost[]; top25: CommunityRanking[]; ratingCount: number; myContributions:{posts:CommunityPost[];ratings:CommunityRating[]} };
-const empty: CommunityData = { posts: [], top25: [], ratingCount: 0, myContributions:{posts:[],ratings:[]} };
+type CommunityData = { posts: CommunityPost[]; top25: CommunityRanking[]; myTop10:CommunityRanking[]; ratingCount: number; myContributions:{posts:CommunityPost[];ratings:CommunityRating[]} };
+const empty: CommunityData = { posts: [], top25: [], myTop10:[], ratingCount: 0, myContributions:{posts:[],ratings:[]} };
 const blankRating = { displayName: "", brand: "", line: "", vitola: "", vintage: "", score: "", review: "" };
 
 export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { inventoryOptions?: CommunityRatingInventoryOption[]; initialTab?: "board" | "ratings" }) {
@@ -188,13 +188,31 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <button className="button" disabled={Boolean(submitting)}>{submitting==="post"?"Publishing…":"Submit discussion"}</button>
 <small>AI Administrator screens submissions. No sales, trades, personal contact details, or illegal activity.</small>
 </form>
-    </div> : <div className="communityLayout">
+    </div> : <div className="communityRatingsWorkspace">
+      <section id="my-top-10">
+<div className="sectionHead">
+<div>
+<div className="eyebrow">Your palate</div>
+<h2>My Top 10</h2>
+<p>Your ten highest published scores, ordered by your ratings. This personal list contributes a preference signal to the Cedriva 25.</p>
+</div>
+</div>
+<div className="rankingList personalRanking">{data.myTop10.map(item => <article key={item.cigarKey}>
+<strong>#{item.rank}</strong>
+<div>
+<h3>{item.brand} {item.line}</h3>
+<span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
+</div>
+<b>{item.averageScore}</b>
+<small>your score</small>
+</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Publish your first cigar rating, then keep scoring the cigars you experience. Your list will update automatically.</p></div>}</section>
+      <div className="communityLayout">
       <section id="top-25">
 <div className="sectionHead">
 <div>
 <div className="eyebrow">Community consensus</div>
 <h2>The Cedriva 25</h2>
-<p>Ranked by average collector score, then rating volume. Only published member ratings count; retailer promotion never does.</p>
+<p>Each collector contributes one score per cigar. Cedriva blends 80% of that score with a 20% personal Top 10 preference signal, then uses rating volume as a tie-breaker. Only published ratings count; retailer promotion never does.</p>
 </div>
 </div>
 <div className="rankingList">{data.top25.map(item => <article key={item.cigarKey}>
@@ -203,8 +221,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <h3>{item.brand} {item.line}</h3>
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
-<b>{item.averageScore}</b>
-<small>{item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"}</small>
+<b>{item.weightedScore}</b>
+<small>Cedriva score · {item.averageScore} average · {item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"}</small>
 </article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the Cedriva 25 without invented scores or promotional placement.</p></div>}</section>
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating}>
 <div className="eyebrow">Rate a cigar</div>
@@ -222,6 +240,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <button className="button" disabled={Boolean(submitting)}>{submitting==="rating"?"Publishing…":"Submit rating"}</button>
 <small>{entryMode === "vault" ? "Cigar identity comes directly from your private Vault. Only the rating is shared." : "Use manual entry for a cigar that is not in your Vault."}</small>
 </form>
+      </div>
     </div>}
   </>;
 }

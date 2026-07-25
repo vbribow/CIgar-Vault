@@ -1,11 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { baselineCommunityModeration,communityCigarKey,communityStatusLabel,communityTop25,type CommunityRating } from "../lib/community";
+import { baselineCommunityModeration,communityCigarKey,communityPersonalTop10,communityStatusLabel,communityTop25,type CommunityRating } from "../lib/community";
 import { readFileSync } from "node:fs";
 
 const rating=(id:string,score:number,overrides:Partial<CommunityRating>={}):CommunityRating=>({id,displayName:"Collector",brand:"Arturo Fuente",line:"OpusX",vitola:"Petite Lancero",score,review:"Excellent construction",status:"active",createdAt:"2026-07-22T00:00:00.000Z",cigarKey:"arturo-fuente|opusx|petite-lancero|",...overrides});
 test("community cigar identity is stable and vintage-aware",()=>{assert.equal(communityCigarKey(rating("1",95)),"arturo-fuente|opusx|petite-lancero|");assert.notEqual(communityCigarKey(rating("1",95,{vintage:2024})),communityCigarKey(rating("1",95,{vintage:2025})))});
-test("Cedriva 25 ranks average score before rating volume",()=>{const rankings=communityTop25([rating("1",96),rating("2",94),rating("3",99,{brand:"Cohiba",line:"Siglo IV",vitola:"Marevas",cigarKey:"cohiba|siglo-iv|marevas|"})]);assert.equal(rankings[0].brand,"Cohiba");assert.equal(rankings[1].averageScore,95);assert.equal(rankings[1].ratingCount,2)});
+test("each collector receives a personal Top 10 from published scores",()=>{
+ const ratings=Array.from({length:12},(_,index)=>rating(String(index),80+index,{userId:"collector-1",line:`Line ${index}`,cigarKey:`cigar-${index}`}));
+ const rankings=communityPersonalTop10(ratings);
+ assert.equal(rankings.length,10);
+ assert.equal(rankings[0].averageScore,91);
+ assert.equal(rankings[9].averageScore,82);
+});
+test("Cedriva 25 blends raw scores with each collector's Top 10 preference",()=>{
+ const rankings=communityTop25([
+  rating("1",96,{userId:"collector-1"}),
+  rating("2",94,{userId:"collector-2"}),
+  rating("3",99,{userId:"collector-1",brand:"Cohiba",line:"Siglo IV",vitola:"Marevas",cigarKey:"cohiba|siglo-iv|marevas|"})
+ ]);
+ assert.equal(rankings[0].brand,"Cohiba");
+ assert.equal(rankings[1].averageScore,95);
+ assert.equal(rankings[1].weightedScore,95.9);
+ assert.equal(rankings[1].ratingCount,2);
+});
 test("hidden and review ratings never affect public rankings",()=>assert.equal(communityTop25([rating("1",100,{status:"review"}),rating("2",99,{status:"hidden"})]).length,0));
 test("community safety blocks transactions and reviews contact details",()=>{assert.equal(baselineCommunityModeration("DM me to buy this box").decision,"block");assert.equal(baselineCommunityModeration("Email me for details").decision,"review");assert.equal(baselineCommunityModeration("How do you stabilize a cabinet humidor?").decision,"allow")});
 test("reviewed contributions explain where founder moderation happens",()=>assert.match(readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8"),/AI Administrator review queue/));
