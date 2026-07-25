@@ -20,7 +20,7 @@ export function isPhysicalVitola(value:string){
 }
 
 export function vitolaOptions(catalogVitolas: string[] = [], includeStandards = true) {
-  const catalog=includeStandards?catalogVitolas:catalogVitolas.filter(isPhysicalVitola);
+  const catalog=catalogVitolas.filter(isPhysicalVitola);
   return [...new Set([...(includeStandards ? standardVitolas : []), ...catalog].map((value) => value.trim()).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b));
 }
