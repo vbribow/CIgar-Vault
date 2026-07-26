@@ -26,15 +26,53 @@ const unitMoney = new Intl.NumberFormat("en-US", {
 });
 
 export default async function ReportsPage() {
-  const mode = await accountDataMode();
-  const plan = await loadAccountPlan();
-  const live = mode !== "mock";
-  const [inventory, humidors, readings, sensors] = await Promise.all([
+  const [modeResult, planResult, inventoryResult] = await Promise.allSettled([
+    accountDataMode(),
+    loadAccountPlan(),
     loadInventory(),
-    live ? loadHumidors() : Promise.resolve([]),
-    live ? loadHumidorReadings() : Promise.resolve([]),
-    live ? loadSensors() : Promise.resolve([]),
   ]);
+  if (
+    modeResult.status !== "fulfilled" ||
+    inventoryResult.status !== "fulfilled"
+  ) {
+    return (
+      <main className="shell wideShell insuranceReport">
+        <section className="reportHero">
+          <div>
+            <div className="eyebrow">Collection protection</div>
+            <h1>The insurance schedule is temporarily protected.</h1>
+            <p className="lede">
+              Cedriva could not safely load the authoritative inventory. No
+              scheduled value, coverage percentage, or evidence exception has
+              been inferred from partial data.
+            </p>
+          </div>
+          <div className="reportValue reportUnavailable">
+            <span>Scheduled replacement value</span>
+            <strong>—</strong>
+            <small>Refresh after the account service recovers</small>
+          </div>
+        </section>
+      </main>
+    );
+  }
+  const mode = modeResult.value;
+  const plan = planResult.status === "fulfilled" ? planResult.value : undefined;
+  const inventory = inventoryResult.value;
+  const live = mode !== "mock";
+  const [humidorsResult, readingsResult, sensorsResult] =
+    await Promise.allSettled([
+      live ? loadHumidors() : Promise.resolve([]),
+      live ? loadHumidorReadings() : Promise.resolve([]),
+      live ? loadSensors() : Promise.resolve([]),
+    ]);
+  const climateReady =
+    humidorsResult.status === "fulfilled" &&
+    readingsResult.status === "fulfilled" &&
+    sensorsResult.status === "fulfilled";
+  const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
+  const readings = readingsResult.status === "fulfilled" ? readingsResult.value : [];
+  const sensors = sensorsResult.status === "fulfilled" ? sensorsResult.value : [];
   const report = buildInsuranceReport(inventory, humidors, readings, sensors);
   const exceptionEntries = [
     [
@@ -104,10 +142,10 @@ export default async function ReportsPage() {
           <strong>{money.format(report.totals.unassignedValue)}</strong>
           <small>known value without a storage location</small>
         </article>
-        <article className={report.totals.valueAtClimateRisk ? "risk" : ""}>
+        <article className={climateReady && report.totals.valueAtClimateRisk ? "risk" : ""}>
           <span>Climate exposure</span>
-          <strong>{money.format(report.totals.valueAtClimateRisk)}</strong>
-          <small>attention, critical, or unmonitored value</small>
+          <strong>{climateReady ? money.format(report.totals.valueAtClimateRisk) : "—"}</strong>
+          <small>{climateReady ? "attention, critical, or unmonitored value" : "climate evidence temporarily unavailable"}</small>
         </article>
       </section>
 
@@ -162,7 +200,12 @@ export default async function ReportsPage() {
             Open climate command center →
           </a>
         </div>
-        {report.climate.length ? (
+        {!climateReady ? (
+          <div className="emptyState reportDataProtected">
+            Climate readings and sensor evidence are temporarily unavailable.
+            Cedriva has not interpreted that outage as zero climate exposure.
+          </div>
+        ) : report.climate.length ? (
           <div className="climateEvidence">
             {report.climate.map((item) => (
               <article
