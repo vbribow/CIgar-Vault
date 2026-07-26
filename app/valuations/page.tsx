@@ -26,12 +26,42 @@ const unitMoney = new Intl.NumberFormat("en-US", {
 });
 
 export default async function ValuationsPage({ searchParams }: { searchParams: Promise<{ inventoryId?: string;collectionId?:string }> }) {
-  const mode = await accountDataMode();
   const filters = await searchParams;
-  const [inventory, valuations] = await Promise.all([
-    loadInventory(),
-    mode === "mock" ? [] : loadValuations(),
-  ]);
+  const [modeResult, inventoryResult, valuationsResult] =
+    await Promise.allSettled([
+      accountDataMode(),
+      loadInventory(),
+      loadValuations(),
+    ]);
+  if (
+    modeResult.status !== "fulfilled" ||
+    inventoryResult.status !== "fulfilled" ||
+    valuationsResult.status !== "fulfilled"
+  ) {
+    return (
+      <main className="shell wideShell valuationWorkspace">
+        <section className="valueHero">
+          <div>
+            <div className="eyebrow">Valuation intelligence</div>
+            <h1>Values are temporarily protected.</h1>
+            <p className="lede">
+              Cedriva could not safely load inventory and valuation evidence
+              together. No portfolio total, coverage percentage, or missing
+              value has been inferred from partial data.
+            </p>
+          </div>
+          <div className="valueHeroCard valuationUnavailable">
+            <span>Documented aftermarket value</span>
+            <strong>—</strong>
+            <small>Refresh after the account service recovers</small>
+          </div>
+        </section>
+      </main>
+    );
+  }
+  const mode = modeResult.value;
+  const inventory = inventoryResult.value;
+  const valuations = valuationsResult.value;
   const activeInventory=inventory.filter(item=>(item.currentQty??0)>0);
   const intelligence = buildValuationIntelligence(activeInventory, valuations);
   const { totals } = intelligence;
