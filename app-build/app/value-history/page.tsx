@@ -9,7 +9,38 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 const unitMoney = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 export default async function ValueHistoryPage() {
-  const [inventory, valuations] = await Promise.all([loadInventory(), loadValuations()]);
+  const [inventoryResult, valuationsResult] = await Promise.allSettled([
+    loadInventory(),
+    loadValuations(),
+  ]);
+  if (
+    inventoryResult.status !== "fulfilled" ||
+    valuationsResult.status !== "fulfilled"
+  ) {
+    return (
+      <main className="shell wideShell historyPage">
+        <section className="historyHero">
+          <div>
+            <div className="eyebrow">Portfolio intelligence</div>
+            <h1>Value history is temporarily protected.</h1>
+            <p className="lede">
+              Cedriva could not safely load current ownership and dated
+              valuation evidence together. No portfolio value, historical
+              movement, or coverage percentage has been inferred from partial
+              data.
+            </p>
+          </div>
+          <div className="historyValue historyUnavailable">
+            <span>Current tracked value</span>
+            <strong>—</strong>
+            <small>Refresh after the account service recovers</small>
+          </div>
+        </section>
+      </main>
+    );
+  }
+  const inventory = inventoryResult.value;
+  const valuations = valuationsResult.value;
   const history = buildPortfolioHistory(inventory, valuations);
   const max = Math.max(...history.snapshots.map(point => point.value), 1);
   const changePercent = history.totals.acquisitionCost ? history.totals.unrealizedChange / history.totals.acquisitionCost * 100 : undefined;
