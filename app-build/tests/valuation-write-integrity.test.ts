@@ -10,3 +10,12 @@ test("private retail valuation and inventory price save atomically",()=>{
   assert.doesNotMatch(source,/saveOwnedRecord\("valuations"/);
   assert.match(source,/records\.push\(\{kind:"inventory"/);
 });
+
+test("scheduled retail research saves valuation and inventory in one statement",()=>{
+  const source=fs.readFileSync(path.join(process.cwd(),"app/api/valuation-monitor/route.ts"),"utf8");
+  assert.match(source,/const records=\[/);
+  assert.match(source,/kind:"valuations"/);
+  assert.match(source,/kind:"inventory"/);
+  assert.match(source,/upsert\(records,\{onConflict:"user_id,kind,record_id"\}\)/);
+  assert.doesNotMatch(source,/from\("vault_records"\)\.update\(\{payload:updated/);
+});
