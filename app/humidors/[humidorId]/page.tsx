@@ -15,12 +15,41 @@ export default async function HumidorDetailPage({
   params: Promise<{ humidorId: string }>;
 }) {
   const { humidorId } = await params;
-  const mode = await accountDataMode();
-  const [humidors, readings, inventory] = await Promise.all([
-    mode === "mock" ? [] : loadHumidors(),
-    mode === "mock" ? [] : loadHumidorReadings(),
-    loadInventory(),
-  ]);
+  const [modeResult, humidorsResult, readingsResult, inventoryResult] =
+    await Promise.allSettled([
+      accountDataMode(),
+      loadHumidors(),
+      loadHumidorReadings(),
+      loadInventory(),
+    ]);
+  if (
+    modeResult.status !== "fulfilled" ||
+    humidorsResult.status !== "fulfilled" ||
+    readingsResult.status !== "fulfilled" ||
+    inventoryResult.status !== "fulfilled"
+  ) {
+    return (
+      <main className="shell">
+        <nav className="nav">
+          <a className="brand" href="/">Cedriva</a>
+          <div className="navLinks"><a href="/humidors">← Humidors</a></div>
+        </nav>
+        <section className="card humidorDetailUnavailable">
+          <div className="eyebrow">Climate record protected</div>
+          <h1>This humidor is temporarily unavailable.</h1>
+          <p>
+            Cedriva could not safely load its configuration, readings, and
+            stored inventory together. The humidor has not been classified as
+            missing, stable, or empty.
+          </p>
+        </section>
+      </main>
+    );
+  }
+  const mode = modeResult.value;
+  const humidors = mode === "mock" ? [] : humidorsResult.value;
+  const readings = mode === "mock" ? [] : readingsResult.value;
+  const inventory = inventoryResult.value;
   const humidor = humidors.find((h) => h.humidorId === humidorId);
   if (!humidor) notFound();
   const insight = humidorInsights(humidor, readings);
