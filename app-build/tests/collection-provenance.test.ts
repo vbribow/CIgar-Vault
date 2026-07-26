@@ -20,14 +20,15 @@ test("collection chronology never treats the set year as every cigar's year",()=
   assert.match(summary.yearPolicy,/never inherited/i);
 });
 
-test("audited collection evidence corrects Gran Fumada and preserves known Father and Son sizes",()=>{
+test("audited collection evidence corrects Gran Fumada and separates Father and Son physical lots",()=>{
   const gran=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-GRAN-FUMADA-2023")!;
   assert.ok(gran.requirements.includes("OpusX Oro Oscuro OxO Lancero 2004 Aged Selection"));
   assert.ok(!gran.requirements.some(requirement=>/OxO Phantom/i.test(requirement)));
   const father=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-FATHER-SON-2026")!;
-  assert.equal(collectionComponentIdentity("OpusX 25",father).vitola,"Robusto");
-  assert.equal(collectionComponentIdentity("Don Carlos 90 Años",father).vitola,"Corona");
-  assert.equal(collectionComponentIdentity("3 Don Carlos The Man",father).vitola,"Robusto (5.25 × 50)");
+  assert.equal(collectionComponentIdentity("OpusX 25 Double Robusto",father).vitola,"Double Robusto — 2026 Father & Son debut");
+  assert.equal(collectionComponentIdentity("Don Carlos 90 Años Corona",father).vitola,"Corona — as reported by Carlito Fuente");
+  assert.equal(collectionComponentIdentity("1 Don Carlos The Man — standard cap",father).vitola,"Robusto (5.25 × 50) — standard cap");
+  assert.equal(collectionComponentIdentity("2 Don Carlos The Man — Cuban Tickler head",father).vitola,"Cuban Tickler-head 2026 Father & Son release");
 });
 
 test("source-backed collection identities preserve construction and exact dimensions",()=>{

@@ -60,7 +60,7 @@ test("lists missing template components", () => {
   );
   assert.equal(result.completionPercent, 0);
   assert.equal(result.missingComponents.length, 5);
-  assert.ok(result.missingComponents.includes("Family Reserve"));
+  assert.ok(result.missingComponents.includes("Family Reserve No. 45"));
 });
 
 test("zero-quantity links remain historical evidence but do not make a collection complete", () => {
