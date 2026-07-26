@@ -83,3 +83,44 @@ export function integritySummary(items: IntegrityItem[]) {
 export function restorableFromMaster(items: IntegrityItem[]) {
   return items.filter(item => item.status === "master-only");
 }
+
+export function buildInventoryRestorePlan(
+  requestedIds: string[],
+  master: InventoryItem[],
+  account: InventoryItem[],
+) {
+  const inventoryIds = [...new Set(requestedIds)];
+  if (inventoryIds.length !== requestedIds.length) {
+    throw new Error("Choose each inventory record only once");
+  }
+
+  const existing = new Set(account.map((item) => item.inventoryId));
+  const conflicts = inventoryIds.filter((inventoryId) => existing.has(inventoryId));
+  if (conflicts.length) {
+    throw new Error(
+      `Existing Cedriva records cannot be overwritten: ${conflicts.join(", ")}`,
+    );
+  }
+
+  const masterById = new Map<string, InventoryItem>();
+  const duplicateMasterIds = new Set<string>();
+  for (const item of master) {
+    if (masterById.has(item.inventoryId)) duplicateMasterIds.add(item.inventoryId);
+    masterById.set(item.inventoryId, item);
+  }
+  const selectedDuplicates = inventoryIds.filter((inventoryId) =>
+    duplicateMasterIds.has(inventoryId),
+  );
+  if (selectedDuplicates.length) {
+    throw new Error(
+      `Duplicate Smartsheet records require manual review: ${selectedDuplicates.join(", ")}`,
+    );
+  }
+
+  const missing = inventoryIds.filter((inventoryId) => !masterById.has(inventoryId));
+  if (missing.length) {
+    throw new Error(`Not found in Smartsheet: ${missing.join(", ")}`);
+  }
+
+  return inventoryIds.map((inventoryId) => masterById.get(inventoryId)!);
+}
