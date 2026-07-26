@@ -19,14 +19,37 @@ export default async function CigarPage({
   params: Promise<{ inventoryId: string }>;
 }) {
   const { inventoryId } = await params;
-  const items = await loadInventory();
+  const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
+  if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
+    return <main className="shell"><nav className="nav"><a className="brand" href="/">Cedriva</a><a className="backLink" href="/inventory">← Collection</a></nav><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>Cedriva could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><a className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</a></section></main>;
+  }
+  const items = inventoryResult.value;
   const item = items.find((i) => i.inventoryId === inventoryId);
   if (!item) notFound();
-  const mode = await accountDataMode();
-  const [smokes, valuations, activities, ratings, collections, humidors, climateReadings] =
-    mode === "mock"
-      ? [[], [], [], [], [], [], []]
-      : await Promise.all([loadSmokingLogs(), loadValuations(), loadActivities(), loadRatings(), loadCollections(), loadHumidors(), loadHumidorReadings()]);
+  const mode = modeResult.value;
+  const [smokesResult, valuationsResult, activitiesResult, ratingsResult, collectionsResult, humidorsResult, climateReadingsResult] =
+    await Promise.allSettled([
+      mode === "mock" ? Promise.resolve([]) : loadSmokingLogs(),
+      mode === "mock" ? Promise.resolve([]) : loadValuations(),
+      mode === "mock" ? Promise.resolve([]) : loadActivities(),
+      mode === "mock" ? Promise.resolve([]) : loadRatings(),
+      mode === "mock" ? Promise.resolve([]) : loadCollections(),
+      mode === "mock" ? Promise.resolve([]) : loadHumidors(),
+      mode === "mock" ? Promise.resolve([]) : loadHumidorReadings(),
+    ] as const);
+  const smokes = smokesResult.status === "fulfilled" ? smokesResult.value : [];
+  const valuations = valuationsResult.status === "fulfilled" ? valuationsResult.value : [];
+  const activities = activitiesResult.status === "fulfilled" ? activitiesResult.value : [];
+  const ratings = ratingsResult.status === "fulfilled" ? ratingsResult.value : [];
+  const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+  const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
+  const climateReadings = climateReadingsResult.status === "fulfilled" ? climateReadingsResult.value : [];
+  const smokesReady = smokesResult.status === "fulfilled";
+  const valuationsReady = valuationsResult.status === "fulfilled";
+  const activitiesReady = activitiesResult.status === "fulfilled";
+  const ratingsReady = ratingsResult.status === "fulfilled";
+  const climateReady = humidorsResult.status === "fulfilled" && climateReadingsResult.status === "fulfilled";
+  const timelineReady = smokesReady && valuationsReady && activitiesReady && ratingsReady;
   const parentCollection=collections.find(collection=>collection.collectionId===item.collectionId);
   const history = smokes.filter((s) => s.inventoryId === inventoryId);
   const values = valuations.filter((v) => v.inventoryId === inventoryId);
@@ -74,10 +97,10 @@ export default async function CigarPage({
       </section>
       <section className="cigarStory">
         <div><div className="eyebrow">The story in your collection</div><h2>{item.line || item.brand}</h2><p>{item.provenanceNotes || item.notes || `This ${item.vitola} is documented as part of your collection${item.vintage?` from ${item.vintage}`:""}. Add the acquisition, people, place, or occasion behind it to preserve why it matters—not only what it is.`}</p><a className="textLink" href="#record-tools">Continue documenting its story →</a></div>
-        <div className="cigarStoryFacts"><article><span>Canonical identity</span><strong>{item.brand} · {item.line}</strong><small>{item.vitola}{item.vintage?` · ${item.vintage}`:""} · {identity.identityId}</small><a className="textLink" href={cigarStoryHref(item)}>Open unified Cigar Story →</a></article><article><span>Connected knowledge</span><strong>{publishedRatings.length} review{publishedRatings.length===1?"":"s"} · {values.length} value record{values.length===1?"":"s"}</strong><small>{identity.complete?"Exact identity ready":"Identity needs review before evidence can be reused"}</small></article><article><span>Your chapter</span><strong>{history.length} smoking experience{history.length===1?"":"s"}</strong><small>{events.length} documented collection event{events.length===1?"":"s"}</small></article><article><span>Provenance</span><strong>{item.boxCode||item.provenanceDocumentLink?"Evidence started":"Story waiting"}</strong><small>{item.storageLocationId?`Cared for in ${item.storageLocationId}`:"Storage not yet documented"}</small></article></div>
+        <div className="cigarStoryFacts"><article><span>Canonical identity</span><strong>{item.brand} · {item.line}</strong><small>{item.vitola}{item.vintage?` · ${item.vintage}`:""} · {identity.identityId}</small><a className="textLink" href={cigarStoryHref(item)}>Open unified Cigar Story →</a></article><article><span>Connected knowledge</span><strong>{ratingsReady?`${publishedRatings.length} review${publishedRatings.length===1?"":"s"}`:"Reviews unavailable"} · {valuationsReady?`${values.length} value record${values.length===1?"":"s"}`:"values unavailable"}</strong><small>{identity.complete?"Exact identity ready":"Identity needs review before evidence can be reused"}</small></article><article><span>Your chapter</span><strong>{smokesReady?`${history.length} smoking experience${history.length===1?"":"s"}`:"Smoking history unavailable"}</strong><small>{activitiesReady?`${events.length} documented collection event${events.length===1?"":"s"}`:"Collection events unavailable"}</small></article><article><span>Provenance</span><strong>{item.boxCode||item.provenanceDocumentLink?"Evidence started":"Story waiting"}</strong><small>{item.storageLocationId?`Cared for in ${item.storageLocationId}`:"Storage not yet documented"}</small></article></div>
       </section>
       <EvidenceLabel evidence={{kind:"Community",sourceName:"Your private collector record",confidence:item.provenanceNotes||item.boxCode?"Medium":"Unrated",supports:"Identity, ownership context, and personal provenance",commercialInfluence:"None disclosed"}}/>
-      <section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>
+      {ratingsReady?<section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>:<UnavailableEvidence label="Published reviews"/>}
       <section className="detailStats">
         <div>
           <span>Remaining</span>
@@ -98,9 +121,9 @@ export default async function CigarPage({
           <strong>{item.storageLocationId || "Not set"}</strong>
         </div>
       </section>
-      <section className="section card" id="value-evidence"><div className="sectionHead"><div><div className="eyebrow">Why this value? · {marketEvidenceType(latestValue)}</div><h2>{latestValue?.source || "Valuation evidence needed"}</h2><p className="small">{latestValue?`${latestValue.valuationDate} · ${latestValue.confidence || "Unrated"} confidence · ${latestValue.notes || "No evidence note supplied."}`:"Cedriva has not yet saved source-backed price evidence for this exact cigar identity."}</p></div><div className="ctaRow">{latestValue?.sourceUrl&&<a className="button secondary" href={latestValue.sourceUrl} target="_blank" rel="noreferrer">View strongest evidence ↗</a>}<a className="button secondary" href={`/valuations?inventoryId=${encodeURIComponent(item.inventoryId)}`}>{latestValue?"Research new evidence":"Research value"}</a><a className="button secondary" href={`/records?inventoryId=${encodeURIComponent(item.inventoryId)}`}>Enter manually</a></div></div><div className="detailStats"><div><span>Retail replacement</span><strong>{item.retailValue === undefined ? "Not researched" : `$${item.retailValue.toLocaleString()} / cigar`}</strong><small>Current replacement cost—not expected resale proceeds</small></div><div><span>Observed asking price</span><strong>{latestValue?.askingPrice === undefined ? "Not found" : `$${latestValue.askingPrice.toLocaleString()} / cigar`}</strong>{latestValue?.askingPriceSourceUrl?<a className="textLink" href={latestValue.askingPriceSourceUrl} target="_blank" rel="noreferrer">View listing ↗</a>:<small>A listing is not a completed sale</small>}</div><div><span>Estimated market range</span><strong>{marketRangeText(latestValue) || "Insufficient evidence"}</strong><small>{latestValue?.marketValue === undefined ? "Cedriva will not manufacture precision" : `Midpoint ${latestValue.marketValue.toLocaleString("en-US",{style:"currency",currency:"USD"})} / cigar`}</small></div><div><span>Latest completed sale</span><strong>{latestSale?.lastSaleValue === undefined ? "Not found" : `$${latestSale.lastSaleValue.toLocaleString()} / cigar`}</strong><small>{latestSale?.lastSaleDate || "Exact sold evidence required"}</small>{latestSale?.lastSaleSourceUrl&&<a className="textLink" href={latestSale.lastSaleSourceUrl} target="_blank" rel="noreferrer">View proof ↗</a>}</div></div></section>
+      {valuationsReady?<section className="section card" id="value-evidence"><div className="sectionHead"><div><div className="eyebrow">Why this value? · {marketEvidenceType(latestValue)}</div><h2>{latestValue?.source || "Valuation evidence needed"}</h2><p className="small">{latestValue?`${latestValue.valuationDate} · ${latestValue.confidence || "Unrated"} confidence · ${latestValue.notes || "No evidence note supplied."}`:"Cedriva has not yet saved source-backed price evidence for this exact cigar identity."}</p></div><div className="ctaRow">{latestValue?.sourceUrl&&<a className="button secondary" href={latestValue.sourceUrl} target="_blank" rel="noreferrer">View strongest evidence ↗</a>}<a className="button secondary" href={`/valuations?inventoryId=${encodeURIComponent(item.inventoryId)}`}>{latestValue?"Research new evidence":"Research value"}</a><a className="button secondary" href={`/records?inventoryId=${encodeURIComponent(item.inventoryId)}`}>Enter manually</a></div></div><div className="detailStats"><div><span>Retail replacement</span><strong>{item.retailValue === undefined ? "Not researched" : `$${item.retailValue.toLocaleString()} / cigar`}</strong><small>Current replacement cost—not expected resale proceeds</small></div><div><span>Observed asking price</span><strong>{latestValue?.askingPrice === undefined ? "Not found" : `$${latestValue.askingPrice.toLocaleString()} / cigar`}</strong>{latestValue?.askingPriceSourceUrl?<a className="textLink" href={latestValue.askingPriceSourceUrl} target="_blank" rel="noreferrer">View listing ↗</a>:<small>A listing is not a completed sale</small>}</div><div><span>Estimated market range</span><strong>{marketRangeText(latestValue) || "Insufficient evidence"}</strong><small>{latestValue?.marketValue === undefined ? "Cedriva will not manufacture precision" : `Midpoint ${latestValue.marketValue.toLocaleString("en-US",{style:"currency",currency:"USD"})} / cigar`}</small></div><div><span>Latest completed sale</span><strong>{latestSale?.lastSaleValue === undefined ? "Not found" : `$${latestSale.lastSaleValue.toLocaleString()} / cigar`}</strong><small>{latestSale?.lastSaleDate || "Exact sold evidence required"}</small>{latestSale?.lastSaleSourceUrl&&<a className="textLink" href={latestSale.lastSaleSourceUrl} target="_blank" rel="noreferrer">View proof ↗</a>}</div></div></section>:<UnavailableEvidence label="Valuation evidence"/>}
       <section className="section card agingIntelligence"><div><div className="eyebrow">Predictive aging · AI-assisted</div><h2>{aging.phase}</h2><p>{aging.age===undefined?aging.basis:`${aging.age} years estimated age · ${aging.maturityPercent}% general maturity estimate`}</p><a className="textLink" href="/learn/resting-and-aging">Understand rest, true aging, and why no peak is guaranteed →</a></div><div><span>Expected general peak</span><strong>{aging.peakWindow||"Year required"}</strong><small>{aging.basis}</small></div></section>
-      <section className={`section card cigarClimate ${storageClimate?.sustained?"sustained":""}`}><div><div className="eyebrow">Climate stewardship · {storageClimate?.profile.label||"Storage not connected"}</div><h2>{storageClimate?.state||"Assign this cigar to a humidor"}</h2><p>{storageClimate?.summary||"Cedriva can connect this cigar to its humidor profile, readings, sustained exposure, and recommended action once storage is documented."}</p>{storageClimate?.consequence&&<small>{storageClimate.consequence}</small>}</div><div className="cigarClimateFacts"><span><small>Latest environment</small><strong>{storageClimate?.latest?`${storageClimate.latest.temperatureF}°F · ${storageClimate.latest.humidity}% RH`:"No reading"}</strong></span><span><small>Observed exposure</small><strong>{storageClimate?`${storageClimate.exposureHours.tooWarm}h warm · ${storageClimate.exposureHours.tooDry}h dry · ${storageClimate.exposureHours.tooHumid}h humid`:"—"}</strong></span><span><small>Aging checkpoint</small><strong>{aging.phase} · {aging.peakWindow||"Add a vintage or production year"}<br/>Climate history qualifies the aging estimate; it does not guarantee a peak.</strong></span>{storageClimate?.action&&<span className="cigarClimateAction"><small>Recommended response</small><strong>{storageClimate.action}</strong></span>}<a className="textLink" href={storageHumidor?`/humidors/${encodeURIComponent(storageHumidor.humidorId)}`:"/humidors"}>{storageHumidor?"Open its climate history":"Assign storage"} →</a></div></section>
+      {climateReady?<section className={`section card cigarClimate ${storageClimate?.sustained?"sustained":""}`}><div><div className="eyebrow">Climate stewardship · {storageClimate?.profile.label||"Storage not connected"}</div><h2>{storageClimate?.state||"Assign this cigar to a humidor"}</h2><p>{storageClimate?.summary||"Cedriva can connect this cigar to its humidor profile, readings, sustained exposure, and recommended action once storage is documented."}</p>{storageClimate?.consequence&&<small>{storageClimate.consequence}</small>}</div><div className="cigarClimateFacts"><span><small>Latest environment</small><strong>{storageClimate?.latest?`${storageClimate.latest.temperatureF}°F · ${storageClimate.latest.humidity}% RH`:"No reading"}</strong></span><span><small>Observed exposure</small><strong>{storageClimate?`${storageClimate.exposureHours.tooWarm}h warm · ${storageClimate.exposureHours.tooDry}h dry · ${storageClimate.exposureHours.tooHumid}h humid`:"—"}</strong></span><span><small>Aging checkpoint</small><strong>{aging.phase} · {aging.peakWindow||"Add a vintage or production year"}<br/>Climate history qualifies the aging estimate; it does not guarantee a peak.</strong></span>{storageClimate?.action&&<span className="cigarClimateAction"><small>Recommended response</small><strong>{storageClimate.action}</strong></span>}<a className="textLink" href={storageHumidor?`/humidors/${encodeURIComponent(storageHumidor.humidorId)}`:"/humidors"}>{storageHumidor?"Open its climate history":"Assign storage"} →</a></div></section>:<UnavailableEvidence label="Climate evidence"/>}
       <section className="section card cigarAdvisor"><div className="cigarAdvisorIntro"><div><div className="eyebrow">Cigar Somm · Powered by Cedriva AI</div><h2>Build the experience around this exact cigar.</h2><p>Get its researched tasting profile, expected progression, smoking guidance, and coffee, spirit, cocktail, and nonalcoholic pairings.</p></div><a className="button" href={cigarAdvisorHref(item)}>Open in Cigar Somm</a></div><div className="cigarAdvisorActions">{advisorActions.map(action=><a href={action.href} key={action.intent}><span>{action.label}</span><small>{action.detail}</small><b>→</b></a>)}</div><small className="cigarAdvisorPrivacy">Your account context is summarized for the answer. It is not presented as a public source or shared with other collectors.</small></section>
       <section className="detailGrid">
         <article className="card">
@@ -114,7 +137,9 @@ export default async function CigarPage({
         </article>
         <article className="card">
           <div className="eyebrow">Smoking history</div>
-          <h2>{history.length} recorded</h2>
+          <h2>{smokesReady?`${history.length} recorded`:"Temporarily unavailable"}</h2>
+          {!smokesReady&&<p className="small">Cedriva is not treating an unavailable journal as an empty history.</p>}
+          {smokesReady&&<>
           {history.slice(0, 3).map((s) => (
             <p key={s.smokeId} className="historyRow">
               <span>{s.dateSmoked}</span>
@@ -125,10 +150,13 @@ export default async function CigarPage({
           <a className="textLink" href="/records">
             Add tasting note →
           </a>
+          </>}
         </article>
         <article className="card">
           <div className="eyebrow">Valuation history</div>
-          <h2>{values.length} recorded</h2>
+          <h2>{valuationsReady?`${values.length} recorded`:"Temporarily unavailable"}</h2>
+          {!valuationsReady&&<p className="small">Cedriva is not treating unavailable market evidence as no valuation history.</p>}
+          {valuationsReady&&<>
           {values.slice(0, 3).map((v) => (
             <p key={v.valuationId} className="historyRow">
               <span>{v.valuationDate}</span>
@@ -139,13 +167,14 @@ export default async function CigarPage({
           <a className="textLink" href="/records">
             Add valuation →
           </a>
+          </>}
         </article>
       </section>
       <section className="section card cigarTimeline">
         <div className="sectionHead">
           <div>
             <div className="eyebrow">Ownership intelligence</div>
-            <h2>{timeline.length} timeline events</h2>
+            <h2>{timelineReady?`${timeline.length} timeline events`:"Timeline temporarily unavailable"}</h2>
             <p className="small">Purchases, moves, smokes, scores, professional reviews, and valuation changes in one history.</p>
           </div>
           <a
@@ -155,17 +184,22 @@ export default async function CigarPage({
             Record activity
           </a>
         </div>
-        {timeline.slice(0, 20).map((event,index) => (
+        {timelineReady&&timeline.slice(0, 20).map((event,index) => (
           <article className="timelineEvent" key={`${event.date}-${event.type}-${index}`}><i/><span>{event.date}</span><div><small>{event.type}</small><strong>{event.title}</strong><p>{event.detail}</p></div></article>
         ))}
-        {!timeline.length && (
+        {timelineReady&&!timeline.length && (
           <p className="small">
             No timeline evidence yet. Start with a purchase, valuation, tasting,
             or storage move.
           </p>
         )}
+        {!timelineReady&&<p className="small">One or more history sources could not be verified. Cedriva has paused the combined timeline rather than presenting a partial record as complete.</p>}
       </section>
       <div id="record-tools"><InventoryRecordTools initialItem={item} inventory={items} mode={mode} /></div>
     </main>
   );
+}
+
+function UnavailableEvidence({label}:{label:string}) {
+  return <section className="section card cigarEvidenceUnavailable"><div className="eyebrow">{label} protected</div><h2>Temporarily unavailable</h2><p>Cedriva could not verify this evidence source. Nothing has been classified as absent, zero, or incomplete.</p></section>;
 }
