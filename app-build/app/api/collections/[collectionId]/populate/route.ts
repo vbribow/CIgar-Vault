@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeWrite, dataMode } from "@/lib/config";
-import { collectionComponentDrafts, collectionComponentRepairs, unmaterializedCollectionRequirements } from "@/lib/collection-components";
+import { collectionComponentDrafts, collectionComponentRepairs, collectionPopulationCandidates, unmaterializedCollectionRequirements } from "@/lib/collection-components";
 import { collectionEditionIssue, collectionMatchMinimum, collectionTemplateFor } from "@/lib/collection-dashboard";
 import { loadCollections } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
@@ -19,9 +19,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     if (!template) return NextResponse.json({ error: "This collection needs a researched contents template before inventory can be populated." }, { status: 409 });
     const editionIssue=collectionEditionIssue(collection);
     if(editionIssue)return NextResponse.json({error:`Collection edition must be corrected before population. ${editionIssue}`},{status:409});
-    const eligibleInventory = inventory.filter(item =>
-      (item.currentQty ?? 0) > 0
-      && (!item.collectionId || item.collectionId === collection.collectionId)
+    // A matching standalone lot is not proof that the collector acquired it
+    // as part of this collection. Only already documented component lots may
+    // fulfill requirements automatically.
+    const eligibleInventory = collectionPopulationCandidates(
+      collection.collectionId,
+      inventory,
     );
     const used = new Set<string>(), reusable = matchCollectionRequirements(template.requirements, eligibleInventory,collectionMatchMinimum(template)).flatMap(match => {
       const item = match.inventoryId ? inventory.find(candidate => candidate.inventoryId === match.inventoryId) : undefined;

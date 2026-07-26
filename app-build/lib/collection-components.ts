@@ -29,6 +29,16 @@ export type CollectionComponentIdentity = {
   needsIdentityReview: boolean;
 };
 
+export function collectionPopulationCandidates(
+  collectionId: string,
+  inventory: InventoryItem[],
+) {
+  return inventory.filter(
+    (item) =>
+      (item.currentQty ?? 0) > 0 && item.collectionId === collectionId,
+  );
+}
+
 function knownRetailValue(candidate: InventoryItem, inventory: InventoryItem[]) {
   const identity = cigarIdentityKey(candidate);
   return inventory

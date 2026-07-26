@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { collectionComponentDrafts, collectionComponentIdentity, collectionComponentRepairs, unmaterializedCollectionRequirements } from "../lib/collection-components";
+import {
+  collectionComponentDrafts,
+  collectionComponentIdentity,
+  collectionComponentRepairs,
+  collectionPopulationCandidates,
+  unmaterializedCollectionRequirements,
+} from "../lib/collection-components";
 import type { CollectionTemplate } from "../lib/collection-templates";
 
 const template: CollectionTemplate = { templateId: "TPL-TEST", name: "Test Set", maker: "Arturo Fuente", expectedComponents: 2, expectedCigars: 21, requirements: ["20 Double Corona cigars", "OpusX Lancero", "Original presentation box"], packaging: "Presentation box", matchingRule: "Match both cigars", accent: "#000", sourceUrl: "https://example.com", sourceLabel: "Official source", researchStatus: "Verified" };
@@ -28,6 +34,34 @@ test("collection population is idempotent and never creates packaging as a cigar
 test("requirements fulfilled by reusable inventory are not duplicated", () => {
   const drafts = collectionComponentDrafts(collection, template, [], new Set(["20 Double Corona cigars"]));
   assert.deepEqual(drafts.map(item => item.vitola), ["Lancero"]);
+});
+
+test("collection population never silently consumes a standalone lot", () => {
+  const standalone = {
+    inventoryId: "INV-STANDALONE",
+    brand: "Arturo Fuente",
+    line: "Test Set",
+    vitola: "Double Corona",
+    currentQty: 20,
+  };
+  const linked = {
+    ...standalone,
+    inventoryId: "INV-LINKED",
+    collectionId: collection.collectionId,
+  };
+  const otherCollection = {
+    ...linked,
+    inventoryId: "INV-OTHER",
+    collectionId: "COL-OTHER",
+  };
+  assert.deepEqual(
+    collectionPopulationCandidates(collection.collectionId, [
+      standalone,
+      linked,
+      otherCollection,
+    ]).map((item) => item.inventoryId),
+    ["INV-LINKED"],
+  );
 });
 
 test("new collection components inherit known retail from the exact same cigar identity", () => {
