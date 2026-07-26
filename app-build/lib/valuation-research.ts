@@ -44,7 +44,7 @@ export const valuationResearchJsonSchema = { type:"object", additionalProperties
 export function parseValuationResearch(text:string){
   try{return ValuationResearchSchema.parse(JSON.parse(text))}
   catch(error){
-    if(error instanceof SyntaxError&&/unterminated|unexpected end/i.test(error.message)){
+    if(error instanceof SyntaxError){
       throw new Error("Valuation research response was incomplete. Please retry this cigar.");
     }
     throw error;
@@ -67,6 +67,17 @@ Keep these evidence levels separate:
 Match brand, line, vitola, release, packaging, and condition. Never substitute another vitola/year, MSRP, ordinary retail, or a closeout for aftermarket evidence. For New World cigars, use traceable specialty listings and sold archives without inventing a market. For Habanos, prioritize completed-result archives from established European auction houses. Confirm whether buyer's premium is included. Classify every comparable. An asking price is not proof—never treat it as a sale. One listing remains an asking price. An estimated range requires at least two independent exact-identity secondary-market signals. Retail evidence never supports an aftermarket range. For a humidor collection, research cigars individually; Cedriva calculates residual humidor value separately. If evidence is opaque, say so.
 
 Use the strongest used source in source/sourceUrl. evidenceDate is today (YYYY-MM-DD). Notes under 350 characters; comparable notes under 120. This is evidence, not an appraisal.`;
-  const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:process.env.OPENAI_VALUATION_MODEL?.trim()||"gpt-5-mini",reasoning:{effort:"low"},store:false,max_output_tokens:1800,tools:[{type:"web_search"}],include:["web_search_call.action.sources"],input:prompt,text:{format:{type:"json_schema",name:"valuation_research",strict:true,schema:valuationResearchJsonSchema}}}),signal:AbortSignal.timeout(90_000)});
-  const payload=await response.json();if(!response.ok)throw new Error((payload as {error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);const text=responseOutputText(payload);if(!text)throw new Error("Research returned no valuation draft");return parseValuationResearch(text);
+  let lastError:unknown;
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:process.env.OPENAI_VALUATION_MODEL?.trim()||"gpt-5-mini",reasoning:{effort:"low"},store:false,max_output_tokens:3200,tools:[{type:"web_search"}],include:["web_search_call.action.sources"],input:attempt===0?prompt:`${prompt}\n\nRetry: return one complete JSON object only. Keep the comparables concise so the response is not truncated.`,text:{format:{type:"json_schema",name:"valuation_research",strict:true,schema:valuationResearchJsonSchema}}}),signal:AbortSignal.timeout(90_000)});
+      const payload=await response.json();if(!response.ok)throw new Error((payload as {error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);
+      const text=responseOutputText(payload);if(!text)throw new Error("Valuation research response was incomplete. Please retry this cigar.");
+      return parseValuationResearch(text);
+    }catch(error){
+      lastError=error;
+      if(!(error instanceof Error)||!/response was incomplete/i.test(error.message)||attempt===1)throw error;
+    }
+  }
+  throw lastError instanceof Error?lastError:new Error("Valuation research failed");
 }

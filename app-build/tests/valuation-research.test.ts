@@ -41,6 +41,13 @@ test("valuation research parsing turns truncated output into a useful retry mess
   );
 });
 
+test("valuation research parsing hides raw malformed JSON errors", () => {
+  assert.throws(
+    () => parseValuationResearch('{"replacementValue":22.7 "notes":"missing comma"}'),
+    /response was incomplete/i,
+  );
+});
+
 test("valuation research never treats owned quantity as original packaging", () => {
   const source=readFileSync(new URL("../lib/valuation-research.ts",import.meta.url),"utf8");
   assert.match(source,/current owned quantity is inventory balance only/);
@@ -52,4 +59,6 @@ test("valuation research never treats owned quantity as original packaging", () 
   assert.match(source,/never treat it as a sale/i);
   assert.match(source,/at least two independent exact-identity secondary-market signals/);
   assert.match(source,/Insufficient evidence/);
+  assert.match(source,/attempt<2/);
+  assert.match(source,/max_output_tokens:3200/);
 });
