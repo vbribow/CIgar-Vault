@@ -17,4 +17,82 @@ export async function sendTestNotifications(){
     smsError:smsResult.status==="rejected"?(smsResult.reason instanceof Error?smsResult.reason.message:"Text delivery failed"):undefined,
   };
 }
-export async function processClimateAlertNotifications(){const config=notificationConfiguration();if(!config.history||(!config.email&&!config.sms))return{enabled:false,sent:0,skipped:0};const[humidors,readings,sensors,inventory,existing]=await Promise.all([getHumidors(),getHumidorReadings(),getSensors(),loadInventory(),getAlertDeliveries()]);const known=new Set(existing.map(a=>a.alertId));let sent=0,skipped=0;for(const health of humidors.map(h=>climateHealth(h,readings,sensors,inventory))){for(const alert of health.alerts){const readingKey=health.latest?.externalReadingId||health.latest?.readingId||health.latest?.recordedAt||"no-reading";const alertId=`ALERT-${health.humidor.humidorId}-${alert.kind}-${readingKey}`.replace(/[^A-Za-z0-9_.:-]/g,"-").slice(0,190);if(known.has(alertId)){skipped++;continue}const subject=`${alert.severity}: ${health.humidor.name} ${alert.kind.toLowerCase()} alert`;const text=`Cedriva ${alert.severity} alert\n${health.humidor.name}\n${alert.message}\n${alert.durationLabel||""}\n${alert.consequence||""}\nRecommended action: ${alert.guidance||"Inspect the environment and confirm the reading."}\nStored value: $${health.storedValue.toLocaleString()}\nDetected: ${alert.recordedAt||new Date().toISOString()}`;let emailSent=false,smsSent=false;const errors:string[]=[];try{emailSent=await sendEmail(subject,text,alertId)}catch(e){errors.push(e instanceof Error?e.message:"Email failed")}try{smsSent=await sendSms(text)}catch(e){errors.push(e instanceof Error?e.message:"SMS failed")}const channels=[config.email,config.sms].filter(Boolean).length;const delivered=[emailSent,smsSent].filter(Boolean).length;const record:AlertDelivery={alertId,humidorId:health.humidor.humidorId,sensorId:health.sensor?.sensorId,severity:alert.severity,alertType:alert.kind,message:alert.message,readingId:health.latest?.readingId,detectedAt:new Date().toISOString(),emailSentAt:emailSent?new Date().toISOString():undefined,smsSentAt:smsSent?new Date().toISOString():undefined,status:delivered===channels?"Sent":delivered?"Partial":"Failed",notes:[alert.durationLabel,alert.consequence,alert.guidance,...errors].filter(Boolean).join("; ")||undefined};await saveAlertDelivery(record);known.add(alertId);sent+=delivered?1:0;}}return{enabled:true,sent,skipped}}
+export function mostCompleteAlertDeliveries(deliveries:AlertDelivery[]){
+  const byAlertId=new Map<string,AlertDelivery>();
+  for(const delivery of deliveries){
+    const current=byAlertId.get(delivery.alertId);
+    if(!current){
+      byAlertId.set(delivery.alertId,delivery);
+      continue;
+    }
+    const currentChannels=Number(Boolean(current.emailSentAt))+Number(Boolean(current.smsSentAt));
+    const candidateChannels=Number(Boolean(delivery.emailSentAt))+Number(Boolean(delivery.smsSentAt));
+    if(candidateChannels>currentChannels||(candidateChannels===currentChannels&&delivery.detectedAt>current.detectedAt)){
+      byAlertId.set(delivery.alertId,delivery);
+    }
+  }
+  return byAlertId;
+}
+
+export async function processClimateAlertNotifications(){
+  const config=notificationConfiguration();
+  if(!config.history||(!config.email&&!config.sms))return{enabled:false,sent:0,skipped:0,retried:0};
+  const[humidors,readings,sensors,inventory,existing]=await Promise.all([
+    getHumidors(),
+    getHumidorReadings(),
+    getSensors(),
+    loadInventory(),
+    getAlertDeliveries(),
+  ]);
+  const deliveries=mostCompleteAlertDeliveries(existing);
+  let sent=0,skipped=0,retried=0;
+  for(const health of humidors.map(h=>climateHealth(h,readings,sensors,inventory))){
+    for(const alert of health.alerts){
+      const readingKey=health.latest?.externalReadingId||health.latest?.readingId||health.latest?.recordedAt||"no-reading";
+      const alertId=`ALERT-${health.humidor.humidorId}-${alert.kind}-${readingKey}`.replace(/[^A-Za-z0-9_.:-]/g,"-").slice(0,190);
+      const previous=deliveries.get(alertId);
+      const emailComplete=!config.email||Boolean(previous?.emailSentAt);
+      const smsComplete=!config.sms||Boolean(previous?.smsSentAt);
+      if(emailComplete&&smsComplete){
+        skipped++;
+        continue;
+      }
+      if(previous)retried++;
+      const subject=`${alert.severity}: ${health.humidor.name} ${alert.kind.toLowerCase()} alert`;
+      const text=`Cedriva ${alert.severity} alert\n${health.humidor.name}\n${alert.message}\n${alert.durationLabel||""}\n${alert.consequence||""}\nRecommended action: ${alert.guidance||"Inspect the environment and confirm the reading."}\nStored value: $${health.storedValue.toLocaleString()}\nDetected: ${alert.recordedAt||new Date().toISOString()}`;
+      let emailSent=false,smsSent=false;
+      const errors:string[]=[];
+      if(config.email&&!previous?.emailSentAt){
+        try{emailSent=await sendEmail(subject,text,alertId)}
+        catch(e){errors.push(e instanceof Error?e.message:"Email failed")}
+      }
+      if(config.sms&&!previous?.smsSentAt){
+        try{smsSent=await sendSms(text)}
+        catch(e){errors.push(e instanceof Error?e.message:"SMS failed")}
+      }
+      const now=new Date().toISOString();
+      const emailSentAt=previous?.emailSentAt||(emailSent?now:undefined);
+      const smsSentAt=previous?.smsSentAt||(smsSent?now:undefined);
+      const channels=[config.email,config.sms].filter(Boolean).length;
+      const delivered=[config.email&&Boolean(emailSentAt),config.sms&&Boolean(smsSentAt)].filter(Boolean).length;
+      const record:AlertDelivery={
+        alertId,
+        humidorId:health.humidor.humidorId,
+        sensorId:health.sensor?.sensorId,
+        severity:alert.severity,
+        alertType:alert.kind,
+        message:alert.message,
+        readingId:health.latest?.readingId,
+        detectedAt:previous?.detectedAt||now,
+        emailSentAt,
+        smsSentAt,
+        status:delivered===channels?"Sent":delivered?"Partial":"Failed",
+        notes:[alert.durationLabel,alert.consequence,alert.guidance,...errors].filter(Boolean).join("; ")||undefined,
+      };
+      await saveAlertDelivery(record);
+      deliveries.set(alertId,record);
+      sent+=emailSent||smsSent?1:0;
+    }
+  }
+  return{enabled:true,sent,skipped,retried};
+}
