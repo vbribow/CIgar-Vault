@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import { collectionComponentDrafts, collectionComponentRepairs, collectionPopulationCandidates, unmaterializedCollectionRequirements } from "@/lib/collection-components";
-import { collectionEditionIssue, collectionMatchMinimum, collectionTemplateFor } from "@/lib/collection-dashboard";
+import { collectionEditionIssue, collectionRequirementMatches, collectionTemplateFor } from "@/lib/collection-dashboard";
 import { loadCollections } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { normalizeInventory } from "@/lib/inventory-model";
 import { addInventoryRows } from "@/lib/smartsheet";
 import { updateInventoryRow } from "@/lib/smartsheet";
 import { saveOwnedRecordsAtomically } from "@/lib/user-data";
-import { matchCollectionRequirements } from "@/lib/collection-matching";
 
 export async function POST(request: Request, { params }: { params: Promise<{ collectionId: string }> }) {
   try {
@@ -26,7 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
       collection.collectionId,
       inventory,
     );
-    const used = new Set<string>(), reusable = matchCollectionRequirements(template.requirements, eligibleInventory,collectionMatchMinimum(template)).flatMap(match => {
+    const used = new Set<string>(), reusable = collectionRequirementMatches(collection, eligibleInventory).flatMap(match => {
       const item = match.inventoryId ? inventory.find(candidate => candidate.inventoryId === match.inventoryId) : undefined;
       if (!item || used.has(item.inventoryId) || (item.collectionId && item.collectionId !== collection.collectionId)) return [];
       used.add(item.inventoryId); return [{ requirement: match.requirement, item: { ...item, collectionId: collection.collectionId } }];

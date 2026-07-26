@@ -16,3 +16,9 @@ test("collection population refuses a mismatched researched edition",()=>{
  assert.match(route,/collectionEditionIssue/);
  assert.match(route,/must be corrected before population/);
 });
+
+test("collection population uses exact researched component matching",()=>{
+ const route=readFileSync(new URL("../app/api/collections/[collectionId]/populate/route.ts",import.meta.url),"utf8");
+ assert.match(route,/collectionRequirementMatches\(collection, eligibleInventory\)/);
+ assert.doesNotMatch(route,/matchCollectionRequirements\(template\.requirements/);
+});
