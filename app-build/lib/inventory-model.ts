@@ -92,3 +92,11 @@ export function inventoryCompleteness(item: InventoryItem): number {
   const fields = [item.originalQty, item.currentQty, item.retailValue, item.vintage, item.storageLocationId];
   return Math.round((fields.filter((value) => value !== undefined && value !== "").length / fields.length) * 100);
 }
+
+export function isCurrentInventoryRecord(item: InventoryItem): boolean {
+  return item.currentQty !== 0;
+}
+
+export function isActiveInventoryHolding(item: InventoryItem): boolean {
+  return typeof item.currentQty === "number" && item.currentQty > 0;
+}

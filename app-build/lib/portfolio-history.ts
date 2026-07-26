@@ -1,4 +1,5 @@
 import type { InventoryItem, Valuation } from "@/lib/types";
+import { isCurrentInventoryRecord } from "@/lib/inventory-model";
 
 export type PortfolioSnapshot = { date: string; value: number; valuedLots: number };
 export type PortfolioMover = { item: InventoryItem; latestValue: number; previousValue: number; change: number; changePercent: number; lotChange: number };
@@ -6,6 +7,7 @@ export type PortfolioMover = { item: InventoryItem; latestValue: number; previou
 const unitValue = (valuation: Valuation) => valuation.marketValue ?? valuation.replacementValue;
 
 export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Valuation[]) {
+  const currentInventory = inventory.filter(isCurrentInventoryRecord);
   const byItem = new Map<string, Valuation[]>();
   for (const valuation of valuations) {
     if (unitValue(valuation) === undefined) continue;
@@ -19,7 +21,7 @@ export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Va
   const snapshots: PortfolioSnapshot[] = dates.map(date => {
     let value = 0;
     let valuedLots = 0;
-    for (const item of inventory) {
+    for (const item of currentInventory) {
       const record = (byItem.get(item.inventoryId) || []).filter(entry => entry.valuationDate <= date).at(-1);
       const unit = record ? unitValue(record) : undefined;
       if (unit === undefined || item.currentQty === undefined) continue;
@@ -29,7 +31,7 @@ export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Va
     return { date, value, valuedLots };
   });
 
-  const movers: PortfolioMover[] = inventory.flatMap(item => {
+  const movers: PortfolioMover[] = currentInventory.flatMap(item => {
     const records = byItem.get(item.inventoryId) || [];
     if (records.length < 2) return [];
     const latest = unitValue(records.at(-1)!);
@@ -41,13 +43,14 @@ export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Va
 
   const latestByItem = new Map<string, Valuation>();
   for (const [id, records] of byItem) if (records.length) latestByItem.set(id, records.at(-1)!);
-  const currentValue = inventory.reduce((sum, item) => sum + ((latestByItem.get(item.inventoryId) && unitValue(latestByItem.get(item.inventoryId)!)) ?? item.retailValue ?? 0) * (item.currentQty || 0), 0);
-  const acquisitionCost = inventory.reduce((sum, item) => sum + (item.actualCost || 0), 0);
+  const currentValue = currentInventory.reduce((sum, item) => sum + ((latestByItem.get(item.inventoryId) && unitValue(latestByItem.get(item.inventoryId)!)) ?? item.retailValue ?? 0) * (item.currentQty || 0), 0);
+  const acquisitionCost = currentInventory.reduce((sum, item) => sum + (item.actualCost || 0), 0);
   const unrealizedChange = currentValue - acquisitionCost;
-  const coverage = inventory.length ? Math.round(latestByItem.size / inventory.length * 100) : 0;
+  const valuedCurrentLots = currentInventory.filter(item => latestByItem.has(item.inventoryId)).length;
+  const coverage = currentInventory.length ? Math.round(valuedCurrentLots / currentInventory.length * 100) : 0;
 
   const brands = new Map<string, number>();
-  for (const item of inventory) {
+  for (const item of currentInventory) {
     const unit = (latestByItem.get(item.inventoryId) && unitValue(latestByItem.get(item.inventoryId)!)) ?? item.retailValue ?? 0;
     brands.set(item.brand, (brands.get(item.brand) || 0) + unit * (item.currentQty || 0));
   }
