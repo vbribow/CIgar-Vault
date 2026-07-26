@@ -9,11 +9,17 @@ export default async function ActivityPage({
   searchParams: Promise<{ inventoryId?: string }>;
 }) {
   const query = await searchParams;
-  const mode = await accountDataMode();
-  const [inventory, activities] = await Promise.all([
+  const [modeResult, inventoryResult] = await Promise.allSettled([
+    accountDataMode(),
     loadInventory(),
-    mode === "mock" ? [] : loadActivities(),
   ]);
+  const mode = modeResult.status === "fulfilled" ? modeResult.value : undefined;
+  const activitiesResult = mode
+    ? await Promise.allSettled([mode === "mock" ? Promise.resolve([]) : loadActivities()])
+    : undefined;
+  const ready = inventoryResult.status === "fulfilled" && mode !== undefined && activitiesResult?.[0]?.status === "fulfilled";
+  const inventory = inventoryResult.status === "fulfilled" ? inventoryResult.value : [];
+  const activities = activitiesResult?.[0]?.status === "fulfilled" ? activitiesResult[0].value : [];
   return (
     <main className="shell">
       <nav className="nav">
@@ -35,12 +41,12 @@ export default async function ActivityPage({
           </p>
         </div>
       </section>
-      <ActivityManager
+      {!ready?<section className="section card"><div className="eyebrow">Activity ledger protected</div><h2>Collection activity is temporarily paused.</h2><p className="small">Cedriva could not verify inventory and its permanent activity ledger together. No activity is being shown as absent, and no quantity-changing transaction can be written against a partial record.</p><a className="button secondary" href="/activity">Try again</a></section>:<ActivityManager
         inventory={inventory}
         initialActivities={activities}
-        mode={mode}
+        mode={mode!}
         selectedId={query.inventoryId}
-      />
+      />}
     </main>
   );
 }
