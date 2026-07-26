@@ -55,11 +55,15 @@ export default async function HumidorDetailPage({
   const insight = humidorInsights(humidor, readings);
   const intelligence = climateIntelligence(humidor, readings);
   const members = inventory.filter((i) => i.storageLocationId === humidorId);
-  const quantity = members.reduce((n, i) => n + (i.currentQty || 0), 0);
-  const value = members.reduce(
-    (n, i) => n + (i.retailValue || 0) * (i.currentQty || 0),
+  const quantityKnown = members.filter(i=>i.currentQty!==undefined);
+  const quantity = quantityKnown.reduce((n, i) => n + i.currentQty!, 0);
+  const valuedMembers=members.filter(i=>i.retailValue!==undefined&&i.currentQty!==undefined);
+  const value = valuedMembers.reduce(
+    (n, i) => n + i.retailValue! * i.currentQty!,
     0,
   );
+  const quantityComplete=quantityKnown.length===members.length;
+  const valueComplete=valuedMembers.length===members.length;
   const chart = [...insight.rows].reverse().slice(-30);
   return (
     <main className="shell">
@@ -115,11 +119,13 @@ export default async function HumidorDetailPage({
         <article>
           <span>Capacity</span>
           <strong>
-            {quantity}
-            {humidor.capacity ? ` / ${humidor.capacity}` : ""}
+            {quantityComplete?quantity:`At least ${quantity}`}
+            {quantityComplete&&humidor.capacity ? ` / ${humidor.capacity}` : ""}
           </strong>
           <small>
-            {humidor.capacity
+            {!quantityComplete
+              ? `${members.length-quantityKnown.length} lot${members.length-quantityKnown.length===1?"":"s"} need quantity`
+              : humidor.capacity
               ? `${Math.round((quantity / humidor.capacity) * 100)}% occupied`
               : "Capacity not set"}
           </small>
@@ -127,9 +133,9 @@ export default async function HumidorDetailPage({
         <article>
           <span>Stored value</span>
           <strong>
-            ${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {valueComplete?`$${value.toLocaleString(undefined,{maximumFractionDigits:0})}`:valuedMembers.length?`$${value.toLocaleString(undefined,{maximumFractionDigits:0})} documented`:"Valuation pending"}
           </strong>
-          <small>{members.length} inventory lots</small>
+          <small>{valuedMembers.length} of {members.length} inventory lots valued</small>
         </article>
       </section>
       <section className="climateContextLink">
