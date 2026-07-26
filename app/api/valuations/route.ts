@@ -5,7 +5,7 @@ import { getValuations, recordValuation } from "@/lib/smartsheet";
 import { loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { applyRetailValuationToInventory } from "@/lib/retail-pricing";
-import { saveOwnedRecord } from "@/lib/user-data";
+import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -20,12 +20,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const item = ValuationSchema.parse(await request.json());
-    if (await saveOwnedRecord("valuations",item.valuationId,item)) {
+    if (await accountDataMode() === "supabase") {
+      const records:Parameters<typeof saveOwnedRecordsAtomically>[0]=[
+        {kind:"valuations",recordId:item.valuationId,payload:item},
+      ];
       if(item.replacementValue!==undefined||item.replacementSticksPerBox!==undefined){
         const inventory=(await loadInventory()).find(record=>record.inventoryId===item.inventoryId);
         if(!inventory)throw new Error(`Inventory ID ${item.inventoryId} was not found`);
-        await saveOwnedRecord("inventory",inventory.inventoryId,applyRetailValuationToInventory(inventory,item));
+        records.push({kind:"inventory",recordId:inventory.inventoryId,payload:applyRetailValuationToInventory(inventory,item)});
       }
+      if(!await saveOwnedRecordsAtomically(records))throw new Error("Sign in before saving private valuation evidence");
       return NextResponse.json({ data: item }, { status: 201 });
     }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
