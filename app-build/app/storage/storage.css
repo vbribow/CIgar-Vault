@@ -1,0 +1,11 @@
+.storageUnavailable {
+  display: grid;
+  gap: 10px;
+  margin-top: 30px;
+  border-color: #805b2d;
+}
+
+.storageUnavailable h1,
+.storageUnavailable p {
+  margin: 0;
+}
