@@ -7,7 +7,7 @@ import { loadInventory } from "@/lib/inventory";
 import { normalizeInventory } from "@/lib/inventory-model";
 import { addInventoryRows } from "@/lib/smartsheet";
 import { updateInventoryRow } from "@/lib/smartsheet";
-import { saveOwnedRecord } from "@/lib/user-data";
+import { saveOwnedRecordsAtomically } from "@/lib/user-data";
 import { matchCollectionRequirements } from "@/lib/collection-matching";
 
 export async function POST(request: Request, { params }: { params: Promise<{ collectionId: string }> }) {
@@ -32,10 +32,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     const drafts = collectionComponentDrafts(collection, template, inventory, fulfilled).map(item => normalizeInventory(item));
     const repairs = collectionComponentRepairs(collection, template, inventory).map(item => normalizeInventory(item));
     if (!drafts.length && !reusable.length && !repairs.length) return NextResponse.json({ data: { created: 0, linked: 0, repaired: 0, unresolved: unmaterializedCollectionRequirements(template), message: "No new component lots were needed." } });
-    const accountSave = await Promise.all(drafts.map(item => saveOwnedRecord("inventory", item.inventoryId, item)));
-    const accountLinks = await Promise.all(reusable.map(({ item }) => saveOwnedRecord("inventory", item.inventoryId, item)));
-    const accountRepairs = await Promise.all(repairs.map(item => saveOwnedRecord("inventory", item.inventoryId, item)));
-    if (![...accountSave, ...accountLinks, ...accountRepairs].every(Boolean)) {
+    const accountChanges = [
+      ...new Map(
+        [
+          ...drafts,
+          ...reusable.map(({ item }) => item),
+          ...repairs,
+        ].map((item) => [item.inventoryId, item]),
+      ).values(),
+    ];
+    const accountSaved = await saveOwnedRecordsAtomically(
+      accountChanges.map((item) => ({
+        kind: "inventory",
+        recordId: item.inventoryId,
+        payload: item,
+      })),
+    );
+    if (!accountSaved) {
       if (!authorizeWrite(request)) return NextResponse.json({ error: "Sign in before populating collection inventory" }, { status: 401 });
       if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in preview mode" }, { status: 409 });
       await addInventoryRows(drafts);

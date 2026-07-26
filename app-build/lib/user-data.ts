@@ -79,3 +79,33 @@ export async function importOwnedRecords(records: Array<{kind:VaultRecordKind;re
   if (error) throw error;
   return rows.length;
 }
+
+/**
+ * Saves a related set of owned records in one database statement. Supabase
+ * executes the statement transactionally, so collectors never receive a
+ * partially populated collection when one row fails.
+ */
+export async function saveOwnedRecordsAtomically(
+  records: Array<{
+    kind: VaultRecordKind;
+    recordId: string;
+    payload: unknown;
+  }>,
+): Promise<boolean> {
+  const context = await accountContext();
+  if (!context) return false;
+  if (!records.length) return true;
+  const updatedAt = new Date().toISOString();
+  const rows = records.map((record) => ({
+    user_id: context.user.id,
+    kind: record.kind,
+    record_id: record.recordId,
+    payload: record.payload,
+    updated_at: updatedAt,
+  }));
+  const { error } = await context.supabase
+    .from("vault_records")
+    .upsert(rows, { onConflict: "user_id,kind,record_id" });
+  if (error) throw error;
+  return true;
+}
