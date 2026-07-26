@@ -4,7 +4,7 @@ import { authorizeWrite, dataMode } from "@/lib/config";
 import { getHumidors, saveHumidor } from "@/lib/smartsheet";
 import { loadHumidors } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
-import { saveOwnedRecord } from "@/lib/user-data";
+import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -20,9 +20,18 @@ export async function POST(request: Request) {
   try {
     const parsed = HumidorSchema.parse(await request.json());
     const { memberIds, ...humidor } = parsed;
-    if (await saveOwnedRecord("humidors",humidor.humidorId,humidor)) {
+    if (await accountDataMode() === "supabase") {
       const inventory=await loadInventory();
-      await Promise.all(inventory.map(item=>saveOwnedRecord("inventory",item.inventoryId,{...item,storageLocationId:memberIds.includes(item.inventoryId)?humidor.humidorId:item.storageLocationId===humidor.humidorId?undefined:item.storageLocationId})));
+      const selected=new Set(memberIds);
+      const changed=inventory.flatMap(item=>{
+        const storageLocationId=selected.has(item.inventoryId)?humidor.humidorId:item.storageLocationId===humidor.humidorId?undefined:item.storageLocationId;
+        return storageLocationId===item.storageLocationId?[]:[{...item,storageLocationId}];
+      });
+      const saved=await saveOwnedRecordsAtomically([
+        {kind:"humidors",recordId:humidor.humidorId,payload:humidor},
+        ...changed.map(item=>({kind:"inventory" as const,recordId:item.inventoryId,payload:item})),
+      ]);
+      if(!saved)throw new Error("Sign in before saving private storage records");
       return NextResponse.json({ data: humidor }, { status: 201 });
     }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
