@@ -1,6 +1,7 @@
 import { matchCollectionRequirements } from "@/lib/collection-matching";
 import { collectionTemplates } from "@/lib/collection-templates";
 import { collectionComponentMarketEvidence } from "@/lib/collection-market-evidence";
+import { cigarProductKey } from "@/lib/cigar-identity";
 import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
 
 export type CollectionValuePoint = {
@@ -73,7 +74,23 @@ export function collectionRequirementMatches(collection: CigarCollection, member
     const cigarYear = Number(item.vintage);
     return !Number.isFinite(collectionYear) || !Number.isFinite(cigarYear) || cigarYear <= collectionYear;
   });
-  const rawMatches = template ? matchCollectionRequirements(template.requirements, ownedMembers,collectionMatchMinimum(template)) : [];
+  const rawMatches = template ? (()=>{
+    const assigned=new Set<string>();
+    const documented=new Map((template.componentEvidence??[]).map(component=>[component.requirement,component]));
+    const results=template.requirements.map(requirement=>{
+      const expected=documented.get(requirement);
+      if(!expected)return undefined;
+      const productKey=cigarProductKey(expected);
+      const exact=ownedMembers.find(item=>!assigned.has(item.inventoryId)&&cigarProductKey(item)===productKey);
+      if(!exact)return{requirement,score:0};
+      assigned.add(exact.inventoryId);
+      return{requirement,inventoryId:exact.inventoryId,label:`${exact.brand} ${exact.line} ${exact.vitola}`,score:1};
+    });
+    const undocumentedRequirements=template.requirements.filter(requirement=>!documented.has(requirement));
+    const remaining=ownedMembers.filter(item=>!assigned.has(item.inventoryId));
+    const fallback=new Map(matchCollectionRequirements(undocumentedRequirements,remaining,collectionMatchMinimum(template)).map(match=>[match.requirement,match]));
+    return results.map((result,index)=>result??fallback.get(template.requirements[index])??{requirement:template.requirements[index],score:0});
+  })() : [];
   const assignedInventory = new Set<string>();
   return rawMatches.map((match) => {
     if (!match.inventoryId || assignedInventory.has(match.inventoryId)) {
