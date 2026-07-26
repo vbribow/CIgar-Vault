@@ -40,3 +40,14 @@ test("retry state preserves successful channels and prefers the most complete de
   assert.match(notifications,/previous\?\.emailSentAt\|\|/);
   assert.match(notifications,/previous\?\.smsSentAt\|\|/);
 });
+
+test("alert processing is single-flight and delivery history is updated in place",()=>{
+  const notifications=fs.readFileSync(path.join(process.cwd(),"lib/alert-notifications.ts"),"utf8");
+  const smartsheet=fs.readFileSync(path.join(process.cwd(),"lib/smartsheet.ts"),"utf8");
+  assert.match(notifications,/activeClimateAlertRun/);
+  assert.match(notifications,/if\(activeClimateAlertRun\)return activeClimateAlertRun/);
+  assert.match(notifications,/\.finally\(\(\)=>\{/);
+  assert.match(smartsheet,/get\("Alert ID"\).*===value\.alertId/);
+  assert.match(smartsheet,/method:"PUT"/);
+  assert.match(smartsheet,/\{id:existing\.id,cells\}/);
+});
