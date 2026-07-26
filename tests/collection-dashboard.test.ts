@@ -47,7 +47,8 @@ test("researched edition counts override stale provisional collection counts", (
     [],
     [],
   );
-  assert.equal(result.expectedComponents,10);
+  assert.equal(result.expectedComponents,11);
+  assert.equal(result.expectedIdentities,10);
   assert.equal(result.expectedCigars,106);
 });
 
@@ -57,8 +58,8 @@ test("lists missing template components", () => {
     [{ inventoryId: "A", brand: "Padrón", line: "1964 Anniversary Series", vitola: "Toro", currentQty: 1, collectionId: "COL-PADRON-COLLECTION" }],
     [],
   );
-  assert.equal(result.completionPercent, 20);
-  assert.equal(result.missingComponents.length, 4);
+  assert.equal(result.completionPercent, 0);
+  assert.equal(result.missingComponents.length, 5);
   assert.ok(result.missingComponents.includes("Family Reserve"));
 });
 
@@ -81,12 +82,12 @@ test("researched collections exclude incorrectly assigned cigars from completion
     { inventoryId:"WRONG",brand:"Arturo Fuente",line:"OpusX",vitola:"Double Corona",currentQty:20,retailValue:100,collectionId:collection.collectionId },
   ];
   const result=summarizeCollection(collection,inventory,[]);
-  assert.equal(result.componentValue,30);
-  assert.equal(result.completionPercent,20);
-  assert.deepEqual(result.excludedAssignedLots,["WRONG"]);
+  assert.equal(result.componentValue,0);
+  assert.equal(result.completionPercent,0);
+  assert.deepEqual(result.excludedAssignedLots,["RIGHT","WRONG"]);
 });
 
-test("a later standalone release cannot satisfy an earlier collection component", () => {
+test("unattributed template evidence cannot verify even a plausible earlier-edition component", () => {
   const collection = { collectionId:"COL-FUENTE-DREAM-DYNASTY", name:"From Dream to Dynasty Collection", releaseYear:2024 };
   const inventory = [
     { inventoryId:"LATER",brand:"Arturo Fuente",line:"OpusX / Forbidden X",vitola:"Pasión de Amor",vintage:2026,currentQty:6,retailValue:60,collectionId:collection.collectionId },
@@ -94,8 +95,8 @@ test("a later standalone release cannot satisfy an earlier collection component"
   ];
   const result=summarizeCollection(collection,inventory,[]);
   assert.ok(result.excludedAssignedLots.includes("LATER"));
-  assert.equal(result.excludedAssignedLots.includes("COLLECTION"),false);
-  assert.equal(result.componentValue,100);
+  assert.equal(result.excludedAssignedLots.includes("COLLECTION"),true);
+  assert.equal(result.componentValue,0);
 });
 
 test("a lower historical whole-set reference cannot create a negative premium", () => {
@@ -113,16 +114,17 @@ test("a lower historical whole-set reference cannot create a negative premium", 
 
 test("subtracts fully priced original cigars from a humidor collection retail price", () => {
   const collection = { collectionId:"COL-FUENTE-PURPLE-DREAM", name:"Big Purple Dream Humidor" };
-  const quantities=[10,6,10,10,10,10,10,10,20,10];
-  const lines=["OpusX Purple Rain","OpusX Big B","OpusX BBMF Natural","OpusX BBMF Maduro","OpusX El Escorpion Natural","OpusX El Escorpion Maduro","OpusX Rare Black Torpedo","OpusX Rare Black Double Corona","OpusX Scorpio Maduro","OpusX Tauros the Bull Maduro"];
+  const templateVitolas=[
+    "Purple Rain — Lonsdale figurado (6.875 × 44)","Big B",
+    "BBMF Natural — Figurado (6.5 × 64)","BBMF Maduro — Figurado (6.5 × 64)",
+    "El Escorpion Natural","El Escorpion Maduro","Rare Black Torpedo",
+    "Rare Black Double Corona","Scorpio Maduro","Tauros the Bull Maduro","Scorpio Maduro",
+  ];
+  const quantities=[10,6,10,10,10,10,10,10,10,10,10];
   const inventory=quantities.map((originalQty,index)=>({
-    inventoryId:`P${index}`,brand:"Arturo Fuente",line:lines[index],vitola:"Size to verify",
+    inventoryId:`P${index}`,brand:"Arturo Fuente",line:"OpusX Heaven and Earth",vitola:templateVitolas[index],
     originalQty,currentQty:Math.max(0,originalQty-1),retailValue:50,collectionId:collection.collectionId,
   }));
-  inventory[0].line="OpusX Heaven and Earth Purple Rain";
-  inventory[0].vitola="Lonsdale figurado (6.875 × 44)";
-  inventory[2].vitola="Figurado (6.5 × 64)";
-  inventory[3].vitola="Figurado (6.5 × 64)";
   const result=summarizeCollection(collection,inventory,[]);
   assert.equal(result.wholeValue,12975);
   assert.equal(result.cigarRetailValue,5300);

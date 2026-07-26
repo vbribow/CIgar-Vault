@@ -5,6 +5,8 @@ import { getCollections, saveCollection } from "@/lib/smartsheet";
 import { loadCollections } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
+import { collectionRequirementMatches, collectionTemplateFor } from "@/lib/collection-dashboard";
+import { isPresentationInventoryMatch } from "@/lib/collection-presentation";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -20,11 +22,30 @@ export async function POST(request: Request) {
   try {
     const parsed = CollectionInputSchema.parse(await request.json());
     const { memberIds, ...collection } = parsed;
+    const inventory=await loadInventory();
+    const presentationAsset=collection.presentationInventoryId
+      ? inventory.find(item=>item.inventoryId===collection.presentationInventoryId)
+      : undefined;
+    if(collection.presentationInventoryId&&!presentationAsset)return NextResponse.json({error:"Presentation inventory record not found"},{status:409});
+    if(presentationAsset&&!isPresentationInventoryMatch(presentationAsset,collection))return NextResponse.json({error:"The selected presentation record does not exactly match this researched collection"},{status:409});
+    if(collection.presentationInventoryId&&memberIds.includes(collection.presentationInventoryId))return NextResponse.json({error:"A presentation humidor or case cannot also be saved as a cigar component"},{status:409});
+    const template=collectionTemplateFor(collection);
+    if(template){
+      const selected=inventory.filter(item=>memberIds.includes(item.inventoryId));
+      const verifiedIds=new Set(collectionRequirementMatches(collection,selected).flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
+      const unverified=memberIds.filter(inventoryId=>!verifiedIds.has(inventoryId));
+      if(unverified.length)return NextResponse.json({error:`${unverified.length} selected lot${unverified.length===1?" does":"s do"} not exactly match a sourced component and cannot be assigned.`},{status:409});
+    }
     if (await accountDataMode() === "supabase") {
-      const inventory=await loadInventory();
       const selected=new Set(memberIds);
       const changed=inventory.flatMap(item=>{
-        const collectionId=selected.has(item.inventoryId)?collection.collectionId:item.collectionId===collection.collectionId?undefined:item.collectionId;
+        const collectionId=item.inventoryId===collection.presentationInventoryId
+          ? undefined
+          : selected.has(item.inventoryId)
+            ? collection.collectionId
+            : item.collectionId===collection.collectionId
+              ? undefined
+              : item.collectionId;
         return collectionId===item.collectionId?[]:[{...item,collectionId}];
       });
       const saved=await saveOwnedRecordsAtomically([

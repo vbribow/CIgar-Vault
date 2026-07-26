@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeWrite, dataMode } from "@/lib/config";
-import { collectionComponentDrafts, collectionComponentRepairs, collectionPopulationCandidates, unmaterializedCollectionRequirements } from "@/lib/collection-components";
+import { collectionComponentDrafts, collectionComponentRepairs, collectionPhysicalLotRepairs, collectionPopulationCandidates, unmaterializedCollectionRequirements } from "@/lib/collection-components";
 import { collectionEditionIssue, collectionRequirementMatches, collectionTemplateFor } from "@/lib/collection-dashboard";
 import { loadCollections } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
@@ -21,24 +21,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     // A matching standalone lot is not proof that the collector acquired it
     // as part of this collection. Only already documented component lots may
     // fulfill requirements automatically.
+    const physicalLotRepairs=collectionPhysicalLotRepairs(collection,template,inventory).map(item=>normalizeInventory(item));
+    const physicalRepairById=new Map(physicalLotRepairs.map(item=>[item.inventoryId,item]));
+    const reconciledInventory=[
+      ...inventory.map(item=>physicalRepairById.get(item.inventoryId)??item),
+      ...physicalLotRepairs.filter(item=>!inventory.some(existing=>existing.inventoryId===item.inventoryId)),
+    ];
     const eligibleInventory = collectionPopulationCandidates(
       collection.collectionId,
-      inventory,
+      reconciledInventory,
     );
     const used = new Set<string>(), reusable = collectionRequirementMatches(collection, eligibleInventory).flatMap(match => {
-      const item = match.inventoryId ? inventory.find(candidate => candidate.inventoryId === match.inventoryId) : undefined;
+      const item = match.inventoryId ? reconciledInventory.find(candidate => candidate.inventoryId === match.inventoryId) : undefined;
       if (!item || used.has(item.inventoryId) || (item.collectionId && item.collectionId !== collection.collectionId)) return [];
       used.add(item.inventoryId); return [{ requirement: match.requirement, item: { ...item, collectionId: collection.collectionId } }];
     });
     const fulfilled = new Set(reusable.map(match => match.requirement));
-    const drafts = collectionComponentDrafts(collection, template, inventory, fulfilled).map(item => normalizeInventory(item));
-    const repairs = collectionComponentRepairs(collection, template, inventory).map(item => normalizeInventory(item));
-    if (!drafts.length && !reusable.length && !repairs.length) return NextResponse.json({ data: { created: 0, linked: 0, repaired: 0, unresolved: unmaterializedCollectionRequirements(template), message: "No new component lots were needed." } });
+    const drafts = collectionComponentDrafts(collection, template, reconciledInventory, fulfilled).map(item => normalizeInventory(item));
+    const repairs = collectionComponentRepairs(collection, template, reconciledInventory).map(item => normalizeInventory(item));
+    if (!drafts.length && !reusable.length && !repairs.length&&!physicalLotRepairs.length) return NextResponse.json({ data: { created: 0, linked: 0, repaired: 0, unresolved: unmaterializedCollectionRequirements(template), message: "No new component lots were needed." } });
     const accountChanges = [
       ...new Map(
         [
           ...drafts,
           ...reusable.map(({ item }) => item),
+          ...physicalLotRepairs,
           ...repairs,
         ].map((item) => [item.inventoryId, item]),
       ).values(),
@@ -53,9 +60,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     if (!accountSaved) {
       if (!authorizeWrite(request)) return NextResponse.json({ error: "Sign in before populating collection inventory" }, { status: 401 });
       if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in preview mode" }, { status: 409 });
-      await addInventoryRows(drafts);
-      await Promise.all([...reusable.map(({ item }) => item), ...repairs].map(item => updateInventoryRow(item.inventoryId, item)));
+      const physicalLotUpdates=physicalLotRepairs.filter(item=>inventory.some(existing=>existing.inventoryId===item.inventoryId));
+      const physicalLotCreates=physicalLotRepairs.filter(item=>!inventory.some(existing=>existing.inventoryId===item.inventoryId));
+      await addInventoryRows([...drafts,...physicalLotCreates]);
+      await Promise.all([...reusable.map(({ item }) => item), ...physicalLotUpdates, ...repairs].map(item => updateInventoryRow(item.inventoryId, item)));
     }
-    return NextResponse.json({ data: { created: drafts.length, linked: reusable.length, repaired: repairs.length, unresolved: unmaterializedCollectionRequirements(template), items: drafts } }, { status: 201 });
+    return NextResponse.json({ data: { created: drafts.length+physicalLotRepairs.filter(item=>!inventory.some(existing=>existing.inventoryId===item.inventoryId)).length, linked: reusable.length, repaired: repairs.length+physicalLotRepairs.filter(item=>inventory.some(existing=>existing.inventoryId===item.inventoryId)).length, unresolved: unmaterializedCollectionRequirements(template), items: drafts } }, { status: 201 });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Collection population failed" }, { status: 422 }); }
 }
