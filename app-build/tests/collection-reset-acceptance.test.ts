@@ -40,8 +40,8 @@ test("Purple Dream acceptance fixture preserves 106 cigars as 11 lots and 10 ide
   ]);
 });
 
-test("the five collection acceptance fixtures freeze incomplete sourcing", () => {
-  assert.equal(readiness("TPL-FUENTE-DREAM-DYNASTY").autoReady,false);
+test("the five collection acceptance fixtures unlock only fully sourced collections", () => {
+  assert.equal(readiness("TPL-FUENTE-DREAM-DYNASTY").autoReady,true);
   assert.equal(readiness("TPL-FUENTE-GRAN-FUMADA-2023").autoReady,false);
   assert.equal(readiness("TPL-FUENTE-PADRON-LEGENDS").autoReady,true);
   assert.equal(readiness("TPL-FUENTE-FATHER-SON-2026").autoReady,false);
