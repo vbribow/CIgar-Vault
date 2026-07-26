@@ -19,7 +19,8 @@ export type InsuranceScheduleRow = {
 };
 
 export function buildInsuranceReport(inventory: InventoryItem[], humidors: Humidor[], readings: HumidorReading[], sensors: EnvironmentalSensor[], now = new Date()) {
-  const rows: InsuranceScheduleRow[] = inventory.map(item => ({
+  const activeInventory = inventory.filter(item => item.currentQty !== 0);
+  const rows: InsuranceScheduleRow[] = activeInventory.map(item => ({
     inventoryId: item.inventoryId,
     cigar: [item.brand, item.line, item.vitola].filter(Boolean).join(" · "),
     vintage: item.vintage === undefined ? "Not recorded" : String(item.vintage),
@@ -33,26 +34,26 @@ export function buildInsuranceReport(inventory: InventoryItem[], humidors: Humid
     verification: isCubanInventory(item) ? cubanVerificationStatus(item) : "Not applicable",
   })).sort((a, b) => (b.scheduledValue ?? -1) - (a.scheduledValue ?? -1));
 
-  const cubanLots = inventory.filter(isCubanInventory);
+  const cubanLots = activeInventory.filter(isCubanInventory);
   const boxedCubanLots = cubanLots.filter(item => cubanVerificationStatus(item) !== "Loose sticks");
-  const climate = humidors.map(humidor => climateHealth(humidor, readings, sensors, inventory, now));
-  const knownQuantity = inventory.reduce((sum, item) => sum + (item.currentQty ?? 0), 0);
+  const climate = humidors.map(humidor => climateHealth(humidor, readings, sensors, activeInventory, now));
+  const knownQuantity = activeInventory.reduce((sum, item) => sum + (item.currentQty ?? 0), 0);
   const scheduledReplacementValue = rows.reduce((sum, row) => sum + (row.scheduledValue ?? 0), 0);
 
   return {
     generatedAt: now.toISOString(),
     rows,
     totals: {
-      lots: inventory.length,
+      lots: activeInventory.length,
       knownQuantity,
       scheduledReplacementValue,
-      storageLocations: new Set(inventory.map(item => item.storageLocationId).filter(Boolean)).size,
+      storageLocations: new Set(activeInventory.map(item => item.storageLocationId).filter(Boolean)).size,
       unassignedValue: rows.filter(row => row.storage === "Unassigned").reduce((sum, row) => sum + (row.scheduledValue ?? 0), 0),
       valueAtClimateRisk: climate.reduce((sum, item) => sum + item.valueAtRisk + item.unmonitoredValue, 0),
     },
     coverage: {
-      quantity: percent(inventory.filter(item => item.currentQty !== undefined).length, inventory.length),
-      valuation: percent(inventory.filter(item => item.retailValue !== undefined).length, inventory.length),
+      quantity: percent(activeInventory.filter(item => item.currentQty !== undefined).length, activeInventory.length),
+      valuation: percent(activeInventory.filter(item => item.retailValue !== undefined).length, activeInventory.length),
       photo: percent(rows.filter(row => row.photo).length, rows.length),
       provenance: percent(rows.filter(row => row.provenance).length, rows.length),
       cubanVerification: percent(boxedCubanLots.filter(item => cubanVerificationStatus(item) === "Verified").length, boxedCubanLots.length),
@@ -70,11 +71,11 @@ export function buildInsuranceReport(inventory: InventoryItem[], humidors: Humid
       evidence: item.latest ? `${item.rows.length} climate readings` : "No climate readings",
     })),
     exceptions: {
-      missingQuantity: inventory.filter(item => item.currentQty === undefined).length,
-      missingValuation: inventory.filter(item => item.retailValue === undefined).length,
+      missingQuantity: activeInventory.filter(item => item.currentQty === undefined).length,
+      missingValuation: activeInventory.filter(item => item.retailValue === undefined).length,
       missingPhoto: rows.filter(row => !row.photo).length,
       missingProvenance: rows.filter(row => !row.provenance).length,
-      unassignedStorage: inventory.filter(item => !item.storageLocationId).length,
+      unassignedStorage: activeInventory.filter(item => !item.storageLocationId).length,
       cubanEvidenceNeeded: boxedCubanLots.filter(item => cubanVerificationStatus(item) !== "Verified").length,
     },
   };

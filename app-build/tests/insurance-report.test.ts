@@ -23,3 +23,10 @@ test("surfaces monitored value when a humidor has no readings", () => {
   assert.equal(report.climate[0].severity, "Offline");
   assert.equal(report.totals.valueAtClimateRisk, 1500);
 });
+
+test("zero-quantity historical lots stay out of the active insurance schedule", () => {
+  const report = buildInsuranceReport([...inventory, { inventoryId: "OLD", brand: "Legacy", line: "Duplicate", vitola: "Churchill", currentQty: 0, retailValue: 500 }], [], [], []);
+  assert.equal(report.rows.some(row => row.inventoryId === "OLD"), false);
+  assert.equal(report.totals.lots, 2);
+  assert.equal(report.totals.scheduledReplacementValue, 1500);
+});
