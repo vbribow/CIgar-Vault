@@ -21,3 +21,45 @@ test("legacy recovery restores only records missing from the authoritative accou
     const result = reconcileInventory([lot("A"), lot("B"), lot("C", 20)], [lot("A"), lot("C", 19), lot("D")]);
     assert.deepEqual(restorableFromMaster(result).map(item => item.inventoryId), ["B"]);
 });
+
+test("a collection or provenance difference can never be reported as an exact match", () => {
+    const master = {
+      ...lot("A"),
+      collectionId: "COL-LEGENDS",
+      provenanceNotes: "Purchased as part of the documented Legends collection",
+    };
+    const account = {
+      ...lot("A"),
+      collectionId: undefined,
+      provenanceNotes: "Standalone acquisition",
+    };
+    const [result] = reconcileInventory([master], [account]);
+    assert.equal(result.status, "mismatch");
+    assert.deepEqual(
+      result.differences.map((difference) => difference.field),
+      ["collectionId", "provenanceNotes"],
+    );
+});
+
+test("quantity history, acquisition cost, and evidence are part of record integrity", () => {
+    const master = {
+      ...lot("A"),
+      originalQty: 20,
+      smokedQty: 10,
+      actualCost: 400,
+      photoLink: "https://example.com/master.jpg",
+    };
+    const account = {
+      ...lot("A"),
+      originalQty: 18,
+      smokedQty: 8,
+      actualCost: 450,
+      photoLink: "https://example.com/account.jpg",
+    };
+    const [result] = reconcileInventory([master], [account]);
+    assert.equal(result.status, "mismatch");
+    assert.deepEqual(
+      result.differences.map((difference) => difference.field),
+      ["originalQty", "smokedQty", "actualCost", "photoLink"],
+    );
+});

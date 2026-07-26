@@ -19,12 +19,18 @@ export type IntegrityItem = {
 };
 
 const comparedFields: Array<[keyof InventoryItem, string]> = [
+  ["catalogId", "Catalog identity"], ["collectionId", "Collection assignment"],
   ["brand", "Brand"], ["line", "Series"], ["vitola", "Vitola"],
-  ["vintage", "Release year"], ["packaging", "Packaging"],
+  ["vintage", "Cigar production or release year"], ["packaging", "Packaging"],
+  ["originalQty", "Original quantity"], ["smokedQty", "Smoked quantity"],
   ["fullBoxQty", "Full boxes"], ["sticksPerBox", "Cigars per box"],
   ["looseStickQty", "Loose sticks"], ["currentQty", "Current quantity"],
-  ["retailValue", "Unit value"], ["storageLocationId", "Storage"],
+  ["retailValue", "Replacement retail value"], ["actualCost", "Acquisition cost"],
+  ["storageLocationId", "Storage"],
   ["habanosVerified", "Habanos verification"], ["boxCode", "Box code"],
+  ["photoLink", "Primary photo"], ["boxPhotoLink", "Box photo"],
+  ["provenanceDocumentLink", "Provenance document"],
+  ["provenanceNotes", "Provenance notes"],
 ];
 
 function normalized(value: unknown) {
