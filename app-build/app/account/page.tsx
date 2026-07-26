@@ -16,7 +16,14 @@ export default async function AccountPage({searchParams}:{searchParams:Promise<{
   const params=await searchParams;
   if(!supabaseConfigured())return <main className="shell"><div className="emptyState">Account service is not configured in this environment.</div></main>;
   const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();if(!user)redirect("/login");
-  const[{data:profile},{data:preferences},{data:vaultRecords},{data:consent}]=await Promise.all([supabase.from("profiles").select("display_name, collection_name, experience_level, onboarding_completed, billing_plan, billing_status, stripe_customer_id").eq("user_id",user.id).maybeSingle(),supabase.from("account_preferences").select("email_notifications,wishlist_alerts,valuation_research,rating_research,product_analytics,upgrade_recommendations").eq("user_id",user.id).maybeSingle(),supabase.from("vault_records").select("kind,record_id,payload,updated_at"),supabase.from("account_consents").select("age_confirmed_at,terms_version,terms_accepted_at,privacy_version,privacy_accepted_at,beta_version,beta_accepted_at").eq("user_id",user.id).maybeSingle()]);
+  const[profileResult,preferencesResult,vaultResult,consentResult]=await Promise.all([
+    supabase.from("profiles").select("display_name, collection_name, experience_level, onboarding_completed, billing_plan, billing_status, stripe_customer_id").eq("user_id",user.id).maybeSingle(),
+    supabase.from("account_preferences").select("email_notifications,wishlist_alerts,valuation_research,rating_research,product_analytics,upgrade_recommendations").eq("user_id",user.id).maybeSingle(),
+    supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",user.id),
+    supabase.from("account_consents").select("age_confirmed_at,terms_version,terms_accepted_at,privacy_version,privacy_accepted_at,beta_version,beta_accepted_at").eq("user_id",user.id).maybeSingle(),
+  ]);
+  if(profileResult.error||preferencesResult.error||vaultResult.error||consentResult.error)return <main className="shell accountShell"><section className="section card"><div className="eyebrow">Account records protected</div><h1>Your account controls are temporarily paused.</h1><p className="lede">Cedriva could not verify profile, preferences, private Vault records, and consent together. Nothing is being shown as missing, expired, or reset.</p><a className="button secondary" href="/account">Try again</a></section></main>;
+  const profile=profileResult.data,preferences=preferencesResult.data,vaultRecords=vaultResult.data,consent=consentResult.data;
   const founder=profile?.billing_plan==="founder";
   const records=(vaultRecords||[]) as AccountVaultRecord[];
   const checklist=buildAccountChecklist(Boolean(profile?.onboarding_completed),records);
