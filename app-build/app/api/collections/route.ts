@@ -7,6 +7,7 @@ import { loadInventory } from "@/lib/inventory";
 import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
 import { collectionRequirementMatches, collectionTemplateFor } from "@/lib/collection-dashboard";
 import { isPresentationInventoryMatch } from "@/lib/collection-presentation";
+import { auditCollectionTemplateProtocol } from "@/lib/collection-templates";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -30,11 +31,14 @@ export async function POST(request: Request) {
     if(presentationAsset&&!isPresentationInventoryMatch(presentationAsset,collection))return NextResponse.json({error:"The selected presentation record does not exactly match this researched collection"},{status:409});
     if(collection.presentationInventoryId&&memberIds.includes(collection.presentationInventoryId))return NextResponse.json({error:"A presentation humidor or case cannot also be saved as a cigar component"},{status:409});
     const template=collectionTemplateFor(collection);
+    if(memberIds.length&&!template)return NextResponse.json({error:"Research and document this collection’s exact sourced components before assigning collector inventory."},{status:409});
     if(template){
+      const protocol=auditCollectionTemplateProtocol(template);
       const selected=inventory.filter(item=>memberIds.includes(item.inventoryId));
       const verifiedIds=new Set(collectionRequirementMatches(collection,selected).flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
       const unverified=memberIds.filter(inventoryId=>!verifiedIds.has(inventoryId));
       if(unverified.length)return NextResponse.json({error:`${unverified.length} selected lot${unverified.length===1?" does":"s do"} not exactly match a sourced component and cannot be assigned.`},{status:409});
+      if(memberIds.length&&!protocol.sourcedRequirements.length)return NextResponse.json({error:"This collection remains in sourced component research and cannot receive inventory assignments yet."},{status:409});
     }
     if (await accountDataMode() === "supabase") {
       const selected=new Set(memberIds);

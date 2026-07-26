@@ -13,3 +13,10 @@ test("private collection and changed memberships save atomically",()=>{
   assert.doesNotMatch(source,/saveOwnedRecord\("collections"/);
   assert.doesNotMatch(source,/Promise\.all\(inventory\.map/);
 });
+
+test("future collections cannot assign inventory before exact sourced research exists",()=>{
+  const source=fs.readFileSync(path.join(process.cwd(),"app/api/collections/route.ts"),"utf8");
+  assert.match(source,/memberIds\.length&&!template/);
+  assert.match(source,/Research and document this collection’s exact sourced components/);
+  assert.match(source,/auditCollectionTemplateProtocol\(template\)/);
+});
