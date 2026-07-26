@@ -8,6 +8,7 @@ import { normalizeInventory } from "@/lib/inventory-model";
 import { addInventoryRows } from "@/lib/smartsheet";
 import { updateInventoryRow } from "@/lib/smartsheet";
 import { saveOwnedRecordsAtomically } from "@/lib/user-data";
+import { auditCollectionTemplateProtocol } from "@/lib/collection-templates";
 
 export async function POST(request: Request, { params }: { params: Promise<{ collectionId: string }> }) {
   try {
@@ -16,6 +17,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
     if (!collection) return NextResponse.json({ error: "Collection not found" }, { status: 404 });
     const template = collectionTemplateFor(collection);
     if (!template) return NextResponse.json({ error: "This collection needs a researched contents template before inventory can be populated." }, { status: 409 });
+    const protocol = auditCollectionTemplateProtocol(template);
+    if (!protocol.readyForInventoryAutomation) {
+      return NextResponse.json({
+        error: `Collection inventory remains frozen until every physical lot has attributable exact-vitola evidence. ${protocol.issues.join(" ")}`,
+      }, { status: 409 });
+    }
     const editionIssue=collectionEditionIssue(collection);
     if(editionIssue)return NextResponse.json({error:`Collection edition must be corrected before population. ${editionIssue}`},{status:409});
     // A matching standalone lot is not proof that the collector acquired it

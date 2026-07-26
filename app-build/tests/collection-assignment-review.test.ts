@@ -20,5 +20,15 @@ test("collection population refuses a mismatched researched edition",()=>{
 test("collection population uses exact researched component matching",()=>{
  const route=readFileSync(new URL("../app/api/collections/[collectionId]/populate/route.ts",import.meta.url),"utf8");
  assert.match(route,/collectionRequirementMatches\(collection, eligibleInventory\)/);
+ assert.match(route,/auditCollectionTemplateProtocol\(template\)/);
+ assert.match(route,/readyForInventoryAutomation/);
  assert.doesNotMatch(route,/matchCollectionRequirements\(template\.requirements/);
+});
+
+test("legacy reconciliation is presented as a non-destructive repair",()=>{
+ const detail=readFileSync(new URL("../app/collections/[collectionId]/page.tsx",import.meta.url),"utf8");
+ const control=readFileSync(new URL("../components/collection-populate-button.tsx",import.meta.url),"utf8");
+ assert.match(detail,/correctionCount=\{reviewMembers\.length\}/);
+ assert.match(control,/Nothing will be deleted/);
+ assert.match(control,/Collector quantities and independent lots are preserved/);
 });
