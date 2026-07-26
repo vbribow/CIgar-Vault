@@ -11,6 +11,19 @@ export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:s
   {id:"rating-monitor",name:"Professional rating coverage",path:"/api/rating-monitor",schedule:"30 14 * * 0",nextDescription:"Sunday at 14:30 UTC"},
   {id:"sommelier-research",name:"Master Somm research",path:"/api/sommelier-knowledge/research",schedule:"0 15 * * 2",nextDescription:"Tuesday at 15:00 UTC · founder review required"},
 ];
+export function validSystemRuns(records:unknown[]):SystemRun[]{
+  const jobIds=new Set(systemJobs.map(job=>job.id));
+  return records.filter((record):record is SystemRun=>{
+    if(!record||typeof record!=="object")return false;
+    const value=record as Partial<SystemRun>;
+    return typeof value.runId==="string"&&value.runId.length>0
+      &&typeof value.jobId==="string"&&jobIds.has(value.jobId as SystemJobId)
+      &&(value.status==="Succeeded"||value.status==="Failed")
+      &&typeof value.startedAt==="string"&&value.startedAt.length>0
+      &&typeof value.completedAt==="string"&&value.completedAt.length>0
+      &&typeof value.summary==="string";
+  });
+}
 export function configurationChecks(environment:Record<string,string|undefined>):HealthCheck[]{const has=(...names:string[])=>names.every(name=>Boolean(environment[name]?.trim()));return[
   {id:"data-authority",name:"Data authority contract",description:"Private vault ownership and explicit migration direction",status:dataAuthorityIsUnambiguous()?"Ready":"Attention",detail:dataAuthorityIsUnambiguous()?"Signed-in Supabase vaults are authoritative; Smartsheet is an explicit founder migration source only":"One or more record kinds has an ambiguous authority rule",href:"/data-model"},
   {id:"supabase",name:"Private account database",description:"Authentication and private vault records",status:has("NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY","SUPABASE_SERVICE_ROLE_KEY")?"Ready":"Attention",detail:has("NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY","SUPABASE_SERVICE_ROLE_KEY")?"Public and scheduled-service credentials configured":"One or more Supabase credentials are missing"},
