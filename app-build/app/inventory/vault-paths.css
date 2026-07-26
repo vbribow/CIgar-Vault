@@ -7,4 +7,8 @@
 .vaultPaths small{line-height:1.5}
 .vaultPaths b{align-self:end;color:var(--gold2);font-size:12px}
 #inventory-records{scroll-margin-top:16px}
+.inventoryDataNotice{display:grid;gap:10px;margin:0 0 22px;border-color:#805b2d}
+.inventoryDataNotice h2,.inventoryDataNotice p{margin:0}
+.inventoryDataNotice p{max-width:760px;color:var(--muted);line-height:1.65}
+.inventoryDataNotice .button{justify-self:start;margin-top:5px}
 @media(max-width:800px){.vaultPaths{grid-template-columns:1fr}.vaultPaths>a{min-height:auto}}
