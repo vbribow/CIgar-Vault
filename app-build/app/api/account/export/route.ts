@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { buildAccountExport } from "@/lib/account-security";
+import { saveOwnedRecord } from "@/lib/user-data";
 
 export async function GET() {
   if (!supabaseConfigured()) return NextResponse.json({ error: "Account service is not configured" }, { status: 503 });
@@ -16,6 +17,14 @@ export async function GET() {
     if (profileError || preferencesError || recordsError) throw profileError || preferencesError || recordsError;
     const createdAt = new Date().toISOString();
     const payload = buildAccountExport({ userId:user.id, email:user.email, profile, preferences, records:records || [], createdAt });
+    const inventoryCount = (records || []).filter(record => record.kind === "inventory").length;
+    await saveOwnedRecord("integrity", `BACKUP-${createdAt}-${crypto.randomUUID()}`, {
+      action: "inventory-backup",
+      scope: "complete-account",
+      recordCount: inventoryCount,
+      totalRecordCount: payload.recordCount,
+      createdAt,
+    });
     return new NextResponse(JSON.stringify(payload, null, 2), { headers: {
       "content-type": "application/json; charset=utf-8",
       "content-disposition": `attachment; filename="cedriva-private-record-${createdAt.slice(0,10)}.json"`,
