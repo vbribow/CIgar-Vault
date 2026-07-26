@@ -7,12 +7,25 @@ import "./dashboard.css";
 import { WorkspaceGuide } from "@/components/workspace-guide";
 export const dynamic = "force-dynamic";
 export default async function CollectionsPage() {
-  const mode = await accountDataMode();
-  const [inventory, collections, valuations] = await Promise.all([
-    loadInventory(),
-    mode === "mock" ? [] : loadCollections(),
-    mode === "mock" ? [] : loadValuations(),
-  ]);
+  const [modeResult, inventoryResult, collectionsResult, valuationsResult] =
+    await Promise.allSettled([
+      accountDataMode(),
+      loadInventory(),
+      loadCollections(),
+      loadValuations(),
+    ]);
+  const mode = modeResult.status === "fulfilled" ? modeResult.value : "mock";
+  const inventory =
+    inventoryResult.status === "fulfilled" ? inventoryResult.value : [];
+  const collections =
+    collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+  const valuations =
+    valuationsResult.status === "fulfilled" ? valuationsResult.value : [];
+  const coreReady =
+    modeResult.status === "fulfilled" &&
+    inventoryResult.status === "fulfilled" &&
+    collectionsResult.status === "fulfilled";
+  const valuationReady = valuationsResult.status === "fulfilled";
   return (
     <main className="shell">
       <section className="valueHero">
@@ -33,12 +46,36 @@ export default async function CollectionsPage() {
         </div>
       </section>
       <WorkspaceGuide items={[{label:"Define",title:"Choose or research a set",detail:"Start from a known template or enter any named release."},{label:"Match",title:"Connect owned components",detail:"Cedriva compares expected contents with inventory."},{label:"Value",title:"Track parts and the whole",detail:"Preserve component value and complete-presentation premium."}]}/>
-      <CollectionsManager
-        initialCollections={collections}
-        inventory={inventory}
-        valuations={valuations}
-        mode={mode}
-      />
+      {!coreReady ? (
+        <section className="card collectionDataNotice">
+          <div className="eyebrow">Collection records protected</div>
+          <h2>The collection workspace is temporarily paused.</h2>
+          <p>
+            Cedriva could not safely load every core ownership source. No
+            collection has been classified as empty, incomplete, or missing.
+            Refresh after the account service recovers.
+          </p>
+        </section>
+      ) : (
+        <>
+          {!valuationReady && (
+            <section className="card collectionDataNotice">
+              <div className="eyebrow">Values temporarily unavailable</div>
+              <p>
+                Your collection records and component quantities are available.
+                Valuation evidence is temporarily hidden rather than shown as
+                zero.
+              </p>
+            </section>
+          )}
+          <CollectionsManager
+            initialCollections={collections}
+            inventory={inventory}
+            valuations={valuations}
+            mode={mode}
+          />
+        </>
+      )}
     </main>
   );
 }
