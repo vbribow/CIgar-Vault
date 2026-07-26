@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  auditCollectionTemplateProtocol,
   collectionTemplates,
   completeCollectionComponentEvidence,
 } from "../lib/collection-templates";
@@ -26,6 +27,7 @@ const readiness=(id:string)=>{
 
 test("Purple Dream acceptance fixture preserves 106 cigars as 11 lots and 10 identities", () => {
   const purple=template("TPL-FUENTE-PURPLE-DREAM");
+  const protocol=auditCollectionTemplateProtocol(purple);
   assert.deepEqual(readiness(purple.templateId),{
     physicalLots:11,
     identities:10,
@@ -38,6 +40,9 @@ test("Purple Dream acceptance fixture preserves 106 cigars as 11 lots and 10 ide
     "OpusX Purple Dream Humidor",
     "Big Purple Dream Humidor",
   ]);
+  assert.equal(protocol.readyForInventoryAutomation,true);
+  assert.equal(protocol.documentedPhysicalLots,11);
+  assert.equal(protocol.documentedCigars,106);
 });
 
 test("the five collection acceptance fixtures unlock only fully sourced collections", () => {
@@ -45,4 +50,35 @@ test("the five collection acceptance fixtures unlock only fully sourced collecti
   assert.equal(readiness("TPL-FUENTE-GRAN-FUMADA-2023").autoReady,false);
   assert.equal(readiness("TPL-FUENTE-PADRON-LEGENDS").autoReady,true);
   assert.equal(readiness("TPL-FUENTE-FATHER-SON-2026").autoReady,false);
+});
+
+test("the universal protocol blocks incomplete present and future collections",()=>{
+  const future={
+    ...template("TPL-FUENTE-PADRON-LEGENDS"),
+    templateId:"TPL-FUTURE",
+    name:"Future collection",
+    expectedComponents:1,
+    expectedCigars:1,
+    requirements:["Future cigar exact vitola"],
+    componentEvidence:[{
+      requirement:"Future cigar exact vitola",
+      brand:"Future Brand",
+      line:"Future Line",
+      vitola:"Future Vitola",
+    }],
+  };
+  const audit=auditCollectionTemplateProtocol(future);
+  assert.equal(audit.readyForInventoryAutomation,false);
+  assert.deepEqual(audit.unresolvedRequirements,["Future cigar exact vitola"]);
+  assert.match(audit.issues.join(" "),/attributable exact-vitola evidence/);
+});
+
+test("every collection admitted for automation satisfies the same exact-lot and quantity protocol",()=>{
+  for(const value of collectionTemplates){
+    const audit=auditCollectionTemplateProtocol(value);
+    if(!audit.readyForInventoryAutomation)continue;
+    assert.equal(audit.unresolvedRequirements.length,0,value.name);
+    assert.equal(audit.documentedPhysicalLots,audit.expectedPhysicalLots,value.name);
+    if(audit.expectedCigars!==undefined)assert.equal(audit.documentedCigars,audit.expectedCigars,value.name);
+  }
 });

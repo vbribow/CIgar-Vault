@@ -87,7 +87,7 @@ test("researched collections exclude incorrectly assigned cigars from completion
   assert.deepEqual(result.excludedAssignedLots,["RIGHT","WRONG"]);
 });
 
-test("unattributed template evidence cannot verify even a plausible earlier-edition component", () => {
+test("attributed exact evidence accepts the collection lot while rejecting a later standalone release", () => {
   const collection = { collectionId:"COL-FUENTE-DREAM-DYNASTY", name:"From Dream to Dynasty Collection", releaseYear:2024 };
   const inventory = [
     { inventoryId:"LATER",brand:"Arturo Fuente",line:"OpusX / Forbidden X",vitola:"Pasión de Amor",vintage:2026,currentQty:6,retailValue:60,collectionId:collection.collectionId },
@@ -95,8 +95,8 @@ test("unattributed template evidence cannot verify even a plausible earlier-edit
   ];
   const result=summarizeCollection(collection,inventory,[]);
   assert.ok(result.excludedAssignedLots.includes("LATER"));
-  assert.equal(result.excludedAssignedLots.includes("COLLECTION"),true);
-  assert.equal(result.componentValue,0);
+  assert.equal(result.excludedAssignedLots.includes("COLLECTION"),false);
+  assert.equal(result.componentValue,100);
 });
 
 test("a lower historical whole-set reference cannot create a negative premium", () => {

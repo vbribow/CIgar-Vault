@@ -1,4 +1,5 @@
 import { collectionEditionIssue, collectionTemplateFor, summarizeCollection } from "./collection-dashboard";
+import { auditCollectionTemplateProtocol } from "./collection-templates";
 import type { CigarCollection, InventoryItem, Valuation } from "./types";
 
 export type CollectionTrustCheck = {
@@ -18,7 +19,8 @@ export function collectionTrustAudit(
   const summary = summarizeCollection(collection, inventory, valuations);
   const editionIssue = collectionEditionIssue(collection);
   const expected = summary.expectedComponents ?? 0;
-  const exactContents = Boolean(template && template.researchStatus === "Verified");
+  const protocol=template?auditCollectionTemplateProtocol(template):undefined;
+  const exactContents = Boolean(protocol?.readyForInventoryAutomation);
   const photo = collection.photoLink || template?.imageUrl;
   const photoSource = collection.photoLink ? collection.valuationSourceUrl : template?.imageSourceUrl;
   const checks: CollectionTrustCheck[] = [
@@ -37,7 +39,7 @@ export function collectionTrustAudit(
       status: exactContents ? "Verified" : "Researching",
       detail: exactContents
         ? `${expected} exact component identities are backed by the cited collection source.`
-        : "The set is known, but one or more exact component identities still need evidence.",
+        : protocol?.issues.join(" ") || "The set is known, but one or more exact component identities still need evidence.",
       href: template?.sourceUrl,
     },
     {
