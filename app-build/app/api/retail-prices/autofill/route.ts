@@ -5,7 +5,7 @@ import { loadInventory } from "@/lib/inventory";
 import { knownRetailPriceSuggestions } from "@/lib/retail-pricing";
 import { recordValuation } from "@/lib/smartsheet";
 import type { Valuation } from "@/lib/types";
-import { accountDataMode, saveOwnedRecord } from "@/lib/user-data";
+import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     if (!suggestions.length) return NextResponse.json({ data: { updated: 0, items: [] } });
     const mode = await accountDataMode();
     if (mode === "supabase") {
-      for (const suggestion of suggestions) {
+      const records:Parameters<typeof saveOwnedRecordsAtomically>[0]=suggestions.flatMap(suggestion=>{
         const valuation: Valuation = {
           ...suggestion.valuation,
           valuationId: `VAL-REUSED-${suggestion.item.inventoryId}-${suggestion.valuation.valuationDate}`.slice(0, 100),
@@ -22,11 +22,12 @@ export async function POST(request: Request) {
           source: suggestion.valuation.source || "Shared retail evidence",
           notes: `Exact cigar identity match. ${suggestion.valuation.notes || ""}`.trim(),
         };
-        await Promise.all([
-          saveOwnedRecord("inventory", suggestion.item.inventoryId, { ...suggestion.item, retailValue: suggestion.unitPrice }),
-          saveOwnedRecord("valuations", valuation.valuationId, valuation),
-        ]);
-      }
+        return[
+          {kind:"inventory" as const,recordId:suggestion.item.inventoryId,payload:{...suggestion.item,retailValue:suggestion.unitPrice}},
+          {kind:"valuations" as const,recordId:valuation.valuationId,payload:valuation},
+        ];
+      });
+      if(!await saveOwnedRecordsAtomically(records))throw new Error("Sign in before applying private retail prices");
     } else {
       if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in preview mode" }, { status: 409 });
