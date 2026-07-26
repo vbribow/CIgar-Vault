@@ -11,8 +11,8 @@ test("summarizes whole value, premium, completeness, and history", () => {
     wholeMarketValue: 1500,
   };
   const inventory = [
-    { inventoryId: "A", brand: "Padrón", line: "Legends Carlos Fuente", vitola: "Toro", currentQty: 20, collectionId: collection.collectionId },
-    { inventoryId: "B", brand: "Arturo Fuente", line: "Legends José Padrón", vitola: "Toro", currentQty: 20, collectionId: collection.collectionId },
+    { inventoryId: "A", brand: "Padrón", line: "Legends Carlos A. Fuente, Sr.", vitola: "Box-pressed Churchill (7 × 50)", currentQty: 20, collectionId: collection.collectionId },
+    { inventoryId: "B", brand: "Arturo Fuente", line: "Legends José O. Padrón", vitola: "Round Churchill (7 × 50)", currentQty: 20, collectionId: collection.collectionId },
   ];
   const valuations = [
     { valuationId: "V1", inventoryId: "A", valuationDate: "2026-01-01", marketValue: 20 },
@@ -119,6 +119,10 @@ test("subtracts fully priced original cigars from a humidor collection retail pr
     inventoryId:`P${index}`,brand:"Arturo Fuente",line:lines[index],vitola:"Size to verify",
     originalQty,currentQty:Math.max(0,originalQty-1),retailValue:50,collectionId:collection.collectionId,
   }));
+  inventory[0].line="OpusX Heaven and Earth Purple Rain";
+  inventory[0].vitola="Lonsdale figurado (6.875 × 44)";
+  inventory[2].vitola="Figurado (6.5 × 64)";
+  inventory[3].vitola="Figurado (6.5 × 64)";
   const result=summarizeCollection(collection,inventory,[]);
   assert.equal(result.wholeValue,12975);
   assert.equal(result.cigarRetailValue,5300);
