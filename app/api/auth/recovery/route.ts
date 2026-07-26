@@ -20,6 +20,6 @@ export async function POST(request:Request){
   }catch(error){
     const message=error instanceof Error?error.message:"Unable to send recovery email";
     const rateLimited=message.toLowerCase().includes("rate limit");
-    return NextResponse.json({error:rateLimited?"Supabase did not send an email because its hourly limit is active. Wait for the countdown to finish, then try exactly once.":message,...(rateLimited?{retryAfterSeconds:65*60}:{})},{status:error instanceof z.ZodError?422:429,headers:rateLimited?{"Retry-After":String(65*60)}:undefined});
+    return NextResponse.json({error:rateLimited?"Supabase did not send an email because its hourly limit is active. Wait for the countdown to finish, then try exactly once.":message,...(rateLimited?{retryAfterSeconds:65*60}:{})},{status:error instanceof z.ZodError?422:rateLimited?429:502,headers:rateLimited?{"Retry-After":String(65*60)}:undefined});
   }
 }

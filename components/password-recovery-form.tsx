@@ -55,16 +55,23 @@ export function PasswordRecoveryForm() {
     setMessage("");
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") || "").trim();
-    const response=await fetch("/api/auth/recovery",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email})});
-    const result=await response.json();
-    setBusy(false);
-    if (!response.ok) {
-      if (response.status === 429) startCooldown(Number(result.retryAfterSeconds)||RECOVERY_RATE_LIMIT_SECONDS);
-      setError(result.error||"Unable to send recovery email.");
-      return;
+    try {
+      const response=await fetch("/api/auth/recovery",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email})});
+      const text=await response.text();
+      let result:Record<string,any>;
+      try{result=text?JSON.parse(text):{}}catch{throw new Error(`Cedriva received an unreadable recovery response (${response.status}). No email was assumed sent.`)}
+      if (!response.ok) {
+        if (response.status === 429) startCooldown(Number(result.retryAfterSeconds)||RECOVERY_RATE_LIMIT_SECONDS);
+        setError(result.error||"Unable to send recovery email.");
+        return;
+      }
+      startCooldown(Number(result.data?.cooldownSeconds)||RECOVERY_SUCCESS_COOLDOWN_SECONDS);
+      setMessage("Recovery email sent. Open only the newest message. Its link will return to the public Cedriva site, not a protected preview.");
+    } catch (reason) {
+      setError(reason instanceof Error?reason.message:"Unable to send recovery email. No email was assumed sent.");
+    } finally {
+      setBusy(false);
     }
-    startCooldown(Number(result.data?.cooldownSeconds)||RECOVERY_SUCCESS_COOLDOWN_SECONDS);
-    setMessage("Recovery email sent. Open only the newest message. Its link will return to the public Cedriva site, not a protected preview.");
   }
 
   return <form onSubmit={submit}>
