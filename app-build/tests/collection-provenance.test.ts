@@ -36,8 +36,8 @@ test("source-backed collection identities preserve construction and exact dimens
   assert.equal(collectionComponentIdentity(legends.requirements[1],legends).vitola,"Round Churchill (7 × 50)");
 
   const purple=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-PURPLE-DREAM")!;
-  assert.equal(collectionComponentIdentity("10 OpusX Purple Rain",purple).vitola,"Lonsdale figurado (6.875 × 44)");
-  assert.equal(collectionComponentIdentity("10 OpusX BBMF Natural",purple).vitola,"Figurado (6.5 × 64)");
+  assert.equal(collectionComponentIdentity("10 OpusX Purple Rain",purple).vitola,"Purple Rain — Lonsdale figurado (6.875 × 44)");
+  assert.equal(collectionComponentIdentity("10 OpusX BBMF Natural",purple).vitola,"BBMF Natural — Figurado (6.5 × 64)");
 
   const habanos=[
     ["TPL-HABANOS-HOYO-2003","Lusitanias (180 mm × 50)"],

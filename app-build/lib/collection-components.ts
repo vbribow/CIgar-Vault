@@ -1,4 +1,4 @@
-import type { CollectionTemplate } from "./collection-templates";
+import { completeCollectionComponentEvidence, type CollectionTemplate } from "./collection-templates";
 import type { CigarCollection, InventoryItem } from "./types";
 import { canonicalBrand } from "./brand-directory";
 import { canonicalCigarIdentity, cigarIdentityKey } from "./cigar-identity";
@@ -7,6 +7,8 @@ import { standardVitolas } from "./vitolas";
 const evidenceOnly = /^(original|numbered|one of).*\b(box|case|book|packaging|humidor)\b/i;
 const vague = /\b(distinct|additional|best-selling|family of brands|rare and limited)\b/i;
 const slug = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 52);
+const requirementQuantity = (requirement:string) => Number(requirement.match(/^(\d+)\s+/)?.[1] ?? 1);
+const componentInventoryId = (collectionId:string,index:number) => `INV-${slug(collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
 const familyPrefixes = [
   "OpusX Oro Oscuro OxO", "OpusX 20 Years Celebration", "OpusX 20 Years", "OpusX Angel’s Share",
   "OpusX Heaven and Earth", "OpusX Lost City", "Reserva Don Carlos", "Don Arturo Gran AniverXario",
@@ -91,11 +93,15 @@ export function collectionComponentDrafts(collection: CigarCollection, template:
   const existing = new Set(inventory.map(item => item.inventoryId));
   return template.requirements.flatMap((requirement, index) => {
     if (fulfilledRequirements.has(requirement) || evidenceOnly.test(requirement) || vague.test(requirement)) return [];
+    const documented = template.componentEvidence?.find(component => component.requirement === requirement);
+    // A parseable product name is not enough to create collector inventory.
+    // Researched component evidence must establish the exact named vitola or
+    // sourced dimensions before Cedriva can materialize a physical lot.
+    if (!completeCollectionComponentEvidence(documented)) return [];
     const identity = collectionComponentIdentity(requirement, template);
-    const inventoryId = `INV-${slug(collection.collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
+    const inventoryId = componentInventoryId(collection.collectionId,index);
     if (existing.has(inventoryId)) return [];
     const canonical = canonicalCigarIdentity(identity);
-    const documented = template.componentEvidence?.find(component => component.requirement === requirement);
     const evidenceLabel = documented?.sourceLabel || template.sourceLabel;
     const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
     const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
@@ -107,7 +113,9 @@ export function collectionComponentRepairs(collection: CigarCollection, template
   const byId = new Map(inventory.map(item => [item.inventoryId, item]));
   return template.requirements.flatMap((requirement, index) => {
     if (evidenceOnly.test(requirement) || vague.test(requirement)) return [];
-    const inventoryId = `INV-${slug(collection.collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
+    const documented = template.componentEvidence?.find(component => component.requirement === requirement);
+    if (!completeCollectionComponentEvidence(documented)) return [];
+    const inventoryId = componentInventoryId(collection.collectionId,index);
     const existing = byId.get(inventoryId);
     const legacyGenerated = existing?.collectionId === collection.collectionId
       && existing.notes?.includes("Expected component:");
@@ -118,7 +126,6 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       && Number(existing.vintage) === Number(template.releaseYear);
     const cigarVintage = inheritedCollectionYear ? undefined : existing.vintage;
     const canonical = canonicalCigarIdentity({ ...identity, vintage: cigarVintage });
-    const documented = template.componentEvidence?.find(component => component.requirement === requirement);
     const evidenceLabel = documented?.sourceLabel || template.sourceLabel;
     const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
     const notes = `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}`;
@@ -151,5 +158,68 @@ export function collectionComponentRepairs(collection: CigarCollection, template
 }
 
 export function unmaterializedCollectionRequirements(template: CollectionTemplate) {
-  return template.requirements.filter(requirement => evidenceOnly.test(requirement) || vague.test(requirement));
+  const documented = new Set((template.componentEvidence??[]).filter(completeCollectionComponentEvidence).map(component=>component.requirement));
+  return template.requirements.filter(requirement => evidenceOnly.test(requirement) || vague.test(requirement) || !documented.has(requirement));
+}
+
+/**
+ * Splits a legacy generated row that collapsed multiple identical physical
+ * lots into one quantity. The total original/current/smoked quantities are
+ * preserved exactly and the operation is idempotent.
+ */
+export function collectionPhysicalLotRepairs(
+  collection:CigarCollection,
+  template:CollectionTemplate,
+  inventory:InventoryItem[],
+) {
+  const byId=new Map(inventory.map(item=>[item.inventoryId,item]));
+  const evidenceByRequirement=new Map((template.componentEvidence??[]).filter(completeCollectionComponentEvidence).map(component=>[component.requirement,component]));
+  const groups=new Map<string,Array<{requirement:string;index:number;quantity:number}>>();
+  template.requirements.forEach((requirement,index)=>{
+    const evidence=evidenceByRequirement.get(requirement);
+    if(!evidence)return;
+    const key=cigarIdentityKey(evidence);
+    const group=groups.get(key)??[];
+    group.push({requirement,index,quantity:requirementQuantity(requirement)});
+    groups.set(key,group);
+  });
+  return [...groups.values()].flatMap(group=>{
+    if(group.length<2)return[];
+    const targets=group.map(entry=>({...entry,inventoryId:componentInventoryId(collection.collectionId,entry.index)}));
+    const existing=targets.map(target=>byId.get(target.inventoryId)).filter((item):item is InventoryItem=>Boolean(item));
+    if(existing.length!==1)return[];
+    const source=existing[0];
+    const legacyGenerated=source.collectionId===collection.collectionId&&source.notes?.includes("Expected component:");
+    if(!legacyGenerated)return[];
+    const expectedOriginal=targets.reduce((sum,target)=>sum+target.quantity,0);
+    const sourceOriginal=source.originalQty??((source.currentQty??0)+(source.smokedQty??0));
+    if(sourceOriginal!==expectedOriginal)return[];
+    const sourceCurrent=source.currentQty??Math.max(0,sourceOriginal-(source.smokedQty??0));
+    if(sourceCurrent<0||sourceCurrent>sourceOriginal)return[];
+    let remainingSmoked=sourceOriginal-sourceCurrent;
+    return targets.map(target=>{
+      const identity=collectionComponentIdentity(target.requirement,template);
+      const smokedQty=Math.min(target.quantity,remainingSmoked);
+      remainingSmoked-=smokedQty;
+      const currentQty=target.quantity-smokedQty;
+      const evidence=evidenceByRequirement.get(target.requirement)!;
+      return {
+        ...source,
+        inventoryId:target.inventoryId,
+        catalogId:canonicalCigarIdentity(identity).identityId,
+        collectionId:collection.collectionId,
+        brand:identity.brand,
+        line:identity.line,
+        vitola:identity.vitola,
+        originalQty:target.quantity,
+        currentQty,
+        smokedQty,
+        fullBoxQty:undefined,
+        sticksPerBox:undefined,
+        looseStickQty:currentQty,
+        provenanceNotes:`Collection component documented by ${evidence.sourceLabel||template.sourceLabel}: ${evidence.sourceUrl||template.sourceUrl}`,
+        notes:`Expected component: ${target.requirement}`,
+      } satisfies InventoryItem;
+    });
+  });
 }

@@ -1,5 +1,4 @@
-import { matchCollectionRequirements } from "@/lib/collection-matching";
-import { collectionTemplates } from "@/lib/collection-templates";
+import { collectionTemplates, completeCollectionComponentEvidence } from "@/lib/collection-templates";
 import { collectionComponentMarketEvidence } from "@/lib/collection-market-evidence";
 import { cigarProductKey } from "@/lib/cigar-identity";
 import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
@@ -19,6 +18,7 @@ export type CollectionDashboardSummary = {
   humidorValueStatus: "Not applicable" | "Calculated" | "Awaiting complete cigar retail values" | "Whole-set retail needed";
   ownedComponents: number;
   expectedComponents?: number;
+  expectedIdentities?: number;
   expectedCigars?: number;
   expectedContents: string[];
   completionPercent: number;
@@ -49,10 +49,6 @@ export function collectionTemplateFor(collection: CigarCollection) {
   });
 }
 
-export function collectionMatchMinimum(template: (typeof collectionTemplates)[number]) {
-  return ["TPL-FUENTE-PADRON-LEGENDS","TPL-PADRON-COLLECTION"].includes(template.templateId) ? 0.45 : 0.72;
-}
-
 export function collectionEditionIssue(collection:CigarCollection){
   const template=collectionTemplateFor(collection);
   if(!template?.releaseYear)return undefined;
@@ -76,20 +72,21 @@ export function collectionRequirementMatches(collection: CigarCollection, member
   });
   const rawMatches = template ? (()=>{
     const assigned=new Set<string>();
-    const documented=new Map((template.componentEvidence??[]).map(component=>[component.requirement,component]));
-    const results=template.requirements.map(requirement=>{
+    const documented=new Map((template.componentEvidence??[]).filter(completeCollectionComponentEvidence).map(component=>[component.requirement,component]));
+    return template.requirements.map(requirement=>{
       const expected=documented.get(requirement);
-      if(!expected)return undefined;
+      if(!expected)return{requirement,score:0};
       const productKey=cigarProductKey(expected);
-      const exact=ownedMembers.find(item=>!assigned.has(item.inventoryId)&&cigarProductKey(item)===productKey);
+      const quantity=Number(requirement.match(/^(\d+)\s+/)?.[1]??1);
+      const exact=ownedMembers.find(item=>{
+        if(assigned.has(item.inventoryId)||cigarProductKey(item)!==productKey)return false;
+        const documentedQuantity=item.originalQty??item.currentQty;
+        return documentedQuantity===quantity;
+      });
       if(!exact)return{requirement,score:0};
       assigned.add(exact.inventoryId);
       return{requirement,inventoryId:exact.inventoryId,label:`${exact.brand} ${exact.line} ${exact.vitola}`,score:1};
     });
-    const undocumentedRequirements=template.requirements.filter(requirement=>!documented.has(requirement));
-    const remaining=ownedMembers.filter(item=>!assigned.has(item.inventoryId));
-    const fallback=new Map(matchCollectionRequirements(undocumentedRequirements,remaining,collectionMatchMinimum(template)).map(match=>[match.requirement,match]));
-    return results.map((result,index)=>result??fallback.get(template.requirements[index])??{requirement:template.requirements[index],score:0});
   })() : [];
   const assignedInventory = new Set<string>();
   return rawMatches.map((match) => {
@@ -126,6 +123,7 @@ export function summarizeCollection(
   // A verified edition template is authoritative. Older saved collection rows
   // may contain a provisional count from before the contents were researched.
   const expectedComponents = template?.expectedComponents ?? collection.expectedComponents;
+  const expectedIdentities = template?.expectedIdentities;
   const ownedComponents = template
     ? matches.filter((match) => Boolean(match.inventoryId)).length
     : members.length;
@@ -192,6 +190,7 @@ export function summarizeCollection(
     humidorValueStatus,
     ownedComponents,
     expectedComponents,
+    expectedIdentities,
     expectedCigars,
     expectedContents: template?.requirements ?? [],
     completionPercent,

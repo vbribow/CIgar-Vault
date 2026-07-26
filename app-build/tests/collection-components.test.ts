@@ -4,12 +4,23 @@ import {
   collectionComponentDrafts,
   collectionComponentIdentity,
   collectionComponentRepairs,
+  collectionPhysicalLotRepairs,
   collectionPopulationCandidates,
   unmaterializedCollectionRequirements,
 } from "../lib/collection-components";
 import type { CollectionTemplate } from "../lib/collection-templates";
 
-const template: CollectionTemplate = { templateId: "TPL-TEST", name: "Test Set", maker: "Arturo Fuente", expectedComponents: 2, expectedCigars: 21, requirements: ["20 Double Corona cigars", "OpusX Lancero", "Original presentation box"], packaging: "Presentation box", matchingRule: "Match both cigars", accent: "#000", sourceUrl: "https://example.com", sourceLabel: "Official source", researchStatus: "Verified" };
+const template: CollectionTemplate = {
+  templateId: "TPL-TEST", name: "Test Set", maker: "Arturo Fuente",
+  expectedComponents: 2, expectedCigars: 21,
+  requirements: ["20 Double Corona cigars", "OpusX Lancero", "Original presentation box"],
+  componentEvidence: [
+    { requirement:"20 Double Corona cigars", brand:"Arturo Fuente", line:"Test Set", vitola:"Double Corona", sourceUrl:"https://example.com/double-corona", sourceLabel:"Official specification" },
+    { requirement:"OpusX Lancero", brand:"Arturo Fuente", line:"OpusX", vitola:"Lancero", sourceUrl:"https://example.com/lancero", sourceLabel:"Official specification" },
+  ],
+  packaging: "Presentation box", matchingRule: "Match both cigars", accent: "#000",
+  sourceUrl: "https://example.com", sourceLabel: "Official source", researchStatus: "Verified",
+};
 const collection = { collectionId: "COL-TEST", name: "Test Set", expectedComponents: 2 };
 
 test("complete collections create linked inventory lots with stated quantities", () => {
@@ -29,6 +40,31 @@ test("collection population is idempotent and never creates packaging as a cigar
   const first = collectionComponentDrafts(collection, template, []);
   assert.deepEqual(collectionComponentDrafts(collection, template, first), []);
   assert.deepEqual(unmaterializedCollectionRequirements(template), ["Original presentation box"]);
+});
+
+test("unattributed component evidence remains unresolved and cannot materialize inventory", () => {
+  const unsupported:CollectionTemplate = {
+    ...template,
+    requirements:["OpusX Placeholder"],
+    componentEvidence:[{
+      requirement:"OpusX Placeholder",
+      brand:"Arturo Fuente",
+      line:"OpusX",
+      vitola:"Placeholder",
+    }],
+  };
+  assert.deepEqual(collectionComponentDrafts(collection,unsupported,[]),[]);
+  assert.deepEqual(collectionComponentRepairs(collection,unsupported,[{
+    inventoryId:"INV-TEST-C01",
+    collectionId:collection.collectionId,
+    brand:"Arturo Fuente",
+    line:"OpusX",
+    vitola:"Size to verify",
+    currentQty:1,
+    notes:"Expected component: OpusX Placeholder",
+  }]),[]);
+  assert.deepEqual(unmaterializedCollectionRequirements(unsupported),["OpusX Placeholder"]);
+  assert.deepEqual(collectionPhysicalLotRepairs(collection,unsupported,[]),[]);
 });
 
 test("requirements fulfilled by reusable inventory are not duplicated", () => {
@@ -176,4 +212,31 @@ test("researched repairs are idempotent and preserve collector-owned fields", ()
   assert.equal(first[0].vintage, 2018);
   assert.equal(first[0].provenanceNotes, "Collection component documented by Measured review: https://example.com/legends");
   assert.equal(collectionComponentRepairs(legendsCollection, legendsTemplate, first).length, 0);
+});
+
+test("Purple Dream legacy Scorpio quantity splits into two physical lots without changing totals", () => {
+  const purple:CollectionTemplate = {
+    ...template,
+    templateId:"TPL-PURPLE",
+    name:"Big Purple Dream Humidor",
+    requirements:["10 OpusX Scorpio Maduro (lot 1 of 2)","10 OpusX Scorpio Maduro (lot 2 of 2)"],
+    componentEvidence:[
+      {requirement:"10 OpusX Scorpio Maduro (lot 1 of 2)",brand:"Arturo Fuente",line:"OpusX Heaven and Earth",vitola:"Scorpio Maduro",sourceUrl:"https://example.com/purple",sourceLabel:"Official contents"},
+      {requirement:"10 OpusX Scorpio Maduro (lot 2 of 2)",brand:"Arturo Fuente",line:"OpusX Heaven and Earth",vitola:"Scorpio Maduro",sourceUrl:"https://example.com/purple",sourceLabel:"Official contents"},
+    ],
+  };
+  const purpleCollection={collectionId:"COL-PURPLE",name:purple.name};
+  const legacy={
+    inventoryId:"INV-PURPLE-C01",collectionId:purpleCollection.collectionId,
+    brand:"Arturo Fuente",line:"OpusX Heaven and Earth",vitola:"Scorpio Maduro",
+    originalQty:20,currentQty:17,smokedQty:3,looseStickQty:17,
+    provenanceNotes:"Collector provenance",notes:"Expected component: 20 OpusX Scorpio Maduro",
+  };
+  const repairs=collectionPhysicalLotRepairs(purpleCollection,purple,[legacy]);
+  assert.equal(repairs.length,2);
+  assert.deepEqual(repairs.map(item=>item.inventoryId),["INV-PURPLE-C01","INV-PURPLE-C02"]);
+  assert.equal(repairs.reduce((sum,item)=>sum+(item.originalQty??0),0),20);
+  assert.equal(repairs.reduce((sum,item)=>sum+(item.currentQty??0),0),17);
+  assert.equal(repairs.reduce((sum,item)=>sum+(item.smokedQty??0),0),3);
+  assert.deepEqual(collectionPhysicalLotRepairs(purpleCollection,purple,repairs),[]);
 });

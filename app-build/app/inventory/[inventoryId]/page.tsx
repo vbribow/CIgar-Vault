@@ -11,6 +11,8 @@ import { cigarAdvisorActions, cigarAdvisorHref } from "@/lib/cigar-advisor-links
 import { cigarStoryHref } from "@/lib/cigar-story";
 import { marketEvidenceType, marketRangeText } from "@/lib/valuation-evidence";
 import { climateIntelligence } from "@/lib/climate-intelligence";
+import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
+import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import "./climate.css";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
@@ -50,7 +52,8 @@ export default async function CigarPage({
   const ratingsReady = ratingsResult.status === "fulfilled";
   const climateReady = humidorsResult.status === "fulfilled" && climateReadingsResult.status === "fulfilled";
   const timelineReady = smokesReady && valuationsReady && activitiesReady && ratingsReady;
-  const parentCollection=collections.find(collection=>collection.collectionId===item.collectionId);
+  const collectionRelationship=inventoryCollectionRelationships(items,collections).get(item.inventoryId);
+  const isPresentationAsset=collectionRelationship?.kind==="presentation";
   const history = smokes.filter((s) => s.inventoryId === inventoryId);
   const values = valuations.filter((v) => v.inventoryId === inventoryId);
   const latestValue = [...values].sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];
@@ -87,7 +90,7 @@ export default async function CigarPage({
             {item.vitola}
             {item.vintage ? ` · ${item.vintage}` : ""}
           </span>
-          {item.collectionId&&<a className="inventoryCollectionTag" href={`/collections/${encodeURIComponent(item.collectionId)}`}>Part of {parentCollection?.name||item.collectionId} →</a>}
+          <CollectionRelationshipTag relationship={collectionRelationship}/>
         </div>
         <div className="scoreCard">
           <small>Personal collection score</small>
@@ -103,15 +106,15 @@ export default async function CigarPage({
       {ratingsReady?<section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>:<UnavailableEvidence label="Published reviews"/>}
       <section className="detailStats">
         <div>
-          <span>Remaining</span>
+          <span>{isPresentationAsset?"Presentation units owned":"Remaining"}</span>
           <strong>{item.currentQty ?? "—"}</strong>
         </div>
         <div>
-          <span>Original</span>
+          <span>{isPresentationAsset?"Originally acquired":"Original"}</span>
           <strong>{item.originalQty ?? "—"}</strong>
         </div>
         <div>
-          <span>Retail replacement / cigar</span>
+          <span>{isPresentationAsset?"Retail replacement / presentation":"Retail replacement / cigar"}</span>
           <strong>
             {item.retailValue ? `$${item.retailValue.toLocaleString()}` : "—"}
           </strong>
