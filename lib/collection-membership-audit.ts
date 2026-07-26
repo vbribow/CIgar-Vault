@@ -17,6 +17,7 @@ export type CollectionMembershipIssue =
   | "Unverified collection assignment"
   | "Collection release year missing"
   | "Collection edition mismatch"
+  | "Cigar release is later than collection"
   | "Possible inherited collection year";
 
 export type CollectionMembershipAuditRow = {
@@ -110,6 +111,13 @@ export function auditCollectionMembership(
     }
     if (collection && collectionEditionIssue(collection)) {
       issues.push("Collection edition mismatch");
+    }
+    if (
+      collection?.releaseYear !== undefined &&
+      item.vintage !== undefined &&
+      Number(item.vintage) > Number(collection.releaseYear)
+    ) {
+      issues.push("Cigar release is later than collection");
     }
     if (collection && possibleInheritedYear(item, collection)) {
       issues.push("Possible inherited collection year");

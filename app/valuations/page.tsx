@@ -32,15 +32,17 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
     loadInventory(),
     mode === "mock" ? [] : loadValuations(),
   ]);
-  const intelligence = buildValuationIntelligence(inventory, valuations);
+  const activeInventory=inventory.filter(item=>(item.currentQty??0)>0);
+  const intelligence = buildValuationIntelligence(activeInventory, valuations);
   const { totals } = intelligence;
-  const scopedInventory=filters.collectionId?inventory.filter(item=>item.collectionId===filters.collectionId):inventory;
+  const scopedInventory=filters.collectionId?activeInventory.filter(item=>item.collectionId===filters.collectionId):activeInventory;
   const completionQueue=intelligence.reviewQueue.filter(row=>
     (!filters.collectionId||row.item.collectionId===filters.collectionId)
     &&row.item.status!=="Review"
     &&!/verify|unknown/i.test(row.item.vitola)
     &&valuationNeedsMonitoring(row.item,valuations)
   );
+  const deferredCount=intelligence.reviewQueue.length-completionQueue.length;
 
   return (
     <main className="shell wideShell valuationWorkspace">
@@ -115,7 +117,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
       </section>
       <SignalLegend />
       {filters.collectionId&&<section className="collectionValuationScope"><div><div className="eyebrow">Collection completion</div><h2>{completionQueue.length} component lot{completionQueue.length===1?"":"s"} still need value work</h2><p>This workspace is limited to the selected collection. Exact-match evidence is reused first; uncertain prices remain visibly pending.</p></div><a className="button secondary" href={`/collections/${encodeURIComponent(filters.collectionId)}`}>Back to collection</a></section>}
-      <ValuationCompletionPanel items={completionQueue.map(row=>row.item)} mode={mode}/>
+      <ValuationCompletionPanel items={completionQueue.map(row=>row.item)} mode={mode} deferredCount={deferredCount}/>
       <RetailPricingControls items={scopedInventory} mode={mode} initialInventoryId={filters.inventoryId} />
       <ValuationResearchPanel items={completionQueue.map((row)=>row.item)} mode={mode}/>
 

@@ -62,6 +62,7 @@ export type ValuationOperationsSnapshot = {
 };
 
 export function valuationOperationsSnapshot(inventory:InventoryItem[],valuations:Valuation[]):ValuationOperationsSnapshot{
+  inventory=inventory.filter(item=>(item.currentQty??0)>0);
   const latestEvidenceAt=valuations.map(value=>value.valuationDate).filter(Boolean).sort().at(-1);
   const latestAutomatedAt=valuations.filter(value=>/automated scheduled|shared exact-match/i.test(value.notes||"")).map(value=>value.valuationDate).filter(Boolean).sort().at(-1);
   const valuedIds=new Set(valuations.filter(value=>value.replacementValue!==undefined||value.marketValue!==undefined||value.askingPrice!==undefined||value.lastSaleValue!==undefined||value.marketEvidenceType==="Insufficient evidence").map(value=>value.inventoryId));

@@ -46,3 +46,11 @@ test("current insufficient evidence is a trusted result, not an immediate retry 
  assert.equal(result.rows[0].evidenceType,"Insufficient evidence");
  assert.equal(result.reviewQueue.length,0);
 });
+
+test("zero-quantity historical lots can be excluded from active portfolio coverage",()=>{
+ const active:InventoryItem={inventoryId:"A",brand:"Cohiba",line:"Siglo IV",vitola:"Corona Gorda",currentQty:20,retailValue:50};
+ const historical:InventoryItem={inventoryId:"H",brand:"Cohiba",line:"Siglo IV",vitola:"Corona Gorda",currentQty:0};
+ const result=buildValuationIntelligence([active,historical].filter(item=>(item.currentQty??0)>0),[]);
+ assert.equal(result.totals.totalLots,1);
+ assert.equal(result.totals.retailCoveragePercent,100);
+});

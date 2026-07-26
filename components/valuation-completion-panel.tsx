@@ -10,7 +10,7 @@ const BATCH_SIZE=6;
 
 async function json(response:Response){const value=await response.json();if(!response.ok)throw new Error(value.error||"Valuation request failed");return value}
 
-export function ValuationCompletionPanel({items,mode}:{items:InventoryItem[];mode:DataMode}){
+export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:InventoryItem[];mode:DataMode;deferredCount?:number}){
   const router=useRouter(),[key,setKey]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0),[outcomes,setOutcomes]=useState<Outcome[]>([]);
   const queue=items.slice(0,BATCH_SIZE);
   async function complete(item:InventoryItem):Promise<Outcome>{
@@ -50,11 +50,11 @@ export function ValuationCompletionPanel({items,mode}:{items:InventoryItem[];mod
     setBusy(false);router.refresh();
   }
   return <section className="valuationCompletion">
-    <div><div className="eyebrow">Valuation completion</div><h2>Finish the next {queue.length||0} inventory records</h2><p>Researches exact cigar identity in pairs, saves only source-linked Medium or High confidence evidence, and holds uncertain matches for human review.</p></div>
+    <div><div className="eyebrow">Valuation completion</div><h2>{queue.length?`Finish the next ${queue.length} inventory records`:deferredCount?`${deferredCount} records require evidence or identity review`:"Current valuation queue is clear"}</h2><p>Researches exact cigar identity in pairs, saves only source-linked Medium or High confidence evidence, and holds uncertain matches for human review.</p></div>
     <div className="completionActions">
       {mode==="smartsheet"&&<label><span>Founder write key</span><input type="password" value={key} onChange={event=>setKey(event.target.value)} placeholder="Required for master inventory"/></label>}
-      <button className="button" disabled={busy||!queue.length||(mode==="smartsheet"&&!key)} onClick={run}>{busy?`Researching ${progress} of ${queue.length}…`:queue.length?`Complete next ${queue.length}`:"Coverage complete"}</button>
-      <small>Keep this page open while the batch runs. Existing values are never overwritten without new evidence.</small>
+      <button className="button" disabled={busy||!queue.length||(mode==="smartsheet"&&!key)} onClick={run}>{busy?`Researching ${progress} of ${queue.length}…`:queue.length?`Complete next ${queue.length}`:deferredCount?"Review deferred records":"Queue clear"}</button>
+      <small>{queue.length?"Keep this page open while the batch runs. Existing values are never overwritten without new evidence.":deferredCount?"Cedriva will not claim coverage while exact identity, evidence, or the research waiting period remains unresolved.":"Every active lot is current under the present evidence policy."}</small>
     </div>
     {outcomes.length>0&&<div className="completionResults">{outcomes.map(item=><span data-status={item.status} key={item.inventoryId}><strong>{item.inventoryId}</strong>{item.message}</span>)}</div>}
   </section>;

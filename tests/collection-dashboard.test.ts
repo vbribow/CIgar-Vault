@@ -98,6 +98,19 @@ test("a later standalone release cannot satisfy an earlier collection component"
   assert.equal(result.componentValue,100);
 });
 
+test("a lower historical whole-set reference cannot create a negative premium", () => {
+  const collection = { collectionId:"COL-FUENTE-PADRON-LEGENDS", name:"Fuente & Padrón Legends", releaseYear:2022, wholeMarketValue:100 };
+  const inventory = [
+    { inventoryId:"C1",collectionId:collection.collectionId,brand:"Padrón",line:"Legends Carlos A. Fuente, Sr.",vitola:"Box-pressed Churchill (7 × 50)",currentQty:20,retailValue:20 },
+    { inventoryId:"C2",collectionId:collection.collectionId,brand:"Arturo Fuente",line:"Legends José O. Padrón",vitola:"Round Churchill (7 × 50)",currentQty:20,retailValue:20 },
+  ];
+  const result=summarizeCollection(collection,inventory,[]);
+  assert.equal(result.componentValue,800);
+  assert.equal(result.wholeValue,800);
+  assert.equal(result.premium,0);
+  assert.equal(result.valueEvidence,"Component inventory");
+});
+
 test("subtracts fully priced original cigars from a humidor collection retail price", () => {
   const collection = { collectionId:"COL-FUENTE-PURPLE-DREAM", name:"Big Purple Dream Humidor" };
   const quantities=[10,6,10,10,10,10,10,10,20,10];
