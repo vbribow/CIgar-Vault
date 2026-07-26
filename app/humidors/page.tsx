@@ -8,13 +8,30 @@ import "./quick-links.css";
 import { WorkspaceGuide } from "@/components/workspace-guide";
 export const dynamic = "force-dynamic";
 export default async function HumidorsPage() {
-  const mode = await accountDataMode();
-  const [inventory, humidors, readings, sensors] = await Promise.all([
-    loadInventory(),
-    mode === "mock" ? [] : loadHumidors(),
-    mode === "mock" ? [] : loadHumidorReadings(),
-    mode === "mock" ? [] : loadSensors(),
-  ]);
+  const modeResult = await Promise.allSettled([accountDataMode()]);
+  if (modeResult[0].status !== "fulfilled") {
+    return <ClimateDataUnavailable />;
+  }
+  const mode = modeResult[0].value;
+  const [inventoryResult, humidorsResult, readingsResult, sensorsResult] =
+    await Promise.allSettled([
+      loadInventory(),
+      mode === "mock" ? Promise.resolve([]) : loadHumidors(),
+      mode === "mock" ? Promise.resolve([]) : loadHumidorReadings(),
+      mode === "mock" ? Promise.resolve([]) : loadSensors(),
+    ]);
+  if (
+    inventoryResult.status !== "fulfilled" ||
+    humidorsResult.status !== "fulfilled" ||
+    readingsResult.status !== "fulfilled" ||
+    sensorsResult.status !== "fulfilled"
+  ) {
+    return <ClimateDataUnavailable />;
+  }
+  const inventory = inventoryResult.value;
+  const humidors = humidorsResult.value;
+  const readings = readingsResult.value;
+  const sensors = sensorsResult.value;
   return (
     <main className="shell">
       <section className="humidorHero">
@@ -67,6 +84,28 @@ export default async function HumidorsPage() {
         inventory={inventory}
         mode={mode}
       />
+    </main>
+  );
+}
+
+function ClimateDataUnavailable() {
+  return (
+    <main className="shell">
+      <section className="humidorHero">
+        <div>
+          <div className="eyebrow">Environmental storage</div>
+          <h1>Climate intelligence is temporarily protected.</h1>
+          <p className="lede">
+            Cedriva could not safely load humidor settings, readings, sensors,
+            and stored inventory together. No stability score, climate alert,
+            or value-at-risk figure has been inferred from partial data.
+          </p>
+        </div>
+        <div className="climateLegend climateUnavailable">
+          <strong>Evidence unavailable—not evidence of stability.</strong>
+          <span>Refresh after the account service recovers.</span>
+        </div>
+      </section>
     </main>
   );
 }
