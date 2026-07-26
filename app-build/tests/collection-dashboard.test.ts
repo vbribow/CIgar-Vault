@@ -86,6 +86,18 @@ test("researched collections exclude incorrectly assigned cigars from completion
   assert.deepEqual(result.excludedAssignedLots,["WRONG"]);
 });
 
+test("a later standalone release cannot satisfy an earlier collection component", () => {
+  const collection = { collectionId:"COL-FUENTE-DREAM-DYNASTY", name:"From Dream to Dynasty Collection", releaseYear:2024 };
+  const inventory = [
+    { inventoryId:"LATER",brand:"Arturo Fuente",line:"OpusX / Forbidden X",vitola:"Pasión de Amor",vintage:2026,currentQty:6,retailValue:60,collectionId:collection.collectionId },
+    { inventoryId:"COLLECTION",brand:"Arturo Fuente",line:"OpusX Forbidden X Pasión d’Amor",vitola:"6.125 × 48",currentQty:1,retailValue:100,collectionId:collection.collectionId },
+  ];
+  const result=summarizeCollection(collection,inventory,[]);
+  assert.ok(result.excludedAssignedLots.includes("LATER"));
+  assert.equal(result.excludedAssignedLots.includes("COLLECTION"),false);
+  assert.equal(result.componentValue,100);
+});
+
 test("subtracts fully priced original cigars from a humidor collection retail price", () => {
   const collection = { collectionId:"COL-FUENTE-PURPLE-DREAM", name:"Big Purple Dream Humidor" };
   const quantities=[10,6,10,10,10,10,10,10,20,10];

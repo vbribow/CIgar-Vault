@@ -63,7 +63,15 @@ export function collectionRequirementMatches(collection: CigarCollection, member
   // A linked record is not proof that a cigar is still present. Collection
   // completion represents current owned contents, while zero-quantity records
   // remain available elsewhere as historical collection evidence.
-  const ownedMembers = members.filter(item => (item.currentQty ?? 0) > 0);
+  // A cigar documented as a later release also cannot be an original component
+  // of an earlier collection edition. Older or undated cigars remain eligible:
+  // a collection release year must never be copied onto its component cigars.
+  const collectionYear = Number(collection.releaseYear ?? template?.releaseYear);
+  const ownedMembers = members.filter(item => {
+    if ((item.currentQty ?? 0) <= 0) return false;
+    const cigarYear = Number(item.vintage);
+    return !Number.isFinite(collectionYear) || !Number.isFinite(cigarYear) || cigarYear <= collectionYear;
+  });
   const rawMatches = template ? matchCollectionRequirements(template.requirements, ownedMembers,collectionMatchMinimum(template)) : [];
   const assignedInventory = new Set<string>();
   return rawMatches.map((match) => {
