@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { EvidenceLabel } from "@/components/evidence-label";
 import { cigarAdvisorHref } from "@/lib/cigar-advisor-links";
 import { buildCigarStory } from "@/lib/cigar-story";
 import { loadCollections, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { canonicalCatalogHref } from "@/lib/canonical-cigar-record";
+import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
 import "./story.css";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,10 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
   const story = buildCigarStory({ identityId, inventory, valuations, smokes, ratings, collections });
   if (!story) notFound();
   const representative = story.lots[0];
+  const relationship=inventoryCollectionRelationships(inventory,collections).get(representative.inventoryId);
+  if(relationship?.kind==="presentation"&&relationship.collection){
+    redirect(`/collections/${encodeURIComponent(relationship.collection.collectionId)}`);
+  }
   return <main className="shell cigarStoryPage">
     <section className="unifiedStoryHero">
       <div>
