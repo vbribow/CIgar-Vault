@@ -51,7 +51,7 @@ test("an incorrectly attached cigar is excluded from Dream to Dynasty completion
   assert.equal(summary.missingComponents.length,22);
 });
 
-test("an exact-looking Dream to Dynasty component remains frozen until its evidence is attributable",()=>{
+test("only the exact sourced Angel’s Share Fuente Fuente component can satisfy Dream to Dynasty",()=>{
   const collection={collectionId:"COL-FUENTE-DREAM-DYNASTY",name:"From Dream to Dynasty Collection",releaseYear:2024};
   const wrong={inventoryId:"INV-DESTINO-SIGLO",collectionId:collection.collectionId,brand:"Arturo Fuente",line:"OpusX Angel’s Share Destino Siglo",vitola:"Figurado",vintage:2025,currentQty:1,retailValue:120};
   const exact={inventoryId:"INV-FUENTE-FUENTE",collectionId:collection.collectionId,brand:"Arturo Fuente",line:"OpusX Angel’s Share Fuente Fuente",vitola:"5.625 × 46",currentQty:1};
@@ -59,7 +59,8 @@ test("an exact-looking Dream to Dynasty component remains frozen until its evide
   assert.equal(wrongSummary.verifiedInventoryIds.includes(wrong.inventoryId),false);
   assert.equal(wrongSummary.excludedAssignedLots.includes(wrong.inventoryId),true);
   const exactSummary=summarizeCollection(collection,[wrong,exact],[]);
-  assert.equal(exactSummary.verifiedInventoryIds.includes(exact.inventoryId),false);
-  assert.equal(exactSummary.excludedAssignedLots.includes(exact.inventoryId),true);
+  assert.equal(exactSummary.verifiedInventoryIds.includes(exact.inventoryId),true);
+  assert.equal(exactSummary.excludedAssignedLots.includes(exact.inventoryId),false);
   assert.equal(exactSummary.verifiedInventoryIds.includes(wrong.inventoryId),false);
+  assert.equal(exactSummary.excludedAssignedLots.includes(wrong.inventoryId),true);
 });
