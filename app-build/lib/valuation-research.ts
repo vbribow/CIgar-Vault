@@ -14,6 +14,13 @@ export const ValuationResearchSchema = z.object({
     notes: z.string(),
   })),
 }).superRefine((value, context) => {
+  if (value.replacementValue !== null && !value.comparables.some(item =>
+    item.kind === "Retail replacement" &&
+    item.unitPrice !== null &&
+    Math.abs(item.unitPrice - value.replacementValue!) <= Math.max(0.01, value.replacementValue! * 0.01)
+  )) {
+    context.addIssue({ code:"custom", message:"Retail replacement requires a normalized per-cigar retail comparable" });
+  }
   if (value.marketRangeLow !== null && value.marketRangeHigh !== null && value.marketRangeLow > value.marketRangeHigh) {
     context.addIssue({ code:"custom", message:"Market range low must not exceed market range high" });
   }

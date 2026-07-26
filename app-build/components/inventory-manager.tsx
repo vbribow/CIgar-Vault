@@ -16,6 +16,7 @@ import { PhotoManager } from "@/components/photo-manager";
 import { InventoryCorrectionAssistant } from "@/components/inventory-correction-assistant";
 import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
+import { brand } from "@/lib/brand";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };
 const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);
@@ -59,7 +60,8 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const payload: Record<string, unknown> = editing ? { ...editing } : {};
     for (const [key, value] of form.entries()) {
       if(key==="writeKey"||key==="quickTotal")continue;
@@ -86,7 +88,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
       const savedId=String(result.data.inventoryId||id);
       const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";
-      setEditing(null); setDraft(null); setMessage(`${savedId} saved and synchronized.${valuationStatus}`); event.currentTarget.reset();
+      setEditing(null); setDraft(null); setMessage(`${savedId} saved and synchronized.${valuationStatus}`); formElement.reset();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
@@ -172,7 +174,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
 
     <section className={`section editor ${editing?"editingEditor":""}`}><div className="sectionHead"><div><div className="eyebrow">{editing&&editMode==="quantity"?"Quantity correction":editing&&editMode==="year"?"Production information":"Inventory editor"}</div><h2>{editing ? `${editMode==="quantity"?"Correct quantity":editMode==="year"?"Add production / release year":"Edit"} · ${editing.brand} ${editing.line}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{editing&&editMode==="quantity"?"Enter full boxes, cigars per box, and loose sticks. Total owned recalculates automatically when saved.":editing&&editMode==="year"?"Enter the four-digit production year or official release year. Leave it blank when the year is not known.":mode === "mock" ? "Preview only: connect a data source to enable writes." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && <button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>}</div>
       <form key={formItem.inventoryId || "new"} className={`inventoryForm ${focusedQuantity||focusedYear?"focusedInventoryForm":""}`} onSubmit={submit}>
-        {showAll&&<><label><span>Inventory reference</span><input name="inventoryId" defaultValue={formItem.inventoryId} readOnly={Boolean(editing)} placeholder="Created automatically"/><small>{editing?"Permanent record reference.":"Optional—leave blank and Cedriva will create a unique reference."}</small></label><CatalogFields item={formItem} catalog={catalog} /></>}
+        {showAll&&<><label><span>Inventory reference</span><input name="inventoryId" defaultValue={formItem.inventoryId} readOnly={Boolean(editing)} placeholder="Created automatically"/><small>{editing?"Permanent record reference.":`Optional—leave blank and ${brand.name} will create a unique reference.`}</small></label><CatalogFields item={formItem} catalog={catalog} /></>}
         {(showAll||focusedYear)&&<label className={focusedYear?"yearField":undefined}><span>Production / release year</span><input name="vintage" type="number" min="1800" max="2200" inputMode="numeric" placeholder="Example: 2024" defaultValue={formItem.vintage} autoFocus={focusedYear}/><small>Use the box production year or the collection’s official release year.</small></label>}
         {focusedQuantity&&<label className="quantityField quickTotalField"><span>Correct total cigars now</span><input name="quickTotal" type="number" min="0" step="1" placeholder={String(formItem.currentQty??0)} inputMode="numeric" autoFocus/><small>Fastest option: enter the total currently owned. This replaces the box/loose breakdown.</small></label>}
         {(showAll||focusedQuantity)&&<><label className="quantityField"><span>Full boxes owned</span><input name="fullBoxQty" type="number" min="0" step="1" defaultValue={formItem.fullBoxQty} /></label><label className="quantityField"><span>Cigars per box</span><input name="sticksPerBox" type="number" min="1" step="1" defaultValue={formItem.sticksPerBox ?? (suggestedFormat?.sizes.length === 1 ? suggestedFormat.sizes[0] : undefined)} placeholder={formItem.knownBoxSizes || suggestedFormat?.sizes.join(", ") || "e.g. 10, 12, 20, 25"} /></label><label className="quantityField"><span>Loose sticks owned</span><input name="looseStickQty" type="number" min="0" step="1" defaultValue={formItem.looseStickQty} /></label></>}
