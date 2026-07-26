@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findDuplicateInventoryIds, integritySummary, reconcileInventory, restorableFromMaster } from "../lib/inventory-integrity";
+import {
+  buildInventoryRestorePlan,
+  findDuplicateInventoryIds,
+  integritySummary,
+  reconcileInventory,
+  restorableFromMaster,
+} from "../lib/inventory-integrity";
 import type { InventoryItem } from "../lib/types";
 
 const lot = (inventoryId: string, currentQty = 10): InventoryItem => ({ inventoryId, brand: "Cohiba", line: "Linea 1492", vitola: "Siglo IV", currentQty });
@@ -61,5 +67,31 @@ test("quantity history, acquisition cost, and evidence are part of record integr
     assert.deepEqual(
       result.differences.map((difference) => difference.field),
       ["originalQty", "smokedQty", "actualCost", "photoLink"],
+    );
+});
+
+test("restore planning rejects existing, duplicate, and unknown inventory records", () => {
+    assert.throws(
+      () => buildInventoryRestorePlan(["A"], [lot("A")], [lot("A")]),
+      /cannot be overwritten/,
+    );
+    assert.throws(
+      () => buildInventoryRestorePlan(["A", "A"], [lot("A")], []),
+      /only once/,
+    );
+    assert.throws(
+      () => buildInventoryRestorePlan(["A"], [lot("A"), lot("A")], []),
+      /manual review/,
+    );
+    assert.throws(
+      () => buildInventoryRestorePlan(["MISSING"], [lot("A")], []),
+      /Not found in Smartsheet/,
+    );
+});
+
+test("restore planning returns only requested records in the requested order", () => {
+    assert.deepEqual(
+      buildInventoryRestorePlan(["B", "A"], [lot("A"), lot("B"), lot("C")], []),
+      [lot("B"), lot("A")],
     );
 });
