@@ -7,7 +7,9 @@ export const loadCollections=()=>loadOwnedRecords<CigarCollection>("collections"
 export const loadHumidors=()=>loadOwnedRecords<Humidor>("humidors",getHumidors);
 export const loadHumidorReadings=()=>loadOwnedRecords<HumidorReading>("readings",getHumidorReadings);
 export const loadSensors=()=>loadOwnedRecords<EnvironmentalSensor>("sensors",getSensors);
-export const loadValuations=()=>loadOwnedRecords<Valuation>("valuations",getValuations);
+export const loadValuations=async()=>(
+  await loadOwnedRecords<Valuation>("valuations",getValuations)
+).filter(value=>!value.invalidatedAt);
 export const loadRatings=()=>loadOwnedRecords<ProfessionalRating>("ratings",async()=>[]);
 export const loadRatingDrafts=()=>loadOwnedRecords<RatingDraftRecord>("rating-drafts",async()=>[]);
 export const loadSmokingLogs=()=>loadOwnedRecords<SmokingLog>("smokes",getSmokingLogs);

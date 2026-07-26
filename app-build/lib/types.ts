@@ -40,6 +40,8 @@ export type Valuation = {
   valuationId: string;
   inventoryId: string;
   valuationDate: string;
+  invalidatedAt?: string;
+  invalidationReason?: string;
   replacementValue?: number;
   replacementSticksPerBox?: number;
   marketValue?: number;

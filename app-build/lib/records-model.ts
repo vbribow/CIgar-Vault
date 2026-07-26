@@ -9,6 +9,7 @@ export const SmokingLogSchema = z.object({
 
 export const ValuationSchema = z.object({
   valuationId: z.string().trim().min(1).max(100), inventoryId: z.string().trim().min(1).max(100), valuationDate: z.iso.date(),
+  invalidatedAt: z.iso.datetime().optional(), invalidationReason: z.string().trim().min(1).max(1000).optional(),
   replacementValue: z.coerce.number().nonnegative().optional(), replacementSticksPerBox: z.coerce.number().int().positive().optional(),
   marketValue: z.coerce.number().nonnegative().optional(), source: z.string().max(500).optional(),
   marketEvidenceType: z.enum(["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]).optional(),
@@ -19,6 +20,7 @@ export const ValuationSchema = z.object({
   lastSaleSourceUrl: z.string().url().optional().or(z.literal("")),
   sourceUrl: z.string().url().optional().or(z.literal("")), confidence: z.string().max(100).optional(), notes: z.string().max(4000).optional(),
 }).strict()
+  .refine(value => Boolean(value.invalidatedAt) === Boolean(value.invalidationReason), { message:"Invalidated evidence requires both a timestamp and reason" })
   .refine(value => value.marketRangeLow === undefined || value.marketRangeHigh === undefined || value.marketRangeLow <= value.marketRangeHigh, { message:"Market range low must not exceed market range high" })
   .refine(value => value.marketEvidenceType !== "Verified completed sale" || Boolean(value.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl), { message:"Verified completed-sale evidence requires value, date, and direct proof" })
   .refine(value => value.marketEvidenceType !== "Estimated market range" || Boolean(value.marketValue !== undefined && value.marketRangeLow !== undefined && value.marketRangeHigh !== undefined && (value.comparableCount ?? 0) >= 2), { message:"An estimated market range requires a value, range, and at least two comparables" })
