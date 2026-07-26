@@ -18,3 +18,10 @@ test("decision center withholds recommendations when any private source fails",(
   assert.match(source,/every\(result=>result\.status==="fulfilled"\)/);
   assert.match(source,/No partial evidence has been turned into a recommendation/);
 });
+
+test("unified intelligence withholds scores and totals when any evidence source fails",()=>{
+  const source=fs.readFileSync(path.join(root,"app/intelligence/page.tsx"),"utf8");
+  assert.match(source,/Promise\.allSettled/);
+  assert.match(source,/every\(result=>result\.status==="fulfilled"\)/);
+  assert.match(source,/No score, recommendation, or collection total is being calculated from partial evidence/);
+});
