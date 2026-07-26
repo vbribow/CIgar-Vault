@@ -104,7 +104,7 @@ export function collectionComponentDrafts(collection: CigarCollection, template:
     const canonical = canonicalCigarIdentity(identity);
     const evidenceLabel = documented?.sourceLabel || template.sourceLabel;
     const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
-    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
+    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, originalQty: identity.quantity, currentQty: identity.quantity, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
     return [{ ...draft, retailValue: knownRetailValue(draft, inventory) }];
   });
 }
@@ -136,6 +136,10 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
+      originalQty: existing.originalQty ?? identity.quantity,
+      currentQty: existing.currentQty ?? existing.looseStickQty ?? identity.quantity,
+      looseStickQty: existing.looseStickQty ?? existing.currentQty ?? identity.quantity,
+      smokedQty: existing.smokedQty ?? 0,
       vintage: cigarVintage,
       provenanceNotes,
     };
