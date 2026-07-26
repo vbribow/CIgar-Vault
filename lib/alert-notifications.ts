@@ -34,7 +34,7 @@ export function mostCompleteAlertDeliveries(deliveries:AlertDelivery[]){
   return byAlertId;
 }
 
-export async function processClimateAlertNotifications(){
+async function runClimateAlertNotifications(){
   const config=notificationConfiguration();
   if(!config.history||(!config.email&&!config.sms))return{enabled:false,sent:0,skipped:0,retried:0};
   const[humidors,readings,sensors,inventory,existing]=await Promise.all([
@@ -95,4 +95,14 @@ export async function processClimateAlertNotifications(){
     }
   }
   return{enabled:true,sent,skipped,retried};
+}
+
+let activeClimateAlertRun:Promise<Awaited<ReturnType<typeof runClimateAlertNotifications>>>|undefined;
+
+export function processClimateAlertNotifications(){
+  if(activeClimateAlertRun)return activeClimateAlertRun;
+  activeClimateAlertRun=runClimateAlertNotifications().finally(()=>{
+    activeClimateAlertRun=undefined;
+  });
+  return activeClimateAlertRun;
 }

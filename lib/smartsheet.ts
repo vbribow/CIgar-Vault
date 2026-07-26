@@ -286,4 +286,32 @@ export async function saveSensor(value:EnvironmentalSensor):Promise<void>{const 
 export async function ingestSensorReadings(values:Array<Omit<HumidorReading,"readingId"> & {externalReadingId:string}>){const sheet=await recordSheet("SMARTSHEET_HUMIDOR_READINGS_SHEET_ID");const existing=new Set(sheet.rows.map(row=>String(recordValues(row,sheet.columns).get("External Reading ID")||"")));const pending=values.filter(v=>!existing.has(v.externalReadingId));if(!pending.length)return{imported:0,duplicates:values.length};const importedAt=new Date().toISOString();const rows=pending.map(value=>{const result={...value,readingId:`READ-${crypto.randomUUID()}`,importedAt};return{toBottom:true,cells:recordCells([["Reading ID",result.readingId],["Humidor ID",result.humidorId],["Sensor ID",result.sensorId],["Provider",result.provider],["External Reading ID",result.externalReadingId],["Recorded At",result.recordedAt],["Temperature F",result.temperatureF],["Humidity RH",result.humidity],["Battery Percent",result.batteryPercent],["Source",result.source],["Notes",result.notes],["Imported At",result.importedAt]],sheet.columns)}});for(let i=0;i<rows.length;i+=400)await request(`/sheets/${requireEnv("SMARTSHEET_HUMIDOR_READINGS_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify(rows.slice(i,i+400))});return{imported:pending.length,duplicates:values.length-pending.length};}
 
 export async function getAlertDeliveries():Promise<AlertDelivery[]>{const sheet=await recordSheet("SMARTSHEET_ALERTS_SHEET_ID");return sheet.rows.map(row=>{const v=recordValues(row,sheet.columns);return{alertId:String(v.get("Alert ID")||row.id),humidorId:String(v.get("Humidor ID")||""),sensorId:v.get("Sensor ID") as string|undefined,severity:String(v.get("Severity")||"Attention") as AlertDelivery["severity"],alertType:String(v.get("Alert Type")||"Climate"),message:String(v.get("Message")||""),readingId:v.get("Reading ID") as string|undefined,detectedAt:String(v.get("Detected At")||""),emailSentAt:v.get("Email Sent At") as string|undefined,smsSentAt:v.get("SMS Sent At") as string|undefined,status:String(v.get("Status")||"Pending") as AlertDelivery["status"],notes:v.get("Notes") as string|undefined};}).sort((a,b)=>b.detectedAt.localeCompare(a.detectedAt));}
-export async function saveAlertDelivery(value:AlertDelivery):Promise<void>{const sheet=await recordSheet("SMARTSHEET_ALERTS_SHEET_ID");const cells=recordCells([["Alert ID",value.alertId],["Humidor ID",value.humidorId],["Sensor ID",value.sensorId],["Severity",value.severity],["Alert Type",value.alertType],["Message",value.message],["Reading ID",value.readingId],["Detected At",value.detectedAt],["Email Sent At",value.emailSentAt],["SMS Sent At",value.smsSentAt],["Status",value.status],["Notes",value.notes]],sheet.columns);await request(`/sheets/${requireEnv("SMARTSHEET_ALERTS_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify([{toBottom:true,cells}])});}
+export async function saveAlertDelivery(value:AlertDelivery):Promise<void>{
+  const sheet=await recordSheet("SMARTSHEET_ALERTS_SHEET_ID");
+  const cells=recordCells([
+    ["Alert ID",value.alertId],
+    ["Humidor ID",value.humidorId],
+    ["Sensor ID",value.sensorId],
+    ["Severity",value.severity],
+    ["Alert Type",value.alertType],
+    ["Message",value.message],
+    ["Reading ID",value.readingId],
+    ["Detected At",value.detectedAt],
+    ["Email Sent At",value.emailSentAt],
+    ["SMS Sent At",value.smsSentAt],
+    ["Status",value.status],
+    ["Notes",value.notes],
+  ],sheet.columns);
+  const existing=sheet.rows.find(row=>String(recordValues(row,sheet.columns).get("Alert ID")||"")===value.alertId);
+  if(existing){
+    await request(`/sheets/${requireEnv("SMARTSHEET_ALERTS_SHEET_ID")}/rows`,{
+      method:"PUT",
+      body:JSON.stringify([{id:existing.id,cells}]),
+    });
+    return;
+  }
+  await request(`/sheets/${requireEnv("SMARTSHEET_ALERTS_SHEET_ID")}/rows`,{
+    method:"POST",
+    body:JSON.stringify([{toBottom:true,cells}]),
+  });
+}
