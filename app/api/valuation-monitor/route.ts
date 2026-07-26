@@ -106,8 +106,12 @@ export async function GET(request:Request){
         if(!row.cached){const{error:eventError}=await admin.from("product_events").insert({user_id:row.userId,event_type:"valuation-research",properties:{estimatedCostUsd:estimatedCallCost,model:process.env.OPENAI_VALUATION_MODEL?.trim()||"gpt-5-mini",inventoryId:row.item.inventoryId}});if(eventError)throw eventError;researchRecorded=true}
         const valuation={...completionValuation(row.item,research,Boolean(row.cached)),valuationId:`VAL-AUTO-${row.item.inventoryId}-${research.evidenceDate}`.slice(0,190)};
         const unsupported=valuation.marketEvidenceType==="Insufficient evidence"&&valuation.replacementValue===undefined;
-        const{error:saveError}=await admin.from("vault_records").upsert({user_id:row.userId,kind:"valuations",record_id:valuation.valuationId,payload:valuation,updated_at:new Date().toISOString()},{onConflict:"user_id,kind,record_id"});if(saveError)throw saveError;
-        if(research.replacementValue!==null){const updated={...row.item,retailValue:research.replacementValue};const{error:inventoryError}=await admin.from("vault_records").update({payload:updated,updated_at:new Date().toISOString()}).eq("user_id",row.userId).eq("kind","inventory").eq("record_id",row.item.inventoryId);if(inventoryError)throw inventoryError}
+        const updatedAt=new Date().toISOString();
+        const records=[
+          {user_id:row.userId,kind:"valuations",record_id:valuation.valuationId,payload:valuation,updated_at:updatedAt},
+          ...(research.replacementValue===null?[]:[{user_id:row.userId,kind:"inventory",record_id:row.item.inventoryId,payload:{...row.item,retailValue:research.replacementValue},updated_at:updatedAt}]),
+        ];
+        const{error:saveError}=await admin.from("vault_records").upsert(records,{onConflict:"user_id,kind,record_id"});if(saveError)throw saveError;
         return{inventoryId:row.item.inventoryId,status:unsupported?"unsupported":row.cached?"cached":"updated",confidence:research.confidence};
       }catch(error){if(!row.cached&&!researchRecorded)await admin.from("product_events").insert({user_id:row.userId,event_type:"valuation-research",properties:{estimatedCostUsd:estimatedCallCost,model:process.env.OPENAI_VALUATION_MODEL?.trim()||"gpt-5-mini",inventoryId:row.item.inventoryId,failed:true}});return{inventoryId:row.item.inventoryId,status:"failed",error:error instanceof Error?error.message:"Failed"}}
     });
