@@ -28,7 +28,8 @@ test("collection population uses exact researched component matching",()=>{
 test("legacy reconciliation is presented as a non-destructive repair",()=>{
  const detail=readFileSync(new URL("../app/collections/[collectionId]/page.tsx",import.meta.url),"utf8");
  const control=readFileSync(new URL("../components/collection-populate-button.tsx",import.meta.url),"utf8");
- assert.match(detail,/correctionCount=\{reviewMembers\.length\}/);
+ assert.match(detail,/repairableMembers=reviewMembers\.filter\(item=>item\.notes\?\.includes\("Expected component:"\)\)/);
+ assert.match(detail,/correctionCount=\{repairableMembers\.length\}/);
  assert.match(control,/Nothing will be deleted/);
  assert.match(control,/Collector quantities and independent lots are preserved/);
 });
