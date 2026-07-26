@@ -31,10 +31,11 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
   const [messages, setMessages] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [lastSynced, setLastSynced] = useState<Date>();
+  const [syncIssue, setSyncIssue] = useState("");
 
   useEffect(()=>{
     let active=true;
-    async function refresh(){if(saving)return;try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)return;const result=await response.json();if(!active||!Array.isArray(result.data))return;setItems(result.data);setDrafts(current=>Object.fromEntries(result.data.map((item:InventoryItem)=>[item.inventoryId,dirty.has(item.inventoryId)?current[item.inventoryId]??draftFor(item):draftFor(item)])));setLastSynced(new Date())}catch{/* preserve the count workspace while offline */}}
+    async function refresh(){if(saving)return;try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)throw new Error("Cross-device refresh unavailable");const result=await response.json();if(!active||!Array.isArray(result.data))throw new Error("Cross-device refresh returned invalid data");setItems(result.data);setDrafts(current=>Object.fromEntries(result.data.map((item:InventoryItem)=>[item.inventoryId,dirty.has(item.inventoryId)?current[item.inventoryId]??draftFor(item):draftFor(item)])));setLastSynced(new Date());setSyncIssue("")}catch(error){if(active)setSyncIssue(error instanceof Error?error.message:"Cross-device refresh unavailable")}}
     const onFocus=()=>void refresh();
     const onVisibility=()=>{if(document.visibilityState==="visible")void refresh()};
     window.addEventListener("focus",onFocus);document.addEventListener("visibilitychange",onVisibility);void refresh();
@@ -64,11 +65,15 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
     const fullBoxQty = Number(draft.fullBoxQty);
     const looseStickQty = Number(draft.looseStickQty);
     const sticksPerBox = draft.sticksPerBox === "" ? undefined : Number(draft.sticksPerBox);
+    if (!Number.isInteger(fullBoxQty) || fullBoxQty < 0 || !Number.isInteger(looseStickQty) || looseStickQty < 0 || (sticksPerBox !== undefined && (!Number.isInteger(sticksPerBox) || sticksPerBox < 1))) {
+      setMessages((current) => ({ ...current, [item.inventoryId]: "Counts must be non-negative whole numbers, and cigars per box must be a positive whole number." }));
+      return;
+    }
     if (fullBoxQty > 0 && !sticksPerBox) {
       setMessages((current) => ({ ...current, [item.inventoryId]: "Enter the number of cigars in each box." }));
       return;
     }
-    if (!writeKey) {
+    if (mode === "smartsheet" && !writeKey) {
       setMessages((current) => ({ ...current, [item.inventoryId]: "Enter the founder write key above first." }));
       return;
     }
@@ -99,7 +104,7 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
 
   return <>
     <section className="countMetrics"><article><span>Counted lots</span><strong>{counted} / {items.length}</strong><small>{Math.round(counted / Math.max(items.length, 1) * 100)}% reconciled</small></article><article><span>Known cigars</span><strong>{knownTotal.toLocaleString()}</strong><small>Across current quantities</small></article><article><span>Remaining</span><strong>{items.length - counted}</strong><small>Lots still needing a physical count</small></article></section>
-    <section className="countControls"><label><span>Search collection</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, cigar, or inventory ID" /></label><label><span>Show</span><select value={scope} onChange={(event) => setScope(event.target.value)}><option value="uncounted">Needs count</option><option value="counted">Counted</option><option value="all">All lots</option></select></label><label><span>Founder write key</span><input type="password" value={writeKey} onChange={(event) => setWriteKey(event.target.value)} autoComplete="current-password" placeholder="Required to save" /></label>{lastSynced&&<small>Cross-device sync checked {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</section>
+    <section className="countControls"><label><span>Search collection</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, cigar, or inventory ID" /></label><label><span>Show</span><select value={scope} onChange={(event) => setScope(event.target.value)}><option value="uncounted">Needs count</option><option value="counted">Counted</option><option value="all">All lots</option></select></label>{mode==="smartsheet"&&<label><span>Founder write key</span><input type="password" value={writeKey} onChange={(event) => setWriteKey(event.target.value)} autoComplete="current-password" placeholder="Required to save" /></label>}{syncIssue?<small role="status">{syncIssue}. Your unsaved entries remain on this device.</small>:lastSynced&&<small>Cross-device sync checked {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</section>
     <section className="countList">{visible.map((item) => {
       const draft = drafts[item.inventoryId];
       const format = findBoxFormat(item);
