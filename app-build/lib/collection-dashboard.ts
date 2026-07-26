@@ -28,6 +28,7 @@ export type CollectionDashboardSummary = {
   retailCoverage: number;
   marketCoverage: number;
   completedSaleCoverage: number;
+  verifiedInventoryIds: string[];
   excludedAssignedLots: string[];
   editionIssue?: string;
 };
@@ -135,14 +136,20 @@ export function summarizeCollection(
   const valueHistory = [...datedValues]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, value]) => ({ date, value }));
-  const wholeValue = collection.wholeMarketValue ?? template?.documentedWholeValue ?? componentValue;
-  const valueEvidence = collection.wholeMarketValue !== undefined
-    ? "Collection record"
-    : template?.documentedWholeValue !== undefined
-      ? "Researched template"
-      : componentValue > 0
-        ? "Component inventory"
-        : "Pending";
+  const documentedWholeValue = collection.wholeMarketValue ?? template?.documentedWholeValue;
+  // A historical whole-set reference must not reduce today's supported
+  // replacement value below the sum of the verified cigars still owned.
+  const useComponentFloor = componentValue > (documentedWholeValue ?? 0);
+  const wholeValue = useComponentFloor ? componentValue : documentedWholeValue ?? componentValue;
+  const valueEvidence = useComponentFloor
+    ? "Component inventory"
+    : collection.wholeMarketValue !== undefined
+      ? "Collection record"
+      : template?.documentedWholeValue !== undefined
+        ? "Researched template"
+        : componentValue > 0
+          ? "Component inventory"
+          : "Pending";
   const expectedCigars = template?.expectedCigars ?? collection.expectedCigars;
   const originalCigars = members.reduce((sum,item)=>sum+(item.originalQty??item.currentQty??0),0);
   const hasCompleteCigarRetail = members.length > 0
@@ -162,7 +169,7 @@ export function summarizeCollection(
     componentValue,
     cigarRetailValue,
     wholeValue,
-    premium: wholeValue - componentValue,
+    premium: Math.max(0, wholeValue - componentValue),
     isHumidorCollection,
     humidorValue,
     humidorValueStatus,
@@ -178,6 +185,7 @@ export function summarizeCollection(
     retailCoverage: componentEvidence.filter(evidence => evidence.retailUnit !== undefined).length,
     marketCoverage: componentEvidence.filter(evidence => evidence.marketUnit !== undefined).length,
     completedSaleCoverage: componentEvidence.filter(evidence => evidence.completedSale !== undefined).length,
+    verifiedInventoryIds: members.map(item=>item.inventoryId),
     excludedAssignedLots,
     editionIssue,
   };

@@ -67,3 +67,13 @@ test("separates collection release year from a generated cigar year", () => {
     const audit = auditCollectionMembership([inherited], [collection]);
     assert.ok(audit.rows[0].issues.includes("Possible inherited collection year"));
 });
+
+test("flags a cigar documented after the collection edition", () => {
+  const laterRelease: InventoryItem = {
+    ...component,
+    vintage: 2026,
+  };
+  const audit = auditCollectionMembership([laterRelease], [collection]);
+  assert.equal(audit.rows[0].classification, "Review");
+  assert.ok(audit.rows[0].issues.includes("Cigar release is later than collection"));
+});
