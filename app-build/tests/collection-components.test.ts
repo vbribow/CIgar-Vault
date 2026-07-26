@@ -8,7 +8,8 @@ import {
   collectionPopulationCandidates,
   unmaterializedCollectionRequirements,
 } from "../lib/collection-components";
-import type { CollectionTemplate } from "../lib/collection-templates";
+import { collectionTemplates, type CollectionTemplate } from "../lib/collection-templates";
+import { summarizeCollection } from "../lib/collection-dashboard";
 
 const template: CollectionTemplate = {
   templateId: "TPL-TEST", name: "Test Set", maker: "Arturo Fuente",
@@ -40,6 +41,18 @@ test("collection population is idempotent and never creates packaging as a cigar
   const first = collectionComponentDrafts(collection, template, []);
   assert.deepEqual(collectionComponentDrafts(collection, template, first), []);
   assert.deepEqual(unmaterializedCollectionRequirements(template), ["Original presentation box"]);
+});
+
+test("new exact collection drafts are immediately countable as owned physical lots",()=>{
+  const granTemplate=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-GRAN-FUMADA-2023")!;
+  const granCollection={collectionId:"COL-FUENTE-GRAN-FUMADA-2023",name:granTemplate.name,releaseYear:2023};
+  const drafts=collectionComponentDrafts(granCollection,granTemplate,[]);
+  assert.equal(drafts.length,13);
+  assert.equal(drafts.reduce((sum,item)=>sum+(item.originalQty??0),0),13);
+  assert.equal(drafts.reduce((sum,item)=>sum+(item.currentQty??0),0),13);
+  const summary=summarizeCollection(granCollection,drafts,[]);
+  assert.equal(summary.completionPercent,100);
+  assert.equal(summary.ownedComponents,13);
 });
 
 test("unattributed component evidence remains unresolved and cannot materialize inventory", () => {
