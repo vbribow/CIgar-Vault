@@ -22,10 +22,12 @@ test("inventory updates cannot silently create a missing record",()=>{
 test("manual intake generates references and offers verified collection choices",()=>{
   const manager=readFileSync(new URL("../components/inventory-manager.tsx",import.meta.url),"utf8");
   assert.match(manager,/manualInventoryId\(\)/);
-  assert.match(manager,/Optional—leave blank and Cedriva will create a unique reference/);
+  assert.match(manager,/Optional—leave blank and \$\{brand\.name\} will create a unique reference/);
   assert.match(manager,/Collection membership/);
   assert.match(manager,/Standalone cigar \/ not assigned/);
   assert.match(manager,/clearableFields/);
+  assert.match(manager,/const formElement = event\.currentTarget/);
+  assert.match(manager,/formElement\.reset\(\)/);
   assert.match(manager,/delete payload\[key as keyof typeof payload\]/);
   assert.match(manager,/saved and synchronized/);
 });
