@@ -45,11 +45,23 @@ test("Purple Dream acceptance fixture preserves 106 cigars as 11 lots and 10 ide
   assert.equal(protocol.documentedCigars,106);
 });
 
-test("the five collection acceptance fixtures unlock only fully sourced collections", () => {
+test("every formerly frozen collection is reconciled through exact sourced physical lots", () => {
+  assert.equal(readiness("TPL-MY-FATHER-BELICOSOS").autoReady,true);
   assert.equal(readiness("TPL-FUENTE-DREAM-DYNASTY").autoReady,true);
-  assert.equal(readiness("TPL-FUENTE-GRAN-FUMADA-2023").autoReady,false);
+  assert.equal(readiness("TPL-FUENTE-GRAN-FUMADA-2022").autoReady,true);
+  assert.equal(readiness("TPL-FUENTE-GRAN-FUMADA-2023").autoReady,true);
   assert.equal(readiness("TPL-FUENTE-PADRON-LEGENDS").autoReady,true);
-  assert.equal(readiness("TPL-FUENTE-FATHER-SON-2026").autoReady,false);
+  assert.equal(readiness("TPL-FUENTE-FATHER-SON-2026").autoReady,true);
+  assert.equal(readiness("TPL-PADRON-COLLECTION").autoReady,true);
+  for(const id of [
+    "TPL-MY-FATHER-BELICOSOS",
+    "TPL-FUENTE-GRAN-FUMADA-2022",
+    "TPL-FUENTE-GRAN-FUMADA-2023",
+    "TPL-FUENTE-FATHER-SON-2026",
+    "TPL-PADRON-COLLECTION",
+  ]){
+    assert.equal(auditCollectionTemplateProtocol(template(id)).readyForInventoryAutomation,true,id);
+  }
 });
 
 test("the universal protocol blocks incomplete present and future collections",()=>{
@@ -71,6 +83,12 @@ test("the universal protocol blocks incomplete present and future collections",(
   assert.equal(audit.readyForInventoryAutomation,false);
   assert.deepEqual(audit.unresolvedRequirements,["Future cigar exact vitola"]);
   assert.match(audit.issues.join(" "),/attributable exact-vitola evidence/);
+});
+
+test("numbered cigar series are never interpreted as collection quantities",()=>{
+  const padron=auditCollectionTemplateProtocol(template("TPL-PADRON-COLLECTION"));
+  assert.equal(padron.documentedCigars,5);
+  assert.equal(padron.readyForInventoryAutomation,true);
 });
 
 test("every collection admitted for automation satisfies the same exact-lot and quantity protocol",()=>{
