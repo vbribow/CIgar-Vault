@@ -4,7 +4,7 @@ import { authorizeWrite, dataMode } from "@/lib/config";
 import { getCollections, saveCollection } from "@/lib/smartsheet";
 import { loadCollections } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
-import { saveOwnedRecord } from "@/lib/user-data";
+import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -20,9 +20,18 @@ export async function POST(request: Request) {
   try {
     const parsed = CollectionInputSchema.parse(await request.json());
     const { memberIds, ...collection } = parsed;
-    if (await saveOwnedRecord("collections", collection.collectionId, collection)) {
+    if (await accountDataMode() === "supabase") {
       const inventory=await loadInventory();
-      await Promise.all(inventory.map(item=>saveOwnedRecord("inventory",item.inventoryId,{...item,collectionId:memberIds.includes(item.inventoryId)?collection.collectionId:item.collectionId===collection.collectionId?undefined:item.collectionId})));
+      const selected=new Set(memberIds);
+      const changed=inventory.flatMap(item=>{
+        const collectionId=selected.has(item.inventoryId)?collection.collectionId:item.collectionId===collection.collectionId?undefined:item.collectionId;
+        return collectionId===item.collectionId?[]:[{...item,collectionId}];
+      });
+      const saved=await saveOwnedRecordsAtomically([
+        {kind:"collections",recordId:collection.collectionId,payload:collection},
+        ...changed.map(item=>({kind:"inventory" as const,recordId:item.inventoryId,payload:item})),
+      ]);
+      if(!saved)throw new Error("Sign in before saving private collection records");
       return NextResponse.json({ data: collection, memberIds }, { status: 201 });
     }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
