@@ -14,6 +14,7 @@ declare
   repaired_inventory jsonb;
   current_qty integer;
   smoked_qty integer;
+  loose_stick_qty integer;
 begin
   if owner_id is null then raise exception 'Sign in before repairing private records'; end if;
 
@@ -48,6 +49,15 @@ begin
     jsonb_set(inventory_row.payload, '{currentQty}', to_jsonb(current_qty + 1), true),
     '{smokedQty}', to_jsonb(greatest(0, smoked_qty - 1)), true
   );
+  if inventory_row.payload ? 'looseStickQty' then
+    loose_stick_qty := coalesce((inventory_row.payload->>'looseStickQty')::integer, 0);
+    repaired_inventory := jsonb_set(
+      repaired_inventory,
+      '{looseStickQty}',
+      to_jsonb(loose_stick_qty + 1),
+      true
+    );
+  end if;
   backup_id := 'REPAIR-BACKUP-' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISSMS') || '-' || gen_random_uuid()::text;
 
   insert into public.vault_records(user_id, kind, record_id, payload, updated_at)
