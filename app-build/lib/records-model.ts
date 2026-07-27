@@ -1,10 +1,13 @@
 import { z } from "zod";
 
+export const constructionQualityOptions = ["Excellent", "Very good", "Good", "Fair", "Poor"] as const;
+export const burnQualityOptions = ["Even throughout", "Minor touch-up", "Multiple touch-ups", "Relight required", "Major burn issue"] as const;
+
 const SmokingLogFields = {
   inventoryId: z.string().trim().min(1).max(100),
   cigarName: z.string().trim().min(3).max(300).optional(), dateSmoked: z.iso.date(), vintage: z.union([z.string(), z.number()]).optional(), overall: z.coerce.number().min(0).max(100).optional(),
   flavor: z.string().max(500).optional(), strength: z.string().max(100).optional(), sweetness: z.string().max(100).optional(),
-  construction: z.string().max(500).optional(), tastingNotes: z.string().max(4000).optional(), buyAgain: z.boolean().optional(),
+  construction: z.string().max(500).optional(), burn: z.enum(burnQualityOptions).optional(), tastingNotes: z.string().max(4000).optional(), buyAgain: z.boolean().optional(),
 };
 
 const requireManualCigar = <T extends z.ZodType<{ inventoryId: string; cigarName?: string }>>(schema: T) =>
@@ -19,6 +22,7 @@ export const SmokingLogSchema = requireManualCigar(z.object({
 /** Collector/API input never owns smokeId. */
 export const SmokingLogCreateSchema = requireManualCigar(z.object({
   ...SmokingLogFields,
+  construction: z.enum(constructionQualityOptions).optional(),
   submissionId: z.string().uuid().optional(),
   newEntryConfirmed: z.boolean().optional(),
 }).strict());

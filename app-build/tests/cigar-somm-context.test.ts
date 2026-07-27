@@ -5,7 +5,7 @@ import { buildCigarSommCollectorContext } from "../lib/cigar-somm-context";
 test("collector context summarizes private records and selected cigar stewardship", () => {
   const context = buildCigarSommCollectorContext({
     inventory: [{ inventoryId: "INV-1", brand: "Cohiba", line: "Siglo IV", vitola: "Corona Gorda", currentQty: 20, retailValue: 55, vintage: 2025, storageLocationId: "H-1", collectionId: "COL-1" }],
-    smokes: [{ smokeId: "S-1", inventoryId: "INV-1", dateSmoked: "2026-07-01", overall: 93, strength: "Medium", tastingNotes: "Cedar and coffee", buyAgain: true }],
+    smokes: [{ smokeId: "S-1", inventoryId: "INV-1", dateSmoked: "2026-07-01", overall: 93, strength: "Medium", construction: "Excellent", burn: "Even throughout", tastingNotes: "Cedar and coffee", buyAgain: true }],
     valuations: [{ valuationId: "V-1", inventoryId: "INV-1", valuationDate: "2026-07-10", marketValue: 62 }],
     wishlist: [{ wishlistId: "W-1", brand: "Trinidad", line: "Fundadores", vitola: "Laguito Especial", priority: "High", status: "Watching", createdAt: "2026-07-01" }],
     collections: [{ collectionId: "COL-1", name: "Habanos Selection", status: "Complete" }],
@@ -20,6 +20,7 @@ test("collector context summarizes private records and selected cigar stewardshi
   assert.equal(context.selectedCigar?.collection, "Habanos Selection");
   assert.deepEqual(context.wishlist.priorityTargets, ["Trinidad Fundadores Laguito Especial"]);
   assert.equal(context.taste.preferredStrength, "Medium");
+  assert.match(context.smokingHistory.recent[0], /construction Excellent · burn Even throughout/);
 });
 
 test("collector context does not invent value or selected-cigar data", () => {

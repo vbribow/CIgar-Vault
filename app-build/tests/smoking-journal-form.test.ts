@@ -20,3 +20,14 @@ test("smoking journal records up to three structured flavor notes", () => {
   assert.match(source, /\[1, 2, 3\]\.map/);
   assert.match(source, /flavors\.join\(", "\)/);
 });
+
+test("smoking journal keeps construction and burn optional, structured, and distinct", () => {
+  assert.match(source, /Construction Quality/);
+  assert.match(source, /name="construction"/);
+  assert.match(source, /How well the cigar was physically made—not its flavor or strength/);
+  assert.match(source, /name="burn"/);
+  assert.match(source, /How evenly the cigar burned and whether it needed correction/);
+  for (const option of ["Excellent", "Very good", "Good", "Fair", "Poor", "Even throughout", "Minor touch-up", "Multiple touch-ups", "Relight required", "Major burn issue"]) {
+    assert.match(readFileSync(new URL("../lib/records-model.ts", import.meta.url), "utf8"), new RegExp(`"${option}"`));
+  }
+});

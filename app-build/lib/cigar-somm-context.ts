@@ -42,7 +42,8 @@ export function buildCigarSommCollectorContext(input: {
   const latestValuation = selected ? valuations.filter(value => value.inventoryId === selected.inventoryId).sort((a, b) => b.valuationDate.localeCompare(a.valuationDate))[0] : undefined;
   const recent = [...input.smokes].sort((a, b) => b.dateSmoked.localeCompare(a.dateSmoked)).slice(0, 5).map(smoke => {
     const item = input.inventory.find(value => value.inventoryId === smoke.inventoryId);
-    return `${item ? identity(item) : "Recorded cigar"}${smoke.overall !== undefined ? ` · ${smoke.overall}/100` : ""}`;
+    const performance = [smoke.construction ? `construction ${smoke.construction}` : "", smoke.burn ? `burn ${smoke.burn}` : ""].filter(Boolean).join(" · ");
+    return `${item ? identity(item) : "Recorded cigar"}${smoke.overall !== undefined ? ` · ${smoke.overall}/100` : ""}${performance ? ` · ${performance}` : ""}`;
   });
   const priorityTargets = wishlist
     .filter(item => item.status === "Watching")
