@@ -38,6 +38,29 @@ export async function saveOwnedRecord(kind: VaultRecordKind, recordId: string, p
   return true;
 }
 
+export async function createOwnedRecord(kind: VaultRecordKind, recordId: string, payload: unknown): Promise<"created"|"exists"|false> {
+  const context = await accountContext();
+  if (!context) return false;
+  const { error } = await context.supabase.from("vault_records").insert({
+    user_id: context.user.id,
+    kind,
+    record_id: recordId,
+    payload,
+    updated_at: new Date().toISOString(),
+  });
+  if (!error) return "created";
+  if (error.code === "23505") return "exists";
+  throw error;
+}
+
+export async function loadOwnedRecord<T>(kind: VaultRecordKind, recordId: string): Promise<T | undefined> {
+  const context = await accountContext();
+  if (!context) return undefined;
+  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("kind", kind).eq("record_id", recordId).maybeSingle();
+  if (error) throw error;
+  return data?.payload as T | undefined;
+}
+
 export async function createOwnedRecords(records:Array<{kind:VaultRecordKind;recordId:string;payload:unknown}>):Promise<boolean>{
   const context=await accountContext();
   if(!context)return false;
