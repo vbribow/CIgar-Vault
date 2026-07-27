@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import { loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
@@ -10,6 +10,7 @@ import {
 import { addInventoryRow, getInventory, getValuations, recordValuation } from "@/lib/smartsheet";
 import { accountDataMode, createOwnedRecords } from "@/lib/user-data";
 import { applyReusableValuations } from "@/lib/valuation-monitor";
+import { createServerRecordId } from "@/lib/server-record-id";
 
 function errorResponse(error: unknown) {
   if (error instanceof ZodError)
@@ -36,17 +37,23 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const draft = normalizeInventory(
-      InventoryInputSchema.parse(await request.json()),
-    );
+    const body=await request.json();
+    if(typeof body!=="object"||body===null||Array.isArray(body))throw new Error("Invalid inventory entry");
+    if("inventoryId" in body)return NextResponse.json({error:"Cedriva creates inventory references automatically. Open an existing record to edit it."},{status:409});
+    const submissionId=z.string().uuid().optional().parse(body.submissionId);
+    const {submissionId:_submissionId,...fields}=body;
+    const draft = normalizeInventory(InventoryInputSchema.parse({...fields,inventoryId:createServerRecordId("inventory",submissionId)}));
     const [inventory,valuations,sharedInventory,sharedValuations]=await Promise.all([
       loadInventory(),
       loadValuations().catch(()=>[]),
       getInventory().catch(()=>[]),
       getValuations().catch(()=>[]),
     ]);
-    if([...inventory,...sharedInventory].some(item=>item.inventoryId===draft.inventoryId)){
-      return NextResponse.json({error:`${draft.inventoryId} already exists. Open that record to update it, or leave the reference blank so Cedriva can create a new one.`},{status:409});
+    const duplicate=[...inventory,...sharedInventory].find(item=>item.inventoryId===draft.inventoryId);
+    if(duplicate){
+      const unchanged=Object.entries(fields).every(([key,value])=>JSON.stringify(duplicate[key as keyof typeof duplicate])===JSON.stringify(value));
+      if(unchanged)return NextResponse.json({data:duplicate,retry:true},{status:200});
+      return NextResponse.json({error:"This submission was already used for a different inventory entry."},{status:409});
     }
     const immediate=applyReusableValuations([draft],[...inventory,...sharedInventory],[...valuations,...sharedValuations]);
     const item=immediate.items[0];

@@ -8,8 +8,7 @@ import { mutationButtonText } from "@/lib/mutation-state";
 import { useMutationGuard } from "@/components/use-mutation-guard";
 import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType } from "@/lib/valuation-evidence";
 
-const today = () => new Date().toISOString().slice(0, 10);
-const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
+const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
 export const flavorOptions = ["Cedar", "Earth", "Leather", "Pepper", "Cream", "Coffee", "Cocoa / chocolate", "Nuts", "Sweetness", "Baking spice", "Fruit", "Floral", "Toast", "Mineral", "Other"] as const;
 
@@ -25,6 +24,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [message, setMessage] = useState("");
   const [smokeSource, setSmokeSource] = useState(selectedInventoryId || "");
   const [smokeSubmissionId, setSmokeSubmissionId] = useState(() => crypto.randomUUID());
+  const [valuationSubmissionId, setValuationSubmissionId] = useState(() => crypto.randomUUID());
   const [newSmokeConfirmed, setNewSmokeConfirmed] = useState(false);
   const smokeMutation = useMutationGuard();
   const valuationMutation = useMutationGuard();
@@ -46,7 +46,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       if (newSmokeConfirmed) payload.newEntryConfirmed = true;
       const flavors = [...new Set(["flavor1", "flavor2", "flavor3"].map(name => String(form.get(name) || "")).filter(Boolean))];
       if (flavors.length) payload.flavor = flavors.join(", ");
-    }
+    } else payload.submissionId = valuationSubmissionId;
     const response = await fetch(kind === "smoke" ? "/api/smoking-log" : "/api/valuations", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-founder-key": key },
@@ -67,7 +67,10 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       setSmokes(values => values.some(value => value.smokeId === result.data.smokeId) ? values : [result.data, ...values]);
       setSmokeSubmissionId(crypto.randomUUID());
     }
-    else setValuations(values => [result.data, ...values]);
+    else {
+      setValuations(values => values.some(value => value.valuationId === result.data.valuationId) ? values : [result.data, ...values]);
+      setValuationSubmissionId(crypto.randomUUID());
+    }
     setMessage(kind === "smoke" && smokeSource === "MANUAL" ? "Smoking experience saved. Inventory was not changed." : "Saved.");
     mutation.succeed();
     event.currentTarget.reset();
@@ -84,6 +87,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
 
   function startAnotherValuation() {
     valuationMutation.reset();
+    setValuationSubmissionId(crypto.randomUUID());
     setMessage("");
   }
 
@@ -119,7 +123,9 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       <div className="recordList"><h3>Recent smokes</h3>{smokes.slice(0, 8).map(smoke => <div key={smoke.smokeId}><strong>{smoke.cigarName || smoke.inventoryId}</strong><span>Entry #{smokeEntryOrder(smokes, smoke.smokeId)} · {smoke.dateSmoked} · {smoke.overall ?? "—"}</span></div>)}</div>
     </section>
 
-    <section className="card"><h2>Add valuation evidence</h2><p className="small">Keep retail, asking prices, estimated ranges, and completed sales separate. Use “Insufficient evidence” instead of manufacturing precision.</p><form className="recordForm" onSubmit={event => send(event, "valuation")}><label><span>Valuation ID</span><input name="valuationId" required placeholder="VAL-0001" /></label><label><span>Inventory lot</span>{valuationPicker}</label><label><span>Evidence date</span><input name="valuationDate" type="date" required defaultValue={today()} /></label><label><span>Retail replacement / cigar</span><input name="replacementValue" type="number" min="0" step=".01" /></label><label><span>Market evidence type</span><select name="marketEvidenceType" defaultValue="Insufficient evidence"><option>Verified completed sale</option><option>Estimated market range</option><option>Observed asking price</option><option>Insufficient evidence</option></select></label><label><span>Market asking price / cigar — no confirmed sale</span><input name="askingPrice" type="number" min="0" step=".01" /></label><label><span>Asking-price source</span><input name="askingPriceSource" placeholder="Specialty dealer or public listing" /></label><label><span>Asking-price URL</span><input name="askingPriceSourceUrl" type="url" placeholder="https://…" /></label><label><span>Estimated range low / cigar</span><input name="marketRangeLow" type="number" min="0" step=".01" /></label><label><span>Estimated range high / cigar</span><input name="marketRangeHigh" type="number" min="0" step=".01" /></label><label><span>Estimated midpoint / cigar</span><input name="marketValue" type="number" min="0" step=".01" /></label><label><span>Independent comparables</span><input name="comparableCount" type="number" min="0" step="1" /></label><label><span>Verified completed sale / cigar</span><input name="lastSaleValue" type="number" min="0" step=".01" /></label><label><span>Completed sale date</span><input name="lastSaleDate" type="date" /></label><label><span>Auction house / venue</span><input name="lastSaleVenue" placeholder="Auction house or verified seller" /></label><label><span>Completed sale URL</span><input name="lastSaleSourceUrl" type="url" placeholder="https://…" /></label><label><span>Strongest evidence source</span><input name="source" placeholder="Retailer, auction, or price guide" /></label><label><span>Strongest evidence URL</span><input name="sourceUrl" type="url" placeholder="https://…" /></label><label><span>Confidence</span><select name="confidence"><option>High</option><option>Medium</option><option>Low</option></select></label><label><span>Evidence notes</span><textarea name="notes" rows={3} placeholder="Identity, quantity, condition, buyer premium, and comparable limitations" /></label>{mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}<button className="button" disabled={mode === "mock"}>Save valuation evidence</button></form><div className="recordList"><h3>Recent valuations</h3>{valuations.slice(0, 8).map(value => <div key={value.valuationId}><strong>{value.inventoryId}</strong><span>{value.valuationDate} · {isVerifiedCompletedSale(value) || claimsUnverifiedCompletedSale(value) ? completedSaleLabel(value) : marketEvidenceType(value)==="Observed asking price" ? marketAskingPriceLabel : marketEvidenceType(value)} · aftermarket ${value.marketValue ?? "—"} · {isVerifiedCompletedSale(value) ? `verified sale $${value.lastSaleValue}` : claimsUnverifiedCompletedSale(value) ? `legacy sale claim $${value.lastSaleValue ?? "—"}` : value.askingPrice!==undefined ? `asking $${value.askingPrice} · no confirmed sale` : "no verified sale"}</span></div>)}</div></section>
+    <section className="card"><h2>Add valuation evidence</h2><p className="small">Keep retail, asking prices, estimated ranges, and completed sales separate. Use “Insufficient evidence” instead of manufacturing precision. Cedriva creates the permanent record reference automatically.</p><form className="recordForm" onSubmit={event => send(event, "valuation")} aria-busy={valuationMutation.pending}><label><span>Inventory lot</span>{valuationPicker}</label><label><span>Evidence date</span><input name="valuationDate" type="date" required defaultValue={today()} /></label><label><span>Retail replacement / cigar</span><input name="replacementValue" type="number" min="0" step=".01" /></label><label><span>Market evidence type</span><select name="marketEvidenceType" defaultValue="Insufficient evidence"><option>Verified completed sale</option><option>Estimated market range</option><option>Observed asking price</option><option>Insufficient evidence</option></select></label><label><span>Market asking price / cigar — no confirmed sale</span><input name="askingPrice" type="number" min="0" step=".01" /></label><label><span>Asking-price source</span><input name="askingPriceSource" placeholder="Specialty dealer or public listing" /></label><label><span>Asking-price URL</span><input name="askingPriceSourceUrl" type="url" placeholder="https://…" /></label><label><span>Estimated range low / cigar</span><input name="marketRangeLow" type="number" min="0" step=".01" /></label><label><span>Estimated range high / cigar</span><input name="marketRangeHigh" type="number" min="0" step=".01" /></label><label><span>Estimated midpoint / cigar</span><input name="marketValue" type="number" min="0" step=".01" /></label><label><span>Independent comparables</span><input name="comparableCount" type="number" min="0" step="1" /></label><label><span>Verified completed sale / cigar</span><input name="lastSaleValue" type="number" min="0" step=".01" /></label><label><span>Completed sale date</span><input name="lastSaleDate" type="date" /></label><label><span>Auction house / venue</span><input name="lastSaleVenue" placeholder="Auction house or verified seller" /></label><label><span>Completed sale URL</span><input name="lastSaleSourceUrl" type="url" placeholder="https://…" /></label><label><span>Strongest evidence source</span><input name="source" placeholder="Retailer, auction, or price guide" /></label><label><span>Strongest evidence URL</span><input name="sourceUrl" type="url" placeholder="https://…" /></label><label><span>Confidence</span><select name="confidence"><option>High</option><option>Medium</option><option>Low</option></select></label><label><span>Evidence notes</span><textarea name="notes" rows={3} placeholder="Identity, quantity, condition, buyer premium, and comparable limitations" /></label>{mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}<button className="button" disabled={mode === "mock"||valuationMutation.pending||valuationMutation.complete}>{mutationButtonText(valuationMutation.status,{idle:"Save valuation evidence",pending:"Saving valuation…",success:"Valuation saved"})}</button></form>
+{valuationMutation.complete&&<button type="button" className="button secondary" onClick={startAnotherValuation}>Add another valuation</button>}
+<div className="recordList"><h3>Recent valuations</h3>{valuations.slice(0, 8).map(value => <div key={value.valuationId}><strong>{value.inventoryId}</strong><span>{value.valuationDate} · {isVerifiedCompletedSale(value) || claimsUnverifiedCompletedSale(value) ? completedSaleLabel(value) : marketEvidenceType(value)==="Observed asking price" ? marketAskingPriceLabel : marketEvidenceType(value)} · aftermarket ${value.marketValue ?? "—"} · {isVerifiedCompletedSale(value) ? `verified sale $${value.lastSaleValue}` : claimsUnverifiedCompletedSale(value) ? `legacy sale claim $${value.lastSaleValue ?? "—"}` : value.askingPrice!==undefined ? `asking $${value.askingPrice} · no confirmed sale` : "no verified sale"}</span></div>)}</div></section>
     {message && <output className="wideMessage" aria-live="polite">{message}</output>}
   </div>;
 }
