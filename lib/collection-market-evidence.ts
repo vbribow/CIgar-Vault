@@ -1,5 +1,6 @@
 import { cigarIdentityKey } from "./cigar-identity";
 import type { InventoryItem, Valuation } from "./types";
+import { isVerifiedCompletedSale } from "./valuation-evidence";
 
 export type CollectionComponentMarketEvidence = {
   retailUnit?: number;
@@ -19,7 +20,7 @@ export function collectionComponentMarketEvidence(item: InventoryItem, inventory
   const own = evidence.find(valuation => valuation.inventoryId === item.inventoryId);
   const shared = evidence.find(valuation => Boolean(valuation.sourceUrl) && /^(High|Medium)$/i.test(valuation.confidence ?? ""));
   const valuation = own ?? shared;
-  const completedSale = evidence.find(valuation => valuation.lastSaleValue !== undefined && Boolean(valuation.lastSaleDate) && Boolean(valuation.lastSaleSourceUrl));
+  const completedSale = evidence.find(isVerifiedCompletedSale);
   const retailUnit = item.retailValue ?? valuation?.replacementValue;
   const marketUnit = valuation?.marketValue;
   return {

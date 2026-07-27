@@ -10,7 +10,7 @@ import { RetailPricingControls } from "@/components/retail-pricing-controls";
 import { retailBoxValue } from "@/lib/retail-pricing";
 import { TrustMark } from "@/components/trust-mark";
 import { ValuationCompletionPanel } from "@/components/valuation-completion-panel";
-import { marketRangeText } from "@/lib/valuation-evidence";
+import { completedSaleLabel, marketRangeText } from "@/lib/valuation-evidence";
 import { valuationNeedsMonitoring } from "@/lib/valuation-monitor";
 
 export const dynamic = "force-dynamic";
@@ -285,7 +285,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                         ? "—"
                         : money.format(row.marketLot)}
                     </td>
-                    <td>{row.latest?.lastSaleValue === undefined ? "—" : <>{unitMoney.format(row.latest.lastSaleValue)}<small>{row.latest.lastSaleDate || row.latest.valuationDate}{row.latest.lastSaleVenue ? ` · ${row.latest.lastSaleVenue}` : ""}</small>{row.latest.lastSaleSourceUrl && <a className="textLink" href={row.latest.lastSaleSourceUrl} target="_blank" rel="noreferrer">Proof ↗</a>}</>}</td>
+                    <td>{row.latestVerifiedSale ? <>{unitMoney.format(row.latestVerifiedSale.lastSaleValue!)}<small>{row.latestVerifiedSale.lastSaleDate}{row.latestVerifiedSale.lastSaleVenue ? ` · ${row.latestVerifiedSale.lastSaleVenue}` : ""}</small><a className="textLink" href={row.latestVerifiedSale.lastSaleSourceUrl} target="_blank" rel="noreferrer">Proof ↗</a></> : row.latestLegacySaleClaim ? <>{row.latestLegacySaleClaim.lastSaleValue === undefined ? "—" : unitMoney.format(row.latestLegacySaleClaim.lastSaleValue)}<small>{completedSaleLabel(row.latestLegacySaleClaim)}</small></> : "—"}</td>
                     <td>
                       {row.changePercent === undefined ? (
                         "—"
