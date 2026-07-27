@@ -8,6 +8,7 @@ export const marketEvidenceTypes = [
 ] as const;
 
 export type MarketEvidenceType = typeof marketEvidenceTypes[number];
+export const marketAskingPriceLabel = "Market asking price — no confirmed sale";
 
 export function isVerifiedCompletedSale(value?: Valuation): boolean {
   return Boolean(value && value.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl);

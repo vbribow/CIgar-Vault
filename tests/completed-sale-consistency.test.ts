@@ -17,3 +17,12 @@ test("completed-sale renderers use the centralized proof predicate and legacy la
   assert.match(records,/completedSaleLabel\(value\)/);
   assert.match(timeline,/isVerifiedCompletedSale\(value\)/);
 });
+
+test("valuation renderers identify asking prices as listings with no confirmed sale",()=>{
+  const inventory=read("../app/inventory/[inventoryId]/page.tsx");
+  const valuations=read("../app/valuations/page.tsx");
+  const records=read("../components/records-manager.tsx");
+  assert.match(inventory,/marketAskingPriceLabel/);
+  assert.match(valuations,/marketAskingPriceLabel/);
+  assert.match(records,/Market asking price \/ cigar — no confirmed sale/);
+});
