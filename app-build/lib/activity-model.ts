@@ -11,6 +11,7 @@ export const ActivityInputSchema = z.object({
   totalAmount: z.coerce.number().finite().nonnegative().optional(),
   toStorage: z.string().trim().max(200).optional(),
   notes: z.string().trim().max(2000).optional(),
+  submissionId: z.string().uuid().optional(),
 }).strict().superRefine((value, context) => {
   if (["Purchase", "Add sticks", "Gift", "Sale", "Damaged / discarded"].includes(value.eventType) && value.quantity === 0 && value.boxes === 0) context.addIssue({ code: "custom", path: ["quantity"], message: "Enter a stick or box quantity" });
   if (value.eventType === "Correction" && value.boxes > 0) context.addIssue({ code: "custom", path: ["boxes"], message: "Enter the corrected total in sticks; box breakdown can be corrected in the Vault editor" });

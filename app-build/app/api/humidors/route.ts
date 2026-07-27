@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { HumidorSchema } from "@/lib/humidor-model";
+import { HumidorCreateSchema, HumidorUpdateSchema } from "@/lib/humidor-model";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import { getHumidors, saveHumidor } from "@/lib/smartsheet";
 import { loadHumidors } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
+import { createServerRecordId } from "@/lib/server-record-id";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -18,8 +19,12 @@ export async function GET() {
 }
 export async function POST(request: Request) {
   try {
-    const parsed = HumidorSchema.parse(await request.json());
-    const { memberIds, ...humidor } = parsed;
+    const body=await request.json();
+    const updating=body?.action==="update";
+    const parsed=updating?HumidorUpdateSchema.parse(body):HumidorCreateSchema.parse(body);
+    const {action:_action,submissionId,...fields}=parsed as typeof parsed&{action?:string;submissionId?:string};
+    const normalized={...fields,humidorId:updating?(fields as typeof fields&{humidorId:string}).humidorId:createServerRecordId("humidor",submissionId)};
+    const { memberIds, ...humidor } = normalized;
     if (await accountDataMode() === "supabase") {
       const inventory=await loadInventory();
       const selected=new Set(memberIds);

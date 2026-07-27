@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CollectionInputSchema } from "@/lib/collection-model";
+import { CollectionCreateInputSchema } from "@/lib/collection-model";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import { getCollections, saveCollection } from "@/lib/smartsheet";
 import { loadCollections } from "@/lib/data";
@@ -8,6 +8,7 @@ import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
 import { collectionRequirementMatches, collectionTemplateFor } from "@/lib/collection-dashboard";
 import { isPresentationInventoryMatch } from "@/lib/collection-presentation";
 import { auditCollectionTemplateProtocol } from "@/lib/collection-templates";
+import { createServerRecordId } from "@/lib/server-record-id";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -21,8 +22,13 @@ export async function GET() {
 }
 export async function POST(request: Request) {
   try {
-    const parsed = CollectionInputSchema.parse(await request.json());
-    const { memberIds, ...collection } = parsed;
+    const parsed = CollectionCreateInputSchema.parse(await request.json());
+    const { memberIds, submissionId, ...fields } = parsed;
+    const existingCollections=await loadCollections();
+    const suppliedExisting=Boolean(fields.collectionId&&existingCollections.some(value=>value.collectionId===fields.collectionId));
+    const suppliedTemplate=Boolean(fields.collectionId&&collectionTemplateFor(fields as Parameters<typeof collectionTemplateFor>[0]));
+    if(fields.collectionId&&!suppliedExisting&&!suppliedTemplate)return NextResponse.json({error:"Cedriva creates collection references automatically. Choose a researched edition or edit an existing collection."},{status:409});
+    const collection={...fields,collectionId:fields.collectionId||createServerRecordId("collection",submissionId)};
     const inventory=await loadInventory();
     const presentationAsset=collection.presentationInventoryId
       ? inventory.find(item=>item.inventoryId===collection.presentationInventoryId)

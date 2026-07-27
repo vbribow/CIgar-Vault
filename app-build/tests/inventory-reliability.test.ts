@@ -5,9 +5,9 @@ import { readFileSync } from "node:fs";
 test("single-lot creation cannot overwrite an existing inventory reference",()=>{
   const route=readFileSync(new URL("../app/api/inventory/route.ts",import.meta.url),"utf8");
   const userData=readFileSync(new URL("../lib/user-data.ts",import.meta.url),"utf8");
-  assert.match(route,/some\(item=>item\.inventoryId===draft\.inventoryId\)/);
+  assert.match(route,/find\(item=>item\.inventoryId===draft\.inventoryId\)/);
   assert.match(route,/createOwnedRecords\(\[/);
-  assert.match(route,/already exists\. Open that record to update it/);
+  assert.match(route,/This submission was already used for a different inventory entry/);
   assert.match(userData,/from\("vault_records"\)\.insert/);
   assert.match(userData,/error\.code==="23505"/);
   assert.match(userData,/createOwnedRecords/);
@@ -21,8 +21,9 @@ test("inventory updates cannot silently create a missing record",()=>{
 
 test("manual intake generates references and offers verified collection choices",()=>{
   const manager=readFileSync(new URL("../components/inventory-manager.tsx",import.meta.url),"utf8");
-  assert.match(manager,/manualInventoryId\(\)/);
-  assert.match(manager,/Optional—leave blank and \$\{brand\.name\} will create a unique reference/);
+  assert.match(manager,/payload\.submissionId=submissionId/);
+  assert.doesNotMatch(manager,/<span>Inventory reference<\/span>/);
+  assert.match(manager,/<input name="inventoryId" type="hidden"/);
   assert.match(manager,/Collection membership/);
   assert.match(manager,/Standalone cigar \/ not assigned/);
   assert.match(manager,/clearableFields/);
