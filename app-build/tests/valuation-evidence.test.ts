@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketEvidenceType, marketRangeText } from "../lib/valuation-evidence";
+import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType, marketRangeText } from "../lib/valuation-evidence";
 
 const base = { valuationId:"V", inventoryId:"I", valuationDate:"2026-07-24" };
 
@@ -41,4 +41,10 @@ test("a completed sale requires value, sale date, and direct sold-lot URL",()=>{
   assert.equal(isVerifiedCompletedSale(verified),true);
   assert.equal(completedSaleLabel(verified),"Verified completed sale");
   assert.equal(marketEvidenceType(verified),"Verified completed sale");
+});
+
+test("an unsold listing has one plain universal market-asking label",()=>{
+  assert.equal(marketAskingPriceLabel,"Market asking price — no confirmed sale");
+  assert.notEqual(marketAskingPriceLabel,"Market value");
+  assert.notEqual(marketAskingPriceLabel,"Verified completed sale");
 });

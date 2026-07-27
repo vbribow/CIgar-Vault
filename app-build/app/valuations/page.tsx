@@ -10,7 +10,7 @@ import { RetailPricingControls } from "@/components/retail-pricing-controls";
 import { retailBoxValue } from "@/lib/retail-pricing";
 import { TrustMark } from "@/components/trust-mark";
 import { ValuationCompletionPanel } from "@/components/valuation-completion-panel";
-import { completedSaleLabel, marketRangeText } from "@/lib/valuation-evidence";
+import { completedSaleLabel, marketAskingPriceLabel, marketRangeText } from "@/lib/valuation-evidence";
 import { valuationNeedsMonitoring } from "@/lib/valuation-monitor";
 
 export const dynamic = "force-dynamic";
@@ -139,7 +139,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
         <header><div className="eyebrow">The New World evidence standard</div><h2 id="value-evidence-standard">Precision must be earned.</h2><p>Cedriva records what the evidence proves and stops there. A listing is useful—but it is not a sale.</p></header>
         <div>
           <article><span>01</span><h3>Retail replacement</h3><p>Current exact-cigar price from a manufacturer or established retailer.</p></article>
-          <article><span>02</span><h3>Observed asking price</h3><p>A public secondary listing. Documented separately and never called market value.</p></article>
+          <article><span>02</span><h3>{marketAskingPriceLabel}</h3><p>A public secondary listing, documented with its observation date and source. It is never presented as a completed sale.</p></article>
           <article><span>03</span><h3>Verified completed sale</h3><p>Exact identity, sold status, date, venue, quantity, and direct proof.</p></article>
           <article><span>04</span><h3>Estimated market range</h3><p>At least two independent secondary signals; shown as a range, not false precision.</p></article>
           <article><span>05</span><h3>Insufficient evidence</h3><p>The trusted answer when the public market cannot support a defensible value.</p></article>
@@ -272,7 +272,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
                     </td>
                     <td>
                       {row.marketUnit === undefined ? (
-                        row.latest?.askingPrice === undefined ? <><strong>Insufficient evidence</strong><small>No defensible aftermarket value</small></> : <><strong>{unitMoney.format(row.latest.askingPrice)}</strong><small>Observed asking price only</small></>
+                        row.latest?.askingPrice === undefined ? <><strong>Insufficient evidence</strong><small>No defensible aftermarket value</small></> : <><strong>{unitMoney.format(row.latest.askingPrice)}</strong><small>{marketAskingPriceLabel}{row.latest.askingPriceSource ? ` · ${row.latest.askingPriceSource}` : ""}</small></>
                       ) : (
                         <>
                           {unitMoney.format(row.marketUnit)}
