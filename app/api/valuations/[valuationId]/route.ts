@@ -15,11 +15,14 @@ export async function PATCH(request:Request,{params}:Context){
     const valuations=await loadAccountRecords<Valuation>("valuations")??[];
     const valuation=valuations.find(value=>value.valuationId===valuationId);
     if(!valuation)return NextResponse.json({error:"Valuation evidence was not found."},{status:404});
-    if(valuation.invalidatedAt)return NextResponse.json({data:valuation});
     const inventory=(await loadInventory()).find(item=>item.inventoryId===valuation.inventoryId);
     if(!inventory)return NextResponse.json({error:"The linked inventory record was not found."},{status:404});
-    const invalidatedAt=new Date().toISOString();
-    const invalidated={...valuation,invalidatedAt,invalidationReason:reason};
+    const invalidatedAt=valuation.invalidatedAt??new Date().toISOString();
+    const invalidated={
+      ...valuation,
+      invalidatedAt,
+      invalidationReason:valuation.invalidationReason??reason,
+    };
     const records:Parameters<typeof saveOwnedRecordsAtomically>[0]=[
       {kind:"valuations",recordId:valuation.valuationId,payload:invalidated},
     ];
