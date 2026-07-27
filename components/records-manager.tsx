@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem, SmokingLog, Valuation } from "@/lib/types";
 import { smokeEntryOrder } from "@/lib/smoke-journal";
+import { mutationButtonText } from "@/lib/mutation-state";
+import { useMutationGuard } from "@/components/use-mutation-guard";
 import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType } from "@/lib/valuation-evidence";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -23,9 +25,14 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [message, setMessage] = useState("");
   const [smokeSource, setSmokeSource] = useState(selectedInventoryId || "");
   const [smokeSubmissionId, setSmokeSubmissionId] = useState(() => crypto.randomUUID());
+  const [newSmokeConfirmed, setNewSmokeConfirmed] = useState(false);
+  const smokeMutation = useMutationGuard();
+  const valuationMutation = useMutationGuard();
 
   async function send(event: FormEvent<HTMLFormElement>, kind: "smoke" | "valuation") {
     event.preventDefault();
+    const mutation = kind === "smoke" ? smokeMutation : valuationMutation;
+    if (!mutation.begin()) return;
     const form = new FormData(event.currentTarget);
     const key = String(form.get("writeKey") || "");
     const numeric = new Set(["overall", "replacementValue", "marketValue", "marketRangeLow", "marketRangeHigh", "askingPrice", "comparableCount", "lastSaleValue"]);
@@ -36,6 +43,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     ));
     if (kind === "smoke") {
       payload.submissionId = smokeSubmissionId;
+      if (newSmokeConfirmed) payload.newEntryConfirmed = true;
       const flavors = [...new Set(["flavor1", "flavor2", "flavor3"].map(name => String(form.get(name) || "")).filter(Boolean))];
       if (flavors.length) payload.flavor = flavors.join(", ");
     }
@@ -43,10 +51,16 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       method: "POST",
       headers: { "Content-Type": "application/json", "x-founder-key": key },
       body: JSON.stringify(payload),
+    }).catch(error => {
+      mutation.fail();
+      setMessage(error instanceof Error ? error.message : "Save failed");
+      return undefined;
     });
+    if (!response) return;
     const result = await response.json();
     if (!response.ok) {
       setMessage(result.error || "Save failed");
+      mutation.fail();
       return;
     }
     if (kind === "smoke") {
@@ -55,8 +69,22 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     }
     else setValuations(values => [result.data, ...values]);
     setMessage(kind === "smoke" && smokeSource === "MANUAL" ? "Smoking experience saved. Inventory was not changed." : "Saved.");
+    mutation.succeed();
     event.currentTarget.reset();
-    if (kind === "smoke") setSmokeSource("");
+    if (kind === "smoke") setSmokeSource(selectedInventoryId || "");
+  }
+
+  function startAnotherSmoke() {
+    smokeMutation.reset();
+    setNewSmokeConfirmed(true);
+    setSmokeSubmissionId(crypto.randomUUID());
+    setSmokeSource(selectedInventoryId || "");
+    setMessage("");
+  }
+
+  function startAnotherValuation() {
+    valuationMutation.reset();
+    setMessage("");
   }
 
   const valuationPicker = <select name="inventoryId" required defaultValue={selectedInventoryId || ""}>
@@ -69,7 +97,8 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       <div className="eyebrow">Private tasting journal</div>
       <h2>Log a smoke</h2>
       <p className="small">Record what you experienced in your own words. There are no wrong tasting notes.</p>
-      <form className="recordForm" onSubmit={event => send(event, "smoke")}>
+      <form className="recordForm" onSubmit={event => send(event, "smoke")} aria-busy={smokeMutation.pending}>
+        <fieldset disabled={smokeMutation.pending || smokeMutation.complete}>
         <label><span>Inventory lot or another cigar *</span><select name="inventoryId" required value={smokeSource} onChange={event => setSmokeSource(event.target.value)}>
           <option value="">Select from your inventory</option>
           {inventory.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}</option>)}
@@ -83,12 +112,14 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <label><span>Tasting notes</span><textarea name="tastingNotes" rows={4} placeholder="How did it begin, develop, and finish? What stood out?" /></label>
         <label className="check"><input name="buyAgain" type="checkbox" /> Buy again</label>
         {mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}
-        <button className="button" disabled={mode === "mock"}>Save smoke</button>
+        <button className="button" disabled={mode === "mock" || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved"})}</button>
+        </fieldset>
       </form>
+      {smokeMutation.complete && <button type="button" className="button secondary" onClick={startAnotherSmoke}>Log another</button>}
       <div className="recordList"><h3>Recent smokes</h3>{smokes.slice(0, 8).map(smoke => <div key={smoke.smokeId}><strong>{smoke.cigarName || smoke.inventoryId}</strong><span>Entry #{smokeEntryOrder(smokes, smoke.smokeId)} · {smoke.dateSmoked} · {smoke.overall ?? "—"}</span></div>)}</div>
     </section>
 
     <section className="card"><h2>Add valuation evidence</h2><p className="small">Keep retail, asking prices, estimated ranges, and completed sales separate. Use “Insufficient evidence” instead of manufacturing precision.</p><form className="recordForm" onSubmit={event => send(event, "valuation")}><label><span>Valuation ID</span><input name="valuationId" required placeholder="VAL-0001" /></label><label><span>Inventory lot</span>{valuationPicker}</label><label><span>Evidence date</span><input name="valuationDate" type="date" required defaultValue={today()} /></label><label><span>Retail replacement / cigar</span><input name="replacementValue" type="number" min="0" step=".01" /></label><label><span>Market evidence type</span><select name="marketEvidenceType" defaultValue="Insufficient evidence"><option>Verified completed sale</option><option>Estimated market range</option><option>Observed asking price</option><option>Insufficient evidence</option></select></label><label><span>Market asking price / cigar — no confirmed sale</span><input name="askingPrice" type="number" min="0" step=".01" /></label><label><span>Asking-price source</span><input name="askingPriceSource" placeholder="Specialty dealer or public listing" /></label><label><span>Asking-price URL</span><input name="askingPriceSourceUrl" type="url" placeholder="https://…" /></label><label><span>Estimated range low / cigar</span><input name="marketRangeLow" type="number" min="0" step=".01" /></label><label><span>Estimated range high / cigar</span><input name="marketRangeHigh" type="number" min="0" step=".01" /></label><label><span>Estimated midpoint / cigar</span><input name="marketValue" type="number" min="0" step=".01" /></label><label><span>Independent comparables</span><input name="comparableCount" type="number" min="0" step="1" /></label><label><span>Verified completed sale / cigar</span><input name="lastSaleValue" type="number" min="0" step=".01" /></label><label><span>Completed sale date</span><input name="lastSaleDate" type="date" /></label><label><span>Auction house / venue</span><input name="lastSaleVenue" placeholder="Auction house or verified seller" /></label><label><span>Completed sale URL</span><input name="lastSaleSourceUrl" type="url" placeholder="https://…" /></label><label><span>Strongest evidence source</span><input name="source" placeholder="Retailer, auction, or price guide" /></label><label><span>Strongest evidence URL</span><input name="sourceUrl" type="url" placeholder="https://…" /></label><label><span>Confidence</span><select name="confidence"><option>High</option><option>Medium</option><option>Low</option></select></label><label><span>Evidence notes</span><textarea name="notes" rows={3} placeholder="Identity, quantity, condition, buyer premium, and comparable limitations" /></label>{mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}<button className="button" disabled={mode === "mock"}>Save valuation evidence</button></form><div className="recordList"><h3>Recent valuations</h3>{valuations.slice(0, 8).map(value => <div key={value.valuationId}><strong>{value.inventoryId}</strong><span>{value.valuationDate} · {isVerifiedCompletedSale(value) || claimsUnverifiedCompletedSale(value) ? completedSaleLabel(value) : marketEvidenceType(value)==="Observed asking price" ? marketAskingPriceLabel : marketEvidenceType(value)} · aftermarket ${value.marketValue ?? "—"} · {isVerifiedCompletedSale(value) ? `verified sale $${value.lastSaleValue}` : claimsUnverifiedCompletedSale(value) ? `legacy sale claim $${value.lastSaleValue ?? "—"}` : value.askingPrice!==undefined ? `asking $${value.askingPrice} · no confirmed sale` : "no verified sale"}</span></div>)}</div></section>
-    {message && <output className="wideMessage">{message}</output>}
+    {message && <output className="wideMessage" aria-live="polite">{message}</output>}
   </div>;
 }

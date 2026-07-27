@@ -5,6 +5,8 @@ import Link from "next/link";
 import { communityStatusLabel, type CommunityPost, type CommunityRanking, type CommunityRating } from "@/lib/community";
 import type { CommunityRatingInventoryOption } from "@/lib/community-rating-options";
 import { TrustMark } from "@/components/trust-mark";
+import { brand } from "@/lib/brand";
+import { useMutationGuard } from "@/components/use-mutation-guard";
 
 type CommunityData = { posts: CommunityPost[]; top25: CommunityRanking[]; myTop10:CommunityRanking[]; ratingCount: number; myContributions:{posts:CommunityPost[];ratings:CommunityRating[]} };
 const empty: CommunityData = { posts: [], top25: [], myTop10:[], ratingCount: 0, myContributions:{posts:[],ratings:[]} };
@@ -19,6 +21,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   const [entryMode, setEntryMode] = useState<"vault" | "manual">(inventoryOptions.length ? "vault" : "manual");
   const [post, setPost] = useState({ displayName: "", category: "General", title: "", body: "" });
   const [rating, setRating] = useState(blankRating);
+  const postMutation = useMutationGuard();
+  const ratingMutation = useMutationGuard();
   const brands = useMemo(() => [...new Set(inventoryOptions.map(item => item.brand))], [inventoryOptions]);
   const lines = useMemo(() => [...new Set(inventoryOptions.filter(item => item.brand === rating.brand).map(item => item.line))], [inventoryOptions, rating.brand]);
   const vitolas = useMemo(() => [...new Set(inventoryOptions.filter(item => item.brand === rating.brand && item.line === rating.line).map(item => item.vitola))], [inventoryOptions, rating.brand, rating.line]);
@@ -56,26 +60,30 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   }
   async function submitPost(event: FormEvent) {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || !postMutation.begin()) return;
     setSubmitting("post");
     try {
       await submit("post", post);
       setPost(current => ({ ...current, title: "", body: "" }));
+      postMutation.succeed();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Submission failed");
+      postMutation.fail();
     } finally {
       setSubmitting("");
     }
   }
   async function submitRating(event: FormEvent) {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || !ratingMutation.begin()) return;
     setSubmitting("rating");
     try {
       await submit("rating", { ...rating, score: Number(rating.score), vintage: rating.vintage || undefined, review: rating.review || undefined });
       setRating(current => ({ ...blankRating, displayName: current.displayName }));
+      ratingMutation.succeed();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Submission failed");
+      ratingMutation.fail();
     } finally {
       setSubmitting("");
     }
@@ -121,7 +129,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
     <section className="communityTabs">
 <button type="button" className={tab === "board" ? "active" : ""} aria-pressed={tab==="board"} onClick={() => showTab("board")}>Message board</button>
 </section>
-    {message && <output className="communityMessage">{message}{message.includes("administrator review") && <small>Your contribution is private while it waits in the <a href="/ai-administrator">AI Administrator review queue</a>.</small>}</output>}
+    {message && <output className="communityMessage" aria-live="polite">{message}{message.includes("administrator review") && <small>Your contribution is private while it waits in the <a href="/ai-administrator">AI Administrator review queue</a>.</small>}</output>}
     <aside className="communityTrust">
 <TrustMark kind="Community" compact/>
 <span>Posts, reviews, and Cedriva 25 scores reflect collector experience—not official product facts.</span>
@@ -163,7 +171,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <strong>The table is ready for its first conversation.</strong>
 <p>Ask a thoughtful question about a cigar, collection care, history, craftsmanship, or a memorable experience.</p>
 </div>}</section>
-      <form className="communityForm" onSubmit={submitPost}>
+      <form className="communityForm" onSubmit={submitPost} aria-busy={postMutation.pending}>
 <div className="eyebrow">New discussion</div>
 <h2>Share with collectors</h2>
 <label>Display name<input value={post.displayName} onChange={event => setPost({ ...post, displayName: event.target.value })} required minLength={2} />
@@ -180,7 +188,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </label>
 <label>Message<textarea value={post.body} onChange={event => setPost({ ...post, body: event.target.value })} required minLength={10} rows={7} />
 </label>
-<button className="button" disabled={Boolean(submitting)}>{submitting==="post"?"Publishing…":"Submit discussion"}</button>
+<button className="button" disabled={Boolean(submitting)||postMutation.complete}>{submitting==="post"?"Publishing…":postMutation.complete?"Discussion submitted":"Submit discussion"}</button>
+{postMutation.complete&&<button type="button" className="button secondary" onClick={()=>{postMutation.reset();setMessage("")}}>Start another discussion</button>}
 <small>AI Administrator screens submissions. No sales, trades, personal contact details, or illegal activity.</small>
 </form>
     </div> : <div className="communityRatingsWorkspace">
@@ -217,9 +226,9 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
 <b>{item.weightedScore}</b>
-<small>Cedriva score · {item.averageScore} average · {item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"} · {item.confidence}</small>
-</article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the Cedriva 25 without invented scores or promotional placement.</p></div>}</section>
-      <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating}>
+<small>{brand.name} score · {item.averageScore} average · {item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"} · {item.confidence}</small>
+</article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the {brand.labels.communityRanking} without invented scores or promotional placement.</p></div>}</section>
+      <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating} aria-busy={ratingMutation.pending}>
 <div className="eyebrow">Rate a cigar</div>
 <h2>Document your experience</h2>
 <p>Choose the exact cigar from your Vault or identify it manually. Your score enters the ranking only after publication.</p>
@@ -232,7 +241,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </label>
 <label>Short review<textarea rows={4} value={rating.review} onChange={event => setRating({ ...rating, review: event.target.value })} />
 </label>
-<button className="button" disabled={Boolean(submitting)}>{submitting==="rating"?"Publishing…":"Submit rating"}</button>
+<button className="button" disabled={Boolean(submitting)||ratingMutation.complete}>{submitting==="rating"?"Publishing…":ratingMutation.complete?"Rating submitted":"Submit rating"}</button>
+{ratingMutation.complete&&<button type="button" className="button secondary" onClick={()=>{ratingMutation.reset();setMessage("")}}>Rate another cigar</button>}
 <small>{entryMode === "vault" ? "Cigar identity comes directly from your private Vault. Only the rating is shared." : "Use manual entry for a cigar that is not in your Vault."}</small>
 </form>
       </div>

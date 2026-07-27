@@ -20,6 +20,7 @@ export const SmokingLogSchema = requireManualCigar(z.object({
 export const SmokingLogCreateSchema = requireManualCigar(z.object({
   ...SmokingLogFields,
   submissionId: z.string().uuid().optional(),
+  newEntryConfirmed: z.boolean().optional(),
 }).strict());
 
 export const ValuationSchema = z.object({
