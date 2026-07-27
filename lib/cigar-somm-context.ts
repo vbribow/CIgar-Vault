@@ -1,5 +1,6 @@
 import { buildCollectorDNA } from "./collection-intelligence";
 import type { CigarCollection, Humidor, HumidorReading, InventoryItem, SmokingLog, Valuation, WishlistItem } from "./types";
+import { buildSmokingExperienceScorecards, smokingScorecardSommContext } from "./smoking-scorecard";
 
 export type CigarSommCollectorContext = {
   privacy: "Private summary for this signed-in collector";
@@ -12,6 +13,7 @@ export type CigarSommCollectorContext = {
     storage?: string;
     latestClimate?: { temperatureF: number; humidity: number; recordedAt: string };
     latestValuePerCigar?: number;
+    smokingExperience?: ReturnType<typeof smokingScorecardSommContext>;
   };
   wishlist: { watching: number; priorityTargets: string[] };
   collections: { owned: number; complete: number; names: string[] };
@@ -57,6 +59,7 @@ export function buildCigarSommCollectorContext(input: {
     storage: humidor?.name,
     latestClimate: latestReading ? { temperatureF: latestReading.temperatureF, humidity: latestReading.humidity, recordedAt: latestReading.recordedAt } : undefined,
     latestValuePerCigar: money(latestValuation?.marketValue ?? latestValuation?.replacementValue ?? selected.retailValue),
+    smokingExperience: smokingScorecardSommContext(buildSmokingExperienceScorecards(selected, input.inventory, input.smokes).identity || buildSmokingExperienceScorecards(selected, input.inventory, input.smokes).lot),
   } : undefined;
   return {
     privacy: "Private summary for this signed-in collector",
