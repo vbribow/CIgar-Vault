@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { InventoryItem, Valuation } from "./types";
+import { isVerifiedCompletedSale } from "./valuation-evidence";
 
 export type AuctionConnectorStatus = "Research link" | "Partner feed required" | "Connected";
 export type AuctionHouse = {
@@ -38,6 +39,6 @@ export function matchAuctionSale(sale:AuctionSale,item:InventoryItem){
   return {score,decision:score===100?"Exact":score>=75?"Review":"Reject" as "Exact"|"Review"|"Reject"};
 }
 export function auctionCoverage(inventory:InventoryItem[],valuations:Valuation[]){
-  const withSale=new Set(valuations.filter(value=>value.lastSaleValue!==undefined&&value.lastSaleDate&&value.lastSaleSourceUrl).map(value=>value.inventoryId));
+  const withSale=new Set(valuations.filter(isVerifiedCompletedSale).map(value=>value.inventoryId));
   return {lots:inventory.length,withVerifiedSale:inventory.filter(item=>withSale.has(item.inventoryId)).length,missingSale:inventory.filter(item=>!withSale.has(item.inventoryId)).length};
 }

@@ -1,4 +1,5 @@
 import { canonicalCigarIdentity, cigarIdentityKey } from "./cigar-identity";
+import { isVerifiedCompletedSale } from "./valuation-evidence";
 import type { CigarCollection, InventoryItem, ProfessionalRating, SmokingLog, Valuation } from "./types";
 
 export function cigarStoryId(item: Pick<InventoryItem, "brand" | "line" | "vitola" | "vintage">) {
@@ -29,7 +30,7 @@ export function buildCigarStory(input: {
   const collections = input.collections.filter(item => collectionIds.has(item.collectionId));
   const latestValuation = valuations[0];
   const completedSale = valuations
-    .filter(item => item.lastSaleValue !== undefined && item.lastSaleDate && item.lastSaleSourceUrl)
+    .filter(isVerifiedCompletedSale)
     .sort((a, b) => (b.lastSaleDate || "").localeCompare(a.lastSaleDate || ""))[0];
   const retailUnits = lots.flatMap(item => item.retailValue === undefined ? [] : [item.retailValue]);
   const retailUnit = retailUnits.length ? Math.max(...retailUnits) : latestValuation?.replacementValue;

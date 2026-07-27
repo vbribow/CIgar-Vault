@@ -9,11 +9,30 @@ export const marketEvidenceTypes = [
 
 export type MarketEvidenceType = typeof marketEvidenceTypes[number];
 
+export function isVerifiedCompletedSale(value?: Valuation): boolean {
+  return Boolean(value && value.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl);
+}
+
+export function claimsUnverifiedCompletedSale(value?: Valuation): boolean {
+  if (!value || isVerifiedCompletedSale(value)) return false;
+  const claimText = [value.marketEvidenceType, value.source, value.notes].filter(Boolean).join(" ");
+  return value.lastSaleValue !== undefined || /completed[\s-]*sale/i.test(claimText);
+}
+
+export function completedSaleLabel(value?: Valuation): string {
+  if (isVerifiedCompletedSale(value)) return "Verified completed sale";
+  if (claimsUnverifiedCompletedSale(value)) return "Legacy market value — completed sale unverified";
+  return "No verified completed sale";
+}
+
 export function marketEvidenceType(value?: Valuation): MarketEvidenceType {
+  if (value?.marketEvidenceType === "Verified completed sale" && !isVerifiedCompletedSale(value)) {
+    return value.marketValue !== undefined ? "Estimated market range" : "Insufficient evidence";
+  }
   if (value?.marketEvidenceType && marketEvidenceTypes.includes(value.marketEvidenceType)) {
     return value.marketEvidenceType;
   }
-  if (value?.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl) {
+  if (isVerifiedCompletedSale(value)) {
     return "Verified completed sale";
   }
   if (value?.marketValue !== undefined || (value?.marketRangeLow !== undefined && value.marketRangeHigh !== undefined)) {

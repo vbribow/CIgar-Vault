@@ -54,3 +54,16 @@ test("zero-quantity historical lots can be excluded from active portfolio covera
  assert.equal(result.totals.totalLots,1);
  assert.equal(result.totals.retailCoveragePercent,100);
 });
+
+test("latest verified sale is derived from complete proof across retained history",()=>{
+ const inventory:InventoryItem[]=[{inventoryId:"I",brand:"Hoyo de Monterrey",line:"Epicure Especial",vitola:"Gordito",currentQty:10}];
+ const valuations:Valuation[]=[
+  {valuationId:"NEW",inventoryId:"I",valuationDate:"2026-07-20",lastSaleValue:52,source:"Completed sale mentioned by source"},
+  {valuationId:"OLD",inventoryId:"I",valuationDate:"2026-06-20",lastSaleValue:48,lastSaleDate:"2026-06-15",lastSaleSourceUrl:"https://example.com/sold-lot"},
+ ];
+ const result=buildValuationIntelligence(inventory,valuations,new Date("2026-07-24"));
+ assert.equal(result.rows[0].latest?.valuationId,"NEW");
+ assert.equal(result.rows[0].latestVerifiedSale?.valuationId,"OLD");
+ assert.equal(result.rows[0].latestLegacySaleClaim?.valuationId,"NEW");
+ assert.equal(result.totals.saleCovered,1);
+});

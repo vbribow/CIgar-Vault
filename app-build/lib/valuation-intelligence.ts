@@ -1,5 +1,5 @@
 import type { InventoryItem, Valuation } from "./types";
-import { marketEvidenceType } from "./valuation-evidence";
+import { claimsUnverifiedCompletedSale, isVerifiedCompletedSale, marketEvidenceType } from "./valuation-evidence";
 
 export type ValuationFreshness = "Current" | "Due soon" | "Stale" | "Never valued";
 
@@ -27,6 +27,10 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
   const rows = inventory.map(item => {
     const records = (history.get(item.inventoryId) ?? []).sort((a, b) => b.valuationDate.localeCompare(a.valuationDate));
     const latest = records[0];
+    const latestVerifiedSale = records
+      .filter(isVerifiedCompletedSale)
+      .sort((a, b) => (b.lastSaleDate || "").localeCompare(a.lastSaleDate || ""))[0];
+    const latestLegacySaleClaim = records.find(claimsUnverifiedCompletedSale);
     const previous = records[1];
     const retailUnit = item.retailValue ?? latest?.replacementValue;
     const marketUnit = latest?.marketValue;
@@ -46,10 +50,10 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
     const missingEvidence=[
       retailUnit===undefined?"Retail replacement":undefined,
       evidenceType==="Insufficient evidence"?"Aftermarket evidence":undefined,
-      latest?.lastSaleValue===undefined?"Completed sale":undefined,
+      !latestVerifiedSale?"Completed sale":undefined,
       !latest?.sourceUrl?"Linked source":undefined,
     ].filter((value):value is string=>Boolean(value));
-    return { item, latest, previous, retailUnit, marketUnit, latestUnit, previousUnit, marketLot, retailLot, changePercent, freshness, evidenceType, records, priorityScore, missingEvidence };
+    return { item, latest, latestVerifiedSale, latestLegacySaleClaim, previous, retailUnit, marketUnit, latestUnit, previousUnit, marketLot, retailLot, changePercent, freshness, evidenceType, records, priorityScore, missingEvidence };
   });
 
   const documentedMarketValue = rows.reduce((sum, row) => sum + (row.marketLot ?? 0), 0);
@@ -72,11 +76,11 @@ export function buildValuationIntelligence(inventory: InventoryItem[], valuation
       sourced: rows.filter(row => row.latest?.sourceUrl).length,
       retailCovered: rows.filter(row=>row.retailUnit!==undefined).length,
       marketCovered: rows.filter(row=>row.marketUnit!==undefined).length,
-      saleCovered: rows.filter(row=>row.latest?.lastSaleValue!==undefined&&Boolean(row.latest.lastSaleSourceUrl)).length,
+      saleCovered: rows.filter(row=>row.latestVerifiedSale).length,
       askingCovered: rows.filter(row=>row.latest?.askingPrice!==undefined&&Boolean(row.latest.askingPriceSourceUrl)).length,
       retailCoveragePercent: percent(rows.filter(row=>row.retailUnit!==undefined).length,rows.length),
       marketCoveragePercent: percent(rows.filter(row=>row.marketUnit!==undefined).length,rows.length),
-      saleCoveragePercent: percent(rows.filter(row=>row.latest?.lastSaleValue!==undefined&&Boolean(row.latest.lastSaleSourceUrl)).length,rows.length),
+      saleCoveragePercent: percent(rows.filter(row=>row.latestVerifiedSale).length,rows.length),
       totalLots: rows.length,
     },
   };

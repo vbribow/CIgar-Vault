@@ -1,12 +1,13 @@
 import { auctionCoverage,auctionHouses } from "@/lib/auction-market";
 import { loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
+import { isVerifiedCompletedSale } from "@/lib/valuation-evidence";
 export const dynamic="force-dynamic";
 const money=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2});
 export default async function AuctionMarketPage(){
   const[inventory,valuations]=await Promise.all([loadInventory(),loadValuations()]);
   const coverage=auctionCoverage(inventory,valuations);
-  const sales=valuations.filter(value=>value.lastSaleValue!==undefined).sort((a,b)=>(b.lastSaleDate||b.valuationDate).localeCompare(a.lastSaleDate||a.valuationDate));
+  const sales=valuations.filter(isVerifiedCompletedSale).sort((a,b)=>(b.lastSaleDate||b.valuationDate).localeCompare(a.lastSaleDate||a.valuationDate));
   const inventoryById=new Map(inventory.map(item=>[item.inventoryId,item]));
   return <main className="shell wideShell"><section className="valueHero"><div><div className="eyebrow">Auction market</div><h1>Completed sales, with proof.</h1><p className="lede">Connect specialist auction evidence to exact cigar identities. Cedriva keeps sold prices separate from estimates, asking prices, and open bids.</p><div className="ctaRow"><a className="button" href="/valuations">Research an inventory cigar</a><a className="button secondary" href="/value-history">View portfolio history</a></div></div><div className="valueHeroCard"><span>Verified sale coverage</span><strong>{coverage.withVerifiedSale}/{coverage.lots}</strong><small>{coverage.missingSale} inventory lots do not yet have a verified completed sale</small></div></section>
   <section className="section"><div className="sectionHead"><div><div className="eyebrow">Source registry</div><h2>Primary auction channels</h2><p className="small">External research links are active now. Automated connections require written permission, an approved API, or a licensed data feed.</p></div></div><div className="featurePillars">{auctionHouses.map(house=><article key={house.id}><span className="pillarNumber">{house.status}</span><h3>{house.name}</h3><p>{house.specialty}</p><small>{house.currency} · {house.evidenceNote}</small><div><a href={house.resultsUrl||house.homeUrl} target="_blank" rel="noreferrer">{house.resultsUrl?"Open sold results":"Open auction house"} ↗</a></div></article>)}</div></section>
