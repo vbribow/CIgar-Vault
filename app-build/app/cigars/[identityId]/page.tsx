@@ -7,6 +7,8 @@ import { loadCollections, loadRatings, loadSmokingLogs, loadValuations } from "@
 import { loadInventory } from "@/lib/inventory";
 import { canonicalCatalogHref } from "@/lib/canonical-cigar-record";
 import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
+import { SmokingExperienceScorecardView } from "@/components/smoking-experience-scorecard";
+import { buildSmokingExperienceScorecards } from "@/lib/smoking-scorecard";
 import "./story.css";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +22,7 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
   const story = buildCigarStory({ identityId, inventory, valuations, smokes, ratings, collections });
   if (!story) notFound();
   const representative = story.lots[0];
+  const smokingScorecards = buildSmokingExperienceScorecards(representative, inventory, smokes);
   const relationship=inventoryCollectionRelationships(inventory,collections).get(representative.inventoryId);
   if(relationship?.kind==="presentation"&&relationship.collection){
     redirect(`/collections/${encodeURIComponent(relationship.collection.collectionId)}`);
@@ -53,6 +56,7 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
       <article className="section card"><div className="eyebrow">Owned lots</div><h2>{story.lots.length} connected</h2>{story.lots.map(item => <Link className="storyRow" href={`/inventory/${item.inventoryId}`} key={item.inventoryId}><span><strong>{item.inventoryId}</strong><small>{item.packaging || "Packaging not documented"}{item.collectionId ? ` · ${item.collectionId}` : ""}</small></span><b>{item.currentQty ?? "—"} →</b></Link>)}</article>
       <article className="section card"><div className="eyebrow">Collection relationships</div><h2>{story.collections.length || "No"} named collection{story.collections.length === 1 ? "" : "s"}</h2>{story.collections.map(item => <Link className="storyRow" href={`/collections/${encodeURIComponent(item.collectionId)}`} key={item.collectionId}><span><strong>{item.name}</strong><small>{item.releaseYear || "Release year pending"} · {item.status || "Review"}</small></span><b>→</b></Link>)}{!story.collections.length && <p className="small">This cigar is not currently attached to a named collection.</p>}</article>
     </section>
+    <SmokingExperienceScorecardView lot={smokingScorecards.lot} identity={smokingScorecards.identity}/>
 
     <section className="storyColumns">
       <article className="section card"><div className="eyebrow">Personal journal</div><h2>{story.smokes.length} experience{story.smokes.length === 1 ? "" : "s"}</h2>{story.smokes.slice(0, 5).map(item => <div className="storyRow" key={item.smokeId}><span><strong>{item.dateSmoked}</strong><small>{item.flavor || item.tastingNotes || "No tasting note"}</small>{(item.construction||item.burn)&&<small>{item.construction?`Construction: ${item.construction}`:""}{item.construction&&item.burn?" · ":""}{item.burn?`Burn: ${item.burn}`:""}</small>}</span><b>{item.overall ?? "—"}</b></div>)}{!story.smokes.length && <p className="small">No smoke recorded yet. Your first note can be simple and entirely your own.</p>}</article>
