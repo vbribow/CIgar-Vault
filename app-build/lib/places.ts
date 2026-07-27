@@ -3,15 +3,21 @@ import { z } from "zod";
 export const placeVibes=["Low-key","Relaxed","Traditional","Professional","Upscale","Private-club atmosphere","Social and lively","Neighborhood-oriented","Beginner-friendly","Collector-focused","Business-friendly","Date-night appropriate","Sports-focused","Quiet and conversation-friendly","Entertainment and nightlife"] as const;
 export const placeCapabilities=["Cigar lounge","Cigar bar","Brick-and-mortar retailer","Walk-in humidor","On-site smoking","Spirits and cocktails","Food","Membership required","Outdoor smoking only"] as const;
 export const certificationLevels=["Cedriva Certified","Cedriva Distinguished","Cedriva Destination","Not Yet Certified"] as const;
+export const certificationDisplayLabels:Record<(typeof certificationLevels)[number],string>={
+ "Cedriva Certified":"Reviewed",
+ "Cedriva Distinguished":"Distinguished",
+ "Cedriva Destination":"Destination",
+ "Not Yet Certified":"Not yet reviewed",
+};
 
 export const PlaceReviewInput=z.object({
  googlePlaceId:z.string().trim().min(3).max(300),
  displayName:z.string().trim().min(2).max(100),
  score:z.coerce.number().int().min(1).max(100),
  visitDate:z.string().date(),
- vibes:z.array(z.enum(placeVibes)).min(1).max(3),
+ vibes:z.array(z.enum(placeVibes)).max(3).default([]),
  capabilities:z.array(z.enum(placeCapabilities)).max(9).default([]),
- review:z.string().trim().min(20).max(2000),
+ review:z.string().trim().max(500).default(""),
  conflictDisclosure:z.string().trim().max(500).optional(),
 }).strict();
 
@@ -44,10 +50,17 @@ export function weightedGoogleScore(rating:number|undefined,count:number|undefin
  if(rating===undefined||!count)return 0;
  return (rating*count+baseline*weight)/(count+weight);
 }
+export function communityPlaceRankingScore(score:number|undefined,count:number,baseline=85,weight=5){
+ if(score===undefined||!count)return undefined;
+ return Math.round(((score*count+baseline*weight)/(count+weight))*10)/10;
+}
 export function rankPlaces<T extends GooglePlaceResult&{cedrivaScore?:number;cedrivaReviewCount:number}>(places:T[]){
  return [...places].sort((a,b)=>{
-  const aCommunity=a.cedrivaScore===undefined?0:(a.cedrivaScore/20)*Math.min(1,a.cedrivaReviewCount/5);
-  const bCommunity=b.cedrivaScore===undefined?0:(b.cedrivaScore/20)*Math.min(1,b.cedrivaReviewCount/5);
-  return (weightedGoogleScore(b.googleRating,b.googleReviewCount)*.7+bCommunity*.3)-(weightedGoogleScore(a.googleRating,a.googleReviewCount)*.7+aCommunity*.3);
+  const aEligible=a.cedrivaReviewCount>=5,bEligible=b.cedrivaReviewCount>=5;
+  if(aEligible!==bEligible)return aEligible?-1:1;
+  const aCommunity=communityPlaceRankingScore(a.cedrivaScore,a.cedrivaReviewCount);
+  const bCommunity=communityPlaceRankingScore(b.cedrivaScore,b.cedrivaReviewCount);
+  if(aCommunity!==undefined||bCommunity!==undefined)return(bCommunity??0)-(aCommunity??0);
+  return weightedGoogleScore(b.googleRating,b.googleReviewCount)-weightedGoogleScore(a.googleRating,a.googleReviewCount);
  });
 }

@@ -1,5 +1,16 @@
 export type BrandKey = "cedriva" | "hojavia";
 
+const neutralProductLabels = {
+  community: "Collectors’ Lounge",
+  communityRanking: "Collector 25",
+  industryHub: "Industry Hub",
+  learning: "Learning",
+  places: "Places",
+  loungePassport: "Lounge Passport",
+  independentAssessment: "Independent location assessment",
+  privateBeta: "Private beta",
+} as const;
+
 export function resolveBrand(previewValue?: string) {
   return previewValue === "hojavia"
   ? {
@@ -13,6 +24,7 @@ export function resolveBrand(previewValue?: string) {
       communityLine: "The culture, carried forward.",
       description:
         "Understand, document, and preserve the people, places, knowledge, and traditions behind every premium cigar.",
+      labels: neutralProductLabels,
     }
   : {
       key: "cedriva" as const,
@@ -25,6 +37,7 @@ export function resolveBrand(previewValue?: string) {
       communityLine: "Premium cigar culture",
       description:
         "Learn with confidence, document with purpose, and preserve the people, stories, and traditions behind every premium cigar.",
+      labels: neutralProductLabels,
     };
 }
 
