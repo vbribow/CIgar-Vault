@@ -43,6 +43,7 @@ export async function signUp(formData: FormData) {
     full_name: fullName,
     age_confirmed_at: consentedAt,
     cedriva_consent_version: "beta-1.0-2026-07-24",
+    brand_presentation: "hojavia",
   }, emailRedirectTo: `${origin}/auth/callback?next=${next}` } });
   if (error) redirect(failure(error.message, "signup", next));
   if (data.user) await claimPartnerReferral(data.user.id);

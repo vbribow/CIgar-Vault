@@ -8,6 +8,7 @@ import {
   publicPageMetadata,
   publicStaticPages,
 } from "../lib/seo";
+import { brand } from "../lib/brand";
 
 test("private application pages default to noindex while public metadata opts in explicitly", () => {
   const rootLayout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
@@ -15,14 +16,18 @@ test("private application pages default to noindex while public metadata opts in
 
   const publicMetadata = publicPageMetadata("Example", "Description", "/learn/example");
   assert.deepEqual(publicMetadata.alternates, { canonical: "/learn/example" });
-  assert.equal(publicMetadata.robots && typeof publicMetadata.robots !== "string" ? publicMetadata.robots.index : undefined, true);
-  assert.equal(publicMetadata.robots && typeof publicMetadata.robots !== "string" ? publicMetadata.robots.follow : undefined, true);
+  assert.equal(publicMetadata.robots && typeof publicMetadata.robots !== "string" ? publicMetadata.robots.index : undefined, !brand.isPreview);
+  assert.equal(publicMetadata.robots && typeof publicMetadata.robots !== "string" ? publicMetadata.robots.follow : undefined, !brand.isPreview);
 });
 
 test("robots and sitemap expose knowledge while protecting collector workflows", () => {
   const rules = robots();
   const rule = Array.isArray(rules.rules) ? rules.rules[0] : rules.rules;
   assert.ok(rule);
+  if (brand.isPreview) {
+    assert.equal(rule.disallow, "/");
+    return;
+  }
   assert.ok(Array.isArray(rule.allow) && rule.allow.includes("/learn"));
   assert.ok(Array.isArray(rule.allow) && rule.allow.includes("/industry"));
   assert.ok(Array.isArray(rule.disallow) && rule.disallow.includes("/inventory"));

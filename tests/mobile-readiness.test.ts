@@ -3,20 +3,16 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import manifest from "../app/manifest";
 
-test("mobile manifest is installable with standard and maskable artwork", () => {
+test("mobile manifest exposes only the Hojavía beta identity", () => {
   const value = manifest();
-  assert.equal(value.id, "/cedriva-app");
-  assert.equal(value.name, "Cedriva");
-  assert.equal(value.short_name, "Cedriva");
-  assert.equal(value.start_url, "/?source=cedriva-app");
+  assert.equal(value.id, "/hojavia-app");
+  assert.equal(value.name, "Hojavía");
+  assert.equal(value.short_name, "Hojavia");
+  assert.equal(value.start_url, "/?source=hojavia-app");
   assert.equal(value.scope, "/");
   assert.equal(value.display, "standalone");
   assert.equal(value.orientation, "portrait-primary");
-  assert.deepEqual(
-    value.icons?.map(icon => `${icon.sizes}:${icon.purpose}`).sort(),
-    ["192x192:any", "192x192:maskable", "512x512:any", "512x512:maskable"],
-  );
-  assert.ok(value.icons?.every(icon => icon.src.includes("cedriva-app-")));
+  assert.deepEqual(value.icons?.map(icon => icon.src), ["/hojavia-mark.svg"]);
 });
 
 test("offline support caches only public shell assets", () => {
@@ -24,8 +20,8 @@ test("offline support caches only public shell assets", () => {
   assert.match(worker, /SAFE_ASSETS/);
   assert.match(worker, /\/offline/);
   assert.match(worker, /\/manifest\.webmanifest/);
-  assert.match(worker, /cedriva-app-192-v4\.png/);
-  assert.match(worker, /cedriva-apple-180-v4\.png/);
+  assert.match(worker, /hojavia-mark\.svg/);
+  assert.doesNotMatch(worker, /cedriva-/);
   assert.doesNotMatch(worker, /cigar-vault-/);
   assert.doesNotMatch(worker, /\/inventory/);
   assert.doesNotMatch(worker, /\/api\//);
@@ -36,7 +32,7 @@ test("offline, install, and social-preview assets bypass protected-route middlew
   const proxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
   assert.match(proxy, /pathname === "\/offline"/);
   assert.match(proxy, /icons\/\|sw\.js\|manifest\.webmanifest/);
-  assert.match(proxy, /og\.png\|cedriva-mark\.svg/);
+  assert.match(proxy, /hojavia-mark\.svg/);
 });
 
 test("mobile install guidance remains actionable across supported platforms",()=>{

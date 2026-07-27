@@ -18,7 +18,7 @@ export async function proxy(request: NextRequest) {
     try { const [user, supplied] = atob(authorization.slice(6)).split(":"); if (user === expectedUser && supplied === password) return NextResponse.next(); }
     catch { /* malformed credentials */ }
   }
-  return new NextResponse("Authentication required", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Cedriva", charset="UTF-8"' } });
+  return new NextResponse("Authentication required", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Hojavía", charset="UTF-8"' } });
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|icons/|sw.js|manifest.webmanifest|robots.txt|sitemap.xml|og.png|cedriva-mark.svg).*)"] };
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|icons/|sw.js|manifest.webmanifest|robots.txt|sitemap.xml|og.png|cedriva-mark.svg|hojavia-mark.svg).*)"] };
