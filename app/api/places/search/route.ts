@@ -15,7 +15,10 @@ export async function GET(request:Request){
  const zip=new URL(request.url).searchParams.get("zip")?.trim()||"";
  if(!/^\d{5}(?:-\d{4})?$/.test(zip))return NextResponse.json({error:"Enter a valid U.S. ZIP code"},{status:422});
  const key=process.env.GOOGLE_PLACES_API_KEY?.trim();
- if(!key)return NextResponse.json({error:"Location discovery requires GOOGLE_PLACES_API_KEY"},{status:503});
+ if(!key)return NextResponse.json({
+  error:"Live location discovery is temporarily unavailable. Cedriva Places and community ratings remain available while this service is being prepared.",
+  code:"LIVE_DISCOVERY_UNAVAILABLE",
+ },{status:503});
  try{
   const searches=await Promise.all(["cigar lounge","cigar bar","cigar shop"].map(term=>googleSearch(`${term} near ${zip}`,key)));
   const unique=[...new Map(searches.flat().map(place=>[place.googlePlaceId,place])).values()].filter(place=>place.businessStatus!=="CLOSED_PERMANENTLY");

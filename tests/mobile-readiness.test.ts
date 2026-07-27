@@ -38,3 +38,23 @@ test("offline, install, and social-preview assets bypass protected-route middlew
   assert.match(proxy, /icons\/\|sw\.js\|manifest\.webmanifest/);
   assert.match(proxy, /og\.png\|cedriva-mark\.svg/);
 });
+
+test("mobile install guidance remains actionable across supported platforms",()=>{
+  const manager=readFileSync(new URL("../components/pwa-manager.tsx",import.meta.url),"utf8");
+  assert.match(manager,/beforeinstallprompt/);
+  assert.match(manager,/Keep \{brand\.name\} on your phone/);
+  assert.match(manager,/Add to Home Screen/);
+  assert.match(manager,/Installation was not completed/);
+  assert.match(manager,/Old \{brand\.name\} installation/);
+  assert.match(manager,/production app/);
+});
+
+test("authentication survives reloads and sign-out clears the server session",()=>{
+  const actions=readFileSync(new URL("../app/login/actions.ts",import.meta.url),"utf8");
+  const proxy=readFileSync(new URL("../lib/supabase/proxy.ts",import.meta.url),"utf8");
+  assert.match(actions,/await supabase\.auth\.signOut\(\)/);
+  assert.match(actions,/redirect\("\/login"\)/);
+  assert.match(proxy,/await supabase\.auth\.getClaims\(\)/);
+  assert.match(proxy,/url\.pathname = "\/login"/);
+  assert.match(proxy,/request\.nextUrl\.pathname === "\/login"/);
+});
