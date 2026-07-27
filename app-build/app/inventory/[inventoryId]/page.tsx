@@ -159,7 +159,7 @@ export default async function CigarPage({
             </p>
           ))}
           {!history.length && <p className="small">No smokes logged yet.</p>}
-          <a className="textLink" href="/records">
+          <a className="textLink" href={`/records?inventoryId=${encodeURIComponent(item.inventoryId)}#log-smoke`}>
             Add tasting note →
           </a>
           </>}
@@ -176,7 +176,7 @@ export default async function CigarPage({
             </p>
           ))}
           {!values.length && <p className="small">No dated valuations yet.</p>}
-          <a className="textLink" href="/records">
+          <a className="textLink" href={`/records?inventoryId=${encodeURIComponent(item.inventoryId)}#log-smoke`}>
             Add valuation →
           </a>
           </>}

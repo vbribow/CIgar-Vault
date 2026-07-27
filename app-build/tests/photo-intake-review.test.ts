@@ -18,3 +18,15 @@ test("photo-assisted drafts preserve explicit zeroes and reject malformed counts
 test("restored photo drafts explain the browser file-security boundary", () => {
   assert.match(intake, /select the original photos again before approval/);
 });
+
+test("mobile intake blocks duplicate approval clicks and announces progress", () => {
+  assert.match(intake, /approvalInFlight\.current/);
+  assert.match(intake, /if\(approvalInFlight\.current\)return/);
+  assert.match(intake, /aria-busy=\{approving\}/);
+  assert.match(intake, /aria-live="polite"/);
+});
+
+test("the photo chooser offers only formats the browser can reliably prepare", () => {
+  assert.match(intake, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.doesNotMatch(intake, /accept="[^"]*image\/heic/);
+});
