@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Hojavía</title>
+  <desc id="description">Hojavía archival leaf mark</desc>
+  <rect width="512" height="512" rx="96" fill="#102c29"/>
+  <path d="M112 381c91-25 157-83 196-176 22-52 54-84 92-96-2 84-31 155-88 211-51 50-118 76-200 77z" fill="#b66a43"/>
+  <path d="M121 378c64-44 124-94 180-151 34-35 64-72 90-111M231 296c-6-31-5-61 3-90M290 237c25 2 51-2 78-12" fill="none" stroke="#f5f1e8" stroke-width="16" stroke-linecap="round"/>
+</svg>

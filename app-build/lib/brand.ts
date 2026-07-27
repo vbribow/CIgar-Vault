@@ -11,22 +11,9 @@ const neutralProductLabels = {
   privateBeta: "Private beta",
 } as const;
 
-export function resolveBrand(previewValue?: string) {
-  return previewValue === "hojavia"
+export function resolveBrand(presentationValue?: string) {
+  return presentationValue?.trim().toLowerCase() === "cedriva"
   ? {
-      key: "hojavia" as const,
-      name: "Hojavía",
-      asciiName: "Hojavia",
-      isPreview: true,
-      brandLine: "Knowledge carried forward.",
-      productLine: "Know what you collect.",
-      journeyLine: "From leaf to legacy.",
-      communityLine: "The culture, carried forward.",
-      description:
-        "Understand, document, and preserve the people, places, knowledge, and traditions behind every premium cigar.",
-      labels: neutralProductLabels,
-    }
-  : {
       key: "cedriva" as const,
       name: "Cedriva",
       asciiName: "Cedriva",
@@ -38,7 +25,25 @@ export function resolveBrand(previewValue?: string) {
       description:
         "Learn with confidence, document with purpose, and preserve the people, stories, and traditions behind every premium cigar.",
       labels: neutralProductLabels,
+    }
+  : {
+      key: "hojavia" as const,
+      name: "Hojavía",
+      asciiName: "Hojavia",
+      isPreview: true,
+      brandLine: "Knowledge carried forward.",
+      productLine: "Know what you collect.",
+      journeyLine: "From leaf to legacy.",
+      communityLine: "The culture, carried forward.",
+      description:
+        "Understand, document, and preserve the people, places, knowledge, and traditions behind every premium cigar.",
+      labels: neutralProductLabels,
     };
 }
 
-export const brand = resolveBrand(process.env.NEXT_PUBLIC_BRAND_PREVIEW);
+// Hojavía is the beta-facing presentation. Cedriva remains available only as
+// an explicit, founder-controlled legacy presentation during migration.
+export const brand = resolveBrand(
+  process.env.NEXT_PUBLIC_BRAND_PRESENTATION ??
+  process.env.NEXT_PUBLIC_BRAND_PREVIEW,
+);
