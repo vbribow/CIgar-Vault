@@ -21,6 +21,6 @@ test("recommendation correction updates the existing lot and refreshes guidance"
 });
 
 test("release year is never guessed or auto-filled", () => {
-  assert.match(editor, /defaultValue=\{item\.vintage \?\? ""\}/);
+  assert.match(editor, /defaultValue=\{String\(item\[fact\] \?\? ""\)\}/);
   assert.match(editor, /Enter the documented year for this exact lot/);
 });
