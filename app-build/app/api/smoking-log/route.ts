@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import { SmokingLogCreateSchema } from "@/lib/records-model";
 import { createSmokeId } from "@/lib/smoke-id";
+import { findNearDuplicateSmoke } from "@/lib/smoke-journal";
 import type { SmokingLog } from "@/lib/types";
 import { addSmokingLog, getSmokingLogs, recordSmokingLog } from "@/lib/smartsheet";
 import { loadSmokingLogs } from "@/lib/data";
@@ -22,11 +23,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const input = SmokingLogCreateSchema.parse(await request.json());
-    const { submissionId, ...fields } = input;
+    const { submissionId, newEntryConfirmed, ...fields } = input;
     const item: SmokingLog = { smokeId: createSmokeId(submissionId), ...fields };
     const manual = item.inventoryId === "MANUAL";
     const inventory = manual ? undefined : (await loadInventory()).find(record => record.inventoryId === item.inventoryId);
     if (!manual && !inventory) throw new Error("Inventory lot was not found");
+    const priorSmokes = dataMode() === "smartsheet" ? await getSmokingLogs() : await loadSmokingLogs();
+    const nearDuplicate = findNearDuplicateSmoke(priorSmokes, item);
+    if (nearDuplicate && nearDuplicate.smokeId !== item.smokeId && !newEntryConfirmed) {
+      return NextResponse.json({ error: "This matches a smoke already recorded. Choose “Log another” before intentionally recording a separate experience." }, { status: 409 });
+    }
     const owned = await createOwnedRecord("smokes",item.smokeId,item);
     if(owned === "exists"){
       const existing = await loadOwnedRecord<SmokingLog>("smokes",item.smokeId);
