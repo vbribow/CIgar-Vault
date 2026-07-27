@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { GlobalSearch } from "@/components/global-search";
 import { CedrivaMark } from "@/components/cedriva-mark";
+import { brand } from "@/lib/brand";
 
 function matches(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -13,14 +14,14 @@ export function AppNavigation() {
   const pathname = usePathname();
   const publicPaths = ["/manifesto", "/constitution", "/industry", "/login", "/recover", "/reset-password", "/privacy", "/terms", "/beta-agreement", "/partners/join", "/partners/invite", "/r"];
   if (publicPaths.some((path) => matches(pathname, path))) return <header className="publicHeader"><div className="publicHeaderInner">
-    <Link className="appBrand" href="/" aria-label="Cedriva home"><CedrivaMark/><span><strong>Cedriva</strong><small>Preserve · Honor · Grow</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<CedrivaMark/>}<span><strong>{brand.name}</strong><small>{brand.brandLine}</small></span></Link>
     <nav aria-label="Public navigation"><Link href="/industry" className={matches(pathname,"/industry")?"active":undefined}>Industry Hub</Link><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><Link href="/login" className="button secondary">Sign in</Link></nav>
   </div></header>;
   const moreLinks=[
     ["/records","Review","Learn from your own experience and trusted voices"],
     ["/valuations","Market","Understand value through dated evidence"],
     ["/verification","Verify","Protect authenticity and provenance"],
-    ["/trust","Trust Center","Understand every Cedriva source label"],
+    ["/trust","Trust Center",`Understand every ${brand.name} source label`],
     ["/trust-scorecard","Trust Scorecard","Measure verified coverage and visible research gaps"],
     ["/industry","Industry Hub","Official profiles, releases, and alerts from verified organizations"],
     ["/industry/registry","Product Registry","Official products, releases, packaging, and canonical records"],
@@ -31,11 +32,11 @@ export function AppNavigation() {
     ["/partner-workspace","Partner Workspace","Collaborate inside your organization’s private workspace"],
     ["/feedback","Beta Feedback","Report bugs, confusion, trust concerns, and ideas"],
     ["/pricing","Reserve","Explore deeper intelligence and service"],
-    ["/explore","All of Cedriva","See every connected collector experience"],
+    ["/explore",`All of ${brand.name}`,"See every connected collector experience"],
   ] as const;
   const moreActive=moreLinks.some(([href])=>matches(pathname,href));
   return <><header className="appHeader"><div className="appHeaderInner">
-    <Link className="appBrand" href="/" aria-label="Cedriva home"><CedrivaMark/><span><strong>Cedriva</strong><small>Premium cigar culture</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<CedrivaMark/>}<span><strong>{brand.name}</strong><small>{brand.communityLine}</small></span></Link>
     <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <Link href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</Link>
       <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>

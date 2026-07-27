@@ -6,6 +6,7 @@ import { buildOnboardingSteps, type IntegrityAudit } from "@/lib/onboarding";
 import { buildCollectionIntelligence } from "@/lib/collection-intelligence";
 import { CollectorJourney } from "@/components/collector-journey";
 import { DataModelStory } from "@/components/data-model-story";
+import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,9 @@ export default async function Home() {
   const onboarding = buildOnboardingSteps({ inventory:items, collections, humidors, sensors, valuations, integrityAudits });
   const intelligence=buildCollectionIntelligence({inventory:items,valuations,humidors,readings,smokes,sensors});
   return <main className="shell">
-    <section className="hero productHero"><div><div className="eyebrow">Preserve · Honor · Grow</div><h1>Your collection is a story worth preserving.</h1><p className="lede">Cedriva helps every collector learn with confidence, document with purpose, and remain connected to the people and traditions behind every cigar.</p><div className="ctaRow"><a className="button" href="/inventory">Document my collection</a><a className="button secondary" href="/discover">Discover something meaningful</a></div></div><figure className="cultureHero"><img src="/editorial/cigar-roller-cedriva.png" alt="A cigar artisan in a Cedriva shirt working with tobacco leaves at a rolling table"/><figcaption><span>The craft behind the collection</span><strong>Every cigar begins with people, place, and patience.</strong><a href="https://unsplash.com/photos/vHCkVUogO-w" target="_blank" rel="noreferrer">Original photograph by Austin · Unsplash ↗</a></figcaption></figure></section>
+    <section className="hero productHero"><div><div className="eyebrow">{brand.brandLine}</div><h1>{brand.isPreview?"Your collection, with context.":"Your collection is a story worth preserving."}</h1><p className="lede">{brand.name} helps every collector learn with confidence, document with purpose, and remain connected to the people and traditions behind every cigar.</p><div className="ctaRow"><a className="button" href="/inventory">Document my collection</a><a className="button secondary" href="/discover">Discover something meaningful</a></div></div><figure className="cultureHero"><img src={brand.isPreview?"/editorial/cigar-roller-hojavia.png":"/editorial/cigar-roller-cedriva.png"} alt="A cigar artisan working with tobacco leaves at a rolling table"/><figcaption><span>The craft behind the collection</span><strong>Every cigar begins with people, place, and patience.</strong><a href="https://unsplash.com/photos/vHCkVUogO-w" target="_blank" rel="noreferrer">Original photograph by Austin · Unsplash ↗</a></figcaption></figure></section>
     <CollectorJourney/>
     <DataModelStory/>
-    {dashboardReady?<Dashboard items={items} onboarding={onboarding} intelligence={intelligence} />:<section className="section card"><div className="eyebrow">Private dashboard protected</div><h2>Your collection summary is temporarily paused.</h2><p className="small">Cedriva could not verify every source needed for quantities, values, climate, history, and onboarding. No metric is being shown as zero, complete, or safe from partial data.</p><a className="button secondary" href="/">Try again</a></section>}
+    {dashboardReady?<Dashboard items={items} onboarding={onboarding} intelligence={intelligence} />:<section className="section card"><div className="eyebrow">Private dashboard protected</div><h2>Your collection summary is temporarily paused.</h2><p className="small">The platform could not verify every source needed for quantities, values, climate, history, and onboarding. No metric is being shown as zero, complete, or safe from partial data.</p><a className="button secondary" href="/">Try again</a></section>}
   </main>;
 }

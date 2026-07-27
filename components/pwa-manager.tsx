@@ -1,13 +1,15 @@
 "use client";
 import { useEffect,useState } from "react";
 import { CedrivaMark } from "@/components/cedriva-mark";
+import { brand } from "@/lib/brand";
+import { isPrivatePreviewHostname } from "@/lib/preview-host";
 type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:"accepted"|"dismissed"}>};
 const productionHost="c-igar-vault-lmug.vercel.app";
 const installDismissedKey="cedriva:pwa-dismissed:v4";
 export function PwaManager(){
   const[event,setEvent]=useState<InstallEvent>(),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
   useEffect(()=>{
-    if(window.location.host!==productionHost&&!window.location.hostname.includes("localhost"))setLegacyHost(window.location.host);
+    if(window.location.host!==productionHost&&!isPrivatePreviewHostname(window.location.hostname))setLegacyHost(window.location.host);
     let registration:ServiceWorkerRegistration|undefined;
     const controllerChange=()=>window.location.reload();
     navigator.serviceWorker?.addEventListener("controllerchange",controllerChange);
@@ -39,8 +41,8 @@ export function PwaManager(){
       setInstalling(false);
     }
   }
-  if(legacyHost)return <aside className="installPrompt updatePrompt"><span className="appBrandMark">!</span><div><strong>Old Cedriva installation</strong><small>{legacyHost} does not synchronize with the production app.</small></div><a href={`https://${productionHost}/`}>Open production</a></aside>;
-  if(waiting)return <aside className="installPrompt updatePrompt"><CedrivaMark/><div><strong>Cedriva update ready</strong><small>Refresh the app identity and install the latest Cedriva experience.</small></div><button onClick={()=>waiting.postMessage({type:"SKIP_WAITING"})}>Update now</button></aside>;
+  if(legacyHost)return <aside className="installPrompt updatePrompt"><span className="appBrandMark">!</span><div><strong>Old {brand.name} installation</strong><small>{legacyHost} does not synchronize with the production app.</small></div><a href={`https://${productionHost}/`}>Open production</a></aside>;
+  if(waiting)return <aside className="installPrompt updatePrompt">{!brand.isPreview&&<CedrivaMark/>}<div><strong>{brand.name} update ready</strong><small>Refresh the app identity and install the latest {brand.name} experience.</small></div><button onClick={()=>waiting.postMessage({type:"SKIP_WAITING"})}>Update now</button></aside>;
   if(hidden||(!event&&!showIos))return null;
-  return <aside className="installPrompt" aria-live="polite"><CedrivaMark/><div><strong>Keep Cedriva on your phone</strong><small>{installError||(showIos?"Use your browser’s Share menu, then choose Add to Home Screen.":"Install the mobile app experience.")}</small></div>{event&&<button onClick={install} disabled={installing}>{installing?"Opening…":"Install"}</button>}<button className="installDismiss" onClick={dismiss} aria-label="Dismiss install suggestion">×</button></aside>;
+  return <aside className="installPrompt" aria-live="polite">{!brand.isPreview&&<CedrivaMark/>}<div><strong>Keep {brand.name} on your phone</strong><small>{installError||(showIos?"Use your browser’s Share menu, then choose Add to Home Screen.":"Install the mobile app experience.")}</small></div>{event&&<button onClick={install} disabled={installing}>{installing?"Opening…":"Install"}</button>}<button className="installDismiss" onClick={dismiss} aria-label="Dismiss install suggestion">×</button></aside>;
 }
