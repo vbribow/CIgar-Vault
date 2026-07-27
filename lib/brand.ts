@@ -41,9 +41,6 @@ export function resolveBrand(presentationValue?: string) {
     };
 }
 
-// Hojavía is the beta-facing presentation. Cedriva remains available only as
-// an explicit, founder-controlled legacy presentation during migration.
-export const brand = resolveBrand(
-  process.env.NEXT_PUBLIC_BRAND_PRESENTATION ??
-  process.env.NEXT_PUBLIC_BRAND_PREVIEW,
-);
+// Hojavía is the only invited-tester presentation. Keeping this deterministic
+// prevents server and client branding from diverging during hydration.
+export const brand = resolveBrand();
