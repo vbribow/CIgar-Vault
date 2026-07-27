@@ -10,7 +10,7 @@ test("private record export downloads a non-empty account-scoped file",()=>{
   assert.match(component,/anchor\.download=filename/);
   assert.match(component,/Downloaded \$\{filename\}/);
   assert.match(route,/\.eq\("user_id",user\.id\)/);
-  assert.match(route,/cedriva-private-record-/);
+  assert.match(route,/private-collector-record-/);
 });
 
 test("complete vault export records an auditable recovery point",()=>{
@@ -19,4 +19,12 @@ test("complete vault export records an auditable recovery point",()=>{
   assert.match(route,/scope:\s*"complete-account"/);
   assert.match(route,/record\.kind === "inventory"/);
   assert.match(route,/totalRecordCount:\s*payload\.recordCount/);
+});
+
+test("smoking performance fields remain inside the complete opaque vault payload",()=>{
+  const security=readFileSync(new URL("../lib/account-security.ts",import.meta.url),"utf8");
+  const recovery=readFileSync(new URL("../lib/account-recovery.ts",import.meta.url),"utf8");
+  assert.match(security,/records:\s*input\.records/);
+  assert.match(security,/payload:\s*unknown/);
+  assert.match(recovery,/payload:\s*z\.record\(z\.string\(\),z\.unknown\(\)\)/);
 });

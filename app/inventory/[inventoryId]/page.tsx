@@ -15,6 +15,7 @@ import { climateIntelligence } from "@/lib/climate-intelligence";
 import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import { RecommendationFactEditor } from "@/components/recommendation-fact-editor";
+import { brand } from "@/lib/brand";
 import "./climate.css";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
@@ -25,7 +26,7 @@ export default async function CigarPage({
   const { inventoryId } = await params;
   const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
   if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
-    return <main className="shell"><nav className="nav"><a className="brand" href="/">Cedriva</a><a className="backLink" href="/inventory">← Collection</a></nav><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>Cedriva could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><a className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</a></section></main>;
+    return <main className="shell"><nav className="nav"><a className="brand" href="/">{brand.name}</a><a className="backLink" href="/inventory">← Collection</a></nav><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><a className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</a></section></main>;
   }
   const items = inventoryResult.value;
   const item = items.find((i) => i.inventoryId === inventoryId);
@@ -76,7 +77,7 @@ export default async function CigarPage({
     <main className="shell">
       <nav className="nav">
         <a className="brand" href="/">
-          Cedriva
+          {brand.name}
         </a>
         <a className="backLink" href="/inventory">
           ← Collection
@@ -145,11 +146,11 @@ export default async function CigarPage({
         <article className="card">
           <div className="eyebrow">Smoking history</div>
           <h2>{smokesReady?`${history.length} recorded`:"Temporarily unavailable"}</h2>
-          {!smokesReady&&<p className="small">Cedriva is not treating an unavailable journal as an empty history.</p>}
+          {!smokesReady&&<p className="small">The platform is not treating an unavailable journal as an empty history.</p>}
           {smokesReady&&<>
           {history.slice(0, 3).map((s) => (
             <p key={s.smokeId} className="historyRow">
-              <span>{s.dateSmoked}</span>
+              <span>{s.dateSmoked}{(s.construction||s.burn)&&<small>{s.construction?`Construction: ${s.construction}`:""}{s.construction&&s.burn?" · ":""}{s.burn?`Burn: ${s.burn}`:""}</small>}</span>
               <strong>{s.overall ?? "—"}</strong>
             </p>
           ))}
@@ -162,7 +163,7 @@ export default async function CigarPage({
         <article className="card">
           <div className="eyebrow">Valuation history</div>
           <h2>{valuationsReady?`${values.length} recorded`:"Temporarily unavailable"}</h2>
-          {!valuationsReady&&<p className="small">Cedriva is not treating unavailable market evidence as no valuation history.</p>}
+          {!valuationsReady&&<p className="small">The platform is not treating unavailable market evidence as no valuation history.</p>}
           {valuationsReady&&<>
           {values.slice(0, 3).map((v) => (
             <p key={v.valuationId} className="historyRow">
@@ -200,7 +201,7 @@ export default async function CigarPage({
             or storage move.
           </p>
         )}
-        {!timelineReady&&<p className="small">One or more history sources could not be verified. Cedriva has paused the combined timeline rather than presenting a partial record as complete.</p>}
+        {!timelineReady&&<p className="small">One or more history sources could not be verified. The platform has paused the combined timeline rather than presenting a partial record as complete.</p>}
       </section>
       <div id="record-tools"><InventoryRecordTools initialItem={item} inventory={items} mode={mode} /></div>
     </main>
@@ -208,5 +209,5 @@ export default async function CigarPage({
 }
 
 function UnavailableEvidence({label}:{label:string}) {
-  return <section className="section card cigarEvidenceUnavailable"><div className="eyebrow">{label} protected</div><h2>Temporarily unavailable</h2><p>Cedriva could not verify this evidence source. Nothing has been classified as absent, zero, or incomplete.</p></section>;
+  return <section className="section card cigarEvidenceUnavailable"><div className="eyebrow">{label} protected</div><h2>Temporarily unavailable</h2><p>The platform could not verify this evidence source. Nothing has been classified as absent, zero, or incomplete.</p></section>;
 }

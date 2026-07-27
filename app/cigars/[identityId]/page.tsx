@@ -27,11 +27,11 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
   return <main className="shell cigarStoryPage">
     <section className="unifiedStoryHero">
       <div>
-        <div className="eyebrow">Cedriva Cigar Story · {story.identity.identityId}</div>
+        <div className="eyebrow">Cigar Story · {story.identity.identityId}</div>
         <h1>{story.identity.brand}</h1>
         <p>{story.identity.line}</p>
         <span>{story.identity.vitola}{story.identity.release ? ` · ${story.identity.release}` : ""}</span>
-        <div className="ctaRow"><Link className="button" href={cigarAdvisorHref(representative)}>Ask Cedriva AI</Link><Link className="button secondary" href={`/records?inventoryId=${encodeURIComponent(representative.inventoryId)}`}>Log a smoke</Link></div>
+        <div className="ctaRow"><Link className="button" href={cigarAdvisorHref(representative)}>Ask Cigar Somm</Link><Link className="button secondary" href={`/records?inventoryId=${encodeURIComponent(representative.inventoryId)}`}>Log a smoke</Link></div>
       </div>
       <aside><span>Identity confidence</span><strong>{story.confidence}</strong><small>{story.sourceCount} linked source{story.sourceCount === 1 ? "" : "s"} · {story.lots.length} owned lot{story.lots.length === 1 ? "" : "s"}</small></aside>
     </section>
@@ -47,7 +47,7 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
       <article><span>Published reviews</span><strong>{story.publishedAverage ?? "—"}</strong><small>{story.ratings.length} sourced score{story.ratings.length === 1 ? "" : "s"}</small></article>
     </section>
 
-    <section className="section card storyChapter"><div><div className="eyebrow">The cigar in your collection</div><h2>One identity, every connected chapter.</h2><p>{representative.provenanceNotes || representative.notes || `This ${story.identity.vitola} is preserved as part of your private Cedriva record. Add the people, place, acquisition, or occasion behind it to preserve why it matters.`}</p></div><div className="storyActions"><Link href={canonicalCatalogHref(representative.catalogId || story.identity.identityId)}>Open canonical record <b>→</b></Link><Link href={`/inventory/${representative.inventoryId}`}>Document provenance <b>→</b></Link><Link href={`/valuations?inventoryId=${representative.inventoryId}`}>Research value <b>→</b></Link><Link href={`/learn`}>Learn with context <b>→</b></Link></div></section>
+    <section className="section card storyChapter"><div><div className="eyebrow">The cigar in your collection</div><h2>One identity, every connected chapter.</h2><p>{representative.provenanceNotes || representative.notes || `This ${story.identity.vitola} is preserved as part of your private collector record. Add the people, place, acquisition, or occasion behind it to preserve why it matters.`}</p></div><div className="storyActions"><Link href={canonicalCatalogHref(representative.catalogId || story.identity.identityId)}>Open canonical record <b>→</b></Link><Link href={`/inventory/${representative.inventoryId}`}>Document provenance <b>→</b></Link><Link href={`/valuations?inventoryId=${representative.inventoryId}`}>Research value <b>→</b></Link><Link href={`/learn`}>Learn with context <b>→</b></Link></div></section>
 
     <section className="storyColumns">
       <article className="section card"><div className="eyebrow">Owned lots</div><h2>{story.lots.length} connected</h2>{story.lots.map(item => <Link className="storyRow" href={`/inventory/${item.inventoryId}`} key={item.inventoryId}><span><strong>{item.inventoryId}</strong><small>{item.packaging || "Packaging not documented"}{item.collectionId ? ` · ${item.collectionId}` : ""}</small></span><b>{item.currentQty ?? "—"} →</b></Link>)}</article>
@@ -55,10 +55,10 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
     </section>
 
     <section className="storyColumns">
-      <article className="section card"><div className="eyebrow">Personal journal</div><h2>{story.smokes.length} experience{story.smokes.length === 1 ? "" : "s"}</h2>{story.smokes.slice(0, 5).map(item => <div className="storyRow" key={item.smokeId}><span><strong>{item.dateSmoked}</strong><small>{item.flavor || item.tastingNotes || "No tasting note"}</small></span><b>{item.overall ?? "—"}</b></div>)}{!story.smokes.length && <p className="small">No smoke recorded yet. Your first note can be simple and entirely your own.</p>}</article>
+      <article className="section card"><div className="eyebrow">Personal journal</div><h2>{story.smokes.length} experience{story.smokes.length === 1 ? "" : "s"}</h2>{story.smokes.slice(0, 5).map(item => <div className="storyRow" key={item.smokeId}><span><strong>{item.dateSmoked}</strong><small>{item.flavor || item.tastingNotes || "No tasting note"}</small>{(item.construction||item.burn)&&<small>{item.construction?`Construction: ${item.construction}`:""}{item.construction&&item.burn?" · ":""}{item.burn?`Burn: ${item.burn}`:""}</small>}</span><b>{item.overall ?? "—"}</b></div>)}{!story.smokes.length && <p className="small">No smoke recorded yet. Your first note can be simple and entirely your own.</p>}</article>
       <article className="section card"><div className="eyebrow">Evidence ledger</div><h2>{story.valuations.length + story.ratings.length} connected records</h2>{story.valuations.slice(0, 3).map(item => <a className="storyRow" href={item.sourceUrl || "#"} key={item.valuationId} target={item.sourceUrl ? "_blank" : undefined} rel={item.sourceUrl ? "noreferrer" : undefined}><span><strong>{item.source || "Collector valuation"}</strong><small>{item.valuationDate} · {item.confidence || "Unrated"} confidence</small></span><b>{money(item.marketValue ?? item.replacementValue)}</b></a>)}{story.ratings.slice(0, 3).map(item => <a className="storyRow" href={item.sourceUrl} key={item.ratingId} target="_blank" rel="noreferrer"><span><strong>{item.publication}</strong><small>{item.matchConfidence} identity match</small></span><b>{item.score} ↗</b></a>)}</article>
     </section>
 
-    <p className="storyDisclosure">Cedriva keeps retail replacement, market estimates, completed-sale evidence, professional reviews, and your personal experience visibly separate. Uncertainty is preserved rather than presented as fact.</p>
+    <p className="storyDisclosure">The platform keeps retail replacement, market estimates, completed-sale evidence, professional reviews, and your personal experience visibly separate. Uncertainty is preserved rather than presented as fact.</p>
   </main>;
 }
