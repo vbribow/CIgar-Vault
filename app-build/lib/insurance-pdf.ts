@@ -1,5 +1,6 @@
 import type { InsuranceScheduleRow } from "./insurance-report";
 import type { Valuation } from "./types";
+import { brand } from "./brand";
 import {
   claimsUnverifiedCompletedSale,
   completedSaleLabel,
@@ -44,7 +45,7 @@ function evidenceLines(inventoryId:string,valuations:Valuation[]){
 
 function pageLines(rows:InsuranceScheduleRow[],valuations:Valuation[],generatedAt:string,page:number,pages:number,totals:InsurancePdfDocument["totals"]){
   const lines=[
-    "CEDRIVA — PRIVATE INSURANCE SCHEDULE",
+    `${brand.asciiName.toUpperCase()} — PRIVATE INSURANCE SCHEDULE`,
     `Generated ${generatedAt.replace("T"," ").slice(0,19)} UTC · Page ${page} of ${pages}`,
     page===1&&totals?`Active lots: ${totals.lots} · Known cigars: ${totals.knownQuantity} · Scheduled retail replacement: ${dollars(totals.scheduledReplacementValue)}`:"",
     "",
