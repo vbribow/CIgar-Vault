@@ -3,3 +3,14 @@ export const SensorSchema=z.object({sensorId:z.string().trim().min(1).max(100),h
 export const SensorCreateSchema=SensorSchema.omit({sensorId:true}).extend({submissionId:z.string().uuid().optional()}).strict();
 export const SensorReadingSchema=z.object({sensorId:z.string().trim().min(1),humidorId:z.string().trim().min(1),provider:z.string().trim().min(1),externalReadingId:z.string().trim().min(1),recordedAt:z.string().trim().min(1),temperatureF:z.coerce.number().min(-100).max(200),humidity:z.coerce.number().min(0).max(100),batteryPercent:z.coerce.number().min(0).max(100).optional(),source:z.string().trim().max(100).optional(),notes:z.string().trim().max(1000).optional()}).strict();
 export const SensorIngestSchema=z.object({readings:z.array(SensorReadingSchema).min(1).max(5000)}).strict();
+
+export function uniqueSensorReadings<T extends {externalReadingId:string}>(values:T[],existingIds:Iterable<string>=[]){
+  const seen=new Set(existingIds);
+  const unique:T[]=[];
+  for(const value of values){
+    if(seen.has(value.externalReadingId))continue;
+    seen.add(value.externalReadingId);
+    unique.push(value);
+  }
+  return{unique,duplicates:values.length-unique.length};
+}
