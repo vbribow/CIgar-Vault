@@ -5,6 +5,7 @@ import { cigarProductKey } from "@/lib/cigar-identity";
 import { GuidedCigarExplorer } from "@/components/guided-cigar-explorer";
 import { brand } from "@/lib/brand";
 import "./guided-explorer.css";
+export const dynamic = "force-dynamic";
 export const metadata:Metadata={title:"Discover",description:"Discover premium cigars through stories, trusted knowledge, collector goals, and the people and places behind the craft."};
 const intentions=[
   ["I’m new to premium cigars","Learn the essentials without judgment, then find a comfortable place to begin.","/learn/foundations","Begin with confidence"],
