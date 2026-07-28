@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef,useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem } from "@/lib/types";
 
@@ -12,31 +12,34 @@ async function json(response:Response){const value=await response.json();if(!res
 
 export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:InventoryItem[];mode:DataMode;deferredCount?:number}){
   const router=useRouter(),[key,setKey]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0),[outcomes,setOutcomes]=useState<Outcome[]>([]);
+  const submissionIds=useRef(new Map<string,string>());
   const queue=items.slice(0,BATCH_SIZE);
   async function complete(item:InventoryItem):Promise<Outcome>{
     try{
+      const submissionId=submissionIds.current.get(item.inventoryId)||crypto.randomUUID();
+      submissionIds.current.set(item.inventoryId,submissionId);
       const headers={"Content-Type":"application/json",...(key?{"x-founder-key":key}:{})};
       const researched=await json(await fetch("/api/valuation-research",{method:"POST",headers,body:JSON.stringify({inventoryId:item.inventoryId})}));
       const draft=researched.data;
       if(!draft.sourceUrl||draft.confidence==="Low"||(draft.replacementValue===null&&draft.marketValue===null)){
         await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({
-          valuationId:`VAL-REVIEW-${item.inventoryId}-${Date.now().toString(36).toUpperCase()}`.slice(0,190),
+          submissionId,
           inventoryId:item.inventoryId,valuationDate:draft.evidenceDate,marketEvidenceType:"Insufficient evidence",
           comparableCount:draft.comparables.length,source:draft.source||"Independent research review",
           sourceUrl:draft.sourceUrl||undefined,confidence:draft.confidence,
           notes:`Insufficient evidence; held for human review and deferred from repeated automated research. ${draft.notes}`,
         })}));
-        return{inventoryId:item.inventoryId,status:"review",message:"Research needs human review before saving."};
+        submissionIds.current.delete(item.inventoryId);return{inventoryId:item.inventoryId,status:"review",message:"Research needs human review before saving."};
       }
       await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({
-        valuationId:`VAL-COMPLETE-${item.inventoryId}-${Date.now().toString(36).toUpperCase()}`.slice(0,190),
+        submissionId,
         inventoryId:item.inventoryId,valuationDate:draft.evidenceDate,replacementValue:draft.replacementValue??undefined,marketValue:draft.marketValue??undefined,
         marketEvidenceType:draft.marketEvidenceType,marketRangeLow:draft.marketRangeLow??undefined,marketRangeHigh:draft.marketRangeHigh??undefined,
         askingPrice:draft.askingPrice??undefined,askingPriceSource:draft.askingPriceSource||undefined,askingPriceSourceUrl:draft.askingPriceSourceUrl||undefined,comparableCount:draft.comparables.length,
         lastSaleValue:draft.lastSaleValue??undefined,lastSaleDate:draft.lastSaleDate??undefined,lastSaleVenue:draft.lastSaleVenue??undefined,lastSaleSourceUrl:draft.lastSaleSourceUrl??undefined,
         source:draft.source,sourceUrl:draft.sourceUrl,confidence:draft.confidence,notes:`Valuation completion batch. ${draft.notes}`,
       })}));
-      return{inventoryId:item.inventoryId,status:"saved",message:"Source-backed valuation saved."};
+      submissionIds.current.delete(item.inventoryId);return{inventoryId:item.inventoryId,status:"saved",message:"Source-backed valuation saved."};
     }catch(error){return{inventoryId:item.inventoryId,status:"failed",message:error instanceof Error?error.message:"Valuation failed"}}
   }
   async function run(){

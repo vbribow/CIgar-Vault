@@ -22,6 +22,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
   const [writeKey, setWriteKey] = useState("");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const [submissionId, setSubmissionId] = useState(() => crypto.randomUUID());
   const selected = useMemo(() => items.find(item => item.inventoryId === inventoryId), [inventoryId, items]);
   const normalized = useMemo(() => {
     try {
@@ -57,7 +58,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
         method: "POST",
         headers: { "Content-Type": "application/json", ...(writeKey ? { "x-founder-key": writeKey } : {}) },
         body: JSON.stringify({
-          valuationId: `VAL-MANUAL-${selected.inventoryId}-${Date.now().toString(36).toUpperCase()}`,
+          submissionId,
           inventoryId: selected.inventoryId,
           valuationDate: today(),
           replacementValue: Math.round(values.unitPrice * 100) / 100,
@@ -73,6 +74,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Manual price save failed");
       setPrice(inputValue(basis === "Per cigar" ? values.unitPrice : values.boxPrice));
+      setSubmissionId(crypto.randomUUID());
       setMessage(`Saved to inventory: ${money(values.unitPrice)} per cigar${values.boxPrice === undefined ? "" : ` · ${money(values.boxPrice)} per box across ${savedSticksPerBox} cigars`}.`);
       router.refresh();
     } catch (error) {
