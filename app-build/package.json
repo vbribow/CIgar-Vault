@@ -5,7 +5,8 @@
   "packageManager": "pnpm@11.9.0",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-app.mjs",
+    "build:next": "next build",
     "start": "next start",
     "dev:vinext": "vinext dev",
     "build:vinext": "vinext build",
