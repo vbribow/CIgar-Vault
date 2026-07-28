@@ -12,7 +12,10 @@ export async function POST(request:Request){
   if(!url||!key)return NextResponse.json({error:"Authentication is not configured"},{status:503});
   try{
     const{email}=Input.parse(await request.json());
-    const origin=appOrigin(new URL(request.url).origin,process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL);
+    const origin=appOrigin(
+      new URL(request.url).origin,
+      process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
+    );
     const supabase=createClient(url,key,{auth:{...recoveryAuthOptions,persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${origin}/reset-password`});
     if(error)throw error;

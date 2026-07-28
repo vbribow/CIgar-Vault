@@ -4,12 +4,13 @@ import { CedrivaMark } from "@/components/cedriva-mark";
 import { brand } from "@/lib/brand";
 import { isPrivatePreviewHostname } from "@/lib/preview-host";
 type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:"accepted"|"dismissed"}>};
-const productionHost="c-igar-vault-lmug.vercel.app";
+const productionHost="hojavia.com";
+const productionHosts=new Set([productionHost,`www.${productionHost}`]);
 const installDismissedKey="cedriva:pwa-dismissed:v4";
 export function PwaManager(){
   const[event,setEvent]=useState<InstallEvent>(),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
   useEffect(()=>{
-    if(window.location.host!==productionHost&&!isPrivatePreviewHostname(window.location.hostname))setLegacyHost(window.location.host);
+    if(!productionHosts.has(window.location.hostname)&&!isPrivatePreviewHostname(window.location.hostname))setLegacyHost(window.location.host);
     let registration:ServiceWorkerRegistration|undefined;
     const controllerChange=()=>window.location.reload();
     navigator.serviceWorker?.addEventListener("controllerchange",controllerChange);

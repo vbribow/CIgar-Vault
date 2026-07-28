@@ -36,7 +36,9 @@ export async function signUp(formData: FormData) {
   } catch (error) {
     redirect(failure(error instanceof Error ? error.message : "Private beta enrollment is unavailable.", "signup", next));
   }
-  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  const productionHost =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   const origin = appOrigin((await headers()).get("origin") || "", productionHost);
   const consentedAt = new Date().toISOString();
   const { data, error } = await supabase.auth.signUp({ email, password, options: { data: {
@@ -54,7 +56,9 @@ export async function signUp(formData: FormData) {
 export async function requestPasswordReset(formData: FormData) {
   const supabase = await createClient();
   const email = String(formData.get("email") || "").trim();
-  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  const productionHost =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   const origin = appOrigin((await headers()).get("origin") || "", productionHost);
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/confirm?next=/reset-password`,
