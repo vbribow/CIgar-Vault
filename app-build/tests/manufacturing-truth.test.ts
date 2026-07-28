@@ -45,7 +45,7 @@ test("factory and regional learning connect back to evidence records", () => {
   assert.equal(manufacturingTruthHrefForHouse("Unknown future house"), "/learn/manufacturing-truth");
 });
 
-test("every brand in Cedriva receives a manufacturing coverage record", () => {
+test("every brand in Hojavía receives a manufacturing coverage record", () => {
   assert.equal(cigarBrands.length, 162);
   assert.equal(allBrandManufacturingCoverage.length, cigarBrands.length);
   assert.equal(new Set(allBrandManufacturingCoverage.map((record) => record.brand)).size, cigarBrands.length);

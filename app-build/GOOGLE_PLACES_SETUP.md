@@ -1,6 +1,6 @@
 # Google Places production setup
 
-Cedriva calls **Places API (New) Text Search** only from its authenticated
+Hojavía calls **Places API (New) Text Search** only from its authenticated
 server route. The credential must never be sent to the browser.
 
 ## Google Cloud
@@ -12,7 +12,7 @@ server route. The credential must never be sent to the browser.
 5. Set conservative daily quotas and billing alerts before launch.
 
 The current route uses the required field mask and requests only the fields
-Cedriva displays.
+Hojavía displays.
 
 ## Application restriction
 
@@ -22,7 +22,7 @@ Vercel Static IPs (or another controlled egress proxy). After Static IPs are
 enabled, allow only those production egress addresses.
 
 Do not apply an HTTP-referrer restriction to this key: requests originate from
-the Cedriva server, not the collector's browser. If static egress is not yet
+the Hojavía server, not the collector's browser. If static egress is not yet
 available, keep the key restricted to Places API (New), use tight quotas and
 alerts, and treat that as a temporary launch exception.
 
@@ -38,7 +38,7 @@ Never use a `NEXT_PUBLIC_` prefix. Redeploy after adding or rotating it.
 
 1. Sign in to canonical production.
 2. Search a known U.S. ZIP code in Places.
-3. Confirm results show separate Google and Cedriva scores.
+3. Confirm results show separate Google and Hojavía scores.
 4. Confirm permanently closed locations are excluded.
 5. Confirm an anonymous request receives a sign-in response.
 6. Review Google usage, quota, and billing dashboards after the test.

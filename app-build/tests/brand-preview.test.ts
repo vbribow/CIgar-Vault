@@ -3,27 +3,27 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { resolveBrand } from "../lib/brand";
 
-test("Hojavía is the enforced default beta presentation", () => {
+test("Hojavía is the sole product presentation", () => {
   const active = resolveBrand();
   assert.equal(active.key, "hojavia");
   assert.equal(active.name, "Hojavía");
-  assert.equal(active.isPreview, true);
-  assert.equal(active.labels.communityRanking, "Collector 25");
+  assert.equal(active.isPreview, false);
+  assert.equal(active.labels.communityRanking, "Hojavía 25");
   assert.equal(active.labels.places, "Places");
   assert.equal(active.labels.industryHub, "Industry Hub");
 });
 
-test("Cedriva requires an explicit founder-controlled legacy value", () => {
-  const preview = resolveBrand("hojavia");
-  assert.equal(preview.key, "hojavia");
-  assert.equal(preview.name, "Hojavía");
-  assert.equal(preview.asciiName, "Hojavia");
-  assert.equal(preview.brandLine, "Knowledge carried forward.");
-  assert.equal(preview.isPreview, true);
-  assert.deepEqual(preview.labels, resolveBrand().labels);
+test("retired presentation values cannot restore the former brand", () => {
+  const active = resolveBrand("hojavia");
+  assert.equal(active.key, "hojavia");
+  assert.equal(active.name, "Hojavía");
+  assert.equal(active.asciiName, "Hojavia");
+  assert.equal(active.brandLine, "Knowledge carried forward.");
+  assert.equal(active.isPreview, false);
+  assert.deepEqual(active.labels, resolveBrand().labels);
   assert.equal(resolveBrand("Hojavia").key, "hojavia");
   assert.equal(resolveBrand("true").key, "hojavia");
-  assert.equal(resolveBrand("cedriva").key, "cedriva");
+  assert.equal(resolveBrand("cedriva").key, "hojavia");
 });
 
 test("the lounge directory resolves its active brand instead of relying on an undeclared global", () => {
@@ -36,7 +36,7 @@ test("the lounge directory resolves its active brand instead of relying on an un
   assert.match(source, /\{brand\.name\}\s+Community/);
 });
 
-test("the private Hojavía preview cannot publish search or legacy presentation signals", () => {
+test("Hojavía owns metadata, install identity, and legacy presentation safeguards", () => {
   const seo = readFileSync(new URL("../lib/seo.ts", import.meta.url), "utf8");
   const robots = readFileSync(new URL("../app/robots.ts", import.meta.url), "utf8");
   const sitemap = readFileSync(new URL("../app/sitemap.ts", import.meta.url), "utf8");
@@ -51,8 +51,9 @@ test("the private Hojavía preview cannot publish search or legacy presentation 
   assert.match(sitemap, /if\s*\(brand\.isPreview\)\s*return\s*\[\]/);
   assert.match(structuredData, /if\s*\(brand\.isPreview\)\s*return\s+null/);
   assert.match(resetPassword, /\{brand\.name\}/);
-  assert.match(resetPassword, /!brand\.isPreview&&<CedrivaMark\/>/);
+  assert.match(resetPassword, /!brand\.isPreview&&<HojaviaMark\/>/);
   assert.match(recommendationEditor, /\$\{brand\.name\}\s+has refreshed this recommendation/);
-  assert.match(layout, /themeColor:brand\.isPreview\?"#173A37":"#0f0d0b"/);
+  assert.match(layout, /themeColor:"#173A37"/);
+  assert.match(layout, /\/hojavia-mark\.svg/);
   assert.doesNotMatch(layout, /Cedriva is a retired legacy placeholder/);
 });

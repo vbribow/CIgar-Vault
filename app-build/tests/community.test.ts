@@ -89,7 +89,7 @@ test("Collector 25 is the prominent default community destination",()=>{
  const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");
  const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
  assert.match(page,/initialTab=\{tab==="board"\?"board":"ratings"\}/);
- assert.match(page,/className="cedriva25Hero"/);
+ assert.match(page,/className="hojavia25Hero"/);
  assert.match(page,/href="\/community\?tab=ratings#top-25"/);
  assert.match(page,/The community benchmark/);
  assert.doesNotMatch(component,/cedriva25Metric/);

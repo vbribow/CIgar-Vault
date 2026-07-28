@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   try {
     const body=await request.json();
     if(typeof body!=="object"||body===null||Array.isArray(body))throw new Error("Invalid inventory entry");
-    if("inventoryId" in body)return NextResponse.json({error:"Cedriva creates inventory references automatically. Open an existing record to edit it."},{status:409});
+    if("inventoryId" in body)return NextResponse.json({error:"Hojavía creates inventory references automatically. Open an existing record to edit it."},{status:409});
     const submissionId=z.string().uuid().optional().parse(body.submissionId);
     const {submissionId:_submissionId,...fields}=body;
     const draft = normalizeInventory(InventoryInputSchema.parse({...fields,inventoryId:createServerRecordId("inventory",submissionId)}));

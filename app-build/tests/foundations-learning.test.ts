@@ -159,7 +159,7 @@ test("learning routes form a connected curriculum around manufacturing truth", (
   assert.match(manufacturingDirectory, /All manufacturers/);
 });
 
-test("the complete Cedriva learning curriculum remains publicly accessible", () => {
+test("the complete Hojavía learning curriculum remains publicly accessible", () => {
   assert.match(rootProxy, /pathname\.startsWith\("\/learn\/"\)/);
   assert.match(supabaseProxy, /pathname\.startsWith\("\/learn\/"\)/);
 });

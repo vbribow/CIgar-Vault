@@ -1,10 +1,10 @@
 import { SeoJsonLd } from "@/components/seo-json-ld";
-import { cedrivaOrganizationJsonLd } from "@/lib/seo";
+import { hojaviaOrganizationJsonLd } from "@/lib/seo";
 
 export default function ManifestoLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <>
-      <SeoJsonLd data={cedrivaOrganizationJsonLd()} />
+      <SeoJsonLd data={hojaviaOrganizationJsonLd()} />
       {children}
     </>
   );

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import manifest from "../app/manifest";
 
-test("mobile manifest exposes only the Hojavía beta identity", () => {
+test("mobile manifest exposes only the Hojavía product identity", () => {
   const value = manifest();
   assert.equal(value.id, "/hojavia-app");
   assert.equal(value.name, "Hojavía");
@@ -12,7 +12,13 @@ test("mobile manifest exposes only the Hojavía beta identity", () => {
   assert.equal(value.scope, "/");
   assert.equal(value.display, "standalone");
   assert.equal(value.orientation, "portrait-primary");
-  assert.deepEqual(value.icons?.map(icon => icon.src), ["/hojavia-mark.svg"]);
+  assert.deepEqual(value.icons?.map(icon => icon.src), [
+    "/icons/hojavia-app-192.png",
+    "/icons/hojavia-app-512.png",
+    "/icons/hojavia-app-512.png",
+    "/hojavia-mark.svg",
+  ]);
+  assert.equal(value.icons?.some(icon => icon.purpose === "maskable"), true);
 });
 
 test("offline support caches only public shell assets", () => {

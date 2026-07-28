@@ -16,7 +16,7 @@ test("product identity connects catalog records while release identity preserves
   assert.notEqual(cigarIdentityKey(release2024), cigarIdentityKey(release2025));
 });
 
-test("canonical identity produces a stable Cedriva id and rejects incomplete identities", () => {
+test("canonical identity produces a stable Hojavía id and rejects incomplete identities", () => {
   const complete = canonicalCigarIdentity({ brand: "Partagás", line: "Serie D No. 4", vitola: "Robusto" });
   assert.match(complete.identityId, /^CIG-[A-F0-9]{8}$/);
   assert.equal(complete.complete, true);

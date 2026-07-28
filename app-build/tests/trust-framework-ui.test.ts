@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { trustDefinition, trustFramework } from "../lib/trust-evidence";
 
-test("Cedriva presents all five constitutional trust levels in order",()=>{
+test("Hojavía presents all five constitutional trust levels in order",()=>{
   assert.deepEqual(trustFramework.map(value=>value.kind),["Official","Verified Historical","Expert","Community","AI"]);
   assert.deepEqual(trustFramework.map(value=>value.level),[1,2,3,4,5]);
   assert.match(trustDefinition("AI").description,/AI-assisted/);
