@@ -43,6 +43,8 @@ test("mobile install guidance remains actionable across supported platforms",()=
   assert.match(manager,/Installation was not completed/);
   assert.match(manager,/Old \{brand\.name\} installation/);
   assert.match(manager,/production app/);
+  assert.match(manager,/const productionHost="hojavia\.com"/);
+  assert.match(manager,/productionHosts\.has\(window\.location\.hostname\)/);
 });
 
 test("authentication survives reloads and sign-out clears the server session",()=>{
