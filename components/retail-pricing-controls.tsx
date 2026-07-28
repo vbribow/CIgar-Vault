@@ -84,7 +84,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
 
   return <section className="section retailPricingControls">
     <div className="sectionHead">
-      <div><div className="eyebrow">Retail pricing</div><h2>Automatic when known. Manual when needed.</h2><p className="small">Cedriva reuses current, source-linked retail evidence only for the exact brand, line, vitola, and release. It never replaces an existing collector-entered retail price during autofill.</p></div>
+      <div><div className="eyebrow">Retail pricing</div><h2>Automatic when known. Manual when needed.</h2><p className="small">The platform reuses current, source-linked retail evidence only for the exact brand, line, vitola, and release. It never replaces an existing collector-entered retail price during autofill.</p></div>
       <button className="button" type="button" disabled={mode === "mock" || busy !== "" || (mode === "smartsheet" && !writeKey)} onClick={autofill}>{busy === "autofill" ? "Applying…" : "Apply known retail prices"}</button>
     </div>
     <form className="recordForm" onSubmit={saveManual}>

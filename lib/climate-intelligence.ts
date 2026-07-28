@@ -1,4 +1,5 @@
 import type { ClimateProfileId,Humidor,HumidorReading } from "./types";
+import { brand } from "@/lib/brand";
 
 export type ClimateProfile={
   id:ClimateProfileId;
@@ -16,8 +17,8 @@ export type ClimateProfile={
 export const climateProfiles:ClimateProfile[]=[
   {id:"new-world",label:"New World",authority:"Published storage guidance",detail:"A conservative starting profile for most premium cigars made outside Cuba.",targetTempF:67,minTempF:65,maxTempF:70,targetHumidity:67,minHumidity:65,maxHumidity:69},
   {id:"habanos",label:"Habanos",authority:"Official Habanos standard",detail:"The official Habanos storage and aging range.",targetTempF:63,minTempF:61,maxTempF:64,targetHumidity:67,minHumidity:65,maxHumidity:70},
-  {id:"mixed",label:"Mixed collection",authority:"Cedriva starting guidance",detail:"A practical compromise for one humidor holding Habanos and New World cigars.",targetTempF:67,minTempF:65,maxTempF:69,targetHumidity:67,minHumidity:65,maxHumidity:69},
-  {id:"aging-cellar",label:"Aging cellar",authority:"Cedriva starting guidance",detail:"A conservative, slightly drier profile for deliberate long-term aging and periodic tasting.",targetTempF:66,minTempF:64,maxTempF:68,targetHumidity:65,minHumidity:63,maxHumidity:67},
+  {id:"mixed",label:"Mixed collection",authority:`${brand.name} starting guidance`,detail:"A practical compromise for one humidor holding Habanos and New World cigars.",targetTempF:67,minTempF:65,maxTempF:69,targetHumidity:67,minHumidity:65,maxHumidity:69},
+  {id:"aging-cellar",label:"Aging cellar",authority:`${brand.name} starting guidance`,detail:"A conservative, slightly drier profile for deliberate long-term aging and periodic tasting.",targetTempF:66,minTempF:64,maxTempF:68,targetHumidity:65,minHumidity:63,maxHumidity:67},
   {id:"custom",label:"Custom",authority:"Collector controlled",detail:"Use your own researched targets and tolerances.",targetTempF:68,minTempF:65,maxTempF:72,targetHumidity:67,minHumidity:62,maxHumidity:72},
 ];
 

@@ -155,7 +155,7 @@ export function buildCanonicalCigarRecord(catalog: CatalogCigar, inventory: Inve
       href: coverage.href,
       caution: exactFactory
         ? "This factory belongs to the catalog product record. Production periods and later revisions still require dated evidence."
-        : "Brand-level manufacturing context is not automatically assigned to this cigar. Cedriva requires evidence for the exact line, vitola, release, and period.",
+        : "Brand-level manufacturing context is not automatically assigned to this cigar. Evidence is required for the exact line, vitola, release, and period.",
     },
     evidence,
     researchGaps,

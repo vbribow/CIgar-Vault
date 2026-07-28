@@ -39,6 +39,6 @@ export function rankCollectionSommCandidates(items: InventoryItem[], smokes: Smo
       const phase = age < 2 ? "still relatively young" : age < 7 ? "developing" : age <= 15 ? "within a broad mature-age window" : "at extended age";
       return { item, rank: 200 + Math.min(age, 15), evidence: "General age guidance" as const, detail: `${year} record is ${age} year${age === 1 ? "" : "s"} old and ${phase}. This is a general heuristic, not proof of current flavor or condition.` };
     }
-    return { item, rank: 100, evidence: "Readiness unknown" as const, detail: "No exact tasting record or individual-cigar year is documented. Cedriva will not invent a smoke-now conclusion." };
+    return { item, rank: 100, evidence: "Readiness unknown" as const, detail: "No exact tasting record or individual-cigar year is documented. The advisor will not invent a smoke-now conclusion." };
   }).sort((a, b) => b.rank - a.rank || `${a.item.brand} ${a.item.line}`.localeCompare(`${b.item.brand} ${b.item.line}`));
 }

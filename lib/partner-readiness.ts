@@ -4,7 +4,7 @@ export const readinessDefinitions=[
   {key:"organization_identity",category:"Trust",title:"Organization identity",description:"Confirm the legal organization name, official website, and primary business location."},
   {key:"authorized_contact",category:"Trust",title:"Authorized representative",description:"Confirm that the primary contact is authorized to represent the organization."},
   {key:"brand_profile",category:"Brand",title:"Official brand profile",description:"Approve the organization story, logo rights, public contact information, and factual profile details."},
-  {key:"partnership_terms",category:"Commercial",title:"Partnership terms",description:"Document scope, responsibilities, term, termination, and the fact that Cedriva remains editorially independent."},
+  {key:"partnership_terms",category:"Commercial",title:"Partnership terms",description:"Document scope, responsibilities, term, termination, and the platform’s editorial independence."},
   {key:"privacy_data_use",category:"Trust",title:"Privacy and data use",description:"Confirm first-party attribution, aggregate reporting, consent requirements, and no access to private collector records."},
   {key:"public_disclosure",category:"Trust",title:"Public disclosure",description:"Approve plain-language compensation and relationship disclosures before any promotion."},
   {key:"attribution_plan",category:"Operations",title:"Attribution plan",description:"Document approved channels, attribution window, destination, campaign owner, and measurement boundaries."},

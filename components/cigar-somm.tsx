@@ -4,6 +4,7 @@ import type{InventoryItem,SmokingLog}from"@/lib/types";
 import{cleanSommText,sommLeadSummary,uniqueSommItems,type CigarSommAnswer}from"@/lib/cigar-somm";
 import{rankCollectionSommCandidates}from"@/lib/collection-somm";
 import{TrustMark}from"@/components/trust-mark";
+import{brand}from"@/lib/brand";
 
 const prompts=["How will this cigar develop while I smoke it?","What should I pair with this cigar after dinner?","Choose a coffee and a zero-proof pairing.","Should I smoke this now or continue aging it?"];
 const identity=(item:InventoryItem)=>`${item.brand} · ${item.line} · ${item.vitola}${item.vintage?` · ${item.vintage}`:""}`;
@@ -39,7 +40,7 @@ export function CigarSomm({inventory,smokes=[],initialInventoryId="",initialColl
 <div>
 <span>Collection pairing</span>
 <h3>Which cigar from {initialCollectionName||"this collection"} are you considering?</h3>
-<p>A collection can contain fundamentally different cigars. Cedriva will not blend their tasting identities. Confirm the exact cigar before analysis.</p>
+<p>A collection can contain fundamentally different cigars. {brand.name} will not blend their tasting identities. Confirm the exact cigar before analysis.</p>
 </div>{collectionCandidates[0]&&<aside>
 <strong>{collectionCandidates[0].evidence==="Readiness unknown"?"No defensible smoke-now leader yet":"Best-supported candidate right now"}</strong>
 <span>As of {new Date().toLocaleDateString()}</span>
@@ -102,7 +103,7 @@ export function CigarSomm({inventory,smokes=[],initialInventoryId="",initialColl
   {result&&<section className="sommAnswer">
 <header>
 <div>
-<div className="eyebrow">Cedriva AI · {result.confidence} confidence</div>
+<div className="eyebrow">{brand.name} AI · {result.confidence} confidence</div>
 <h2>{cleanSommText(result.cigarContext)}</h2>
 </div>
 <span>AI-assisted · Source-aware</span>

@@ -90,7 +90,7 @@ test("public Industry Hub visibly identifies official source limits",async()=>{
   const page=await readFile(new URL("../app/industry/page.tsx",import.meta.url),"utf8");
   const profile=await readFile(new URL("../app/industry/[slug]/page.tsx",import.meta.url),"utf8");
   assert.match(page,/TrustMark kind="Official"/);
-  assert.match(page,/does not mean Cedriva independently endorses every claim/i);
+  assert.match(page,/does not mean \{brand\.name\} independently endorses every claim/i);
   assert.match(page,/Drafts and submissions never appear here/i);
   assert.match(profile,/Authorized organization/);
   assert.match(profile,/Revision and correction history/);

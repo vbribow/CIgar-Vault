@@ -66,9 +66,9 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
     </section>
 
     <section className="brandResearchRunner">
-      <div><div className="eyebrow">Live source research</div><h2>Build the evidence report.</h2><p>Cedriva searches primary and established trade sources, keeps line-level factory relationships separate, and returns unresolved questions without guessing.</p></div>
+      <div><div className="eyebrow">Live source research</div><h2>Build the evidence report.</h2><p>The research workspace searches primary and established trade sources, keeps line-level factory relationships separate, and returns unresolved questions without guessing.</p></div>
       <div className="brandResearchRunControls">
-        <span className="brandResearchAuthorization">Signed-in Cedriva research workspace</span>
+        <span className="brandResearchAuthorization">Signed-in research workspace</span>
         <button className="button" type="button" disabled={running} onClick={runResearch}>{running ? "Researching trusted sources…" : `Research ${item.brand}`}</button>
         <small>The report is a review draft. Nothing publishes automatically.</small>
         {message && <output aria-live="polite">{message}</output>}

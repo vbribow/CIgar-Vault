@@ -2,3 +2,8 @@ body:has(.loginShell)>.appHeader{display:none}.loginShell{min-height:100vh;displ
 .forgotLink{margin:0 0 18px;text-align:right}.forgotLink a{color:var(--gold2);font-weight:800}
 .recoveryStatus{display:grid;gap:5px;padding:14px;border:1px solid #7c6332;border-radius:10px;background:#2a2111;color:#ebd39a}.recoveryStatus span,.recoveryHelp{font-size:14px;line-height:1.5}.recoveryHelp{margin:2px 0 0;color:var(--muted)}.recoveryHelp a{color:var(--gold2);font-weight:800}
 .signupConsent{border:1px solid var(--line);padding:14px;display:grid;gap:11px}.signupConsent legend{padding:0 7px;color:var(--gold2);font-weight:800}.signupConsent label{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:start}.signupConsent input{margin-top:4px}.signupConsent span{font-size:13px;line-height:1.45;color:var(--muted)}.signupConsent a{color:var(--gold2);font-weight:700}
+
+html[data-brand="hojavia"] .loginStory{background:radial-gradient(circle at 16% 18%,rgba(182,106,67,.38),transparent 36%),radial-gradient(circle at 82% 78%,rgba(108,112,72,.22),transparent 32%),linear-gradient(145deg,#173a37,#102c29);border-right-color:#46625d}
+html[data-brand="hojavia"] .loginPanel{background:linear-gradient(155deg,#173a37,#102724)}
+html[data-brand="hojavia"] .loginPanel input{border-color:#607b74;background:rgba(16,44,41,.66);color:#f5f1e8}
+html[data-brand="hojavia"] .loginPanel input:focus{border-color:#b66a43;outline:2px solid rgba(182,106,67,.25);outline-offset:2px}

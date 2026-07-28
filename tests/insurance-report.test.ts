@@ -30,3 +30,18 @@ test("zero-quantity historical lots stay out of the active insurance schedule", 
   assert.equal(report.totals.lots, 2);
   assert.equal(report.totals.scheduledReplacementValue, 1500);
 });
+
+test("collection presentation assets stay outside cigar quantity and value totals", () => {
+  const presentation:InventoryItem={inventoryId:"CASE",brand:"Maker",line:"Numbered Humidor",vitola:"Presentation asset",currentQty:1,retailValue:12975};
+  const report=buildInsuranceReport(
+    [...inventory,presentation],
+    [],
+    [],
+    [],
+    new Date("2026-07-21T12:00:00Z"),
+    [{collectionId:"COL-1",name:"Numbered Humidor",presentationInventoryId:"CASE"}],
+  );
+  assert.equal(report.rows.some(row=>row.inventoryId==="CASE"),false);
+  assert.equal(report.totals.knownQuantity,27);
+  assert.equal(report.totals.scheduledReplacementValue,1500);
+});

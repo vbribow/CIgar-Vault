@@ -98,7 +98,7 @@ export function buildInventoryRestorePlan(
   const conflicts = inventoryIds.filter((inventoryId) => existing.has(inventoryId));
   if (conflicts.length) {
     throw new Error(
-      `Existing Cedriva records cannot be overwritten: ${conflicts.join(", ")}`,
+      `Existing private records cannot be overwritten: ${conflicts.join(", ")}`,
     );
   }
 

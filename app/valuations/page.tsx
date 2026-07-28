@@ -45,7 +45,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
             <div className="eyebrow">Valuation intelligence</div>
             <h1>Values are temporarily protected.</h1>
             <p className="lede">
-              Cedriva could not safely load inventory and valuation evidence
+              The platform could not safely load inventory and valuation evidence
               together. No portfolio total, coverage percentage, or missing
               value has been inferred from partial data.
             </p>
@@ -134,9 +134,9 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           <small>{totals.neverValued} never valued · {totals.dueSoon + totals.stale} aging</small>
         </article>
       </section>
-      <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>Source-finding and normalization assisted by Cedriva AI</span></div><a href="/trust">Understand the evidence labels →</a></aside>
+      <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>AI-assisted source finding and normalization</span></div><a href="/trust">Understand the evidence labels →</a></aside>
       <section className="valueEvidenceStandard" aria-labelledby="value-evidence-standard">
-        <header><div className="eyebrow">The New World evidence standard</div><h2 id="value-evidence-standard">Precision must be earned.</h2><p>Cedriva records what the evidence proves and stops there. A listing is useful—but it is not a sale.</p></header>
+        <header><div className="eyebrow">The New World evidence standard</div><h2 id="value-evidence-standard">Precision must be earned.</h2><p>The record states only what the evidence proves. A listing is useful—but it is not a sale.</p></header>
         <div>
           <article><span>01</span><h3>Retail replacement</h3><p>Current exact-cigar price from a manufacturer or established retailer.</p></article>
           <article><span>02</span><h3>{marketAskingPriceLabel}</h3><p>A public secondary listing, documented with its observation date and source. It is never presented as a completed sale.</p></article>

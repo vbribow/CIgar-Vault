@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { brand } from "@/lib/brand";
 
-export const cedrivaName = "Cedriva";
-export const cedrivaDescription =
-  "Learn with confidence, document with purpose, and preserve the people, stories, and traditions behind every premium cigar.";
+export const organizationName = brand.name;
+export const organizationDescription = brand.description;
+
+// Legacy exports remain temporarily for source compatibility. Visible values
+// resolve through the centralized brand configuration.
+export const cedrivaName = organizationName;
+export const cedrivaDescription = organizationDescription;
 
 const fallbackSiteUrl = "https://c-igar-vault-lmug.vercel.app";
 
@@ -25,11 +30,11 @@ export function publicPageMetadata(title: string, description: string, canonical
     description,
     alternates: { canonical: canonicalPath },
     robots: {
-      index: true,
-      follow: true,
+      index: !brand.isPreview,
+      follow: !brand.isPreview,
       googleBot: {
-        index: true,
-        follow: true,
+        index: !brand.isPreview,
+        follow: !brand.isPreview,
         "max-image-preview": "large",
         "max-snippet": -1,
         "max-video-preview": -1,
@@ -39,7 +44,7 @@ export function publicPageMetadata(title: string, description: string, canonical
 }
 
 export const learningPages = [
-  { path: "/learn", name: "Cedriva Learn", description: "Premium cigar education that grows with the collector." },
+  { path: "/learn", name: `${brand.name} ${brand.labels.learning}`, description: "Premium cigar education that grows with the collector." },
   { path: "/learn/foundations", name: "Cigar Foundations", description: "A welcoming introduction to choosing, preparing, enjoying, and caring for a premium cigar." },
   { path: "/learn/seed-to-smoke", name: "Seed to Smoke", description: "Follow tobacco through agriculture, curing, fermentation, blending, rolling, and stewardship." },
   { path: "/learn/vitolas", name: "Understanding Vitolas", description: "Learn how cigar dimensions and shapes influence construction and experience." },
@@ -51,10 +56,10 @@ export const learningPages = [
 
 export const publicStaticPages = [
   ...learningPages,
-  { path: "/manifesto", name: "The Cedriva Manifesto", description: "A declaration for premium cigar culture, knowledge, craftsmanship, and community." },
-  { path: "/constitution", name: "The Cedriva Constitution", description: "Cedriva’s purpose, commitments, and promise to premium cigar culture." },
-  { path: "/data-model", name: "How Cedriva Understands a Cigar", description: "Cedriva’s collector-centered model for identity, releases, provenance, evidence, and legacy." },
-  { path: "/industry", name: "Cedriva Industry Hub", description: "Official manufacturer profiles, announcements, releases, packaging changes, and alerts." },
+  { path: "/manifesto", name: `The ${brand.name} Manifesto`, description: "A declaration for premium cigar culture, knowledge, craftsmanship, and community." },
+  { path: "/constitution", name: `The ${brand.name} Constitution`, description: `${brand.name}’s purpose, commitments, and promise to premium cigar culture.` },
+  { path: "/data-model", name: `How ${brand.name} Understands a Cigar`, description: `${brand.name}’s collector-centered model for identity, releases, provenance, evidence, and legacy.` },
+  { path: "/industry", name: `${brand.name} ${brand.labels.industryHub}`, description: "Official manufacturer profiles, announcements, releases, packaging changes, and alerts." },
   { path: "/industry/registry", name: "Official Product & Release Registry", description: "Official products, releases, packaging revisions, and evidence-aware cigar records." },
 ] as const;
 
@@ -89,7 +94,7 @@ export function learningCollectionJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Cedriva Learn",
+    name: `${brand.name} ${brand.labels.learning}`,
     url: absoluteSiteUrl("/learn"),
     description: "Premium cigar education that welcomes beginners and reveals greater depth as collectors grow.",
     isPartOf: { "@id": `${siteUrl()}/#website` },
@@ -107,7 +112,7 @@ export function industryCollectionJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Cedriva Industry Hub",
+    name: `${brand.name} ${brand.labels.industryHub}`,
     url: absoluteSiteUrl("/industry"),
     description: "Official premium cigar industry profiles, releases, announcements, packaging revisions, and corrections with visible source labels.",
     isPartOf: { "@id": `${siteUrl()}/#website` },

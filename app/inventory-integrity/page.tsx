@@ -46,7 +46,7 @@ export default async function InventoryIntegrityPage() {
           <div className="eyebrow">Inventory protection</div>
           <h1>Inventory Integrity Center.</h1>
           <p className="lede">
-            Your private Cedriva account is authoritative. Compare it with the
+            Your private account is authoritative. Compare it with the
             legacy Smartsheet recovery source without overwriting newer values,
             storage, or corrections.
           </p>
@@ -64,7 +64,7 @@ export default async function InventoryIntegrityPage() {
 
       {!accountAvailable && (
         <div className="integrityNotice">
-          Cedriva could not safely load the private account inventory. No
+          The platform could not safely load the private account inventory. No
           missing-record conclusion has been made. Try this audit again after
           the account service recovers.
         </div>
@@ -72,14 +72,14 @@ export default async function InventoryIntegrityPage() {
       {accountAvailable && !signedIn && (
         <div className="integrityNotice">
           Sign in to compare your private account with the legacy Smartsheet
-          recovery source. Cedriva will not interpret a signed-out account as
+          recovery source. The platform will not interpret a signed-out account as
           an empty collection.
         </div>
       )}
       {!masterAvailable && (
         <div className="integrityNotice">
           The legacy Smartsheet recovery source is temporarily unavailable.
-          Your private Cedriva inventory remains authoritative and no records
+          Your private inventory remains authoritative and no records
           have been classified as missing.
         </div>
       )}
@@ -142,7 +142,7 @@ export default async function InventoryIntegrityPage() {
           <div className="eyebrow">Trust safeguard</div>
           <h2>No comparison was inferred from incomplete data.</h2>
           <p>
-            Cedriva will resume the record-by-record audit only after both
+            The platform will resume the record-by-record audit only after both
             sources are available and the collector is signed in.
           </p>
           <div className="backupActions">

@@ -74,6 +74,6 @@ test("manufacturing research returns collectors to the searchable brand index", 
 test("unresolved manufacturing records expose their specific evidence gaps", () => {
   assert.match(manufacturingDirectory, /View evidence gap/);
   assert.match(manufacturingDirectory, /Evidence still required/);
-  assert.match(manufacturingDirectory, /How Cedriva verifies evidence/);
+  assert.match(manufacturingDirectory, /How \{brand\.name\} verifies evidence/);
   assert.doesNotMatch(manufacturingDirectory, /Review research standard/);
 });

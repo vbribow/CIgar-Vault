@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { manufacturingTruthHrefForHouse } from "@/lib/manufacturing-truth";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 import "./blending.css";
 
 export const metadata: Metadata = publicPageMetadata(
@@ -78,7 +79,7 @@ const profileSources = [
     initials: "CF",
     name: "Carlos “Carlito” Fuente Jr.",
     house: "Arturo Fuente",
-    manufacturing: "Family-owned production. Arturo Fuente handmade cigars are rolled by Tabacalera A. Fuente y Cia. in the Dominican Republic. Cedriva still records the precise factory and origin shown for an individual line or release.",
+    manufacturing: `Family-owned production. Arturo Fuente handmade cigars are rolled by Tabacalera A. Fuente y Cia. in the Dominican Republic. ${brand.name} still records the precise factory and origin shown for an individual line or release.`,
     factorySource: "https://arturofuente.com/our-cigars/don-carlos/",
     factoryLabel: "Official Fuente manufacturing record",
     verified: "Fuente’s family history credits Carlito Fuente with pursuing Dominican wrapper tobacco for Fuente Fuente OpusX, introduced as the company’s first successful all-Dominican cigar. Fuente also documents his revival of difficult perfecto forms in the Hemingway line.",
@@ -230,7 +231,7 @@ const profileSources = [
     initials: "CE",
     name: "Christian Eiroa",
     house: "C.L.E. Cigar Company",
-    manufacturing: "Company-controlled Honduran production. C.L.E. identifies its converted Cine Aladino facility in Danlí as the C.L.E. Cigar Factory; individual pages also identify Las Lomas for specific lines. Cedriva records the named facility by product rather than treating Honduras as sufficient.",
+    manufacturing: `Company-controlled Honduran production. C.L.E. identifies its converted Cine Aladino facility in Danlí as the C.L.E. Cigar Factory; individual pages also identify Las Lomas for specific lines. ${brand.name} records the named facility by product rather than treating Honduras as sufficient.`,
     factorySource: "https://clecigars.com/our-tradition/",
     factoryLabel: "Official C.L.E. factory record",
     verified: "C.L.E. records that Eiroa grew up on his family’s Jamastrán Valley farm, returned to Honduras to learn tobacco in 1995, launched Camacho Corojo in 2000, and formed C.L.E. Cigar Company in 2012.",
@@ -407,7 +408,7 @@ export default function BlendingPage() {
     <main className="shell blendingPage">
       <section className="blendingHero">
         <div>
-          <div className="eyebrow">Cedriva Learn · Blending & Blenders</div>
+          <div className="eyebrow">{brand.name} Learn · Blending & Blenders</div>
           <h1>A blend is a system of relationships.</h1>
           <p className="lede">A master blender does not simply choose good-tasting leaves. The work connects agriculture, sensory memory, combustion, construction, inventory, people, and time—then makes that intention repeatable.</p>
           <div className="ctaRow"><a className="button" href="#process">Follow the process</a><a className="button secondary" href="#profiles">Study the blenders</a></div>
@@ -531,26 +532,26 @@ export default function BlendingPage() {
       </section>
 
       <section className="styleStandard">
-        <div><div className="eyebrow">How Cedriva discusses style</div><h2>A blender is more than a tasting-note stereotype.</h2></div>
-        <div><p>A useful profile studies repeated, documented choices: origins and farms, fermentation and age, preferred structures, vitola adaptation, production philosophy, cultural influences, and the intentions behind named projects.</p><blockquote>“Style” is a pattern worth investigating—not a permanent label Cedriva assigns to a person.</blockquote><p>When Cedriva describes a sensory pattern, it will identify whether that description comes from the producer, an expert source, community records, or our editorial analysis.</p></div>
+        <div><div className="eyebrow">How {brand.name} discusses style</div><h2>A blender is more than a tasting-note stereotype.</h2></div>
+        <div><p>A useful profile studies repeated, documented choices: origins and farms, fermentation and age, preferred structures, vitola adaptation, production philosophy, cultural influences, and the intentions behind named projects.</p><blockquote>“Style” is a pattern worth investigating—not a permanent label {brand.name} assigns to a person.</blockquote><p>When {brand.name} describes a sensory pattern, it will identify whether that description comes from the producer, an expert source, community records, or our editorial analysis.</p></div>
       </section>
 
       <section className="manufacturingStandard">
         <div>
-          <div className="eyebrow">Cedriva manufacturing transparency standard</div>
+          <div className="eyebrow">{brand.name} manufacturing transparency standard</div>
           <h2>The name on the band may not be the name over the factory door.</h2>
         </div>
         <div className="manufacturingTruths">
           <article><strong>Brand owner</strong><p>Owns or directs the commercial identity. This does not automatically mean the company owns a factory or physically makes the cigar.</p></article>
           <article><strong>Blender or creative director</strong><p>Defines, selects, or approves the blend. The work may be shared with growers, factory blenders, tobacco teams, and production leaders.</p></article>
-          <article><strong>Manufacturer</strong><p>The factory and people who process, bunch, roll, finish, age, and quality-check the cigar. This is the maker Cedriva names by line and release.</p></article>
+          <article><strong>Manufacturer</strong><p>The factory and people who process, bunch, roll, finish, age, and quality-check the cigar. This is the maker {brand.name} names by line and release.</p></article>
           <article><strong>Country of origin</strong><p>Tells where the cigar was made—not who manufactured it, who owns the brand, or where every leaf was grown.</p></article>
         </div>
-        <div className="manufacturingRule"><strong>The rule</strong><p>Every Cedriva cigar record should identify the actual factory when reliable evidence exists. If production changes, the record should preserve the manufacturer by release period instead of silently rewriting history. If the factory is undisclosed or unverified, Cedriva says exactly that.</p></div>
+        <div className="manufacturingRule"><strong>The rule</strong><p>Every {brand.name} cigar record should identify the actual factory when reliable evidence exists. If production changes, the record should preserve the manufacturer by release period instead of silently rewriting history. If the factory is undisclosed or unverified, {brand.name} says exactly that.</p></div>
       </section>
 
       <section className="blenderProfiles" id="profiles">
-        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 22 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so Cedriva distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
+        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 22 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so {brand.name} distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
         <div className="profileGrid">{profileSources.map((profile)=><article key={profile.name}>
           <header><span>{profile.initials}</span><div><small>{profile.house}</small><h3>{profile.name}</h3></div></header>
           <dl>
@@ -562,13 +563,13 @@ export default function BlendingPage() {
           <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
           <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
         </article>)}</div>
-        <div className="profilePolicy"><strong>Profile standard</strong><p>Biographical facts require attributable sources. Company claims are labeled as company claims. Cedriva analysis is labeled as analysis. Sensory reputation is never presented as biography, and living craft is never reduced to an unsourced legend.</p></div>
+        <div className="profilePolicy"><strong>Profile standard</strong><p>Biographical facts require attributable sources. Company claims are labeled as company claims. {brand.name} analysis is labeled as analysis. Sensory reputation is never presented as biography, and living craft is never reduced to an unsourced legend.</p></div>
       </section>
 
       <section className="boutiqueProfiles" id="boutique-blenders">
         <div className="boutiqueIntroduction">
           <div><div className="eyebrow">Boutique chapter · 9 independent and craft voices</div><h2>Small scale can create room for a sharper point of view.</h2></div>
-          <div><p>“Boutique” has no universal production threshold, and it is not a quality grade. Some respected makers prefer <em>independent</em> or <em>craft</em>; RoMa Craft explicitly uses the latter. Cedriva uses this chapter to study focused portfolios, hands-on direction, small-batch factories, and close manufacturing partnerships—not scarcity as a status symbol.</p><a className="textLink" href="#boutique-study">Learn how to read the roles ↓</a></div>
+          <div><p>“Boutique” has no universal production threshold, and it is not a quality grade. Some respected makers prefer <em>independent</em> or <em>craft</em>; RoMa Craft explicitly uses the latter. {brand.name} uses this chapter to study focused portfolios, hands-on direction, small-batch factories, and close manufacturing partnerships—not scarcity as a status symbol.</p><a className="textLink" href="#boutique-study">Learn how to read the roles ↓</a></div>
         </div>
         <div className="boutiquePrinciples" id="boutique-study">
           <article><span>01</span><h3>Identify the roles</h3><p>Brand founder, blender, tobacco grower, factory owner, and production partner may be different people. Credit each one accurately.</p></article>
@@ -587,7 +588,7 @@ export default function BlendingPage() {
           <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
           <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
         </article>)}</div>
-        <div className="profilePolicy"><strong>A note on authorship</strong><p>A compelling independent brand may be highly personal and still be collaborative. Cedriva names the manufacturing partner whenever the record supports it, because honoring the factory, rollers, tobacco teams, and blender is more truthful than constructing a lone-genius story.</p></div>
+        <div className="profilePolicy"><strong>A note on authorship</strong><p>A compelling independent brand may be highly personal and still be collaborative. {brand.name} names the manufacturing partner whenever the record supports it, because honoring the factory, rollers, tobacco teams, and blender is more truthful than constructing a lone-genius story.</p></div>
       </section>
 
       <section className="readingBlend">

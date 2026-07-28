@@ -1,3 +1,5 @@
+import { brand } from "@/lib/brand";
+
 const layers = [
   { number: "01", title: "Identity", body: "Brand, line, blend, and vitola establish what the cigar is." },
   { number: "02", title: "Release", body: "Time, factory, market, edition, band, and packaging place it in history." },
@@ -12,12 +14,12 @@ export function DataModelStory() {
     <section className="dataModelStory" aria-labelledby="data-model-story-heading">
       <div className="dataModelStoryIntro">
         <div>
-          <div className="eyebrow">The knowledge beneath Cedriva</div>
+          <div className="eyebrow">The knowledge beneath {brand.name}</div>
           <h2 id="data-model-story-heading">Every cigar is more than a name.</h2>
         </div>
         <div>
-          <p>Cedriva connects the cigar in your hand to the people, tobacco, factory, release, evidence, and collector history behind it.</p>
-          <a className="textLink" href="/data-model">See how Cedriva understands a cigar →</a>
+          <p>{brand.name} connects the cigar in your hand to the people, tobacco, factory, release, evidence, and collector history behind it.</p>
+          <a className="textLink" href="/data-model">See how {brand.name} understands a cigar →</a>
         </div>
       </div>
       <div className="dataModelStoryGrid">

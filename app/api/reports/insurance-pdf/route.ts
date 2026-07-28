@@ -3,7 +3,7 @@ import { buildInsurancePdfDocument } from "@/lib/insurance-pdf";
 import { buildInsuranceReport } from "@/lib/insurance-report";
 import { normalizeInventory } from "@/lib/inventory-model";
 import { createClient } from "@/lib/supabase/server";
-import type { InventoryItem, Valuation } from "@/lib/types";
+import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,7 +21,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("vault_records")
       .select("kind,payload")
-      .in("kind", ["inventory", "valuations"])
+      .in("kind", ["inventory", "valuations", "collections"])
       .order("record_id")
       .limit(MAX_PRIVATE_RECORDS + 1);
     if (error) throw error;
@@ -35,8 +35,11 @@ export async function GET() {
       .filter(row=>row.kind==="valuations")
       .map(row=>row.payload as Valuation)
       .filter(value=>!value.invalidatedAt);
+    const collections=(data??[])
+      .filter(row=>row.kind==="collections")
+      .map(row=>row.payload as CigarCollection);
     const generatedAt=new Date().toISOString();
-    const report=buildInsuranceReport(inventory,[],[],[],new Date(generatedAt));
+    const report=buildInsuranceReport(inventory,[],[],[],new Date(generatedAt),collections);
     const bytes=buildInsurancePdfDocument({
       rows:report.rows,
       valuations,

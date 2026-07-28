@@ -1,4 +1,5 @@
 import { cigarBrands } from "./brand-directory";
+import { brand as presentationBrand } from "./brand";
 
 export type ManufacturingRelationship =
   | "Vertically integrated"
@@ -100,7 +101,7 @@ export const manufacturingTruthRecords: ManufacturingTruthRecord[] = [
     examples: ["Espinosa Habano", "Laranja Reserva", "601", "Murcielago", "Knuckle Sandwich"],
     truth: "Espinosa owns La Zona, but not every Espinosa-owned brand is made there. The company also directs projects manufactured by A.J. Fernandez.",
     releaseRule: "Verify the factory by line and release. A La Zona association must never be applied automatically to the entire portfolio.",
-    history: "Production relationships have moved over time; Cedriva preserves the maker attached to the relevant release period.",
+    history: `Production relationships have moved over time; ${presentationBrand.name} preserves the maker attached to the relevant release period.`,
     trustLevel: "Verified Historical",
     confidence: "High",
     sourceName: "Direct Erik Espinosa interview",
@@ -782,7 +783,7 @@ export function manufacturingCoverageForBrand(brand: string): BrandManufacturing
     primaryRegion: directoryBrand?.region || "Unclassified",
     segment: directoryBrand?.segment || "Unclassified",
     status: "Research needed",
-    manufacturing: "Brand is represented; the actual factory has not yet met Cedriva’s publication standard",
+    manufacturing: `Brand is represented; the actual factory has not yet met ${presentationBrand.name}’s publication standard`,
     evidence: "Open evidence gap · no factory inferred from brand region",
     href: "/learn/manufacturing-truth#research-standard",
   };

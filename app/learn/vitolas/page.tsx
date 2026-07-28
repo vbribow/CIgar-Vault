@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 import "./vitolas.css";
 
 export const metadata: Metadata = publicPageMetadata(
@@ -41,9 +42,13 @@ const experienceFactors = [
 export default function VitolasPage() {
   return (
     <main className="shell vitolasPage">
+      <nav className="vitolaBreadcrumb" aria-label="Learning navigation">
+        <a href="/learn">← Back to {brand.name} Learn</a>
+        <span aria-current="page">Understanding Vitolas</span>
+      </nav>
       <section className="vitolaHero">
         <div>
-          <div className="eyebrow">Cedriva Learn · Vitolas</div>
+          <div className="eyebrow">{brand.name} Learn · Vitolas</div>
           <h1>Shape changes more than appearance.</h1>
           <p className="lede">A vitola describes a cigar’s physical format: its length, ring gauge, and shape. Those dimensions influence how a blend is constructed, how it burns, and how the collector encounters it.</p>
           <div className="ctaRow"><a className="button" href="#measure">Learn to read the measurements</a><a className="button secondary" href="#compare">Compare common vitolas</a></div>
@@ -96,7 +101,7 @@ export default function VitolasPage() {
       </section>
 
       <section className="figuradoGuide">
-        <div className="vitolaSectionHead"><div><div className="eyebrow">Figurado vocabulary</div><h2>Names describe families, not perfectly fixed specifications.</h2></div><p>Manufacturers and markets sometimes use these words differently. Cedriva records both the stated name and the measurable shape.</p></div>
+        <div className="vitolaSectionHead"><div><div className="eyebrow">Figurado vocabulary</div><h2>Names describe families, not perfectly fixed specifications.</h2></div><p>Manufacturers and markets sometimes use these words differently. {brand.name} records both the stated name and the measurable shape.</p></div>
         <div>{figurados.map(([name,description],index)=><article key={name}><span>0{index+1}</span><h3>{name}</h3><p>{description}</p></article>)}</div>
       </section>
 
@@ -118,7 +123,7 @@ export default function VitolasPage() {
 
       <section className="vitolaClosing">
         <div><div className="eyebrow">Collect with precision</div><h2>Record the name. Trust the measurements. Notice the experience.</h2></div>
-        <div><p>When comparing two vitolas from the same line, document length, ring gauge, shape, cut, draw, smoking pace, and where the profile changed. Over time, your journal will reveal which proportions best suit your preferences.</p><div className="ctaRow"><a className="button" href="/records">Begin a tasting record</a><a className="button secondary" href="/learn/blending">See how blenders adapt a vitola</a><a className="button secondary" href="/learn/manufacturing-truth">Trace the factory</a></div></div>
+        <div><p>When comparing two vitolas from the same line, document length, ring gauge, shape, cut, draw, smoking pace, and where the profile changed. Over time, your journal will reveal which proportions best suit your preferences.</p><div className="ctaRow"><a className="button" href="/records">Begin a tasting record</a><a className="button secondary" href="/learn/blending">See how blenders adapt a vitola</a><a className="button secondary" href="/learn/manufacturing-truth">Trace the factory</a><a className="textLink" href="/learn">Return to all learning pathways →</a></div></div>
       </section>
     </main>
   );

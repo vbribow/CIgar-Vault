@@ -50,7 +50,7 @@ export function BetaFeedbackForm() {
     }
     setItems(current => [result.data, ...current]);
     event.currentTarget.reset();
-    setMessage("Feedback received. Thank you for helping Cedriva earn trust.");
+    setMessage("Feedback received. Thank you for helping the platform earn trust.");
   }
 
   return <div className="feedbackLayout">
@@ -65,7 +65,7 @@ export function BetaFeedbackForm() {
       {message && <output>{message}</output>}
     </form>
     <section className="feedbackHistory">
-      <div><div className="eyebrow">Your reports</div><h2>Nothing disappears.</h2><p>Track what you reported and whether Cedriva has responded.</p></div>
+      <div><div className="eyebrow">Your reports</div><h2>Nothing disappears.</h2><p>Track what you reported and whether the team has responded.</p></div>
       {items.map(item => <article className="card" key={item.id}>
         <div><span>{item.category} · {item.severity}</span><strong>{item.summary}</strong><small>{new Date(item.created_at).toLocaleString()}</small></div>
         <b className={`feedbackStatus ${item.status.toLowerCase()}`}>{item.status}</b>

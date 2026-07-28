@@ -124,7 +124,7 @@ export function brandCoverageWithCatalog(catalog: CatalogCigar[]) {
         primaryRegion: item.country || "Unclassified",
         segment: "Newly documented",
         status: "Research needed",
-        manufacturing: "Brand approved into Cedriva; actual factory remains an open evidence question",
+        manufacturing: "Brand approved into the catalog; actual factory remains an open evidence question",
         evidence: "Founder-approved discovery · factory unresolved",
         href: "/learn/manufacturing-truth#research-standard",
         sourceUrl: item.sourceUrl,

@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ catalogId
   const { catalogId } = await params;
   const record = await recordFor(catalogId);
   return record
-    ? { title: `${record.brand} ${record.line} ${record.vitola}`, description: `Cedriva’s canonical, evidence-aware record for the ${record.brand} ${record.line} ${record.vitola}.` }
+    ? { title: `${record.brand} ${record.line} ${record.vitola}`, description: `The canonical, evidence-aware record for the ${record.brand} ${record.line} ${record.vitola}.` }
     : { title: "Cigar Record" };
 }
 
@@ -45,7 +45,7 @@ export default async function CanonicalCigarRecordPage({ params }: { params: Pro
 
     <section className="canonicalHero">
       <div>
-        <div className="eyebrow">Cedriva Canonical Cigar Record · v{record.recordVersion}</div>
+        <div className="eyebrow">Canonical Cigar Record · v{record.recordVersion}</div>
         <h1>{record.brand}</h1>
         <p>{record.line}</p>
         <span>{record.vitola}</span>
@@ -62,7 +62,7 @@ export default async function CanonicalCigarRecordPage({ params }: { params: Pro
 
     <section className="canonicalPrinciple">
       <strong>One cigar. Every connected truth.</strong>
-      <p>This is the shared product record used by Discover, Vault, Learn, Verify, Market, Reviews, and Cedriva AI. Collector ownership remains private and separate. <Link href="/provenance-graph">See how the provenance graph works →</Link></p>
+      <p>This is the shared product record used by Discover, Vault, Learning, Verify, Market, Reviews, and Cigar Somm. Collector ownership remains private and separate. <Link href="/provenance-graph">See how the provenance graph works →</Link></p>
     </section>
 
     <section className="canonicalSection" id="identity">

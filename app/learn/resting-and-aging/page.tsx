@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { AgingGuidanceSelector } from "@/components/aging-guidance-selector";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 import "./resting-and-aging.css";
 
 export const metadata: Metadata = publicPageMetadata(
@@ -57,7 +59,7 @@ export default function RestingAndAgingPage() {
     <main className="shell restingAgingPage">
       <section className="restHero">
         <div>
-          <div className="eyebrow">Cedriva Learn · Collection Care</div>
+          <div className="eyebrow">{brand.name} Learn · Collection Care</div>
           <h1>Let the cigar arrive before you ask it to perform.</h1>
           <p className="lede">
             Resting protects the first experience. Aging creates a longer
@@ -146,20 +148,7 @@ export default function RestingAndAgingPage() {
         <div>{ageCandidates.map(([title, body]) => <article key={title}><h3>{title}</h3><p>{body}</p></article>)}</div>
       </section>
 
-      <section className="storageStandard">
-        <div>
-          <div className="eyebrow">Conditions make the experiment credible</div>
-          <h2>Consistency protects both the cigar and the conclusion.</h2>
-          <p>Habanos publishes an aging standard of 16–18°C (61–64°F) and 65–70% relative humidity for Habanos. Other manufacturers and collectors may use different targets. Cedriva treats the maker’s guidance and your chosen stable environment as more trustworthy than a universal internet rule.</p>
-        </div>
-        <ul>
-          <li><strong>Track temperature and humidity together.</strong> Relative humidity changes with temperature.</li>
-          <li><strong>Avoid odor contamination.</strong> Premium tobacco readily absorbs surrounding aromas.</li>
-          <li><strong>Retain identity.</strong> Original boxes, bands, dates, receipts, and provenance make an aged cigar more understandable.</li>
-          <li><strong>Protect slowly.</strong> Correct dryness or excess moisture gradually; do not shock the wrapper.</li>
-          <li><strong>Sample, then decide.</strong> A planned tasting interval is more useful than opening boxes constantly.</li>
-        </ul>
-      </section>
+      <AgingGuidanceSelector />
 
       <section className="agingMyths">
         <div className="eyebrow">Common myths</div>
@@ -178,19 +167,7 @@ export default function RestingAndAgingPage() {
         </div>
       </section>
 
-      <section className="agingSources">
-        <div><div className="eyebrow">Evidence behind the guidance</div><h2>Source the rule before repeating it.</h2></div>
-        <div>
-          <a href="https://www.habanos.com/en/keeping-habanos/" target="_blank" rel="noreferrer"><span>Official · Habanos</span><strong>Keeping Habanos and acclimatizing new arrivals ↗</strong></a>
-          <a href="https://www.habanos.com/en/ageing-finished-cigars/" target="_blank" rel="noreferrer"><span>Official · Habanos</span><strong>Ageing finished cigars ↗</strong></a>
-          <a href="https://www.habanos.com/en/checking-the-work/" target="_blank" rel="noreferrer"><span>Official · Habanos</span><strong>Factory rest in the Escaparate ↗</strong></a>
-          <a href="https://www.habanos.com/en/news/habanos-vintage-2/" target="_blank" rel="noreferrer"><span>Official · Habanos</span><strong>The five-year Vintage standard ↗</strong></a>
-          <a href="https://www.perdomocigars.com/the-perdomo-way" target="_blank" rel="noreferrer"><span>Official · Perdomo</span><strong>Six-to-eight-month factory aging rooms ↗</strong></a>
-          <a href="https://bovedainc.com/question/why-did-my-rh-level-drop/" target="_blank" rel="noreferrer"><span>Manufacturer guidance · Boveda</span><strong>Four-week arrival acclimation guidance ↗</strong></a>
-          <a href="https://www.cigaraficionado.com/glossary/aging" target="_blank" rel="noreferrer"><span>Established editorial source</span><strong>Aging, box aging, and diminishing returns ↗</strong></a>
-        </div>
-        <small>This educational material is intended only for adults of legal age. Timing ranges are collector guidance, not guarantees of flavor, condition, or value.</small>
-      </section>
+      <p className="agingDisclosure">This educational material is intended only for adults of legal age. Timing and climate ranges are starting guidance, not guarantees of flavor, condition, safety, or value.</p>
     </main>
   );
 }

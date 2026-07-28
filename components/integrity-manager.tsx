@@ -11,7 +11,7 @@ export function IntegrityManager({ items, signedIn, duplicateCount }: { items: I
   const repairable = restorableFromMaster(items);
 
   async function restore() {
-    if (!selected.length || !confirm(`Restore ${selected.length} record${selected.length === 1 ? "" : "s"} that ${selected.length === 1 ? "is" : "are"} missing from your Cedriva account? Existing account records will not be changed.`)) return;
+    if (!selected.length || !confirm(`Restore ${selected.length} record${selected.length === 1 ? "" : "s"} that ${selected.length === 1 ? "is" : "are"} missing from your private account? Existing account records will not be changed.`)) return;
     setBusy(true); setMessage("");
     const response = await fetch("/api/inventory-integrity/restore", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ inventoryIds: selected }) });
     const result = await response.json(); setBusy(false);
@@ -34,10 +34,10 @@ export function IntegrityManager({ items, signedIn, duplicateCount }: { items: I
       {visible.map(item => <article key={item.inventoryId} className={`integrityRow ${item.status}`}>
         {signedIn && item.status === "master-only" ? <input type="checkbox" aria-label={`Select ${item.inventoryId}`} checked={selected.includes(item.inventoryId)} onChange={() => toggle(item.inventoryId)} /> : <span className="integrityCheck">{item.status === "matched" ? "✓" : ""}</span>}
         <div><span className={`integrityStatus ${item.status}`}>{item.status.replace("-", " ")}</span><strong>{item.identity}</strong><small>{item.inventoryId}</small></div>
-        <div className="integrityDiffs">{item.differences.length ? item.differences.slice(0, 4).map(diff => <span key={diff.field}><b>{diff.label}</b> Legacy Smartsheet: {String(diff.master ?? "—")} · Cedriva account: {String(diff.account ?? "—")}</span>) : <span>{item.status === "matched" ? "All monitored fields agree" : item.status === "master-only" ? "Missing from Cedriva and available for recovery" : "Preserved in the authoritative Cedriva account"}</span>}</div>
+        <div className="integrityDiffs">{item.differences.length ? item.differences.slice(0, 4).map(diff => <span key={diff.field}><b>{diff.label}</b> Legacy Smartsheet: {String(diff.master ?? "—")} · Private account: {String(diff.account ?? "—")}</span>) : <span>{item.status === "matched" ? "All monitored fields agree" : item.status === "master-only" ? "Missing from the private account and available for recovery" : "Preserved in the authoritative private account"}</span>}</div>
       </article>)}
       {!visible.length && <div className="emptyState">No records match this filter.</div>}
     </div>
-    {signedIn && repairable.length > 0 && <div className="selectAll"><button onClick={() => setSelected(repairable.map(item => item.inventoryId))}>Select all {repairable.length} missing records</button><span>Recovery adds missing records only. Existing Cedriva records are never overwritten.</span></div>}
+    {signedIn && repairable.length > 0 && <div className="selectAll"><button onClick={() => setSelected(repairable.map(item => item.inventoryId))}>Select all {repairable.length} missing records</button><span>Recovery adds missing records only. Existing private records are never overwritten.</span></div>}
   </section>;
 }

@@ -11,7 +11,7 @@ async function responseJson(response: Response) {
   try {
     return text ? JSON.parse(text) : {};
   } catch {
-    throw new Error(`Cedriva received an unreadable import response (${response.status}). Nothing was assumed saved.`);
+    throw new Error(`The platform received an unreadable import response (${response.status}). Nothing was assumed saved.`);
   }
 }
 

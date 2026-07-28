@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 import "./seed-to-smoke.css";
 
 export const metadata: Metadata = publicPageMetadata(
@@ -111,13 +112,13 @@ export default function SeedToSmokePage() {
     <main className="shell seedToSmokePage">
       <section className="seedHero">
         <div>
-          <div className="eyebrow">Cedriva Learn · Seed to Smoke</div>
+          <div className="eyebrow">{brand.name} Learn · Seed to Smoke</div>
           <h1>Before it becomes a cigar, tobacco must survive a thousand decisions.</h1>
           <p className="lede">Premium cigars begin in agriculture and arrive through years of judgment, risk, patience, and skilled hands. Understanding that journey changes the way a collector experiences every cigar.</p>
           <div className="ctaRow"><a className="button" href="#journey">Follow the complete journey</a><a className="button secondary" href="#torcedor">Meet the torcedor’s craft</a></div>
         </div>
         <aside>
-          <span>The Cedriva learning standard</span>
+          <span>The {brand.name} learning standard</span>
           <blockquote>Explain how it came to exist, who made it possible, why it is difficult, and how that knowledge deepens the collector’s experience.</blockquote>
         </aside>
       </section>
@@ -149,7 +150,7 @@ export default function SeedToSmokePage() {
         </div>
         <div>
           <p>Rolling is not measured only by speed or appearance. Advancement requires control of tobacco, construction, airflow, dimensions, finishing, consistency, and increasingly difficult vitolas under real production conditions.</p>
-          <p className="torcedorNote"><strong>A necessary distinction:</strong> qualification systems differ by country, era, and factory. Official Habanos educational material currently describes four grades of torcedor. “Category 9” is also used within the Cuban legacy tradition, especially by Miami factories. Cedriva presents the nine stages below as a learning framework—not as a universal credential.</p>
+          <p className="torcedorNote"><strong>A necessary distinction:</strong> qualification systems differ by country, era, and factory. Official Habanos educational material currently describes four grades of torcedor. “Category 9” is also used within the Cuban legacy tradition, especially by Miami factories. {brand.name} presents the nine stages below as a learning framework—not as a universal credential.</p>
         </div>
       </section>
 
@@ -188,11 +189,11 @@ export default function SeedToSmokePage() {
 
       <section className="sourceStandard">
         <div>
-          <div className="eyebrow">Cedriva source standard</div>
+          <div className="eyebrow">{brand.name} source standard</div>
           <h2>Honor the craft without turning legend into fact.</h2>
         </div>
         <div>
-          <p>When Cedriva describes a roller’s qualification, we identify whether the designation is official, historical, factory-specific, expert-reported, or promotional. We do not quietly convert one factory’s language into a universal industry standard.</p>
+          <p>When {brand.name} describes a roller’s qualification, we identify whether the designation is official, historical, factory-specific, expert-reported, or promotional. We do not quietly convert one factory’s language into a universal industry standard.</p>
           <div className="sourceLinks">
             <a href="https://www.habanos.com/en/the-craft-of-the-torcedor/" target="_blank" rel="noreferrer"><span>Official source</span><strong>Habanos: The craft of the torcedor ↗</strong></a>
             <a href="https://www.miamiandbeaches.com/things-to-do/shopping/visit-cuban-cigar-shops-in-miami" target="_blank" rel="noreferrer"><span>Regional source</span><strong>Greater Miami: Cuban rolling tradition in Miami ↗</strong></a>
@@ -202,7 +203,7 @@ export default function SeedToSmokePage() {
 
       <section className="seedClosing">
         <div><div className="eyebrow">The collector’s role</div><h2>Knowledge turns consumption into stewardship.</h2></div>
-        <div><p>When collectors understand the work behind tobacco, they store more carefully, ask better questions, recognize construction, value honest information, support the people behind the industry, and preserve stories that might otherwise disappear.</p><div className="ctaRow"><a className="button" href="/learn/blending">Continue to blending</a><a className="button secondary" href="/learn/resting-and-aging">Learn rest and aging</a><a className="button secondary" href="/learn/manufacturing-truth">Meet the factories</a><a className="button secondary" href="/data-model">See how Cedriva preserves the record</a></div></div>
+        <div><p>When collectors understand the work behind tobacco, they store more carefully, ask better questions, recognize construction, value honest information, support the people behind the industry, and preserve stories that might otherwise disappear.</p><div className="ctaRow"><a className="button" href="/learn/blending">Continue to blending</a><a className="button secondary" href="/learn/resting-and-aging">Learn rest and aging</a><a className="button secondary" href="/learn/manufacturing-truth">Meet the factories</a><a className="button secondary" href="/data-model">See how {brand.name} preserves the record</a></div></div>
       </section>
     </main>
   );

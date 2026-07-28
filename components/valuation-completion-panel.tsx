@@ -22,7 +22,7 @@ export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:Inv
         await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({
           valuationId:`VAL-REVIEW-${item.inventoryId}-${Date.now().toString(36).toUpperCase()}`.slice(0,190),
           inventoryId:item.inventoryId,valuationDate:draft.evidenceDate,marketEvidenceType:"Insufficient evidence",
-          comparableCount:draft.comparables.length,source:draft.source||"Cedriva research review",
+          comparableCount:draft.comparables.length,source:draft.source||"Independent research review",
           sourceUrl:draft.sourceUrl||undefined,confidence:draft.confidence,
           notes:`Insufficient evidence; held for human review and deferred from repeated automated research. ${draft.notes}`,
         })}));
@@ -34,7 +34,7 @@ export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:Inv
         marketEvidenceType:draft.marketEvidenceType,marketRangeLow:draft.marketRangeLow??undefined,marketRangeHigh:draft.marketRangeHigh??undefined,
         askingPrice:draft.askingPrice??undefined,askingPriceSource:draft.askingPriceSource||undefined,askingPriceSourceUrl:draft.askingPriceSourceUrl||undefined,comparableCount:draft.comparables.length,
         lastSaleValue:draft.lastSaleValue??undefined,lastSaleDate:draft.lastSaleDate??undefined,lastSaleVenue:draft.lastSaleVenue??undefined,lastSaleSourceUrl:draft.lastSaleSourceUrl??undefined,
-        source:draft.source,sourceUrl:draft.sourceUrl,confidence:draft.confidence,notes:`Cedriva valuation completion batch. ${draft.notes}`,
+        source:draft.source,sourceUrl:draft.sourceUrl,confidence:draft.confidence,notes:`Valuation completion batch. ${draft.notes}`,
       })}));
       return{inventoryId:item.inventoryId,status:"saved",message:"Source-backed valuation saved."};
     }catch(error){return{inventoryId:item.inventoryId,status:"failed",message:error instanceof Error?error.message:"Valuation failed"}}
@@ -54,7 +54,7 @@ export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:Inv
     <div className="completionActions">
       {mode==="smartsheet"&&<label><span>Founder write key</span><input type="password" value={key} onChange={event=>setKey(event.target.value)} placeholder="Required for master inventory"/></label>}
       <button className="button" disabled={busy||!queue.length||(mode==="smartsheet"&&!key)} onClick={run}>{busy?`Researching ${progress} of ${queue.length}…`:queue.length?`Complete next ${queue.length}`:deferredCount?"Review deferred records":"Queue clear"}</button>
-      <small>{queue.length?"Keep this page open while the batch runs. Existing values are never overwritten without new evidence.":deferredCount?"Cedriva will not claim coverage while exact identity, evidence, or the research waiting period remains unresolved.":"Every active lot is current under the present evidence policy."}</small>
+      <small>{queue.length?"Keep this page open while the batch runs. Existing values are never overwritten without new evidence.":deferredCount?"Coverage remains unresolved while exact identity, evidence, or the research waiting period is incomplete.":"Every active lot is current under the present evidence policy."}</small>
     </div>
     {outcomes.length>0&&<div className="completionResults">{outcomes.map(item=><span data-status={item.status} key={item.inventoryId}><strong>{item.inventoryId}</strong>{item.message}</span>)}</div>}
   </section>;

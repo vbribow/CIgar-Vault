@@ -2,14 +2,15 @@ import { climateHealth } from "./climate-alerts";
 import { loadInventory } from "./inventory";
 import { getAlertDeliveries,getHumidorReadings,getHumidors,getSensors,saveAlertDelivery } from "./smartsheet";
 import type { AlertDelivery } from "./types";
+import { brand } from "./brand";
 
 export function notificationConfiguration(){return{email:Boolean(process.env.RESEND_API_KEY&&process.env.ALERT_EMAIL_TO&&process.env.ALERT_EMAIL_FROM),sms:Boolean(process.env.TWILIO_ACCOUNT_SID&&process.env.TWILIO_AUTH_TOKEN&&process.env.TWILIO_FROM_NUMBER&&process.env.ALERT_SMS_TO),history:Boolean(process.env.SMARTSHEET_ALERTS_SHEET_ID)}}
 async function sendEmail(subject:string,text:string,idempotencyKey:string){if(!notificationConfiguration().email)return false;const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":idempotencyKey},body:JSON.stringify({from:process.env.ALERT_EMAIL_FROM,to:[process.env.ALERT_EMAIL_TO],subject,text})});if(!response.ok)throw new Error(`Email delivery failed (${response.status})`);return true}
 export async function sendAccountEmail(to:string,subject:string,text:string,idempotencyKey:string){if(!process.env.RESEND_API_KEY||!process.env.ALERT_EMAIL_FROM)return false;const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":idempotencyKey},body:JSON.stringify({from:process.env.ALERT_EMAIL_FROM,to:[to],subject,text})});if(!response.ok)throw new Error(`Email delivery failed (${response.status})`);return true}
 async function sendSms(text:string){if(!notificationConfiguration().sms)return false;const account=process.env.TWILIO_ACCOUNT_SID!;const body=new URLSearchParams({To:process.env.ALERT_SMS_TO!,From:process.env.TWILIO_FROM_NUMBER!,Body:text.slice(0,1500)});const response=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${account}/Messages.json`,{method:"POST",headers:{Authorization:`Basic ${btoa(`${account}:${process.env.TWILIO_AUTH_TOKEN}`)}`,"Content-Type":"application/x-www-form-urlencoded"},body});if(!response.ok)throw new Error(`Text delivery failed (${response.status})`);return true}
 export async function sendTestNotifications(){
-  const now=new Date().toISOString(),text=`Cedriva test alert — notification delivery is working. ${now}`;
-  const[emailResult,smsResult]=await Promise.allSettled([sendEmail("Cedriva test alert",text,`cigar-vault-test-${Date.now()}`),sendSms(text)]);
+  const now=new Date().toISOString(),text=`${brand.name} test alert — notification delivery is working. ${now}`;
+  const[emailResult,smsResult]=await Promise.allSettled([sendEmail(`${brand.name} test alert`,text,`cigar-vault-test-${Date.now()}`),sendSms(text)]);
   return{
     email:emailResult.status==="fulfilled"&&emailResult.value,
     sms:smsResult.status==="fulfilled"&&smsResult.value,
@@ -59,7 +60,7 @@ async function runClimateAlertNotifications(){
       }
       if(previous)retried++;
       const subject=`${alert.severity}: ${health.humidor.name} ${alert.kind.toLowerCase()} alert`;
-      const text=`Cedriva ${alert.severity} alert\n${health.humidor.name}\n${alert.message}\n${alert.durationLabel||""}\n${alert.consequence||""}\nRecommended action: ${alert.guidance||"Inspect the environment and confirm the reading."}\nStored value: $${health.storedValue.toLocaleString()}\nDetected: ${alert.recordedAt||new Date().toISOString()}`;
+      const text=`${brand.name} ${alert.severity} alert\n${health.humidor.name}\n${alert.message}\n${alert.durationLabel||""}\n${alert.consequence||""}\nRecommended action: ${alert.guidance||"Inspect the environment and confirm the reading."}\nStored value: $${health.storedValue.toLocaleString()}\nDetected: ${alert.recordedAt||new Date().toISOString()}`;
       let emailSent=false,smsSent=false;
       const errors:string[]=[];
       if(config.email&&!previous?.emailSentAt){

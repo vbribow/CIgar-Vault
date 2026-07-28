@@ -4,7 +4,7 @@ import type { IndustryRegistryPayload, IndustryRegistryType } from "@/lib/indust
 
 export type PublicIndustryProfile={id:string;partnerId:string;slug:string;partnerType:string;trustLevel:"Official";publishedAt:string;payload:IndustryProfilePayload};
 export type PublicIndustryPublication={id:string;partnerId:string;slug:string;organizationName:string;type:string;trustLevel:"Official";publishedAt:string;payload:IndustryPublicationPayload};
-export type PublicIndustryRevision={id:string;entityType:string;entityId:string;action:string;source:"Official organization"|"Cedriva review";createdAt:string};
+export type PublicIndustryRevision={id:string;entityType:string;entityId:string;action:string;source:"Official organization"|"Independent review";createdAt:string};
 export type PublicIndustryRegistryRecord={id:string;partnerId:string;slug:string;organizationName:string;recordType:IndustryRegistryType;trustLevel:"Official";publishedAt:string;payload:IndustryRegistryPayload};
 
 export async function loadPublicIndustry(){
@@ -19,7 +19,7 @@ export async function loadPublicIndustry(){
   if(profilesResult.error||publicationsResult.error||revisionsResult.error)return{profiles:[] as PublicIndustryProfile[],publications:[] as PublicIndustryPublication[],revisions:[] as PublicIndustryRevision[],registryRecords:[] as PublicIndustryRegistryRecord[]};
   const profiles=(profilesResult.data||[]).map(row=>{const partner=row.partners as unknown as{slug:string;partner_type:string};return{id:row.id,partnerId:row.partner_id,slug:partner.slug,partnerType:partner.partner_type,trustLevel:"Official" as const,publishedAt:row.published_at,payload:row.published_payload as IndustryProfilePayload}});
   const publications=(publicationsResult.data||[]).map(row=>{const partner=row.partners as unknown as{name:string;slug:string};return{id:row.id,partnerId:row.partner_id,slug:partner.slug,organizationName:partner.name,type:row.publication_type,trustLevel:"Official" as const,publishedAt:row.published_at,payload:row.published_payload as IndustryPublicationPayload}});
-  const revisions=(revisionsResult.data||[]).map(row=>({id:row.id,entityType:row.entity_type,entityId:row.entity_id,action:row.action,source:row.actor==="founder"?"Cedriva review" as const:"Official organization" as const,createdAt:row.created_at}));
+  const revisions=(revisionsResult.data||[]).map(row=>({id:row.id,entityType:row.entity_type,entityId:row.entity_id,action:row.action,source:row.actor==="founder"?"Independent review" as const:"Official organization" as const,createdAt:row.created_at}));
   const registryRecords=registryResult.error?[]:(registryResult.data||[]).map(row=>{const partner=row.partners as unknown as{name:string;slug:string};return{id:row.id,partnerId:row.partner_id,slug:partner.slug,organizationName:partner.name,recordType:row.record_type as IndustryRegistryType,trustLevel:"Official" as const,publishedAt:row.published_at,payload:row.published_payload as IndustryRegistryPayload}});
   return{profiles,publications,revisions,registryRecords};
 }

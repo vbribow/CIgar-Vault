@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { formatRecoveryCountdown, LEGACY_RECOVERY_COOLDOWN_KEY, RECOVERY_COOLDOWN_KEY, RECOVERY_RATE_LIMIT_SECONDS, RECOVERY_SUCCESS_COOLDOWN_SECONDS, recoveryCooldownUntil, recoverySecondsRemaining } from "@/lib/recovery-cooldown";
+import { brand } from "@/lib/brand";
 
 export function PasswordRecoveryForm() {
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
@@ -59,14 +60,14 @@ export function PasswordRecoveryForm() {
       const response=await fetch("/api/auth/recovery",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email})});
       const text=await response.text();
       let result:Record<string,any>;
-      try{result=text?JSON.parse(text):{}}catch{throw new Error(`Cedriva received an unreadable recovery response (${response.status}). No email was assumed sent.`)}
+      try{result=text?JSON.parse(text):{}}catch{throw new Error(`${brand.name} received an unreadable recovery response (${response.status}). No email was assumed sent.`)}
       if (!response.ok) {
         if (response.status === 429) startCooldown(Number(result.retryAfterSeconds)||RECOVERY_RATE_LIMIT_SECONDS);
         setError(result.error||"Unable to send recovery email.");
         return;
       }
       startCooldown(Number(result.data?.cooldownSeconds)||RECOVERY_SUCCESS_COOLDOWN_SECONDS);
-      setMessage("Recovery email sent. Open only the newest message. Its link will return to the public Cedriva site, not a protected preview.");
+      setMessage(`Recovery email sent. Open only the newest message. Its link will return to the public ${brand.name} site, not a protected preview.`);
     } catch (reason) {
       setError(reason instanceof Error?reason.message:"Unable to send recovery email. No email was assumed sent.");
     } finally {
@@ -80,6 +81,6 @@ export function PasswordRecoveryForm() {
     {error && <div className="loginMessage error">{error}</div>}
     {message && <div className="loginMessage">{message}</div>}
     {secondsRemaining > 0 && <div className="recoveryStatus" role="status"><strong>Recovery request paused</strong><span>Do not request another message yet. Check spam or junk and use only the newest email. Successful requests pause for 10 minutes; provider rate limits pause for 65 minutes.</span></div>}
-    <p className="recoveryHelp">Still locked out after the timer ends? {supportEmail ? <a href={`mailto:${supportEmail}?subject=Cigar%20Vault%20account%20recovery`}>Contact support</a> : "Contact the Cedriva administrator"} before requesting repeatedly.</p>
+    <p className="recoveryHelp">Still locked out after the timer ends? {supportEmail ? <a href={`mailto:${supportEmail}?subject=Collector%20account%20recovery`}>Contact support</a> : `Contact the ${brand.name} administrator`} before requesting repeatedly.</p>
   </form>;
 }

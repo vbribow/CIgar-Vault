@@ -22,6 +22,13 @@ export function isPresentationInventoryMatch(item:InventoryItem,collection:Cigar
   return template.presentationAliases.some(alias=>normalized(alias)===line);
 }
 
+export function cigarInventoryRecords(
+  inventory:InventoryItem[],
+  collections:CigarCollection[],
+){
+  return inventory.filter(item=>!collections.some(collection=>isPresentationInventoryMatch(item,collection)));
+}
+
 /**
  * Resolves displayable collection relationships from verified component
  * membership or an exact presentation-asset alias. A saved collectionId alone

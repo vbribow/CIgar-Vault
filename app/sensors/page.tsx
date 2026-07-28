@@ -82,7 +82,7 @@ export default async function SensorsPage() {
             <h2 id="provider-heading">Start with a trusted sensor.</h2>
           </div>
           <p>
-            Cedriva stores every provider in one standard climate record, so
+            The platform stores every provider in one standard climate record, so
             changing hardware will not strand your history.
           </p>
         </div>

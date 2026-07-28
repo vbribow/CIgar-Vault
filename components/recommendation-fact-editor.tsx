@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { brand } from "@/lib/brand";
 import type { InventoryItem } from "@/lib/types";
 
 type RequiredInventoryFact = "vintage" | "actualCost" | "provenanceNotes" | "storageLocationId";
@@ -76,7 +77,7 @@ export function RecommendationFactEditor({
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || `Could not save ${copy.label.toLowerCase()}.`);
-      setMessage(`${copy.label} saved. Cedriva has refreshed this recommendation.`);
+      setMessage(`${copy.label} saved. ${brand.name} has refreshed this recommendation.`);
       setEditing(false);
       router.refresh();
     } catch (saveError) {

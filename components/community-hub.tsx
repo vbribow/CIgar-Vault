@@ -132,8 +132,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
     {message && <output className="communityMessage" aria-live="polite">{message}{message.includes("administrator review") && <small>Your contribution is private while it waits in the <a href="/ai-administrator">AI Administrator review queue</a>.</small>}</output>}
     <aside className="communityTrust">
 <TrustMark kind="Community" compact/>
-<span>Posts, reviews, and Cedriva 25 scores reflect collector experience—not official product facts.</span>
-<a href="/trust">How Cedriva labels trust →</a>
+<span>Posts, reviews, and {brand.labels.communityRanking} scores reflect collector experience—not official product facts.</span>
+<a href="/trust">How {brand.name} labels trust →</a>
 </aside>
     {(data.myContributions.posts.length>0||data.myContributions.ratings.length>0)&&<section className="contributionTracker">
 <div className="sectionHead">
@@ -160,7 +160,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <div>
 <div className="eyebrow">Collector conversation</div>
 <h2>Recent discussions</h2>
-<p>Questions, experience, stewardship, and cultural knowledge shared by Cedriva collectors.</p>
+<p>Questions, experience, stewardship, and cultural knowledge shared by {brand.name} collectors.</p>
 </div>
 </div>{loading ? <div className="emptyState">Loading community…</div> : data.posts.map(item => <article className="communityPost" key={item.id}>
 <span>{item.category}</span>
@@ -198,7 +198,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <div>
 <div className="eyebrow">Your palate</div>
 <h2>My Top 10</h2>
-<p>Your ten highest published scores, ordered by your ratings. This personal list contributes a preference signal to the Cedriva 25.</p>
+<p>Your ten highest published scores, ordered by your ratings. This personal list contributes a preference signal to the {brand.labels.communityRanking}.</p>
 </div>
 </div>
 <div className="rankingList personalRanking">{data.myTop10.map(item => <article key={item.cigarKey}>
@@ -215,8 +215,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <div className="sectionHead">
 <div>
 <div className="eyebrow">Community consensus</div>
-<h2>The Cedriva 25</h2>
-<p>Each collector contributes one current score per cigar. A mature personal Top 10 can contribute up to 20% preference context; early lists receive proportionally less weight. Cedriva also adjusts small samples toward the community average so one rating cannot imply broad consensus. Only published ratings count.</p>
+<h2>The {brand.labels.communityRanking}</h2>
+<p>Each collector contributes one current score per cigar. A mature personal Top 10 can contribute up to 20% preference context; early lists receive proportionally less weight. {brand.name} also adjusts small samples toward the community average so one rating cannot imply broad consensus. Only published ratings count.</p>
 </div>
 </div>
 <div className="rankingList">{data.top25.map(item => <article key={item.cigarKey}>

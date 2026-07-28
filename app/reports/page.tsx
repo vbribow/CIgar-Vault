@@ -2,7 +2,7 @@ import { ReportActions } from "@/components/report-actions";
 import { accountDataMode } from "@/lib/user-data";
 import { buildInsuranceReport } from "@/lib/insurance-report";
 import { loadInventory } from "@/lib/inventory";
-import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
+import { loadCollections, loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./reports.css";
 import { ProductEvent } from "@/components/product-event";
 import { loadAccountPlan } from "@/lib/entitlements-server";
@@ -26,14 +26,16 @@ const unitMoney = new Intl.NumberFormat("en-US", {
 });
 
 export default async function ReportsPage() {
-  const [modeResult, planResult, inventoryResult] = await Promise.allSettled([
+  const [modeResult, planResult, inventoryResult, collectionsResult] = await Promise.allSettled([
     accountDataMode(),
     loadAccountPlan(),
     loadInventory(),
+    loadCollections(),
   ]);
   if (
     modeResult.status !== "fulfilled" ||
-    inventoryResult.status !== "fulfilled"
+    inventoryResult.status !== "fulfilled" ||
+    collectionsResult.status !== "fulfilled"
   ) {
     return (
       <main className="shell wideShell insuranceReport">
@@ -42,7 +44,7 @@ export default async function ReportsPage() {
             <div className="eyebrow">Collection protection</div>
             <h1>The insurance schedule is temporarily protected.</h1>
             <p className="lede">
-              Cedriva could not safely load the authoritative inventory. No
+              The platform could not safely load the authoritative inventory. No
               scheduled value, coverage percentage, or evidence exception has
               been inferred from partial data.
             </p>
@@ -59,6 +61,7 @@ export default async function ReportsPage() {
   const mode = modeResult.value;
   const plan = planResult.status === "fulfilled" ? planResult.value : undefined;
   const inventory = inventoryResult.value;
+  const collections = collectionsResult.value;
   const live = mode !== "mock";
   const [humidorsResult, readingsResult, sensorsResult] =
     await Promise.allSettled([
@@ -73,7 +76,7 @@ export default async function ReportsPage() {
   const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
   const readings = readingsResult.status === "fulfilled" ? readingsResult.value : [];
   const sensors = sensorsResult.status === "fulfilled" ? sensorsResult.value : [];
-  const report = buildInsuranceReport(inventory, humidors, readings, sensors);
+  const report = buildInsuranceReport(inventory, humidors, readings, sensors, new Date(), collections);
   const exceptionEntries = [
     [
       "Missing current quantity",
@@ -203,7 +206,7 @@ export default async function ReportsPage() {
         {!climateReady ? (
           <div className="emptyState reportDataProtected">
             Climate readings and sensor evidence are temporarily unavailable.
-            Cedriva has not interpreted that outage as zero climate exposure.
+            The platform has not interpreted that outage as zero climate exposure.
           </div>
         ) : report.climate.length ? (
           <div className="climateEvidence">
@@ -265,7 +268,7 @@ export default async function ReportsPage() {
         </div>
         <p className="insuranceIntro">
           These companies publicly discuss coverage for collectibles or
-          valuable collections. Cedriva has not verified that every policy
+          valuable collections. The platform has not verified that every policy
           covers cigars. Ask the carrier or a licensed broker to confirm cigar
           eligibility and exclusions in writing before relying on coverage.
         </p>

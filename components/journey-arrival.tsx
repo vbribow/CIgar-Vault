@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 import { useSearchParams } from "next/navigation";
 
 const stages={
@@ -16,5 +17,5 @@ export function JourneyArrival(){
   const id=useSearchParams().get("journey") as keyof typeof stages|null;
   const stage=id?stages[id]:undefined;
   if(!stage)return null;
-  return <aside className="journeyArrival"><div><span>Your Cedriva journey</span><strong>{stage[0]}</strong><small>{stage[1]}</small></div><Link href="/#collector-journey-heading">Change journey</Link></aside>;
+  return <aside className="journeyArrival"><div><span>Your {brand.name} journey</span><strong>{stage[0]}</strong><small>{stage[1]}</small></div><Link href="/#collector-journey-heading">Change journey</Link></aside>;
 }

@@ -19,3 +19,17 @@ test("falls back to retail value for current allocation without market evidence"
   assert.equal(result.brandAllocation[0].value, 150);
   assert.equal(result.totals.coverage, 0);
 });
+
+test("collection presentation value is never added to cigar portfolio value", () => {
+  const collection = {
+    collectionId:"COL-1",
+    name:"Numbered Humidor",
+    presentationInventoryId:"CASE",
+  };
+  const result = buildPortfolioHistory([
+    { inventoryId:"CASE", brand:"Maker", line:"Numbered Humidor", vitola:"Presentation asset", currentQty:1, retailValue:12975 },
+    { inventoryId:"CIGAR", collectionId:"COL-1", brand:"Maker", line:"Reserva", vitola:"Toro", currentQty:10, retailValue:50 },
+  ], [], [collection]);
+  assert.equal(result.totals.currentValue, 500);
+  assert.deepEqual(result.brandAllocation, [{brand:"Maker",value:500,percent:100}]);
+});

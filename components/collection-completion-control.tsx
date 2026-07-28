@@ -20,7 +20,7 @@ export function CollectionCompletionControl({collectionId,mode,missingComponents
   const ready=missingComponents===0&&retailMissing===0&&identityReview===0;
 
   async function reconcile(){
-    if(!window.confirm("Confirm that you own this complete presentation. Cedriva will create only missing documented components, preserve existing inventory, and reuse exact-match prices when available."))return;
+    if(!window.confirm("Confirm that you own this complete presentation. The platform will create only missing documented components, preserve existing inventory, and reuse exact-match prices when available."))return;
     const founderKey=mode==="smartsheet"?window.prompt("Founder write key"):"";
     if(mode==="smartsheet"&&founderKey===null)return;
     const headers={...(founderKey?{"x-founder-key":founderKey}:{})};
@@ -40,7 +40,7 @@ export function CollectionCompletionControl({collectionId,mode,missingComponents
   }
 
   return <section className="collectionCompletionControl" aria-label="Collection completion">
-    <div><div className="eyebrow">Completion engine</div><h2>{ready?"Collection record complete":"Finish this collection"}</h2><p>Cedriva reconciles documented contents first, reuses exact-match value evidence, then isolates only the records that still need research.</p></div>
+    <div><div className="eyebrow">Completion engine</div><h2>{ready?"Collection record complete":"Finish this collection"}</h2><p>The platform reconciles documented contents first, reuses exact-match value evidence, then isolates only the records that still need research.</p></div>
     <div className="collectionCompletionSteps">
       <span data-complete={missingComponents===0}><b>{missingComponents===0?"✓":missingComponents}</b> component{missingComponents===1?"":"s"} missing</span>
       <span data-complete={identityReview===0}><b>{identityReview===0?"✓":identityReview}</b> identit{identityReview===1?"y":"ies"} to review</span>
