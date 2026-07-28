@@ -16,7 +16,7 @@ test("validates reusable partner and campaign configuration",()=>{
 });
 
 test("keeps referral destinations first-party and paths predictable",()=>{
-  assert.equal(referralPath("fox-founding-launch","https://cedriva.com"),"https://cedriva.com/r/fox-founding-launch");
+  assert.equal(referralPath("fox-founding-launch","https://hojavia.com"),"https://hojavia.com/r/fox-founding-launch");
   assert.equal(safePartnerDestination("//malicious.example"),"/partners/join");
   assert.equal(safePartnerDestination("/partners/join"),"/partners/join");
 });

@@ -4,11 +4,6 @@ import { brand } from "@/lib/brand";
 export const organizationName = brand.name;
 export const organizationDescription = brand.description;
 
-// Legacy exports remain temporarily for source compatibility. Visible values
-// resolve through the centralized brand configuration.
-export const cedrivaName = organizationName;
-export const cedrivaDescription = organizationDescription;
-
 const fallbackSiteUrl = "https://c-igar-vault-lmug.vercel.app";
 
 export function siteUrl() {
@@ -63,7 +58,7 @@ export const publicStaticPages = [
   { path: "/industry/registry", name: "Official Product & Release Registry", description: "Official products, releases, packaging revisions, and evidence-aware cigar records." },
 ] as const;
 
-export function cedrivaOrganizationJsonLd() {
+export function hojaviaOrganizationJsonLd() {
   const url = siteUrl();
   return {
     "@context": "https://schema.org",
@@ -71,18 +66,18 @@ export function cedrivaOrganizationJsonLd() {
       {
         "@type": "Organization",
         "@id": `${url}/#organization`,
-        name: cedrivaName,
+        name: organizationName,
         url,
-        logo: absoluteSiteUrl("/icons/cedriva-512.png"),
-        description: cedrivaDescription,
-        slogan: "Preserve. Honor. Grow.",
+        logo: absoluteSiteUrl("/hojavia-mark.svg"),
+        description: organizationDescription,
+        slogan: brand.brandLine,
       },
       {
         "@type": "WebSite",
         "@id": `${url}/#website`,
         url,
-        name: cedrivaName,
-        description: cedrivaDescription,
+        name: organizationName,
+        description: organizationDescription,
         publisher: { "@id": `${url}/#organization` },
         inLanguage: "en-US",
       },

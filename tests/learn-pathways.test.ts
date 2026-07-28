@@ -5,7 +5,7 @@ import path from "node:path";
 
 const source = fs.readFileSync(path.resolve(import.meta.dirname, "../app/learn/page.tsx"), "utf8");
 
-test("every collector learning depth links to a working Cedriva destination", () => {
+test("every collector learning depth links to a working Hojavía destination", () => {
   for (const destination of ["/catalog", "/records", "/humidors", "/intelligence", "/community", "/collections"]) {
     assert.match(source, new RegExp(`\"${destination}\"`));
   }

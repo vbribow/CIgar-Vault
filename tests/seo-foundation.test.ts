@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import robots from "../app/robots";
 import {
-  cedrivaOrganizationJsonLd,
+  hojaviaOrganizationJsonLd,
   learningCollectionJsonLd,
   publicPageMetadata,
   publicStaticPages,
@@ -44,8 +44,8 @@ test("robots and sitemap expose knowledge while protecting collector workflows",
   assert.match(proxy, /robots\.txt\|sitemap\.xml/);
 });
 
-test("structured data describes only visible Cedriva organization and learning content", () => {
-  const organization = cedrivaOrganizationJsonLd();
+test("structured data describes only the visible Hojavía organization and learning content", () => {
+  const organization = hojaviaOrganizationJsonLd();
   assert.equal(organization["@context"], "https://schema.org");
   assert.deepEqual(organization["@graph"].map((item) => item["@type"]), ["Organization", "WebSite"]);
 

@@ -17,9 +17,9 @@ type StageId = typeof stages[number]["id"];
 
 export function CollectorJourney() {
   const [selected,setSelected]=useState<StageId>("explorer");
-  useEffect(()=>{const saved=window.localStorage.getItem("cedriva-collector-stage") as StageId|null;if(saved&&stages.some(stage=>stage.id===saved))setSelected(saved)},[]);
+  useEffect(()=>{const saved=(window.localStorage.getItem("hojavia:collector-stage")||window.localStorage.getItem("cedriva-collector-stage")) as StageId|null;if(saved&&stages.some(stage=>stage.id===saved))setSelected(saved)},[]);
   const stage=stages.find(item=>item.id===selected)!;
-  function choose(id:StageId){setSelected(id);window.localStorage.setItem("cedriva-collector-stage",id)}
+  function choose(id:StageId){setSelected(id);window.localStorage.setItem("hojavia:collector-stage",id)}
   return <section className="collectorJourney" aria-labelledby="collector-journey-heading">
     <div className="collectorJourneyIntro"><div><div className="eyebrow">{brand.name} grows with you</div><h2 id="collector-journey-heading">Where are you in your collector journey?</h2></div><p>Choose the experience that feels closest today. Each path opens its own tailored starting point without limiting what you can explore.</p></div>
     <div className="journeyStagePicker" role="tablist" aria-label="Choose a collector journey">{stages.map(item=><button type="button" role="tab" id={`collector-journey-${item.id}`} aria-selected={item.id===selected} aria-controls="collector-journey-panel" className={item.id===selected?"active":undefined} onClick={()=>choose(item.id)} key={item.id}><span>{item.level}</span><strong>{item.name.replace("The ","")}</strong><small>View path</small></button>)}</div>

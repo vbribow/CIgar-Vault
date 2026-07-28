@@ -26,7 +26,7 @@ export async function GET() {
       .limit(MAX_PRIVATE_RECORDS + 1);
     if (error) throw error;
     if ((data?.length ?? 0) > MAX_PRIVATE_RECORDS) {
-      return NextResponse.json({ error: "This Vault is too large for an immediate download. Please contact Cedriva support for a secure prepared export." }, { status: 413 });
+      return NextResponse.json({ error: "This Vault is too large for an immediate download. Please contact Hojavía support for a secure prepared export." }, { status: 413 });
     }
     const inventory=(data??[])
       .filter(row=>row.kind==="inventory")
@@ -46,7 +46,7 @@ export async function GET() {
       generatedAt,
       totals:report.totals,
     });
-    const filename=`cedriva-insurance-schedule-${generatedAt.slice(0,10)}.pdf`;
+    const filename=`hojavia-insurance-schedule-${generatedAt.slice(0,10)}.pdf`;
     return new Response(bytes,{
       status:200,
       headers:{
@@ -60,7 +60,7 @@ export async function GET() {
     });
   } catch {
     return NextResponse.json(
-      { error: "Cedriva could not prepare the insurance PDF. Your records were not changed. Please try again." },
+      { error: "Hojavía could not prepare the insurance PDF. Your records were not changed. Please try again." },
       { status: 503, headers: { "Cache-Control": "private, no-store" } },
     );
   }

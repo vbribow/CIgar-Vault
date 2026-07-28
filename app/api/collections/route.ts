@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const existingCollections=await loadCollections();
     const suppliedExisting=Boolean(fields.collectionId&&existingCollections.some(value=>value.collectionId===fields.collectionId));
     const suppliedTemplate=Boolean(fields.collectionId&&collectionTemplateFor(fields as Parameters<typeof collectionTemplateFor>[0]));
-    if(fields.collectionId&&!suppliedExisting&&!suppliedTemplate)return NextResponse.json({error:"Cedriva creates collection references automatically. Choose a researched edition or edit an existing collection."},{status:409});
+    if(fields.collectionId&&!suppliedExisting&&!suppliedTemplate)return NextResponse.json({error:"Hojavía creates collection references automatically. Choose a researched edition or edit an existing collection."},{status:409});
     const collection={...fields,collectionId:fields.collectionId||createServerRecordId("collection",submissionId)};
     const inventory=await loadInventory();
     const presentationAsset=collection.presentationInventoryId

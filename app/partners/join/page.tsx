@@ -1,5 +1,5 @@
 import { partnerAdmin } from "@/lib/partner-platform";
-import { CedrivaMark } from "@/components/cedriva-mark";
+import { HojaviaMark } from "@/components/hojavia-mark";
 import { brand } from "@/lib/brand";
 import "./partner-join.css";
 
@@ -17,7 +17,7 @@ export default async function PartnerJoinPage({ searchParams }: {
   const partnerName = partner?.name;
   return <main className="partnerJoin">
     <section className="partnerJoinStory">
-      <a className="appBrand" href="/">{!brand.isPreview&&<CedrivaMark/>}<span><strong>{brand.name}</strong><small>{brand.brandLine}</small></span></a>
+      <a className="appBrand" href="/">{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}</strong><small>{brand.brandLine}</small></span></a>
       <div>
         <div className="eyebrow">{partnerName ? `A personal invitation from ${partnerName}` : `Welcome to ${brand.name}`}</div>
         <h1>Document the collection. Understand the culture. Preserve the story.</h1>

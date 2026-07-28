@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { productDomains } from "../lib/product-domains";
 
-test("Cedriva exposes the nine connected product domains",()=>{
+test("Hojavía exposes the nine connected product domains",()=>{
   assert.deepEqual(productDomains.map(domain=>domain.id),["discover","vault","review","market","verify","community","learn","ai","reserve"]);
   assert.equal(new Set(productDomains.map(domain=>domain.href)).size,9);
 });

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { GlobalSearch } from "@/components/global-search";
-import { CedrivaMark } from "@/components/cedriva-mark";
+import { HojaviaMark } from "@/components/hojavia-mark";
 import { brand } from "@/lib/brand";
 
 function matches(pathname: string, href: string) {
@@ -14,7 +14,7 @@ export function AppNavigation() {
   const pathname = usePathname();
   const publicPaths = ["/manifesto", "/constitution", "/industry", "/login", "/recover", "/reset-password", "/privacy", "/terms", "/beta-agreement", "/partners/join", "/partners/invite", "/r"];
   if (publicPaths.some((path) => matches(pathname, path))) return <header className="publicHeader"><div className="publicHeaderInner">
-    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<CedrivaMark/>}<span><strong>{brand.name}</strong><small>{brand.brandLine}</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}</strong><small>{brand.brandLine}</small></span></Link>
     <nav aria-label="Public navigation"><Link href="/industry" className={matches(pathname,"/industry")?"active":undefined}>Industry Hub</Link><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><Link href="/login" className="button secondary">Sign in</Link></nav>
   </div></header>;
   const moreLinks=[
@@ -36,7 +36,7 @@ export function AppNavigation() {
   ] as const;
   const moreActive=moreLinks.some(([href])=>matches(pathname,href));
   return <><header className="appHeader"><div className="appHeaderInner">
-    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<CedrivaMark/>}<span><strong>{brand.name}</strong><small>{brand.communityLine}</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}</strong><small>{brand.communityLine}</small></span></Link>
     <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <Link href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</Link>
       <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>

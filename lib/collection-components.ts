@@ -96,7 +96,7 @@ export function collectionComponentDrafts(collection: CigarCollection, template:
     const documented = template.componentEvidence?.find(component => component.requirement === requirement);
     // A parseable product name is not enough to create collector inventory.
     // Researched component evidence must establish the exact named vitola or
-    // sourced dimensions before Cedriva can materialize a physical lot.
+    // sourced dimensions before Hojavía can materialize a physical lot.
     if (!completeCollectionComponentEvidence(documented)) return [];
     const identity = collectionComponentIdentity(requirement, template);
     const inventoryId = componentInventoryId(collection.collectionId,index);
