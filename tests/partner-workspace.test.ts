@@ -114,3 +114,10 @@ test("founder API enforces readiness before partner activation",async()=>{
   assert.match(route,/if\(!summary\.complete\)throw new Error/);
   assert.match(route,/collaboration_locked/);
 });
+
+test("malformed invitation links return a clear public message",async()=>{
+  const route=await readFile(new URL("../app/api/partner-invitations/route.ts",import.meta.url),"utf8");
+  assert.match(route,/error instanceof z\.ZodError/);
+  assert.match(route,/This invitation link is invalid or incomplete\./);
+  assert.doesNotMatch(route,/error instanceof Error\?error\.message:"Invitation unavailable"/);
+});
