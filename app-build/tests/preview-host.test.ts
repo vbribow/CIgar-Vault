@@ -1,6 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isPrivatePreviewHostname } from "../lib/preview-host";
+import { isActiveProductHostname,isPrivatePreviewHostname } from "../lib/preview-host";
+
+test("current Hojavía production hosts are recognized even before the custom domain cutover", () => {
+  for (const hostname of [
+    "hojavia.com",
+    "www.hojavia.com",
+    "c-igar-vault-lmug.vercel.app",
+    "cedriva-app.brian-bowers-3344.chatgpt.site",
+  ]) {
+    assert.equal(isActiveProductHostname(hostname), true, hostname);
+  }
+  assert.equal(isActiveProductHostname("old-hojavia.example.com"), false);
+});
 
 test("loopback and private-network preview hosts are not treated as obsolete installations", () => {
   for (const hostname of [
