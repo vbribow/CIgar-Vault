@@ -5,6 +5,12 @@ import { partnerAdmin } from "@/lib/partner-platform";
 import { hashInvitationToken, invitationExpired } from "@/lib/partner-workspace";
 
 const Token=z.string().min(30).max(200);
+const invitationError=(error:unknown,fallback:string)=>
+  error instanceof z.ZodError
+    ? "This invitation link is invalid or incomplete."
+    : error instanceof Error
+      ? error.message
+      : fallback;
 
 async function lookup(token:string){
   const admin=partnerAdmin();
@@ -25,7 +31,7 @@ export async function GET(request:Request){
     const{membership,partner}=await lookup(token);
     return NextResponse.json({data:{partnerName:partner.name,partnerSlug:partner.slug,displayName:membership.display_name,role:membership.role,expiresAt:membership.invitation_expires_at}});
   }catch(error){
-    return NextResponse.json({error:error instanceof Error?error.message:"Invitation unavailable"},{status:404});
+    return NextResponse.json({error:invitationError(error,"Invitation unavailable")},{status:404});
   }
 }
 
@@ -45,6 +51,6 @@ export async function POST(request:Request){
     await admin.from("partner_audit_events").insert({partner_id:data.partner_id,actor:`partner:${user.id}`,action:"membership.accepted",subject_type:"membership",subject_id:data.id,details:{role:data.role}});
     return NextResponse.json({data:{partnerName:partner.name,role:data.role,workspacePath:"/partner-workspace"}});
   }catch(error){
-    return NextResponse.json({error:error instanceof Error?error.message:"Unable to accept invitation"},{status:422});
+    return NextResponse.json({error:invitationError(error,"Unable to accept invitation")},{status:422});
   }
 }
