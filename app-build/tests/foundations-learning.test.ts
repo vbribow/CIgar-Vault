@@ -6,6 +6,7 @@ const learn = readFileSync(new URL("../app/learn/page.tsx", import.meta.url), "u
 const foundations = readFileSync(new URL("../app/learn/foundations/page.tsx", import.meta.url), "utf8");
 const seedToSmoke = readFileSync(new URL("../app/learn/seed-to-smoke/page.tsx", import.meta.url), "utf8");
 const restingAndAging = readFileSync(new URL("../app/learn/resting-and-aging/page.tsx", import.meta.url), "utf8");
+const agingGuidance = readFileSync(new URL("../components/aging-guidance-selector.tsx", import.meta.url), "utf8");
 const humidorClimate = readFileSync(new URL("../app/learn/humidor-climate/page.tsx", import.meta.url), "utf8");
 const vitolas = readFileSync(new URL("../app/learn/vitolas/page.tsx", import.meta.url), "utf8");
 const blending = readFileSync(new URL("../app/learn/blending/page.tsx", import.meta.url), "utf8");
@@ -36,6 +37,8 @@ test("vitola learning teaches measurement, shape, construction, and naming uncer
   assert.match(vitolas, /vitola de salida/);
   assert.match(vitolas, /useful reference ranges—not universal laws/);
   assert.match(vitolas, /Size does not mechanically determine strength, quality, or flavor/);
+  assert.match(vitolas, /← Back to \{brand\.name\} Learn/);
+  assert.match(vitolas, /Return to all learning pathways/);
   assert.match(learn, /href="\/learn\/vitolas"/);
 });
 
@@ -75,7 +78,7 @@ test("every blender profile identifies who manufactures the cigars", () => {
   assert.match(blending, /The name on the band may not be the name over the factory door/);
   assert.match(blending, /Who makes the cigars\?/);
   assert.match(blending, /manufacturer by release period instead of silently rewriting history/);
-  assert.match(blending, /If the factory is undisclosed or unverified, Cedriva says exactly that/);
+  assert.match(blending, /If the factory is undisclosed or unverified, \{brand\.name\} says exactly that/);
   for (const manufacturer of ["My Father Cigars S.A.", "Tabacalera A. Fuente y Cia.", "Tabacalera A.J. Fernandez", "La Zona", "Casa Carrillo", "La Gran Fabrica Drew Estate", "Tabacalera Palma", "Joya de Nicaragua", "El Titan de Bronze", "Nica Sueño", "TABSA", "Raíces Cubanas", "Plasencia", "Quesada", "Fábrica Oveja Negra", "Tabacalera Pichardo", "NACSA"]) {
     assert.match(blending, new RegExp(manufacturer));
   }
@@ -113,7 +116,12 @@ test("resting and aging education separates recovery from deliberate cellar time
   assert.match(restingAndAging, /Stability before time/);
   assert.match(restingAndAging, /There is no universal number/);
   assert.match(restingAndAging, /Time can soften and integrate, but it can also reduce intensity/);
-  assert.match(restingAndAging, /Habanos publishes an aging standard/);
+  for (const profile of ["New World", "Habanos", "Mixed Collection"]) assert.match(agingGuidance, new RegExp(profile));
+  assert.match(agingGuidance, /Commercial technical guidance · Boveda/);
+  assert.match(agingGuidance, /Official maker evidence · Perdomo/);
+  assert.match(agingGuidance, /Technical method · CORESTA/);
+  assert.match(agingGuidance, /No single organization governs every New World producer/);
+  assert.match(agingGuidance, /not an official manufacturer standard/);
   assert.match(restingAndAging, /intended only for adults of legal age/);
   assert.match(learn, /href="\/learn\/resting-and-aging"/);
   assert.match(seedToSmoke, /href="\/learn\/resting-and-aging"/);
@@ -143,7 +151,7 @@ test("learning routes form a connected curriculum around manufacturing truth", (
   assert.match(manufacturingTruth, /Actual factory/);
   assert.match(manufacturingTruth, /Release/);
   assert.match(manufacturingTruth, /Provenance/);
-  assert.match(manufacturingTruth, /Complete Cedriva brand universe/);
+  assert.match(manufacturingTruth, /Complete \{brand\.name\} brand universe/);
   assert.match(manufacturingTruth, /allBrandManufacturingCoverage/);
   assert.match(manufacturingTruth, /No cigar disappears because its factory is unknown/);
   assert.match(manufacturingDirectory, /Choose a cigar manufacturer/);

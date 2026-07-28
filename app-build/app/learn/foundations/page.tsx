@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 
 export const metadata: Metadata = publicPageMetadata(
   "Cigar Foundations",
@@ -108,7 +109,7 @@ export default function FoundationsPage() {
   return <main className="shell foundationsPage">
     <section className="foundationsHero">
       <div>
-        <div className="eyebrow">Cedriva Foundations · The Curious</div>
+        <div className="eyebrow">{brand.name} Foundations · The Curious</div>
         <h1>Your first cigar should feel welcoming.</h1>
         <p className="lede">No posturing. No vocabulary test. Learn only what helps you choose thoughtfully, enjoy comfortably, and ask your next question with confidence.</p>
         <div className="ctaRow"><a className="button" href="#lesson-1">Start the first lesson</a><a className="button secondary" href="#first-visit">Prepare for a shop visit</a></div>
@@ -136,10 +137,10 @@ export default function FoundationsPage() {
     </section>
 
     <section className="foundationNext">
-      <div><div className="eyebrow">You have the foundations</div><h2>Curiosity is the next lesson.</h2><p>Explore documented cigars when you feel ready, or ask Cedriva AI a plain-language question without embarrassment.</p></div>
-      <div><Link className="button" href="/catalog">Explore the cigar reference</Link><Link className="button secondary" href="/cigar-somm">Ask Cedriva AI</Link><Link className="textLink" href="/learn">Return to all learning pathways →</Link></div>
+      <div><div className="eyebrow">You have the foundations</div><h2>Curiosity is the next lesson.</h2><p>Explore documented cigars when you feel ready, or ask {brand.name} AI a plain-language question without embarrassment.</p></div>
+      <div><Link className="button" href="/catalog">Explore the cigar reference</Link><Link className="button secondary" href="/cigar-somm">Ask {brand.name} AI</Link><Link className="textLink" href="/learn">Return to all learning pathways →</Link></div>
     </section>
 
-    <p className="foundationsDisclosure">Premium cigars contain tobacco and nicotine and are intended only for adults of legal age. Cedriva provides cultural and educational information, not medical advice.</p>
+    <p className="foundationsDisclosure">Premium cigars contain tobacco and nicotine and are intended only for adults of legal age. {brand.name} provides cultural and educational information, not medical advice.</p>
   </main>;
 }

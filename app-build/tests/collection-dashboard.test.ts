@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { collectionEditionIssue, summarizeCollection } from "../lib/collection-dashboard";
+import { summarizeCollectionProvenance } from "../lib/collection-provenance";
 import { collectionTrustAudit } from "../lib/collection-trust";
 
 test("summarizes whole value, premium, completeness, and history", () => {
@@ -22,6 +23,7 @@ test("summarizes whole value, premium, completeness, and history", () => {
   assert.equal(result.componentValue, 900);
   assert.equal(result.wholeValue, 1500);
   assert.equal(result.premium, 600);
+  assert.equal(result.premiumSupported, true);
   assert.equal(result.completionPercent, 100);
   assert.equal(result.missingComponents.length, 0);
   assert.equal(result.expectedCigars,40);
@@ -39,6 +41,25 @@ test("uses researched template value while keeping unsupported values visibly pe
   const unsupported = summarizeCollection({ collectionId: "COL-CUSTOM", name: "Custom Set" }, [], []);
   assert.equal(unsupported.wholeValue, 0);
   assert.equal(unsupported.valueEvidence, "Pending");
+});
+
+test("an incomplete collection never reports the unowned remainder as premium", () => {
+  const collection={collectionId:"COL-FUENTE-PURPLE-DREAM",name:"Big Purple Dream Humidor"};
+  const inventory=[{
+    inventoryId:"TAUROS",
+    collectionId:collection.collectionId,
+    brand:"Arturo Fuente",
+    line:"OpusX Heaven & Earth",
+    vitola:"Tauros the Bull Maduro",
+    originalQty:10,
+    currentQty:9,
+    retailValue:75,
+  }];
+  const result=summarizeCollection(collection,inventory,[]);
+  assert.equal(result.completionPercent,9);
+  assert.equal(result.componentValue,675);
+  assert.equal(result.premium,0);
+  assert.equal(result.premiumSupported,false);
 });
 
 test("researched edition counts override stale provisional collection counts", () => {
@@ -130,6 +151,7 @@ test("subtracts fully priced original cigars from a humidor collection retail pr
   assert.equal(result.cigarRetailValue,5300);
   assert.equal(result.humidorValue,7675);
   assert.equal(result.humidorValueStatus,"Calculated");
+  assert.equal(result.premiumSupported,false);
 });
 
 test("does not estimate a humidor residual until every included cigar has retail evidence", () => {
@@ -167,4 +189,26 @@ test("collection trust rejects a collection year copied from the wrong edition",
  );
  assert.equal(audit.checks.find(check=>check.id==="edition")?.status,"Attention");
  assert.equal(audit.ready,false);
+});
+
+test("Purple Dream official release photography retains visible source attribution",()=>{
+ const audit=collectionTrustAudit(
+  {collectionId:"COL-FUENTE-PURPLE-DREAM",name:"Big Purple Dream Humidor",releaseYear:2026},
+  [],
+  [],
+ );
+ const photography=audit.checks.find(check=>check.id==="photography");
+ assert.equal(photography?.status,"Verified");
+ assert.equal(photography?.href,"https://www.fuenteagedselection.com/humidors/2026-purple-rain-big-purple-dream-humidor");
+});
+
+test("collection chronology never treats its edition year as component production evidence",()=>{
+ const provenance=summarizeCollectionProvenance(
+  {collectionId:"COL-FUENTE-PURPLE-DREAM",name:"Big Purple Dream Humidor",releaseYear:2026},
+  undefined,
+  [{inventoryId:"P",collectionId:"COL-FUENTE-PURPLE-DREAM",brand:"Arturo Fuente",line:"OpusX Heaven and Earth",vitola:"Purple Rain — Lonsdale figurado (6.875 × 44)",originalQty:10,currentQty:10}],
+ );
+ assert.equal(provenance.collectionYear,2026);
+ assert.equal(provenance.recordedComponentYears,0);
+ assert.equal(provenance.unknownComponentYears,1);
 });

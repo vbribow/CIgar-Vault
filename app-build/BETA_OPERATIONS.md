@@ -1,8 +1,12 @@
-# Cedriva Private Beta Operations
+# Private Beta Operations
 
-Version: 1.0
-Updated: July 24, 2026
+Version: 1.2
+Updated: July 26, 2026
 Owner: Brian Bowers
+
+Cedriva is retired as a brand and remains only in unchanged legacy technical
+surfaces. These procedures govern the platform independently of the eventual
+cleared and explicitly adopted replacement name.
 
 ## Purpose
 
@@ -14,7 +18,7 @@ Operate a controlled cohort of four to five trusted collectors without treating 
 - Apply `202607240008_beta_readiness.sql` before inviting anyone.
 - Add a collector in `/founder-onboarding` as a Prospect.
 - Move the collector to Invited only after Brian approves that person.
-- Preparing an email opens the founder's email client. Cedriva never sends an invitation automatically.
+- Preparing an email opens the founder's email client. The platform never sends an invitation automatically.
 - The invited collector must use the exact invited email address.
 - Signup requires legal-age confirmation and acceptance of the Privacy Notice, Terms, and Beta Agreement.
 
@@ -30,6 +34,19 @@ Open `/founder-onboarding`, enter the Founder key, and confirm all six safeguard
 6. No unresolved blocking feedback remains.
 
 Do not invite the cohort while the dashboard says to hold.
+
+## Go-live blockers
+
+The following items must be completed and tested before the Places or Lounge
+Passport programs are presented as production-ready:
+
+1. Use one canonical production app so portfolio, inventory, authentication, and lounge activity do not split across separate installations.
+2. Configure Google Places access in the production environment and confirm ZIP-code lounge discovery works on a signed-in phone.
+3. Connect lounge ratings to approved production storage and verify that ratings survive sign-out, restart, and installation from the home screen.
+4. Test one lounge-specific QR code from scan through successful rating, duplicate protection, moderation, and ranking display.
+5. Confirm community ratings, Google ratings, and any independent platform certification remain visibly separate.
+
+Do not launch the lounge partner program while any item above is incomplete.
 
 ## First-session checklist
 

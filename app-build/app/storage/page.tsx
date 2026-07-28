@@ -1,5 +1,6 @@
 import { loadInventory } from "@/lib/inventory";
 import { isCurrentInventoryRecord } from "@/lib/inventory-model";
+import { brand } from "@/lib/brand";
 import "./storage.css";
 
 export const dynamic = "force-dynamic";
@@ -10,14 +11,14 @@ export default async function StoragePage() {
     return (
       <main className="shell">
         <nav className="nav">
-          <a className="brand" href="/">Cedriva</a>
+          <a className="brand" href="/">{brand.name}</a>
           <div className="navLinks"><a href="/inventory">Inventory</a></div>
         </nav>
         <section className="card storageUnavailable">
           <div className="eyebrow">Storage record protected</div>
           <h1>Storage is temporarily unavailable.</h1>
           <p>
-            Cedriva could not safely load the authoritative inventory. No
+            The platform could not safely load the authoritative inventory. No
             location has been classified as empty and no cigar has been
             classified as unassigned.
           </p>
@@ -43,7 +44,7 @@ export default async function StoragePage() {
   return (
     <main className="shell">
       <nav className="nav">
-        <a className="brand" href="/">Cedriva</a>
+        <a className="brand" href="/">{brand.name}</a>
         <div className="navLinks">
           <a href="/inventory">Inventory</a>
           <a href="/collection-health">Collection health</a>

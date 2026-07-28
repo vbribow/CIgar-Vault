@@ -135,7 +135,7 @@ export async function POST(request:Request){
       if(input.data.recordId){
         const{data:existing,error:lookupError}=await admin.from("industry_registry_records").select("*").eq("id",input.data.recordId).eq("partner_id",partnerId).eq("record_type",recordType).single();
         if(lookupError)throw lookupError;
-        if(!registryCanSubmit(existing.status))throw new Error("This registry record is locked while Cedriva reviews it");
+        if(!registryCanSubmit(existing.status))throw new Error("This registry record is locked while it is under review");
         const result=await admin.from("industry_registry_records").update({status:"draft",draft_payload:payload,review_note:null,reviewed_by:null,submitted_at:null,approved_at:null,updated_at:now}).eq("id",existing.id).select().single();
         if(result.error)throw result.error;data=result.data;
       }else{
@@ -160,7 +160,7 @@ export async function POST(request:Request){
     if(input.action==="saveIndustryProfile"){
       if(!partnerCan(access.role,"readiness.submit"))throw new Error("Your role cannot edit the official organization profile");
       const{data:existing}=await admin.from("industry_profiles").select("*").eq("partner_id",partnerId).maybeSingle();
-      if(existing&&!industryCanSubmit(existing.status))throw new Error("This profile is locked while Cedriva reviews it");
+      if(existing&&!industryCanSubmit(existing.status))throw new Error("This profile is locked while it is under review");
       const now=new Date().toISOString(),payload={...input.data,partnerId:undefined};
       const{data,error}=await admin.from("industry_profiles").upsert({
         partner_id:partnerId,status:"draft",trust_level:"Official",draft_payload:payload,
@@ -189,7 +189,7 @@ export async function POST(request:Request){
       if(input.data.publicationId){
         const{data:existing,error:lookupError}=await admin.from("industry_publications").select("*").eq("id",input.data.publicationId).eq("partner_id",partnerId).single();
         if(lookupError)throw lookupError;
-        if(!industryCanSubmit(existing.status))throw new Error("This publication is locked while Cedriva reviews it");
+        if(!industryCanSubmit(existing.status))throw new Error("This publication is locked while it is under review");
         const result=await admin.from("industry_publications").update({publication_type:input.data.type,status:"draft",draft_payload:payload,review_note:null,reviewed_by:null,submitted_at:null,approved_at:null,updated_at:now}).eq("id",existing.id).select().single();
         if(result.error)throw result.error;data=result.data;
       }else{
@@ -263,7 +263,7 @@ export async function POST(request:Request){
     const{data:target,error:targetError}=await admin.from("partner_memberships").select("*").eq("id",input.membershipId).eq("partner_id",partnerId).single();
     if(targetError)throw targetError;
     if(!partnerCan(access.role,"partner.manage"))throw new Error("Only a workspace owner can manage team roles");
-    if(target.user_id===user.id)throw new Error("Ask the Cedriva founder to change or revoke your own owner access");
+    if(target.user_id===user.id)throw new Error("Ask the founder to change or revoke your own owner access");
     if(input.action==="changeMemberRole"){
       const{data,error}=await admin.from("partner_memberships").update({role:input.role,updated_at:new Date().toISOString()}).eq("id",target.id).select().single();
       if(error)throw error;

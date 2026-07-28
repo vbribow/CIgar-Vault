@@ -24,6 +24,18 @@ test("completed-sale wording alone never confers verified status",()=>{
   assert.equal(marketEvidenceType(sourceLabelOnly),"Estimated market range");
 });
 
+test("a documented lack of sale evidence is not misread as a sale claim",()=>{
+  const insufficient = {
+    ...base,
+    replacementValue:75,
+    marketEvidenceType:"Insufficient evidence" as const,
+    notes:"No direct completed-sale proof was found.",
+  };
+  assert.equal(claimsUnverifiedCompletedSale(insufficient),false);
+  assert.equal(completedSaleLabel(insufficient),"No verified completed sale");
+  assert.equal(marketEvidenceType(insufficient),"Insufficient evidence");
+});
+
 test("partial completed-sale fields remain legacy and unverified",()=>{
   const valueOnly = {...base,lastSaleValue:47,marketEvidenceType:"Verified completed sale" as const};
   const valueAndDate = {...valueOnly,lastSaleDate:"2026-07-01"};

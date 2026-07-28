@@ -5,6 +5,7 @@ import { loadCollections, loadValuations } from "@/lib/data";
 import "../collection-catalog/catalog.css";
 import "./dashboard.css";
 import { WorkspaceGuide } from "@/components/workspace-guide";
+import { brand } from "@/lib/brand";
 export const dynamic = "force-dynamic";
 export default async function CollectionsPage() {
   const [modeResult, inventoryResult, collectionsResult, valuationsResult] =
@@ -45,13 +46,13 @@ export default async function CollectionsPage() {
           </small>
         </div>
       </section>
-      <WorkspaceGuide items={[{label:"Define",title:"Choose or research a set",detail:"Start from a known template or enter any named release."},{label:"Match",title:"Connect owned components",detail:"Cedriva compares expected contents with inventory."},{label:"Value",title:"Track parts and the whole",detail:"Preserve component value and complete-presentation premium."}]}/>
+      <WorkspaceGuide items={[{label:"Define",title:"Choose or research a set",detail:"Start from a known template or enter any named release."},{label:"Match",title:"Connect owned components",detail:`${brand.name} compares expected contents with inventory.`},{label:"Value",title:"Track parts and the whole",detail:"Preserve component value and complete-presentation premium."}]}/>
       {!coreReady ? (
         <section className="card collectionDataNotice">
           <div className="eyebrow">Collection records protected</div>
           <h2>The collection workspace is temporarily paused.</h2>
           <p>
-            Cedriva could not safely load every core ownership source. No
+            {brand.name} could not safely load every core ownership source. No
             collection has been classified as empty, incomplete, or missing.
             Refresh after the account service recovers.
           </p>

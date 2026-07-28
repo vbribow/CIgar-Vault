@@ -10,6 +10,31 @@ export type CollectionTrustCheck = {
   href?: string;
 };
 
+export function collectionPhotoEvidence(
+  collection: CigarCollection,
+  template = collectionTemplateFor(collection),
+) {
+  if (collection.photoLink) {
+    return {
+      photo: collection.photoLink,
+      sourceUrl: collection.valuationSourceUrl,
+      sourceLabel: collection.valuationSource,
+    };
+  }
+  if (template?.templateId === "TPL-FUENTE-PURPLE-DREAM") {
+    return {
+      photo: template.imageUrl,
+      sourceUrl: "https://www.fuenteagedselection.com/humidors/2026-purple-rain-big-purple-dream-humidor",
+      sourceLabel: "Fuente Aged Selection official release photography",
+    };
+  }
+  return {
+    photo: template?.imageUrl,
+    sourceUrl: template?.imageSourceUrl,
+    sourceLabel: template?.imageSourceLabel,
+  };
+}
+
 export function collectionTrustAudit(
   collection: CigarCollection,
   inventory: InventoryItem[],
@@ -21,8 +46,9 @@ export function collectionTrustAudit(
   const expected = summary.expectedComponents ?? 0;
   const protocol=template?auditCollectionTemplateProtocol(template):undefined;
   const exactContents = Boolean(protocol?.readyForInventoryAutomation);
-  const photo = collection.photoLink || template?.imageUrl;
-  const photoSource = collection.photoLink ? collection.valuationSourceUrl : template?.imageSourceUrl;
+  const photoEvidence = collectionPhotoEvidence(collection, template);
+  const photo = photoEvidence.photo;
+  const photoSource = photoEvidence.sourceUrl;
   const checks: CollectionTrustCheck[] = [
     {
       id: "edition",

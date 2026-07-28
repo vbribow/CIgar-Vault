@@ -12,7 +12,7 @@ test("each collector receives a personal Top 10 from published scores",()=>{
  assert.equal(rankings[0].averageScore,91);
  assert.equal(rankings[9].averageScore,82);
 });
-test("Cedriva 25 blends raw scores with each collector's Top 10 preference",()=>{
+test("Collector 25 blends raw scores with each collector's Top 10 preference",()=>{
  const rankings=communityTop25([
   rating("1",96,{userId:"collector-1"}),
   rating("2",94,{userId:"collector-2"}),
@@ -23,7 +23,7 @@ test("Cedriva 25 blends raw scores with each collector's Top 10 preference",()=>
  assert.equal(rankings[1].weightedScore,95.9);
  assert.equal(rankings[1].ratingCount,2);
 });
-test("Cedriva 25 counts only the latest valid score from each collector and cigar",()=>{
+test("Collector 25 counts only the latest valid score from each collector and cigar",()=>{
  const rankings=communityTop25([
   rating("old",100,{userId:"collector-1",createdAt:"2026-01-01T00:00:00.000Z"}),
   rating("new",90,{userId:"collector-1",createdAt:"2026-07-01T00:00:00.000Z"}),
@@ -85,7 +85,7 @@ test("community destinations lead to substantive, distinct content",()=>{
  assert.match(component,/id="top-25"/);
  assert.match(component,/one rating cannot imply broad consensus/);
 });
-test("Cedriva 25 is the prominent default community destination",()=>{
+test("Collector 25 is the prominent default community destination",()=>{
  const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");
  const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
  assert.match(page,/initialTab=\{tab==="board"\?"board":"ratings"\}/);
@@ -93,7 +93,8 @@ test("Cedriva 25 is the prominent default community destination",()=>{
  assert.match(page,/href="\/community\?tab=ratings#top-25"/);
  assert.match(page,/The community benchmark/);
  assert.doesNotMatch(component,/cedriva25Metric/);
- assert.match(page,/The Cedriva Collectors’ Lounge/);
+ assert.match(page,/The \{brand\.labels\.community\}/);
+ assert.match(page,/brand\.labels\.communityRanking/);
 });
 test("age and marketplace notice appears with message-board participation",()=>{
  const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");

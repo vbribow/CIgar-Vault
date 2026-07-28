@@ -1,7 +1,14 @@
 import type { MetadataRoute } from "next";
+import { brand } from "@/lib/brand";
 import { absoluteSiteUrl, siteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
+  if (brand.isPreview) {
+    return {
+      rules: { userAgent: "*", disallow: "/" },
+    };
+  }
+
   return {
     rules: {
       userAgent: "*",

@@ -1,6 +1,7 @@
 import { climateHealth } from "./climate-alerts";
 import { cubanVerificationStatus, isCubanInventory } from "./cuban-verification";
-import type { EnvironmentalSensor, Humidor, HumidorReading, InventoryItem } from "./types";
+import type { CigarCollection, EnvironmentalSensor, Humidor, HumidorReading, InventoryItem } from "./types";
+import { cigarInventoryRecords } from "./collection-presentation";
 
 const percent = (complete: number, total: number) => total ? Math.round(complete / total * 100) : 100;
 
@@ -18,8 +19,8 @@ export type InsuranceScheduleRow = {
   verification: string;
 };
 
-export function buildInsuranceReport(inventory: InventoryItem[], humidors: Humidor[], readings: HumidorReading[], sensors: EnvironmentalSensor[], now = new Date()) {
-  const activeInventory = inventory.filter(item => item.currentQty !== 0);
+export function buildInsuranceReport(inventory: InventoryItem[], humidors: Humidor[], readings: HumidorReading[], sensors: EnvironmentalSensor[], now = new Date(), collections:CigarCollection[] = []) {
+  const activeInventory = cigarInventoryRecords(inventory,collections).filter(item => item.currentQty !== 0);
   const rows: InsuranceScheduleRow[] = activeInventory.map(item => ({
     inventoryId: item.inventoryId,
     cigar: [item.brand, item.line, item.vitola].filter(Boolean).join(" · "),

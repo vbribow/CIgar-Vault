@@ -6,6 +6,10 @@ import {
   parseInventoryUpdate,
 } from "@/lib/inventory-model";
 import { loadInventory } from "@/lib/inventory";
+import {
+  isPrivateInventoryPreviewRequest,
+  savePreviewInventoryOverride,
+} from "@/lib/preview-inventory";
 import { deleteInventoryRow, updateInventoryRow } from "@/lib/smartsheet";
 import { deleteOwnedRecord, saveOwnedRecord } from "@/lib/user-data";
 
@@ -23,13 +27,13 @@ function failure(error: unknown) {
   );
 }
 function guard(request: Request) {
-  if (!authorizeWrite(request))
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (dataMode() === "mock")
     return NextResponse.json(
       { error: "Writes are disabled in mock mode" },
       { status: 409 },
     );
+  if (!authorizeWrite(request))
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
 export async function PUT(request: Request, context: Context) {
@@ -44,6 +48,15 @@ export async function PUT(request: Request, context: Context) {
         { status: 409 },
       );
     if (await saveOwnedRecord("inventory", inventoryId, item)) return NextResponse.json({ data: item });
+    if (dataMode() === "mock") {
+      if (!isPrivateInventoryPreviewRequest(request))
+        return NextResponse.json(
+          { error: "Local preview edits are allowed only from this private development host." },
+          { status: 403 },
+        );
+      await savePreviewInventoryOverride(item);
+      return NextResponse.json({ data: item, storage: "local-preview" });
+    }
     const blocked = guard(request); if (blocked) return blocked;
     await updateInventoryRow(inventoryId, item);
     return NextResponse.json({ data: item });

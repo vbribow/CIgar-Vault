@@ -27,7 +27,7 @@ export async function GET() {
     });
     return new NextResponse(JSON.stringify(payload, null, 2), { headers: {
       "content-type": "application/json; charset=utf-8",
-      "content-disposition": `attachment; filename="cedriva-private-record-${createdAt.slice(0,10)}.json"`,
+      "content-disposition": `attachment; filename="private-collector-record-${createdAt.slice(0,10)}.json"`,
       "cache-control": "no-store",
     } });
   } catch (error) {

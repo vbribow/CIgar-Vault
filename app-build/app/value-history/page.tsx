@@ -1,4 +1,4 @@
-import { loadValuations } from "@/lib/data";
+import { loadCollections, loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { buildPortfolioHistory } from "@/lib/portfolio-history";
 import { MarketSignal } from "@/components/market-signal";
@@ -9,13 +9,15 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 const unitMoney = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 export default async function ValueHistoryPage() {
-  const [inventoryResult, valuationsResult] = await Promise.allSettled([
+  const [inventoryResult, valuationsResult, collectionsResult] = await Promise.allSettled([
     loadInventory(),
     loadValuations(),
+    loadCollections(),
   ]);
   if (
     inventoryResult.status !== "fulfilled" ||
-    valuationsResult.status !== "fulfilled"
+    valuationsResult.status !== "fulfilled" ||
+    collectionsResult.status !== "fulfilled"
   ) {
     return (
       <main className="shell wideShell historyPage">
@@ -24,7 +26,7 @@ export default async function ValueHistoryPage() {
             <div className="eyebrow">Portfolio intelligence</div>
             <h1>Value history is temporarily protected.</h1>
             <p className="lede">
-              Cedriva could not safely load current ownership and dated
+              The platform could not safely load current ownership and dated
               valuation evidence together. No portfolio value, historical
               movement, or coverage percentage has been inferred from partial
               data.
@@ -41,7 +43,8 @@ export default async function ValueHistoryPage() {
   }
   const inventory = inventoryResult.value;
   const valuations = valuationsResult.value;
-  const history = buildPortfolioHistory(inventory, valuations);
+  const collections = collectionsResult.value;
+  const history = buildPortfolioHistory(inventory, valuations, collections);
   const max = Math.max(...history.snapshots.map(point => point.value), 1);
   const changePercent = history.totals.acquisitionCost ? history.totals.unrealizedChange / history.totals.acquisitionCost * 100 : undefined;
   return <main className="shell wideShell historyPage">

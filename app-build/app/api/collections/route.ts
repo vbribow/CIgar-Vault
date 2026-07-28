@@ -9,8 +9,10 @@ import { collectionRequirementMatches, collectionTemplateFor } from "@/lib/colle
 import { isPresentationInventoryMatch } from "@/lib/collection-presentation";
 import { auditCollectionTemplateProtocol } from "@/lib/collection-templates";
 import { createServerRecordId } from "@/lib/server-record-id";
+import { isPrivateInventoryPreviewRequest, savePreviewInventoryOverride } from "@/lib/preview-inventory";
+import { loadPreviewCollections, savePreviewCollection } from "@/lib/preview-collections";
 export async function GET() {
-  if (dataMode() === "mock") return NextResponse.json({ data: [] });
+  if (dataMode() === "mock") return NextResponse.json({ data: await loadPreviewCollections() });
   try {
     return NextResponse.json({ data: await loadCollections() });
   } catch (e) {
@@ -65,8 +67,28 @@ export async function POST(request: Request) {
       if(!saved)throw new Error("Sign in before saving private collection records");
       return NextResponse.json({ data: collection, memberIds }, { status: 201 });
     }
+    if (dataMode() === "mock") {
+      if (!isPrivateInventoryPreviewRequest(request))
+        return NextResponse.json(
+          { error: "Local preview edits are allowed only from this private development host." },
+          { status: 403 },
+        );
+      const selected=new Set(memberIds);
+      const changed=inventory.flatMap(item=>{
+        const collectionId=item.inventoryId===collection.presentationInventoryId
+          ? undefined
+          : selected.has(item.inventoryId)
+            ? collection.collectionId
+            : item.collectionId===collection.collectionId
+              ? undefined
+              : item.collectionId;
+        return collectionId===item.collectionId?[]:[{...item,collectionId}];
+      });
+      await savePreviewCollection(collection);
+      for(const item of changed)await savePreviewInventoryOverride(item);
+      return NextResponse.json({ data: collection, memberIds, storage: "local-preview" }, { status: 201 });
+    }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in mock mode" }, { status: 409 });
     await saveCollection(collection, memberIds);
     return NextResponse.json({ data: collection, memberIds }, { status: 201 });
   } catch (e) {

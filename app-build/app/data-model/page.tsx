@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 import "./data-model.css";
 
 export const metadata: Metadata = publicPageMetadata(
-  "How Cedriva Understands a Cigar",
-  "Explore Cedriva’s collector-centered model for cigar identity, releases, ownership, provenance, evidence, and legacy.",
+  `How ${brand.name} Understands a Cigar`,
+  `Explore ${brand.name}’s collector-centered model for cigar identity, releases, ownership, provenance, evidence, and legacy.`,
   "/data-model",
 );
 
@@ -36,20 +37,20 @@ export default function DataModelPage() {
     <main className="shell dataModelPage">
       <section className="dataModelHero">
         <div>
-          <div className="eyebrow">The Cedriva Data Model · Working Draft 0.1</div>
+          <div className="eyebrow">The {brand.name} Data Model · Working Draft 0.1</div>
           <h1>A cigar is never only a row in an inventory.</h1>
-          <p className="lede">It is people, place, agriculture, time, craft, commercial history, and collector experience. Cedriva connects those relationships without losing the clarity a new collector needs.</p>
+          <p className="lede">It is people, place, agriculture, time, craft, commercial history, and collector experience. {brand.name} connects those relationships without losing the clarity a new collector needs.</p>
           <div className="ctaRow"><a className="button" href="#identity">Follow the cigar story</a><a className="button secondary" href="/catalog">Explore the cigar reference</a></div>
         </div>
         <aside>
           <span>The governing model</span>
           <strong>Identity before inventory.</strong>
-          <p>Cedriva first determines what a cigar is. Ownership is then documented as a private relationship between the collector and that shared identity.</p>
+          <p>{brand.name} first determines what a cigar is. Ownership is then documented as a private relationship between the collector and that shared identity.</p>
         </aside>
       </section>
 
       <section className="dataModelDefinition">
-        <div className="eyebrow">What Cedriva means by “a cigar”</div>
+        <div className="eyebrow">What {brand.name} means by “a cigar”</div>
         <div className="dataModelDefinitionGrid">
           <article><span>Product</span><h2>The reusable expression</h2><p>A canonical combination of brand, product line, blend, and vitola—the identity shared across discovery, learning, reviews, verification, and market evidence.</p></article>
           <article><span>Release</span><h2>The historical context</h2><p>A product placed into time, geography, factory, edition, packaging, band, MSRP, and distribution history.</p></article>
@@ -60,7 +61,7 @@ export default function DataModelPage() {
       <section className="dataModelIdentity" id="identity">
         <div className="dataModelSectionIntro">
           <div><div className="eyebrow">The identity ladder</div><h2>Understand the cigar one relationship at a time.</h2></div>
-          <p>These layers remain distinct even when the industry uses the same word for several of them. That discipline lets Cedriva preserve expert detail without overwhelming a beginner.</p>
+          <p>These layers remain distinct even when the industry uses the same word for several of them. That discipline lets {brand.name} preserve expert detail without overwhelming a beginner.</p>
         </div>
         <ol>{identityLayers.map(([title, body], index) => <li key={title}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{title}</h3><p>{body}</p></div></li>)}</ol>
       </section>
@@ -68,7 +69,7 @@ export default function DataModelPage() {
       <section className="dataModelRelationships">
         <div className="dataModelSectionIntro">
           <div><div className="eyebrow">A living knowledge system</div><h2>Facts become meaningful through connection.</h2></div>
-          <p>One shared cigar identity can support collector experiences across Discover, Vault, Review, Market, Verify, Community, Learn, and Cedriva AI.</p>
+          <p>One shared cigar identity can support collector experiences across Discover, Vault, Review, Market, Verify, Community, Learn, and {brand.name} AI.</p>
         </div>
         <div className="dataModelRelationshipGrid">
           {relationships.map((item, index) => <article key={item.title}><span>0{index + 1}</span><h3>{item.title}</h3><p>{item.body}</p><ul>{item.details.map((detail) => <li key={detail}>{detail}</li>)}</ul></article>)}
@@ -92,7 +93,7 @@ export default function DataModelPage() {
           <ul>
             <li>Publishing a review does not expose the private journal behind it.</li>
             <li>Sharing a collection view does not reveal cost or exact storage.</li>
-            <li>Cedriva AI uses only the context permitted for the interaction.</li>
+            <li>{brand.name} AI uses only the context permitted for the interaction.</li>
             <li>Collectors can inspect, correct, remove, and export personal context.</li>
           </ul>
         </div>

@@ -6,6 +6,7 @@ import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./humidors.css";
 import "./quick-links.css";
 import { WorkspaceGuide } from "@/components/workspace-guide";
+import { brand } from "@/lib/brand";
 export const dynamic = "force-dynamic";
 export default async function HumidorsPage() {
   const modeResult = await Promise.allSettled([accountDataMode()]);
@@ -96,7 +97,7 @@ function ClimateDataUnavailable() {
           <div className="eyebrow">Environmental storage</div>
           <h1>Climate intelligence is temporarily protected.</h1>
           <p className="lede">
-            Cedriva could not safely load humidor settings, readings, sensors,
+            {brand.name} could not safely load humidor settings, readings, sensors,
             and stored inventory together. No stability score, climate alert,
             or value-at-risk figure has been inferred from partial data.
           </p>

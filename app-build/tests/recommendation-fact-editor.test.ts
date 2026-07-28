@@ -17,7 +17,11 @@ test("recommendation correction updates the existing lot and refreshes guidance"
   assert.doesNotMatch(editor, /method: "POST"/);
   assert.match(editor, /JSON\.stringify\(\{ \.\.\.item, \[fact\]: value \}\)/);
   assert.match(editor, /router\.refresh\(\)/);
-  assert.match(editor, /Cedriva has refreshed this recommendation/);
+  assert.match(editor, /\$\{brand\.name\} has refreshed this recommendation/);
+});
+
+test("a saved provenance note is reported as a documented story", () => {
+  assert.match(record, /item\.provenanceNotes\?"Story documented":"Story waiting"/);
 });
 
 test("release year is never guessed or auto-filled", () => {

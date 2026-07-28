@@ -37,7 +37,7 @@ export default async function CigarPage({
   const [smokesResult, valuationsResult, activitiesResult, ratingsResult, collectionsResult, humidorsResult, climateReadingsResult] =
     await Promise.allSettled([
       mode === "mock" ? Promise.resolve([]) : loadSmokingLogs(),
-      mode === "mock" ? Promise.resolve([]) : loadValuations(),
+      loadValuations(),
       mode === "mock" ? Promise.resolve([]) : loadActivities(),
       mode === "mock" ? Promise.resolve([]) : loadRatings(),
       mode === "mock" ? Promise.resolve([]) : loadCollections(),
@@ -176,7 +176,7 @@ export default async function CigarPage({
             </p>
           ))}
           {!values.length && <p className="small">No dated valuations yet.</p>}
-          <a className="textLink" href={`/records?inventoryId=${encodeURIComponent(item.inventoryId)}#log-smoke`}>
+          <a className="textLink" href="/records">
             Add valuation →
           </a>
           </>}

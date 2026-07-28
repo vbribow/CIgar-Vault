@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { BrandManufacturingCoverage, BrandManufacturingStatus, ManufacturingTruthRecord } from "@/lib/manufacturing-truth";
+import { brand } from "@/lib/brand";
 
 const relationships = ["All relationships", "Vertically integrated", "Company-owned factory", "Partner-owned factory", "Directed contract production", "Mixed production"] as const;
 
@@ -91,8 +92,8 @@ export function ManufacturingCoverageIndex({ records }: { records: BrandManufact
           {!record.recordId && expanded && <div className="coverageGap" id={gapId}>
             <strong>{record.status === "Country verified" ? "What remains unverified" : "Evidence still required"}</strong>
             <div>{missing.map((item) => <span key={item}>{item}</span>)}</div>
-            <p>{record.status === "Country verified" ? "Cedriva has official country-level evidence, but will not assign a factory to every release without product-level support." : "Cedriva will publish these relationships only after direct manufacturer evidence or corroborated historical sources meet the trust standard."}</p>
-            <a href="#research-standard">How Cedriva verifies evidence ↓</a>
+            <p>{record.status === "Country verified" ? `${brand.name} has official country-level evidence, but will not assign a factory to every release without product-level support.` : `${brand.name} will publish these relationships only after direct manufacturer evidence or corroborated historical sources meet the trust standard.`}</p>
+            <a href="#research-standard">How {brand.name} verifies evidence ↓</a>
           </div>}
           <div className="coverageLinks">
             {record.recordId

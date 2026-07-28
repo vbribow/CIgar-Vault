@@ -12,7 +12,7 @@ export async function saveProfile(formData: FormData) {
   const profile = {
     user_id: user.id,
     display_name: String(formData.get("displayName") || "").trim(),
-    collection_name: String(formData.get("collectionName") || "My Cedriva").trim(),
+    collection_name: String(formData.get("collectionName") || "My Collection").trim(),
     experience_level: String(formData.get("experienceLevel") || "Collector"),
     onboarding_completed: true,
     updated_at: new Date().toISOString(),

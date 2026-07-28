@@ -4,6 +4,7 @@ import { humidorInsights } from "@/lib/humidor-insights";
 import { loadInventory } from "@/lib/inventory";
 import { loadHumidorReadings, loadHumidors } from "@/lib/data";
 import { climateIntelligence } from "@/lib/climate-intelligence";
+import { brand } from "@/lib/brand";
 import "../humidors.css";
 import "./detail.css";
 export const dynamic = "force-dynamic";
@@ -31,14 +32,14 @@ export default async function HumidorDetailPage({
     return (
       <main className="shell">
         <nav className="nav">
-          <a className="brand" href="/">Cedriva</a>
+          <a className="brand" href="/">{brand.name}</a>
           <div className="navLinks"><a href="/humidors">← Humidors</a></div>
         </nav>
         <section className="card humidorDetailUnavailable">
           <div className="eyebrow">Climate record protected</div>
           <h1>This humidor is temporarily unavailable.</h1>
           <p>
-            Cedriva could not safely load its configuration, readings, and
+            {brand.name} could not safely load its configuration, readings, and
             stored inventory together. The humidor has not been classified as
             missing, stable, or empty.
           </p>
@@ -69,7 +70,7 @@ export default async function HumidorDetailPage({
     <main className="shell">
       <nav className="nav">
         <a className="brand" href="/">
-          Cedriva
+          {brand.name}
         </a>
         <div className="navLinks">
           <a href="/humidors">← Humidors</a>

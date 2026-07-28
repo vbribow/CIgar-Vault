@@ -13,6 +13,7 @@ export type CollectionDashboardSummary = {
   cigarRetailValue: number;
   wholeValue: number;
   premium: number;
+  premiumSupported: boolean;
   isHumidorCollection: boolean;
   humidorValue?: number;
   humidorValueStatus: "Not applicable" | "Calculated" | "Awaiting complete cigar retail values" | "Whole-set retail needed";
@@ -180,11 +181,17 @@ export function summarizeCollection(
       : hasCompleteCigarRetail
         ? "Calculated"
         : "Awaiting complete cigar retail values";
+  const premiumSupported = completionPercent === 100
+    && componentEvidence.length === ownedComponents
+    && componentEvidence.every(evidence => evidence.marketUnit !== undefined);
   return {
     componentValue,
     cigarRetailValue,
     wholeValue,
-    premium: Math.max(0, wholeValue - componentValue),
+    premium: premiumSupported
+      ? Math.max(0, wholeValue - componentValue)
+      : 0,
+    premiumSupported,
     isHumidorCollection,
     humidorValue,
     humidorValueStatus,

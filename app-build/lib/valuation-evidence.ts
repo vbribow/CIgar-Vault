@@ -16,6 +16,11 @@ export function isVerifiedCompletedSale(value?: Valuation): boolean {
 
 export function claimsUnverifiedCompletedSale(value?: Valuation): boolean {
   if (!value || isVerifiedCompletedSale(value)) return false;
+  if (
+    value.lastSaleValue === undefined &&
+    value.marketEvidenceType &&
+    value.marketEvidenceType !== "Verified completed sale"
+  ) return false;
   const claimText = [value.marketEvidenceType, value.source, value.notes].filter(Boolean).join(" ");
   return value.lastSaleValue !== undefined || /completed[\s-]*sale/i.test(claimText);
 }

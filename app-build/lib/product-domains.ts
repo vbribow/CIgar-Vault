@@ -1,10 +1,12 @@
+import { brand } from "@/lib/brand";
+
 export type ProductDomainId = "discover"|"vault"|"review"|"market"|"verify"|"community"|"learn"|"ai"|"reserve";
 export type ProductDomainLink = { href:string; label:string; description:string };
 export type ProductDomain = { id:ProductDomainId; label:string; promise:string; href:string; links:ProductDomainLink[] };
 
 export const productDomains:ProductDomain[]=[
   {id:"discover",label:"Discover",promise:"Find the next meaningful cigar and understand why it matters.",href:"/discover",links:[
-    {href:"/discover",label:"Discover Cedriva",description:"Explore cigars through stories, goals, and trusted guidance"},
+    {href:"/discover",label:`Discover ${brand.name}`,description:"Explore cigars through stories, goals, and trusted guidance"},
     {href:"/catalog",label:"Cigar catalog",description:"Browse documented brands, lines, and vitolas"},
     {href:"/collection-catalog",label:"Collection catalog",description:"Explore researched heritage sets"},
     {href:"/wishlist",label:"Wish list",description:"Remember cigars and collections worth pursuing"},
@@ -45,16 +47,16 @@ export const productDomains:ProductDomain[]=[
     {href:"/learn/blending",label:"Blending & Master Blenders",description:"Understand blend architecture and study documented blender careers"},
     {href:"/learn/manufacturing-truth",label:"Manufacturing Truth",description:"Find the brand owner, blender, actual factory, tobacco regions, and supporting evidence"},
     {href:"/catalog",label:"Cigar reference",description:"Learn through documented cigar identities"},
-    {href:"/data-model",label:"How Cedriva understands a cigar",description:"Follow identity, release, provenance, evidence, and collector history"},
-    {href:"/sommelier-library",label:"Curated knowledge",description:"Review the evidence library behind Cedriva AI"},
+    {href:"/data-model",label:`How ${brand.name} understands a cigar`,description:"Follow identity, release, provenance, evidence, and collector history"},
+    {href:"/sommelier-library",label:"Curated knowledge",description:`Review the evidence library behind ${brand.name} AI`},
   ]},
-  {id:"ai",label:"Cigar Somm",promise:"Elevate collector judgment with trusted, personal guidance powered by Cedriva AI.",href:"/cigar-somm",links:[
+  {id:"ai",label:"Cigar Somm",promise:`Elevate collector judgment with trusted, personal guidance powered by ${brand.name} AI.`,href:"/cigar-somm",links:[
     {href:"/cigar-somm",label:"Open Cigar Somm",description:"Choose one cigar for its profile, readiness, and complete pairing plan"},
     {href:"/intelligence",label:"Collection intelligence",description:"Understand patterns, priorities, and evidence gaps"},
     {href:"/acquisitions",label:"Collection goals",description:"See documented pieces that would complete a set"},
   ]},
   {id:"reserve",label:"Reserve",promise:"The deepest level of intelligence, service, and stewardship.",href:"/pricing",links:[
-    {href:"/pricing",label:"Cedriva plans",description:"Choose the depth of service that fits your collection"},
+    {href:"/pricing",label:`${brand.name} plans`,description:"Choose the depth of service that fits your collection"},
     {href:"/account",label:"Account and privacy",description:"Control your plan, preferences, exports, and data"},
   ]},
 ];

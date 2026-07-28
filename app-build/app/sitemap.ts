@@ -1,8 +1,11 @@
 import type { MetadataRoute } from "next";
+import { brand } from "@/lib/brand";
 import { loadPublicIndustry } from "@/lib/industry-public";
 import { absoluteSiteUrl, publicStaticPages } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (brand.isPreview) return [];
+
   const staticEntries: MetadataRoute.Sitemap = publicStaticPages.map((page) => ({
     url: absoluteSiteUrl(page.path),
   }));

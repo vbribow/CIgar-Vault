@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 import "./humidor-climate.css";
 
 export const metadata: Metadata = publicPageMetadata(
@@ -43,7 +44,7 @@ export default function HumidorClimatePage() {
     <main className="shell climateLesson">
       <section className="climateLessonHero">
         <div>
-          <div className="eyebrow">Cedriva Learn · Collection Care</div>
+          <div className="eyebrow">{brand.name} Learn · Collection Care</div>
           <h1>Climate is not a number. It is a pattern.</h1>
           <p className="lede">
             Temperature and relative humidity work together. The goal is not
@@ -87,8 +88,8 @@ export default function HumidorClimatePage() {
             <span>Mixed collection</span>
             <strong>Mid-to-upper 60s°F</strong>
             <b>65–69% RH</b>
-            <p>A practical Cedriva starting compromise when one humidor contains both groups—not an official Habanos specification. Serious long-term collectors may choose separate environments.</p>
-            <small>Cedriva guidance · clearly identified inference</small>
+            <p>A practical {brand.name} starting compromise when one humidor contains both groups—not an official Habanos specification. Serious long-term collectors may choose separate environments.</p>
+            <small>{brand.name} guidance · clearly identified inference</small>
           </article>
         </div>
         <blockquote>
@@ -122,7 +123,7 @@ export default function HumidorClimatePage() {
       </section>
 
       <section className="timeSection">
-        <div><div className="eyebrow">Duration changes the meaning</div><h2>A spike is not a season.</h2><p>Severity, duration, repetition, and cigar condition determine the response. Cedriva should help collectors see trends rather than manufacture panic.</p></div>
+        <div><div className="eyebrow">Duration changes the meaning</div><h2>A spike is not a season.</h2><p>Severity, duration, repetition, and cigar condition determine the response. {brand.name} should help collectors see trends rather than manufacture panic.</p></div>
         <div className="timeEffects">{timeEffects.map(([time, body]) => <article key={time}><span>{time}</span><p>{body}</p></article>)}</div>
       </section>
 
@@ -166,7 +167,7 @@ export default function HumidorClimatePage() {
 
       <section className="climateLessonClosing">
         <div><div className="eyebrow">Put the lesson to work</div><h2>Protect the trend. Preserve the cigar.</h2></div>
-        <div><p>Set a range that matches the collection, record temperature and humidity together, and let Cedriva show whether the environment is truly stable over time.</p><div className="ctaRow"><a className="button" href="/humidors">Review my humidors</a><a className="button secondary" href="/sensors">Connect climate readings</a><a className="button secondary" href="/learn/resting-and-aging">Continue to resting and aging</a></div></div>
+        <div><p>Set a range that matches the collection, record temperature and humidity together, and let {brand.name} show whether the environment is truly stable over time.</p><div className="ctaRow"><a className="button" href="/humidors">Review my humidors</a><a className="button secondary" href="/sensors">Connect climate readings</a><a className="button secondary" href="/learn/resting-and-aging">Continue to resting and aging</a></div></div>
       </section>
     </main>
   );

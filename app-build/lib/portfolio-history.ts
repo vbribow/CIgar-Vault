@@ -1,13 +1,14 @@
-import type { InventoryItem, Valuation } from "@/lib/types";
+import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
 import { isCurrentInventoryRecord } from "@/lib/inventory-model";
+import { cigarInventoryRecords } from "@/lib/collection-presentation";
 
 export type PortfolioSnapshot = { date: string; value: number; valuedLots: number };
 export type PortfolioMover = { item: InventoryItem; latestValue: number; previousValue: number; change: number; changePercent: number; lotChange: number };
 
 const unitValue = (valuation: Valuation) => valuation.marketValue ?? valuation.replacementValue;
 
-export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Valuation[]) {
-  const currentInventory = inventory.filter(isCurrentInventoryRecord);
+export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Valuation[], collections:CigarCollection[] = []) {
+  const currentInventory = cigarInventoryRecords(inventory,collections).filter(isCurrentInventoryRecord);
   const byItem = new Map<string, Valuation[]>();
   for (const valuation of valuations) {
     if (unitValue(valuation) === undefined) continue;

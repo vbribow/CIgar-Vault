@@ -9,6 +9,7 @@ import { addInventoryRows } from "@/lib/smartsheet";
 import { updateInventoryRow } from "@/lib/smartsheet";
 import { saveOwnedRecordsAtomically } from "@/lib/user-data";
 import { auditCollectionTemplateProtocol } from "@/lib/collection-templates";
+import { isPrivateInventoryPreviewRequest, savePreviewInventoryOverrides } from "@/lib/preview-inventory";
 
 export async function POST(request: Request, { params }: { params: Promise<{ collectionId: string }> }) {
   try {
@@ -65,12 +66,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ col
       })),
     );
     if (!accountSaved) {
-      if (!authorizeWrite(request)) return NextResponse.json({ error: "Sign in before populating collection inventory" }, { status: 401 });
-      if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in preview mode" }, { status: 409 });
-      const physicalLotUpdates=physicalLotRepairs.filter(item=>inventory.some(existing=>existing.inventoryId===item.inventoryId));
-      const physicalLotCreates=physicalLotRepairs.filter(item=>!inventory.some(existing=>existing.inventoryId===item.inventoryId));
-      await addInventoryRows([...drafts,...physicalLotCreates]);
-      await Promise.all([...reusable.map(({ item }) => item), ...physicalLotUpdates, ...repairs].map(item => updateInventoryRow(item.inventoryId, item)));
+      if(dataMode()==="mock"){
+        if(!isPrivateInventoryPreviewRequest(request))return NextResponse.json({error:"Local preview reconciliation is allowed only from this private development host."},{status:403});
+        await savePreviewInventoryOverrides(accountChanges);
+      }else{
+        if (!authorizeWrite(request)) return NextResponse.json({ error: "Sign in before populating collection inventory" }, { status: 401 });
+        const physicalLotUpdates=physicalLotRepairs.filter(item=>inventory.some(existing=>existing.inventoryId===item.inventoryId));
+        const physicalLotCreates=physicalLotRepairs.filter(item=>!inventory.some(existing=>existing.inventoryId===item.inventoryId));
+        await addInventoryRows([...drafts,...physicalLotCreates]);
+        await Promise.all([...reusable.map(({ item }) => item), ...physicalLotUpdates, ...repairs].map(item => updateInventoryRow(item.inventoryId, item)));
+      }
     }
     return NextResponse.json({ data: { created: drafts.length+physicalLotRepairs.filter(item=>!inventory.some(existing=>existing.inventoryId===item.inventoryId)).length, linked: reusable.length, repaired: repairs.length+physicalLotRepairs.filter(item=>inventory.some(existing=>existing.inventoryId===item.inventoryId)).length, unresolved: unmaterializedCollectionRequirements(template), items: drafts } }, { status: 201 });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Collection population failed" }, { status: 422 }); }

@@ -1,4 +1,5 @@
 import type { buildCollectionIntelligence } from "@/lib/collection-intelligence";
+import { brand } from "@/lib/brand";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const signed = (value: number) => `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
@@ -37,12 +38,12 @@ export function CollectorCommandCenter({ intelligence }: { intelligence: ReturnT
         <footer><span>{snapshots[0]?.date ?? "First evidence"}</span><span>{history.totals.coverage}% independently valued</span><span>{snapshots.at(-1)?.date ?? "Current"}</span></footer>
       </article>
       <article className="terminalList moversPanel"><header><div><span>Market monitor</span><strong>Largest measured moves</strong></div><a href="/value-history">Full history →</a></header>
-        <div>{movers.map(mover => <a href={`/inventory/${mover.item.inventoryId}`} key={mover.item.inventoryId}><span><strong>{mover.item.brand} {mover.item.line}</strong><small>{mover.item.vitola} · {money.format(mover.latestValue)}/cigar</small></span><b className={mover.changePercent >= 0 ? "positive" : "negative"}>{signed(mover.changePercent)}</b></a>)}{!movers.length && <p>Two dated valuations per cigar are required before Cedriva reports a move.</p>}</div>
+        <div>{movers.map(mover => <a href={`/inventory/${mover.item.inventoryId}`} key={mover.item.inventoryId}><span><strong>{mover.item.brand} {mover.item.line}</strong><small>{mover.item.vitola} · {money.format(mover.latestValue)}/cigar</small></span><b className={mover.changePercent >= 0 ? "positive" : "negative"}>{signed(mover.changePercent)}</b></a>)}{!movers.length && <p>Two dated valuations per cigar are required before {brand.name} reports a move.</p>}</div>
       </article>
       <article className="terminalList"><header><div><span>Exception queue</span><strong>Records needing attention</strong></div><a href="/inventory-integrity">Audit →</a></header>
         <div>{intelligence.advisor.needsAttention.map(item => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}><span><strong>{item.brand} {item.line}</strong><small>{[item.currentQty === undefined && "quantity", item.retailValue === undefined && "value", !item.storageLocationId && "location", !item.vintage && "release year"].filter(Boolean).join(" · ")} needed</small></span><em>Fix →</em></a>)}{!intelligence.advisor.needsAttention.length && <p>Every core inventory field is complete.</p>}</div>
       </article>
-      <article className="terminalList"><header><div><span>Cedriva AI · AI-assisted</span><strong>Smoke window</strong></div><a href="/cigar-somm">Consult advisor →</a></header>
+      <article className="terminalList"><header><div><span>{brand.name} AI · AI-assisted</span><strong>Smoke window</strong></div><a href="/cigar-somm">Consult advisor →</a></header>
         <div>{intelligence.advisor.smokeNow.slice(0, 5).map(item => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}><span><strong>{item.brand} {item.line}</strong><small>{item.vintage ?? "Undated"} · {item.vitola}</small></span><em>{item.score ?? "Ready"}</em></a>)}{!intelligence.advisor.smokeNow.length && <p>Add release years to unlock evidence-based maturity guidance. <a href="/inventory#inventory-records">Review undated lots →</a></p>}</div>
       </article>
     </div>

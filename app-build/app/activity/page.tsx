@@ -24,7 +24,7 @@ export default async function ActivityPage({
     <main className="shell">
       <nav className="nav">
         <a className="brand" href="/">
-          Cedriva
+          Vault
         </a>
         <div className="navLinks">
           <a href="/inventory">Inventory</a>
@@ -41,7 +41,7 @@ export default async function ActivityPage({
           </p>
         </div>
       </section>
-      {!ready?<section className="section card"><div className="eyebrow">Activity ledger protected</div><h2>Collection activity is temporarily paused.</h2><p className="small">Cedriva could not verify inventory and its permanent activity ledger together. No activity is being shown as absent, and no quantity-changing transaction can be written against a partial record.</p><a className="button secondary" href="/activity">Try again</a></section>:<ActivityManager
+      {!ready?<section className="section card"><div className="eyebrow">Activity ledger protected</div><h2>Collection activity is temporarily paused.</h2><p className="small">The platform could not verify inventory and its permanent activity ledger together. No activity is being shown as absent, and no quantity-changing transaction can be written against a partial record.</p><a className="button secondary" href="/activity">Try again</a></section>:<ActivityManager
         inventory={inventory}
         initialActivities={activities}
         mode={mode!}

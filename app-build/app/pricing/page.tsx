@@ -4,11 +4,12 @@ import { plans, type PlanId } from "@/lib/entitlements";
 import { ProductEvent } from "@/components/product-event";
 import "./pricing.css";
 import "./tiers.css";
+import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 export const metadata:Metadata={
-  title:"Cedriva Reserve",
-  description:"Explore the deepest level of Cedriva intelligence, education, service, and collection stewardship.",
+  title:`${brand.name} Reserve`,
+  description:`Explore the deepest level of ${brand.name} intelligence, education, service, and collection stewardship.`,
 };
 
 const featureLabels={
@@ -29,7 +30,7 @@ export default async function PricingPage({searchParams}:{searchParams:Promise<{
   const tiers:PlanId[]=["free","collector","pro","concierge"];
   return <main className="shell pricingPage">
     <ProductEvent eventType="pricing-viewed" properties={recommended?{recommended}:undefined}/>
-    <section className="pricingHero"><div><div className="eyebrow">Cedriva Reserve · Depth when it becomes useful</div><h1>Start simply. Grow without limits.</h1><p className="lede">Cedriva recommends deeper service only when research, collection scale, climate care, or personal support makes it genuinely valuable.</p></div><div className="founderCount"><strong>25</strong><span>founder memberships</span><small>Complete access remains grandfathered.</small></div></section>
+    <section className="pricingHero"><div><div className="eyebrow">{brand.name} Reserve · Depth when it becomes useful</div><h1>Start simply. Grow without limits.</h1><p className="lede">{brand.name} recommends deeper service only when research, collection scale, climate care, or personal support makes it genuinely valuable.</p></div><div className="founderCount"><strong>25</strong><span>founder memberships</span><small>Complete access remains grandfathered.</small></div></section>
     {params.error&&<div className="pricingNotice error">{params.error}</div>}
     {recommended&&<div className="pricingNotice">Based on your recent collection activity, <strong>{plans[recommended]?.name||"the next plan"}</strong> may be useful. Nothing has been restricted.</div>}
     <section className="tierGrid">{tiers.map(id=>{const plan=plans[id];return <article className={`tierCard ${recommended===id?"recommended":""}`} key={id}>{recommended===id&&<b>Recommended</b>}<div className="eyebrow">{plan.name}</div><h2>{plan.positioning}</h2><div className="tierLimits"><span>{Number.isFinite(plan.inventoryLimit)?`${plan.inventoryLimit} inventory lots`:"Unlimited inventory"}</span><span>{Number.isFinite(plan.humidorLimit)?`${plan.humidorLimit} humidor${plan.humidorLimit===1?"":"s"}`:"Unlimited humidors"}</span></div><ul>{plan.features.map(feature=><li key={feature}>{featureLabels[feature]}</li>)}</ul><a className="button secondary" href={id==="free"?"/login?mode=signup":"/account"}>{id==="free"?"Start free":"Available after founder beta"}</a></article>})}</section>

@@ -8,6 +8,7 @@ dist
 *.log
 *.tsbuildinfo
 .DS_Store
+app-build/.local-data/
 
 # Local Cedriva strategy and governance documents guide development but are not published.
 /corporate-docs/*.md
