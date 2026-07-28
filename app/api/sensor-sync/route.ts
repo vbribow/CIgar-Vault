@@ -13,11 +13,13 @@ async function sync(request:Request){
     const result=await fetchSensorPushReadings(sensorPush);
     if(!result.linked)return NextResponse.json({error:"Register a SensorPush device and add its external device ID first"},{status:422});
     const ingested=result.readings.length?await ingestSensorReadings(result.readings):{imported:0,duplicates:0};
-    const syncedIds=new Set(result.readings.map(r=>r.sensorId));
     const syncedAt=new Date().toISOString();
-    for(const sensor of sensorPush)await saveSensor({...sensor,lastSyncAt:syncedIds.has(sensor.sensorId)?syncedAt:sensor.lastSyncAt,connectionStatus:syncedIds.has(sensor.sensorId)?"Connected":"Stale",syncMethod:"Cloud API"});
+    for(const sensor of sensorPush){
+      const cursor=result.cursors.get(sensor.sensorId);
+      await saveSensor({...sensor,lastSyncAt:cursor||sensor.lastSyncAt,connectionStatus:cursor?(result.truncated?"Stale":"Connected"):"Stale",syncMethod:"Cloud API"});
+    }
     const notifications=await processClimateAlertNotifications();
-    return NextResponse.json({data:{provider:"SensorPush",linked:result.linked,...ingested,truncated:result.truncated,syncedAt,notifications}});
+    return NextResponse.json({data:{provider:"SensorPush",linked:result.linked,...ingested,truncated:result.truncated,syncedAt,notifications,message:result.truncated?"SensorPush limited this batch. Saved progress is safe; wait at least one minute, then sync again to continue.":"All available SensorPush readings are current."}});
   }catch(error){
     await Promise.all(sensorPush.map(sensor=>saveSensor({...sensor,connectionStatus:"Error",syncMethod:"Cloud API"}).catch(()=>undefined)));
     throw error;

@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSensorPushSamples } from "../lib/sensorpush";
+import { latestSensorPushCursors,normalizeSensorPushSamples,sensorPushStartTime } from "../lib/sensorpush";
 import type { EnvironmentalSensor } from "../lib/types";
 const sensor:EnvironmentalSensor={sensorId:"SP-1",humidorId:"H1",provider:"SensorPush",name:"Cabinet",externalDeviceId:"123.456",syncMethod:"Cloud API",connectionStatus:"Ready"};
 test("SensorPush samples normalize into provider-independent readings",()=>{const rows=normalizeSensorPushSamples({sensors:{"123.456":[{observed:"2026-07-21T12:00:00Z",temperature:68.2,humidity:66.4}]}},[sensor]);assert.equal(rows.length,1);assert.equal(rows[0].humidorId,"H1");assert.equal(rows[0].externalReadingId,"sensorpush:123.456:2026-07-21T12:00:00Z");});
 test("unregistered SensorPush devices are ignored",()=>{const rows=normalizeSensorPushSamples({sensors:{unknown:[{observed:"2026-07-21T12:00:00Z",temperature:68,humidity:67}]}},[sensor]);assert.equal(rows.length,0);});
+test("eight-sensor initial synchronization stays within a bounded twelve-hour window",()=>{const sensors=Array.from({length:8},(_,index)=>({...sensor,sensorId:`SP-${index}`,externalDeviceId:`device-${index}`}));assert.equal(sensorPushStartTime(sensors,Date.parse("2026-07-28T12:00:00Z")),"2026-07-28T00:00:00.000Z");});
+test("a newly added sensor keeps the shared query from skipping its initial history",()=>{const start=sensorPushStartTime([{...sensor,lastSyncAt:"2026-07-28T11:00:00Z"},{...sensor,sensorId:"SP-2",externalDeviceId:"789"}],Date.parse("2026-07-28T12:00:00Z"));assert.equal(start,"2026-07-28T00:00:00.000Z");});
+test("sync cursors advance only to the newest reading actually received",()=>{const rows=normalizeSensorPushSamples({sensors:{"123.456":[{observed:"2026-07-21T12:00:00Z",temperature:68,humidity:67},{observed:"2026-07-21T12:01:00Z",temperature:68.1,humidity:66.9}]}},[sensor]);assert.equal(latestSensorPushCursors(rows).get("SP-1"),"2026-07-21T12:01:00.000Z");});
+test("malformed or physically invalid samples never enter climate history",()=>{const rows=normalizeSensorPushSamples({sensors:{"123.456":[{observed:"not-a-date",temperature:68,humidity:67},{observed:"2026-07-21T12:00:00Z",temperature:68,humidity:120}]}},[sensor]);assert.equal(rows.length,0);});
