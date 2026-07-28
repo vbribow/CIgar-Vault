@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-const target = process.env.SITES_DEPLOYMENT === "true" ? "vinext" : "next";
+const target = process.env.VERCEL === "1" ? "next" : "vinext";
 const result = spawnSync(target, ["build"], { stdio: "inherit" });
 
 if (result.error) {
