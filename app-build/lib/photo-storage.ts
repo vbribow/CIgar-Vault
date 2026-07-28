@@ -2,7 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 import { createClient as createSessionClient } from "./supabase/server";
 
 type StoredObject={body:ArrayBuffer;httpMetadata?:{contentType?:string};size?:number;writeHttpMetadata(headers:Headers):void};
-type PhotoBucket={put(key:string,value:ArrayBuffer,options:{httpMetadata:{contentType:string};customMetadata:Record<string,string>}):Promise<void>;get(key:string):Promise<StoredObject|null>};
+type PhotoBucket={
+ put(key:string,value:ArrayBuffer,options:{httpMetadata:{contentType:string};customMetadata:Record<string,string>}):Promise<void>;
+ get(key:string):Promise<StoredObject|null>;
+ remove(key:string):Promise<void>;
+};
 const bucketName="inventory-photos";
 
 function admin(){
@@ -28,7 +32,8 @@ export async function photoBucket():Promise<PhotoBucket>{
  bucketReady??=ensureBucket();await bucketReady;
  return{
   async put(key,value,options){const client=admin()??await createSessionClient(),{error}=await client.storage.from(bucketName).upload(key,value,{contentType:options.httpMetadata.contentType,cacheControl:"3600",upsert:true,metadata:options.customMetadata});if(error)throw new Error(/bucket not found/i.test(error.message)?"Private photo storage has not been provisioned. Apply the latest Supabase migration.":error.message)},
-  async get(key){const client=admin()??await createSessionClient(),{data,error}=await client.storage.from(bucketName).download(key);if(error){if(/not found|does not exist/i.test(error.message))return null;throw error}const contentType=data.type||"application/octet-stream",body=await data.arrayBuffer();return{body,size:body.byteLength,httpMetadata:{contentType},writeHttpMetadata(headers){headers.set("Content-Type",contentType);headers.set("Content-Length",String(body.byteLength))}}}
+  async get(key){const client=admin()??await createSessionClient(),{data,error}=await client.storage.from(bucketName).download(key);if(error){if(/not found|does not exist/i.test(error.message))return null;throw error}const contentType=data.type||"application/octet-stream",body=await data.arrayBuffer();return{body,size:body.byteLength,httpMetadata:{contentType},writeHttpMetadata(headers){headers.set("Content-Type",contentType);headers.set("Content-Length",String(body.byteLength))}}},
+  async remove(key){const client=admin()??await createSessionClient(),{error}=await client.storage.from(bucketName).remove([key]);if(error&&!/not found|does not exist/i.test(error.message))throw error}
  };
 }
 

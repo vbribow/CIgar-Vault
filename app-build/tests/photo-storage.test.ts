@@ -13,4 +13,12 @@ test("native Vercel photo storage does not import Cloudflare workers",()=>{
  const source=readFileSync(new URL("../lib/photo-storage.ts",import.meta.url),"utf8");
  assert.doesNotMatch(source,/cloudflare:workers/);
  assert.match(source,/inventory-photos/);
+ assert.match(source,/remove\(\[key\]\)/);
+});
+
+test("a photo is removed when its inventory relationship cannot be saved",()=>{
+ const route=readFileSync(new URL("../app/api/inventory/[inventoryId]/photos/route.ts",import.meta.url),"utf8");
+ assert.match(route,/if\(!await saveOwnedRecord\("inventory",inventoryId,updated\)\)throw/);
+ assert.match(route,/await bucket\.remove\(key\)\.catch/);
+ assert.match(route,/throw error/);
 });
