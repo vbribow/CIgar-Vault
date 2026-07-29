@@ -7,6 +7,7 @@ import { appOrigin } from "@/lib/app-origin";
 import { claimPartnerReferral } from "@/lib/partner-platform";
 import { requireBetaInvitation } from "@/lib/beta-access";
 import { safeAuthNext } from "@/lib/auth-navigation";
+import { isEmailNotConfirmed } from "@/lib/auth-errors";
 
 const failure = (message: string, mode: string, next: string) => `/login?mode=${mode}&next=${encodeURIComponent(next)}&error=${encodeURIComponent(message)}`;
 
@@ -16,7 +17,7 @@ export async function signIn(formData: FormData) {
   const password = String(formData.get("password") || "");
   const next = safeAuthNext(formData.get("next"));
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect(failure(error.message, "signin", next));
+  if (error) redirect(failure(isEmailNotConfirmed(error) ? "Your email is not confirmed yet. Resend the confirmation email below, then follow its link." : error.message, "signin", next));
   redirect(next);
 }
 
@@ -52,6 +53,28 @@ export async function signUp(formData: FormData) {
   if (data.user) await claimPartnerReferral(data.user.id);
   if (!data.session) redirect("/login?mode=signin&notice=Check%20your%20email%20to%20confirm%20your%20account.");
   redirect(next);
+}
+
+export async function resendConfirmation(formData: FormData) {
+  const supabase = await createClient();
+  const email = String(formData.get("email") || "").trim();
+  const next = safeAuthNext(formData.get("next"));
+  const productionHost =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  const origin = appOrigin((await headers()).get("origin") || "", productionHost);
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: `${origin}/auth/callback?next=${next}` },
+  });
+  if (error) {
+    const message = error.status === 429 || error.code === "over_email_send_rate_limit"
+      ? "Please wait a moment before requesting another confirmation email."
+      : "Unable to resend the confirmation email right now. Please try again.";
+    redirect(failure(message, "signin", next));
+  }
+  redirect(`/login?mode=signin&next=${encodeURIComponent(next)}&notice=${encodeURIComponent("Confirmation email sent. Check your inbox and spam folder, then follow the link before signing in.")}`);
 }
 
 export async function requestPasswordReset(formData: FormData) {
