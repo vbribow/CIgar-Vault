@@ -14,6 +14,7 @@ export function betaInvitationEmail(collector:Pick<BetaCollector,"name"|"email">
   "",
   `Create your account: ${betaSignupUrl}`,
   `Use this exact invited email address: ${collector.email}`,
+  "After creating your account, open the confirmation email and follow its link before signing in.",
   "",
   "Before beginning, please review:",
   "Beta Agreement: https://hojavia.com/beta-agreement",
