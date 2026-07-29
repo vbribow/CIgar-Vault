@@ -12,16 +12,30 @@ test("completion batches six records with bounded two-record concurrency",()=>{
 });
 
 test("completion only saves source-backed medium or high confidence evidence",()=>{
-  assert.match(panel,/!draft\.sourceUrl/);
-  assert.match(panel,/draft\.confidence==="Low"/);
+  assert.match(panel,/draft\.automaticSaveEligible/);
   assert.match(panel,/\/api\/valuations/);
+});
+
+test("signed-in valuation work starts automatically when research is enabled",()=>{
+  assert.match(panel,/useEffect/);
+  assert.match(panel,/\/api\/account\/preferences/);
+  assert.match(panel,/fetch\("\/api\/valuation-research"/);
+  assert.match(panel,/valuationResearch!==false/);
+  assert.match(panel,/readiness\.data\?\.configured/);
+  assert.match(panel,/await run\(\)/);
+  assert.match(panel,/production monitor checks the queue hourly/);
+  assert.match(panel,/waiting for its secure research connection/);
 });
 
 test("completion records uncertain research once and defers duplicate paid searches",()=>{
   assert.match(panel,/marketEvidenceType:"Insufficient evidence"/);
   assert.match(panel,/held for human review and deferred from repeated automated research/);
+  assert.match(panel,/Current queue is clear/);
+  assert.match(panel,/no price has been invented/);
   const page=readFileSync(new URL("../app/valuations/page.tsx",import.meta.url),"utf8");
   assert.match(page,/valuationNeedsMonitoring\(row\.item,valuations\)/);
+  assert.match(page,/need active value work/);
+  assert.match(page,/completionQueue\.slice/);
 });
 
 test("completion refuses paid valuation research before exact cigar identity is resolved",()=>{

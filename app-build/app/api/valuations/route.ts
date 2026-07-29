@@ -10,6 +10,7 @@ import { loadPreviewValuations, savePreviewValuation } from "@/lib/preview-valua
 import { accountDataMode, createOwnedRecord, loadOwnedRecord, saveOwnedRecordsAtomically } from "@/lib/user-data";
 import { createServerRecordId } from "@/lib/server-record-id";
 import type { Valuation } from "@/lib/types";
+import { assertValuationIntegrity } from "@/lib/valuation-integrity";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: await loadPreviewValuations() });
   try {
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
     const input = ValuationCreateSchema.parse(await request.json());
     const { submissionId, ...fields } = input;
     const item: Valuation = { valuationId: createServerRecordId("valuation", submissionId), ...fields };
+    const inventoryRecord=(await loadInventory()).find(record=>record.inventoryId===item.inventoryId);
+    if(!inventoryRecord)throw new Error(`Inventory ID ${item.inventoryId} was not found`);
+    assertValuationIntegrity(inventoryRecord,item);
     if (await accountDataMode() === "supabase") {
       const created=await createOwnedRecord("valuations",item.valuationId,item);
       if(created==="exists"){
@@ -37,9 +41,7 @@ export async function POST(request: Request) {
       const records:Parameters<typeof saveOwnedRecordsAtomically>[0]=[
       ];
       if(item.replacementValue!==undefined||item.replacementSticksPerBox!==undefined){
-        const inventory=(await loadInventory()).find(record=>record.inventoryId===item.inventoryId);
-        if(!inventory)throw new Error(`Inventory ID ${item.inventoryId} was not found`);
-        records.push({kind:"inventory",recordId:inventory.inventoryId,payload:applyRetailValuationToInventory(inventory,item)});
+        records.push({kind:"inventory",recordId:inventoryRecord.inventoryId,payload:applyRetailValuationToInventory(inventoryRecord,item)});
       }
       if(records.length&&!await saveOwnedRecordsAtomically(records))throw new Error("Could not synchronize valuation evidence");
       return NextResponse.json({ data: item }, { status: 201 });
@@ -52,9 +54,7 @@ export async function POST(request: Request) {
         );
       const retry = await savePreviewValuation(item);
       if (item.replacementValue !== undefined || item.replacementSticksPerBox !== undefined) {
-        const inventory=(await loadInventory()).find(record=>record.inventoryId===item.inventoryId);
-        if(!inventory)throw new Error(`Inventory ID ${item.inventoryId} was not found`);
-        await savePreviewInventoryOverride(applyRetailValuationToInventory(inventory,item));
+        await savePreviewInventoryOverride(applyRetailValuationToInventory(inventoryRecord,item));
       }
       return NextResponse.json({ data: item, retry, storage: "local-preview" }, { status: retry ? 200 : 201 });
     }

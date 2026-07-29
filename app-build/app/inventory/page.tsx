@@ -7,6 +7,7 @@ import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
 import { brand } from "@/lib/brand";
+import { cigarInventoryRecords } from "@/lib/collection-presentation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./vault-paths.css";
@@ -42,6 +43,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const catalog = catalogResult.status === "fulfilled" ? catalogResult.value : mergeCatalogRecords([], items);
   const ratings = ratingsResult.status === "fulfilled" ? ratingsResult.value : [];
   const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+  const cigarItems = cigarInventoryRecords(items, collections);
   const collectionLinksReady = collectionsResult.status === "fulfilled";
   const relatedReady = ratingsResult.status === "fulfilled" && collectionLinksReady;
   const plan = planResult.ok ? planResult.value : undefined;
@@ -54,7 +56,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     </nav>
     <WorkspaceGuide items={[{label:"Capture",title:"Add by camera or form",detail:"Identify a cigar, review the fields, then approve it into inventory.",href:"#mobile-intake"},{label:"Count",title:"Reconcile boxes and loose sticks",detail:"Record what is physically present without disturbing the rest of the lot.",href:"/inventory-count"},{label:"Protect",title:"Complete value and provenance",detail:"Close evidence gaps for reporting, verification, and climate exposure.",href:"/collection-health"}]}/>
     {!relatedReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Supporting evidence temporarily unavailable</div><p>Your inventory is intact and available. Collection links or published ratings are temporarily hidden rather than shown as absent.</p></section>}
-    <UpgradeNudge plan={plan} context="inventory" usage={items.length} signals={{lotCount:items.length,portfolioValue:items.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}}/>
+    <UpgradeNudge plan={plan} context="inventory" usage={cigarItems.length} signals={{lotCount:cigarItems.length,portfolioValue:cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}}/>
     <div><InventoryManager initialItems={items} catalog={catalog} ratings={ratings} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialCollectionId={filters.collectionId} /></div>
   </main>;
 }

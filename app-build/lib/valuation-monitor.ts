@@ -1,4 +1,5 @@
 import { canonicalCigarIdentity, cigarIdentityKey } from "./cigar-identity";
+import type { ValuationResearch } from "./valuation-research";
 import type { InventoryItem, Valuation } from "./types";
 
 const DAY_MS=86_400_000;
@@ -10,6 +11,22 @@ export type ValuationUsageEvent={created_at:string;properties?:{estimatedCostUsd
 export function valuationIdentityKey(item:InventoryItem){return cigarIdentityKey(item)}
 
 export function valuationIdentityReady(item:InventoryItem){return canonicalCigarIdentity(item).complete}
+
+export function automaticValuationResearchIssues(research:ValuationResearch){
+  const issues:string[]=[];
+  if(!research.sourceUrl)issues.push("A direct source link is required.");
+  if(!/^(High|Medium)$/i.test(research.confidence))issues.push("Evidence confidence must be Medium or High.");
+  if(!/fox\s*cigar/i.test(research.notes))issues.push("The required Fox Cigar verification result was not recorded.");
+  const hasSupportedValue=research.replacementValue!==null||research.marketValue!==null;
+  const hasLinkedAsking=research.askingPrice!==null&&Boolean(research.askingPriceSourceUrl);
+  const hasLinkedSale=research.lastSaleValue!==null&&Boolean(research.lastSaleSourceUrl);
+  if(!hasSupportedValue&&!hasLinkedAsking&&!hasLinkedSale)issues.push("No source-backed price evidence was found.");
+  return issues;
+}
+
+export function automaticValuationResearchReady(research:ValuationResearch){
+  return automaticValuationResearchIssues(research).length===0;
+}
 
 export function valuationRefreshDays(item:InventoryItem,latest?:Valuation){
   if(latest?.marketEvidenceType==="Insufficient evidence"||(latest?.marketValue===undefined&&latest?.replacementValue===undefined&&/insufficient|unsupported|no defensible/i.test(latest?.notes||"")))return 180;

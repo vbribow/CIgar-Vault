@@ -196,6 +196,25 @@ test("legacy generated rows discard an inherited collection year", () => {
   assert.doesNotMatch(repairs[0].catalogId ?? "", /2024/);
 });
 
+test("a corrected sourced lineup updates only untouched generated quantities",()=>{
+  const correctedTemplate={...template,expectedComponents:1,expectedCigars:1,requirements:["1 OpusX Lancero"],componentEvidence:[
+    {requirement:"1 OpusX Lancero",brand:"Arturo Fuente",line:"OpusX",vitola:"Lancero",sourceUrl:"https://example.com/lancero",sourceLabel:"Official specification"},
+  ]};
+  const pristine={
+    inventoryId:"INV-TEST-C01",collectionId:"COL-TEST",brand:"Arturo Fuente",line:"Preview cigar",vitola:"Toro",
+    originalQty:2,currentQty:2,looseStickQty:2,smokedQty:0,notes:"Expected component: 2 Preview cigars",
+  };
+  const corrected=collectionComponentRepairs(collection,correctedTemplate,[pristine])[0];
+  assert.equal(corrected.originalQty,1);
+  assert.equal(corrected.currentQty,1);
+  assert.equal(corrected.looseStickQty,1);
+
+  const collectorAdjusted={...pristine,currentQty:1,looseStickQty:1};
+  const preserved=collectionComponentRepairs(collection,correctedTemplate,[collectorAdjusted])[0];
+  assert.equal(preserved.originalQty,2);
+  assert.equal(preserved.currentQty,1);
+});
+
 test("researched repairs are idempotent and preserve collector-owned fields", () => {
   const legendsCollection = { collectionId: "COL-LEGENDS", name: "Fuente & Padrón Legends" };
   const legendsTemplate = {

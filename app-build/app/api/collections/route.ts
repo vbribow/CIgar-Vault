@@ -4,7 +4,7 @@ import { authorizeWrite, dataMode } from "@/lib/config";
 import { getCollections, saveCollection } from "@/lib/smartsheet";
 import { loadCollections } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
-import { accountDataMode, saveOwnedRecordsAtomically } from "@/lib/user-data";
+import { accountDataMode, deleteOwnedRecord, saveOwnedRecordsAtomically } from "@/lib/user-data";
 import { collectionRequirementMatches, collectionTemplateFor } from "@/lib/collection-dashboard";
 import { isPresentationInventoryMatch } from "@/lib/collection-presentation";
 import { auditCollectionTemplateProtocol } from "@/lib/collection-templates";
@@ -96,5 +96,21 @@ export async function POST(request: Request) {
       { error: e instanceof Error ? e.message : "Invalid request" },
       { status: 422 },
     );
+  }
+}
+
+export async function DELETE(request:Request){
+  try{
+    const {collectionId}=await request.json() as {collectionId?:string};
+    if(!collectionId)return NextResponse.json({error:"Collection reference is required"},{status:422});
+    const [collections,inventory,mode]=await Promise.all([loadCollections(),loadInventory(),accountDataMode()]);
+    const collection=collections.find(value=>value.collectionId===collectionId);
+    if(!collection)return NextResponse.json({error:"Collection not found"},{status:404});
+    if(inventory.some(item=>item.collectionId===collectionId))return NextResponse.json({error:"Remove or reassign the collection’s inventory before deleting its record."},{status:409});
+    if(mode!=="supabase")return NextResponse.json({error:"Empty collection removal is available only for signed-in private Vault records."},{status:405});
+    if(!await deleteOwnedRecord("collections",collectionId))return NextResponse.json({error:"Sign in before removing a private collection record"},{status:401});
+    return new NextResponse(null,{status:204});
+  }catch(error){
+    return NextResponse.json({error:error instanceof Error?error.message:"Collection removal failed"},{status:422});
   }
 }

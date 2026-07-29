@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { collectionSearchUrl, inferCollectionDetails, parseCollectionSearchRss } from "../lib/collection-research";
+import { collectionSearchUrl, collectionVerificationSearchUrls, inferCollectionDetails, parseCollectionSearchRss } from "../lib/collection-research";
 import { collectionTemplates } from "../lib/collection-templates";
 import { matchCollectionRequirements } from "../lib/collection-matching";
 import type { InventoryItem } from "../lib/types";
@@ -8,6 +8,12 @@ import type { InventoryItem } from "../lib/types";
 test("collection research builds a cigar-specific web query", () => {
   const url = collectionSearchUrl("La Gran Fumada");
   assert.match(url, /La%20Gran%20Fumada%20cigar%20collection%20contents%20box%20set/);
+});
+
+test("every collection verification pass includes an exact Fox Cigar search",()=>{
+  const urls=collectionVerificationSearchUrls("From Dream to Dynasty");
+  assert.equal(urls.length,2);
+  assert.match(decodeURIComponent(urls[1]),/site:foxcigar\.com/);
 });
 
 test("collection research parses web results without markup", () => {

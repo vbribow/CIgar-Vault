@@ -56,6 +56,13 @@ test("a whole-collection price cannot be stored as one cigar's retail replacemen
   }).success, false);
 });
 
+test("research instructions prohibit mixed-set allocation", () => {
+  const source=readFileSync(new URL("../lib/valuation-research.ts",import.meta.url),"utf8");
+  assert.match(source,/Never divide, average, normalize, or allocate the price of a mixed collection/);
+  assert.match(source,/every cigar in that box is the same exact cigar/);
+  assert.match(source,/Collection components require exact individual-cigar evidence/);
+});
+
 test("valuation research never treats owned quantity as original packaging", () => {
   const source=readFileSync(new URL("../lib/valuation-research.ts",import.meta.url),"utf8");
   assert.match(source,/current owned quantity is inventory balance only/);

@@ -7,6 +7,7 @@ export function cigarStoryId(item: Pick<InventoryItem, "brand" | "line" | "vitol
 }
 
 export function cigarStoryHref(item: Pick<InventoryItem, "brand" | "line" | "vitola" | "vintage">) {
+  if(item.vitola.toLowerCase().includes("presentation humidor"))return "/collections";
   return `/cigars/${encodeURIComponent(cigarStoryId(item))}`;
 }
 

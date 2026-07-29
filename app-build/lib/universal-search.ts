@@ -1,7 +1,131 @@
-import type{CigarCollection,InventoryItem,Valuation,WishlistItem}from"./types";
+import {
+  collectionContentsSummary,
+  inventoryCollectionRelationships,
+} from "./collection-presentation";
 import { productDomains } from "./product-domains";
-export type SearchResult={id:string;kind:"Inventory"|"Collection"|"Market"|"Workspace";label:string;detail:string;href:string;signal?:string};
-const workspaces=[["Home","Your adaptive collector home","/"] as const,...productDomains.flatMap(domain=>domain.links.map(link=>[link.label,`${domain.label} · ${link.description}`,link.href] as const))];
-const words=(query:string)=>query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-const matches=(query:string,value:string)=>words(query).every(word=>value.toLowerCase().includes(word));
-export function universalSearch(query:string,input:{inventory:InventoryItem[];collections:CigarCollection[];valuations:Valuation[];wishlist:WishlistItem[]}){if(query.trim().length<2)return[];const latest=new Map<string,Valuation>();for(const value of[...input.valuations].sort((a,b)=>a.valuationDate.localeCompare(b.valuationDate)))latest.set(value.inventoryId,value);const results:SearchResult[]=[];for(const item of input.inventory)if(matches(query,`${item.inventoryId} ${item.brand} ${item.line} ${item.vitola} ${item.vintage??""} ${item.boxCode??""}`))results.push({id:`inventory-${item.inventoryId}`,kind:"Inventory",label:`${item.brand} ${item.line}`,detail:`${item.vitola}${item.vintage?` · ${item.vintage}`:""} · ${item.currentQty??"?"} cigars`,href:`/inventory/${encodeURIComponent(item.inventoryId)}`,signal:(latest.get(item.inventoryId)?.marketValue??latest.get(item.inventoryId)?.replacementValue??item.retailValue)!==undefined?"Valued":"Value needed"});for(const collection of input.collections)if(matches(query,`${collection.name} ${collection.maker??""} ${collection.edition??""} ${collection.releaseYear??""}`))results.push({id:`collection-${collection.collectionId}`,kind:"Collection",label:collection.name,detail:`${collection.maker??"Collector set"}${collection.expectedCigars?` · ${collection.expectedCigars} cigars`:""}`,href:`/collections/${encodeURIComponent(collection.collectionId)}`,signal:collection.status});for(const item of input.wishlist)if(matches(query,`${item.brand} ${item.line} ${item.vitola} ${item.collectionName??""}`))results.push({id:`market-${item.wishlistId}`,kind:"Market",label:`${item.brand} ${item.line}`,detail:`${item.vitola} · ${item.status}${item.targetPrice?` · target $${item.targetPrice}/cigar`:""}`,href:"/wishlist",signal:item.availabilityListings?.some(listing=>listing.availability==="In stock"||listing.availability==="Auction open")?"Available":"Watching"});for(const[title,detail,href]of workspaces)if(matches(query,`${title} ${detail}`))results.push({id:`workspace-${href}`,kind:"Workspace",label:title,detail,href});return results.slice(0,16)}
+import type {
+  CigarCollection,
+  InventoryItem,
+  Valuation,
+  WishlistItem,
+} from "./types";
+
+export type SearchResult = {
+  id: string;
+  kind: "Inventory" | "Collection" | "Market" | "Workspace";
+  label: string;
+  detail: string;
+  href: string;
+  signal?: string;
+};
+
+const workspaces = [
+  ["Home", "Your adaptive collector home", "/"] as const,
+  ...productDomains.flatMap((domain) =>
+    domain.links.map(
+      (link) =>
+        [link.label, `${domain.label} · ${link.description}`, link.href] as const,
+    ),
+  ),
+];
+const words = (query: string) =>
+  query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+const matches = (query: string, value: string) =>
+  words(query).every((word) => value.toLowerCase().includes(word));
+
+export function universalSearch(
+  query: string,
+  input: {
+    inventory: InventoryItem[];
+    collections: CigarCollection[];
+    valuations: Valuation[];
+    wishlist: WishlistItem[];
+  },
+) {
+  if (query.trim().length < 2) return [];
+  const latest = new Map<string, Valuation>();
+  for (const value of [...input.valuations].sort((a, b) =>
+    a.valuationDate.localeCompare(b.valuationDate),
+  ))
+    latest.set(value.inventoryId, value);
+  const relationships = inventoryCollectionRelationships(
+    input.inventory,
+    input.collections,
+  );
+  const results: SearchResult[] = [];
+  for (const item of input.inventory) {
+    if (
+      !matches(
+        query,
+        `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola} ${item.vintage ?? ""} ${item.boxCode ?? ""}`,
+      )
+    )
+      continue;
+    const relationship = relationships.get(item.inventoryId);
+    const contents =
+      relationship?.kind === "presentation" && relationship.collection
+        ? collectionContentsSummary(relationship.collection, input.inventory)
+        : undefined;
+    results.push({
+      id: `inventory-${item.inventoryId}`,
+      kind: "Inventory",
+      label: `${item.brand} ${item.line}`,
+      detail: contents
+        ? `${item.vitola} · ${contents.documentedCigars ?? contents.originalCigars} documented cigars · presentation humidor`
+        : `${item.vitola}${item.vintage ? ` · ${item.vintage}` : ""} · ${item.currentQty ?? "?"} cigars`,
+      href: `/inventory/${encodeURIComponent(item.inventoryId)}`,
+      signal:
+        (latest.get(item.inventoryId)?.marketValue ??
+          latest.get(item.inventoryId)?.replacementValue ??
+          item.retailValue) !== undefined
+          ? "Valued"
+          : "Value needed",
+    });
+  }
+  for (const collection of input.collections)
+    if (
+      matches(
+        query,
+        `${collection.name} ${collection.maker ?? ""} ${collection.edition ?? ""} ${collection.releaseYear ?? ""}`,
+      )
+    )
+      results.push({
+        id: `collection-${collection.collectionId}`,
+        kind: "Collection",
+        label: collection.name,
+        detail: `${collection.maker ?? "Collector set"}${collection.expectedCigars ? ` · ${collection.expectedCigars} cigars` : ""}`,
+        href: `/collections/${encodeURIComponent(collection.collectionId)}`,
+        signal: collection.status,
+      });
+  for (const item of input.wishlist)
+    if (
+      matches(
+        query,
+        `${item.brand} ${item.line} ${item.vitola} ${item.collectionName ?? ""}`,
+      )
+    )
+      results.push({
+        id: `market-${item.wishlistId}`,
+        kind: "Market",
+        label: `${item.brand} ${item.line}`,
+        detail: `${item.vitola} · ${item.status}${item.targetPrice ? ` · target $${item.targetPrice}/cigar` : ""}`,
+        href: "/wishlist",
+        signal: item.availabilityListings?.some(
+          (listing) =>
+            listing.availability === "In stock" ||
+            listing.availability === "Auction open",
+        )
+          ? "Available"
+          : "Watching",
+      });
+  for (const [title, detail, href] of workspaces)
+    if (matches(query, `${title} ${detail}`))
+      results.push({
+        id: `workspace-${href}`,
+        kind: "Workspace",
+        label: title,
+        detail,
+        href,
+      });
+  return results.slice(0, 16);
+}

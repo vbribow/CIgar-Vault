@@ -9,6 +9,7 @@ test("presentation assets redirect away from the cigar-specific Unified Story",(
   assert.match(unifiedStory,/inventoryCollectionRelationships\(inventory,collections\)/);
   assert.match(unifiedStory,/relationship\?\.kind==="presentation"/);
   assert.match(unifiedStory,/redirect\(`\/collections\//);
+  assert.match(unifiedStory,/isPresentationInventoryRecord\(representative,collections\)/);
 });
 
 test("inventory presents a collection destination instead of a cigar-story button for presentation assets",()=>{

@@ -6,7 +6,7 @@ import { buildCigarStory } from "@/lib/cigar-story";
 import { loadCollections, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { canonicalCatalogHref } from "@/lib/canonical-cigar-record";
-import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
+import { inventoryCollectionRelationships, isPresentationInventoryRecord } from "@/lib/collection-presentation";
 import { SmokingExperienceScorecardView } from "@/components/smoking-experience-scorecard";
 import { buildSmokingExperienceScorecards } from "@/lib/smoking-scorecard";
 import "./story.css";
@@ -27,6 +27,7 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
   if(relationship?.kind==="presentation"&&relationship.collection){
     redirect(`/collections/${encodeURIComponent(relationship.collection.collectionId)}`);
   }
+  if(isPresentationInventoryRecord(representative,collections))redirect("/collections");
   return <main className="shell cigarStoryPage">
     <section className="unifiedStoryHero">
       <div>
