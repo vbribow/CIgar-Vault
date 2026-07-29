@@ -32,3 +32,20 @@ test("inventory records link to one stable shared Cigar Story", () => {
   const detail = readFileSync(new URL("../app/inventory/[inventoryId]/page.tsx", import.meta.url), "utf8");
   assert.match(detail, /Open unified Cigar Story/);
 });
+
+test("newer retail evidence does not hide the latest supported market value", () => {
+  const story = buildCigarStory({
+    identityId: cigarStoryId(lot),
+    inventory: [{ ...lot, retailValue: undefined }],
+    valuations: [
+      { ...value, valuationId: "VAL-MARKET", valuationDate: "2026-07-20", replacementValue: undefined, marketValue: 72 },
+      { ...value, valuationId: "VAL-RETAIL", valuationDate: "2026-07-24", replacementValue: 64, marketValue: undefined },
+    ],
+    smokes: [],
+    ratings: [],
+    collections: [],
+  });
+  assert.equal(story?.retailUnit, 64);
+  assert.equal(story?.marketUnit, 72);
+  assert.equal(story?.latestValuation?.valuationId, "VAL-RETAIL");
+});

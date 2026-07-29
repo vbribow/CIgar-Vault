@@ -10,6 +10,18 @@ export const marketEvidenceTypes = [
 export type MarketEvidenceType = typeof marketEvidenceTypes[number];
 export const marketAskingPriceLabel = "Market asking price — no confirmed sale";
 
+export function latestValuationWith(
+  values: Valuation[],
+  predicate: (value: Valuation) => boolean,
+): Valuation | undefined {
+  return [...values]
+    .filter(predicate)
+    .sort((left, right) =>
+      right.valuationDate.localeCompare(left.valuationDate) ||
+      right.valuationId.localeCompare(left.valuationId)
+    )[0];
+}
+
 export function isVerifiedCompletedSale(value?: Valuation): boolean {
   return Boolean(value && value.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl);
 }

@@ -1,5 +1,5 @@
 import { canonicalCigarIdentity, cigarIdentityKey } from "./cigar-identity";
-import { isVerifiedCompletedSale } from "./valuation-evidence";
+import { isVerifiedCompletedSale, latestValuationWith } from "./valuation-evidence";
 import type { CigarCollection, InventoryItem, ProfessionalRating, SmokingLog, Valuation } from "./types";
 
 export function cigarStoryId(item: Pick<InventoryItem, "brand" | "line" | "vitola" | "vintage">) {
@@ -29,11 +29,13 @@ export function buildCigarStory(input: {
   const collectionIds = new Set(lots.flatMap(item => item.collectionId ? [item.collectionId] : []));
   const collections = input.collections.filter(item => collectionIds.has(item.collectionId));
   const latestValuation = valuations[0];
+  const latestReplacementValuation = latestValuationWith(valuations, value => value.replacementValue !== undefined);
+  const latestMarketValuation = latestValuationWith(valuations, value => value.marketValue !== undefined);
   const completedSale = valuations
     .filter(isVerifiedCompletedSale)
     .sort((a, b) => (b.lastSaleDate || "").localeCompare(a.lastSaleDate || ""))[0];
   const retailUnits = lots.flatMap(item => item.retailValue === undefined ? [] : [item.retailValue]);
-  const retailUnit = retailUnits.length ? Math.max(...retailUnits) : latestValuation?.replacementValue;
+  const retailUnit = retailUnits.length ? Math.max(...retailUnits) : latestReplacementValuation?.replacementValue;
   const quantity = lots.reduce((sum, item) => sum + (item.currentQty ?? 0), 0);
   const personalScores = smokes.flatMap(item => item.overall === undefined ? [] : [item.overall]);
   const publishedScores = ratings.map(item => item.score);
@@ -50,11 +52,13 @@ export function buildCigarStory(input: {
     ratings,
     collections,
     latestValuation,
+    latestReplacementValuation,
+    latestMarketValuation,
     completedSale,
     retailUnit,
     quantity,
     retailLotValue: retailUnit === undefined ? undefined : retailUnit * quantity,
-    marketUnit: latestValuation?.marketValue,
+    marketUnit: latestMarketValuation?.marketValue,
     personalAverage: personalScores.length ? Math.round(personalScores.reduce((sum, value) => sum + value, 0) / personalScores.length * 10) / 10 : undefined,
     publishedAverage: publishedScores.length ? Math.round(publishedScores.reduce((sum, value) => sum + value, 0) / publishedScores.length * 10) / 10 : undefined,
     sourceCount: sources.size,

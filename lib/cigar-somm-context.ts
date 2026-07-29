@@ -1,6 +1,7 @@
 import { buildCollectorDNA } from "./collection-intelligence";
 import type { CigarCollection, Humidor, HumidorReading, InventoryItem, SmokingLog, Valuation, WishlistItem } from "./types";
 import { buildSmokingExperienceScorecards, smokingScorecardSommContext } from "./smoking-scorecard";
+import { latestValuationWith } from "./valuation-evidence";
 
 export type CigarSommCollectorContext = {
   privacy: "Private summary for this signed-in collector";
@@ -41,7 +42,9 @@ export function buildCigarSommCollectorContext(input: {
   const collection = selected?.collectionId ? collections.find(value => value.collectionId === selected.collectionId) : undefined;
   const humidor = selected?.storageLocationId ? humidors.find(value => value.humidorId === selected.storageLocationId) : undefined;
   const latestReading = humidor ? readings.filter(value => value.humidorId === humidor.humidorId).sort((a, b) => b.recordedAt.localeCompare(a.recordedAt))[0] : undefined;
-  const latestValuation = selected ? valuations.filter(value => value.inventoryId === selected.inventoryId).sort((a, b) => b.valuationDate.localeCompare(a.valuationDate))[0] : undefined;
+  const selectedValuations = selected ? valuations.filter(value => value.inventoryId === selected.inventoryId) : [];
+  const latestMarketValuation = latestValuationWith(selectedValuations, value => value.marketValue !== undefined);
+  const latestReplacementValuation = latestValuationWith(selectedValuations, value => value.replacementValue !== undefined);
   const recent = [...input.smokes].sort((a, b) => b.dateSmoked.localeCompare(a.dateSmoked)).slice(0, 5).map(smoke => {
     const item = input.inventory.find(value => value.inventoryId === smoke.inventoryId);
     const performance = [smoke.construction ? `construction ${smoke.construction}` : "", smoke.burn ? `burn ${smoke.burn}` : ""].filter(Boolean).join(" · ");
@@ -58,7 +61,7 @@ export function buildCigarSommCollectorContext(input: {
     collection: collection?.name,
     storage: humidor?.name,
     latestClimate: latestReading ? { temperatureF: latestReading.temperatureF, humidity: latestReading.humidity, recordedAt: latestReading.recordedAt } : undefined,
-    latestValuePerCigar: money(latestValuation?.marketValue ?? latestValuation?.replacementValue ?? selected.retailValue),
+    latestValuePerCigar: money(latestMarketValuation?.marketValue ?? latestReplacementValuation?.replacementValue ?? selected.retailValue),
     smokingExperience: smokingScorecardSommContext(buildSmokingExperienceScorecards(selected, input.inventory, input.smokes).identity || buildSmokingExperienceScorecards(selected, input.inventory, input.smokes).lot),
   } : undefined;
   return {
