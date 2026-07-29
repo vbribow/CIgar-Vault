@@ -8,6 +8,10 @@ export function privateBetaEnabled(
   return environment === "production";
 }
 
+export function normalizeBetaEmail(email: string) {
+  return email.trim().normalize("NFKC").toLowerCase();
+}
+
 export async function requireBetaInvitation(email: string) {
   if (!privateBetaEnabled()) return;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -21,7 +25,7 @@ export async function requireBetaInvitation(email: string) {
   const { data, error } = await admin
     .from("beta_collectors")
     .select("id,stage")
-    .eq("email", email.toLowerCase())
+    .eq("email", normalizeBetaEmail(email))
     .maybeSingle();
   if (error) throw new Error("Private beta enrollment is temporarily unavailable.");
   if (!data || data.stage === "Prospect") {
