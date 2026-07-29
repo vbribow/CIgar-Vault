@@ -64,6 +64,21 @@ test("every formerly frozen collection is reconciled through exact sourced physi
   }
 });
 
+test("Father and Son 2026 uses the final shipped lineup instead of the preview",()=>{
+  const father=template("TPL-FUENTE-FATHER-SON-2026");
+  assert.deepEqual(readiness(father.templateId),{
+    physicalLots:8,
+    identities:8,
+    cigars:10,
+    sourced:8,
+    requirements:8,
+    autoReady:true,
+  });
+  assert.ok(father.sourceLabel.includes("post-release"));
+  assert.ok(father.requirements.some(requirement=>/Destino al Siglo/i.test(requirement)));
+  assert.ok(!father.requirements.some(requirement=>/Oro Oscuro/i.test(requirement)));
+});
+
 test("the universal protocol blocks incomplete present and future collections",()=>{
   const future={
     ...template("TPL-FUENTE-PADRON-LEGENDS"),

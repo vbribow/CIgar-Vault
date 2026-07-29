@@ -1,0 +1,15 @@
+node_modules
+.pnpm-store
+.next
+dist
+.wrangler
+.env
+.env.local
+*.log
+*.tsbuildinfo
+.DS_Store
+app-build/.local-data/
+
+# Local Cedriva strategy and governance documents guide development but are not published.
+/corporate-docs/*.md
+!/corporate-docs/LAUNCH_PLAN.md

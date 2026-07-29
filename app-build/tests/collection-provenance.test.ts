@@ -25,10 +25,14 @@ test("audited collection evidence corrects Gran Fumada and separates Father and 
   assert.ok(gran.requirements.includes("OpusX Oro Oscuro OxO Lancero 2004 Aged Selection"));
   assert.ok(!gran.requirements.some(requirement=>/OxO Phantom/i.test(requirement)));
   const father=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-FATHER-SON-2026")!;
-  assert.equal(collectionComponentIdentity("OpusX 25 Double Robusto",father).vitola,"Double Robusto — 2026 Father & Son debut");
-  assert.equal(collectionComponentIdentity("Don Carlos 90 Años Corona",father).vitola,"Corona — as reported by Carlito Fuente");
-  assert.equal(collectionComponentIdentity("1 Don Carlos The Man — standard cap",father).vitola,"Robusto (5.25 × 50) — standard cap");
-  assert.equal(collectionComponentIdentity("2 Don Carlos The Man — Cuban Tickler head",father).vitola,"Cuban Tickler-head 2026 Father & Son release");
+  assert.equal(collectionComponentIdentity("OpusX 25 Double Robusto",father).vitola,"Double Robusto (5.75 × 52)");
+  assert.equal(collectionComponentIdentity("Don Carlos 90 Años Robusto Extra",father).vitola,"Robusto Extra (5.75 × 47)");
+  assert.equal(collectionComponentIdentity("1 Don Carlos The Man — standard cap",father).vitola,"Robusto (5.25 × 50)");
+  assert.equal(collectionComponentIdentity("2 Don Carlos The Man — Cuban Tickler head",father).vitola,"Cuban Tickler (5.875 × 52)");
+  assert.equal(father.expectedIdentities,8);
+  assert.ok(father.requirements.some(requirement=>/Destino al Siglo/i.test(requirement)));
+  assert.ok(!father.requirements.some(requirement=>/Oro Oscuro/i.test(requirement)));
+  assert.equal(father.requirements.filter(requirement=>/Gran AniverXario/i.test(requirement)).length,1);
 });
 
 test("source-backed collection identities preserve construction and exact dimensions",()=>{

@@ -31,7 +31,13 @@ type Item = {
   created_at: string;
 };
 
-export function FounderBetaFeedback({ writeKey }: { writeKey: string }) {
+export function FounderBetaFeedback({
+  writeKey,
+  onFeedbackUpdated,
+}: {
+  writeKey: string;
+  onFeedbackUpdated?: () => void | Promise<void>;
+}) {
   const [items, setItems] = useState<Item[]>([]);
   const [message, setMessage] = useState("");
   const evidence = useMemo(() => buildBetaEvidenceSummary(items.map(item => ({ ...item, mode: item.mode || "Issue report" }))), [items]);
@@ -55,6 +61,7 @@ export function FounderBetaFeedback({ writeKey }: { writeKey: string }) {
       return;
     }
     setItems(current => current.map(value => value.id === item.id ? { ...value, ...result.data } : value));
+    await onFeedbackUpdated?.();
     setMessage("Feedback record updated.");
   }
 
@@ -99,7 +106,10 @@ export function FounderBetaFeedback({ writeKey }: { writeKey: string }) {
           {item.name_associations && <><dt>Associations</dt><dd>{item.name_associations}</dd></>}
         </dl>
       </div>}
-      <form action={form => update(item, String(form.get("status")) as Item["status"], String(form.get("founderNote") || ""))}>
+      <form
+        key={`${item.id}:${item.status}:${item.founder_note || ""}`}
+        action={form => update(item, String(form.get("status")) as Item["status"], String(form.get("founderNote") || ""))}
+      >
         <select name="status" defaultValue={item.status}><option>Open</option><option>Reviewing</option><option>Resolved</option><option>Closed</option></select>
         <input name="founderNote" defaultValue={item.founder_note || ""} placeholder="Response or resolution note"/>
         <button className="button secondary">Save</button>

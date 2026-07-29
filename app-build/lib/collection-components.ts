@@ -130,15 +130,21 @@ export function collectionComponentRepairs(collection: CigarCollection, template
     const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
     const notes = `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}`;
     const provenanceNotes = `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`;
+    const previousRequirement=existing.notes?.match(/^Expected component:\s*(.*?)(?:\s+·|$)/)?.[1];
+    const untouchedGeneratedQuantity=previousRequirement!==requirement
+      && existing.originalQty!==undefined
+      && existing.currentQty===existing.originalQty
+      && (existing.looseStickQty??existing.currentQty)===existing.currentQty
+      && (existing.smokedQty??0)===0;
     const repaired = {
       ...existing,
       catalogId: canonical.identityId,
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
-      originalQty: existing.originalQty ?? identity.quantity,
-      currentQty: existing.currentQty ?? existing.looseStickQty ?? identity.quantity,
-      looseStickQty: existing.looseStickQty ?? existing.currentQty ?? identity.quantity,
+      originalQty: untouchedGeneratedQuantity ? identity.quantity : existing.originalQty ?? identity.quantity,
+      currentQty: untouchedGeneratedQuantity ? identity.quantity : existing.currentQty ?? existing.looseStickQty ?? identity.quantity,
+      looseStickQty: untouchedGeneratedQuantity ? identity.quantity : existing.looseStickQty ?? existing.currentQty ?? identity.quantity,
       smokedQty: existing.smokedQty ?? 0,
       vintage: cigarVintage,
       provenanceNotes,
@@ -153,6 +159,9 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       && existing.brand === result.brand
       && existing.line === result.line
       && existing.vitola === result.vitola
+      && existing.originalQty === result.originalQty
+      && existing.currentQty === result.currentQty
+      && existing.looseStickQty === result.looseStickQty
       && existing.provenanceNotes === result.provenanceNotes
       && existing.retailValue === result.retailValue
       && existing.status === result.status
