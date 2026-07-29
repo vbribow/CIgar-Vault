@@ -4,7 +4,7 @@ export const BetaCollectorInput=z.object({id:z.string().uuid().optional(),name:z
 export type BetaCollector=z.infer<typeof BetaCollectorInput>&{id:string;createdAt:string;updatedAt:string};
 const stageOrder:BetaStage[]=["Prospect","Invited","Signed up","Imported","Activated"];
 export const betaSignupUrl="https://hojavia.com/login?mode=signup";
-export function betaInvitationMailto(collector:Pick<BetaCollector,"name"|"email">){
+export function betaInvitationEmail(collector:Pick<BetaCollector,"name"|"email">){
  const subject="Your Hojavía private beta invitation";
  const body=[
   `Hi ${collector.name},`,
@@ -21,7 +21,11 @@ export function betaInvitationMailto(collector:Pick<BetaCollector,"name"|"email"
   "",
   "This invitation is personal and may not be transferred.",
  ].join("\n");
- return `mailto:${encodeURIComponent(collector.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+ return{recipient:collector.email,subject,body};
+}
+export function betaInvitationMailto(collector:Pick<BetaCollector,"name"|"email">){
+ const{recipient,subject,body}=betaInvitationEmail(collector);
+ return `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 export function advancedBetaStage(current:BetaStage,signals:{signedUp:boolean;inventoryLots:number;activated:boolean}){const detected:BetaStage=signals.activated||signals.inventoryLots>=20?"Activated":signals.inventoryLots>0?"Imported":signals.signedUp?"Signed up":current;return stageOrder.indexOf(detected)>stageOrder.indexOf(current)?detected:current}
 export function betaSummary(collectors:BetaCollector[]){const count=(stage:BetaStage)=>collectors.filter(item=>item.stage===stage).length;const activated=count("Activated");return{total:collectors.length,prospects:count("Prospect"),invited:count("Invited"),signedUp:count("Signed up"),imported:count("Imported"),activated,founderSeatsRemaining:Math.max(0,25-activated)}}
