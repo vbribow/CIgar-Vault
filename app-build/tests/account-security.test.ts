@@ -15,7 +15,8 @@ test("security summary finds the latest backup without counting audit records", 
 
 test("complete account export preserves every owned record", () => {
   const payload=buildAccountExport({userId:"U1",email:"collector@example.com",profile:{collection_name:"Vault"},preferences:{product_analytics:false},records,createdAt:"2026-07-21T12:00:00Z"});
-  assert.equal(payload.format,"cigar-vault-account-export");
+  assert.equal(payload.format,"hojavia-account-export");
+  assert.equal(payload.version,2);
   assert.equal(payload.recordCount,4);
   assert.equal(payload.records[0].record_id,"I1");
   assert.deepEqual(payload.preferences,{product_analytics:false});

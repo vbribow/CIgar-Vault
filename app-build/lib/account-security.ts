@@ -29,8 +29,8 @@ export function buildAccountExport(input: {
   createdAt: string;
 }) {
   return {
-    format: "cigar-vault-account-export",
-    version: 1,
+    format: "hojavia-account-export",
+    version: 2,
     createdAt: input.createdAt,
     owner: { userId: input.userId, email: input.email },
     profile: input.profile ?? null,

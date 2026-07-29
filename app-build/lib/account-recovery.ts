@@ -6,8 +6,8 @@ export const RecoveryMode = z.enum(["missing","replace","skip"]);
 export type RecoveryModeValue = z.infer<typeof RecoveryMode>;
 
 export const AccountExportSchema = z.object({
-  format: z.literal("cigar-vault-account-export"),
-  version: z.literal(1),
+  format: z.enum(["hojavia-account-export","cigar-vault-account-export"]),
+  version: z.union([z.literal(1),z.literal(2)]),
   createdAt: z.string().datetime(),
   owner: z.object({ userId:z.string().min(1), email:z.string().email().optional() }),
   recordCount: z.number().int().nonnegative(),
@@ -18,6 +18,10 @@ export const AccountExportSchema = z.object({
     updated_at: z.string().datetime().optional(),
   })).max(10000),
 }).superRefine((value,context) => {
+  const validFormatVersion =
+    (value.format === "hojavia-account-export" && value.version === 2) ||
+    (value.format === "cigar-vault-account-export" && value.version === 1);
+  if(!validFormatVersion)context.addIssue({code:"custom",path:["version"],message:"Export format and version do not match"});
   if(value.recordCount!==value.records.length)context.addIssue({code:"custom",path:["recordCount"],message:"Export record count does not match its contents"});
   const keys=new Set<string>();
   value.records.forEach((record,index)=>{const key=`${record.kind}:${record.record_id}`;if(keys.has(key))context.addIssue({code:"custom",path:["records",index,"record_id"],message:"Export contains a duplicate record"});keys.add(key)});
