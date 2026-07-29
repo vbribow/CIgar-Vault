@@ -67,18 +67,21 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     };
   }, [recentlySaved, editing]);
 
-  const statuses = useMemo(() => [...new Set(items.map((item) => item.status).filter(Boolean))].sort(), [items]);
-  const locations = useMemo(() => [...new Set(items.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [items]);
+  const scopedItems = useMemo(
+    () => initialActiveOnly ? items.filter((item) => (item.currentQty ?? 0) > 0) : items,
+    [items, initialActiveOnly],
+  );
+  const statuses = useMemo(() => [...new Set(scopedItems.map((item) => item.status).filter(Boolean))].sort(), [scopedItems]);
+  const locations = useMemo(() => [...new Set(scopedItems.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [scopedItems]);
   const collectionRelationships = useMemo(() => inventoryCollectionRelationships(items,collections), [items,collections]);
   const collectionContents = useMemo(() => new Map(collections.map(collection => [collection.collectionId,collectionContentsSummary(collection,items)])), [collections,items]);
-  const filtered = useMemo(() => items.filter((item) => {
+  const filtered = useMemo(() => scopedItems.filter((item) => {
     const haystack = `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola}`.toLowerCase();
     const missingMatch = missing === "all" || (missing === "quantity" && (item.fullBoxQty === undefined || item.looseStickQty === undefined)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
     const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
-    const activityMatch = !initialActiveOnly || (item.currentQty ?? 0) > 0;
-    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && activityMatch;
-  }), [items, query, status, missing, storage, initialCollectionId, initialActiveOnly]);
+    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch;
+  }), [scopedItems, query, status, missing, storage, initialCollectionId]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
@@ -191,7 +194,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>
       <label><span>Storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All locations</option><option value="unassigned">Unassigned</option>{locations.map((value)=><option key={value}>{value}</option>)}</select></label>
-      <div className="filterCount">{filtered.length} of {items.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
+      <div className="filterCount">{filtered.length} of {scopedItems.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
     </section>
     {message&&missing!=="all"&&<div className="inventoryQueueNotice" role="status" aria-live="polite">{message}<small>{filtered.length} record{filtered.length===1?"":"s"} currently remain in this audit view.</small></div>}
     {initialCollectionId&&<section className="card inventoryDataNotice"><div><strong>{collections.find(collection=>collection.collectionId===initialCollectionId)?.name||"Selected collection"} · focused component queue</strong><p>Showing only linked lots that match the selected data-quality filter.</p></div><a className="button secondary" href={`/inventory?missing=${encodeURIComponent(missing)}#inventory-records`}>Show all matching lots</a></section>}
