@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import { findBoxFormat } from "@/lib/box-formats";
+import { recordRevision } from "@/lib/record-revision";
 import type { InventoryItem } from "@/lib/types";
 
 type CountDraft = { fullBoxQty: string; sticksPerBox: string; looseStickQty: string; storageLocationId: string };
@@ -91,7 +92,7 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
     setSaving(item.inventoryId);
     setMessages((current) => ({ ...current, [item.inventoryId]: "" }));
     try {
-      const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, { method: "PUT", headers: { "Content-Type": "application/json", "x-founder-key": writeKey }, body: JSON.stringify(payload) });
+      const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, { method: "PUT", headers: { "Content-Type": "application/json", "x-founder-key": writeKey, "If-Match": recordRevision(item) }, body: JSON.stringify(payload) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.issues?.[0]?.message || result.error || "Save failed");
       setItems((current) => current.map((candidate) => candidate.inventoryId === item.inventoryId ? result.data : candidate));

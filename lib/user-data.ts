@@ -1,6 +1,7 @@
 import type { DataMode } from "./config";
 import { dataMode } from "./config";
 import type { VaultRecordKind } from "./data-authority";
+import { recordRevision } from "./record-revision";
 import { createClient, supabaseConfigured } from "./supabase/server";
 
 export type { VaultRecordKind } from "./data-authority";
@@ -36,6 +37,34 @@ export async function saveOwnedRecord(kind: VaultRecordKind, recordId: string, p
   const { error } = await context.supabase.from("vault_records").upsert({ user_id: context.user.id, kind, record_id: recordId, payload, updated_at: new Date().toISOString() }, { onConflict: "user_id,kind,record_id" });
   if (error) throw error;
   return true;
+}
+
+export async function saveOwnedRecordIfUnchanged(
+  kind: VaultRecordKind,
+  recordId: string,
+  payload: unknown,
+  expectedRevision: string,
+): Promise<"saved" | "conflict" | false> {
+  const context = await accountContext();
+  if (!context) return false;
+  const { data: current, error: loadError } = await context.supabase
+    .from("vault_records")
+    .select("payload,updated_at")
+    .eq("kind", kind)
+    .eq("record_id", recordId)
+    .maybeSingle();
+  if (loadError) throw loadError;
+  if (!current || recordRevision(current.payload) !== expectedRevision) return "conflict";
+  const { data: saved, error: saveError } = await context.supabase
+    .from("vault_records")
+    .update({ payload, updated_at: new Date().toISOString() })
+    .eq("kind", kind)
+    .eq("record_id", recordId)
+    .eq("updated_at", current.updated_at)
+    .select("record_id")
+    .maybeSingle();
+  if (saveError) throw saveError;
+  return saved ? "saved" : "conflict";
 }
 
 export async function createOwnedRecord(kind: VaultRecordKind, recordId: string, payload: unknown): Promise<"created"|"exists"|false> {

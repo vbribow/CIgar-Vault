@@ -10,8 +10,9 @@ import {
   isPrivateInventoryPreviewRequest,
   savePreviewInventoryOverride,
 } from "@/lib/preview-inventory";
+import { recordRevision } from "@/lib/record-revision";
 import { deleteInventoryRow, updateInventoryRow } from "@/lib/smartsheet";
-import { deleteOwnedRecord, saveOwnedRecord } from "@/lib/user-data";
+import { deleteOwnedRecord, saveOwnedRecordIfUnchanged } from "@/lib/user-data";
 
 type Context = { params: Promise<{ inventoryId: string }> };
 function failure(error: unknown) {
@@ -41,13 +42,30 @@ export async function PUT(request: Request, context: Context) {
     const { inventoryId } = await context.params;
     const existing = (await loadInventory()).find(candidate => candidate.inventoryId === inventoryId);
     if (!existing) return NextResponse.json({ error: `${inventoryId} was not found. Refresh your Vault before trying again.` }, { status: 404 });
+    const expectedRevision = request.headers.get("if-match");
+    if (!expectedRevision)
+      return NextResponse.json(
+        { error: "Refresh your Vault before saving so Hojavía can protect changes made on another device." },
+        { status: 428 },
+      );
+    if (expectedRevision && expectedRevision !== recordRevision(existing))
+      return NextResponse.json(
+        { error: "This record changed on another device. Refresh your Vault, review the newer information, and try again." },
+        { status: 409 },
+      );
     const item = normalizeInventory(parseInventoryUpdate(await request.json(), existing));
     if (item.inventoryId !== inventoryId)
       return NextResponse.json(
         { error: "Inventory ID cannot be changed" },
         { status: 409 },
       );
-    if (await saveOwnedRecord("inventory", inventoryId, item)) return NextResponse.json({ data: item });
+    const result = await saveOwnedRecordIfUnchanged("inventory", inventoryId, item, expectedRevision);
+    if (result === "saved") return NextResponse.json({ data: item, revision: recordRevision(item) });
+    if (result === "conflict")
+      return NextResponse.json(
+        { error: "This record changed while you were saving. Refresh your Vault, review the newer information, and try again." },
+        { status: 409 },
+      );
     if (dataMode() === "mock") {
       if (!isPrivateInventoryPreviewRequest(request))
         return NextResponse.json(
@@ -55,11 +73,11 @@ export async function PUT(request: Request, context: Context) {
           { status: 403 },
         );
       await savePreviewInventoryOverride(item);
-      return NextResponse.json({ data: item, storage: "local-preview" });
+      return NextResponse.json({ data: item, revision: recordRevision(item), storage: "local-preview" });
     }
     const blocked = guard(request); if (blocked) return blocked;
     await updateInventoryRow(inventoryId, item);
-    return NextResponse.json({ data: item });
+    return NextResponse.json({ data: item, revision: recordRevision(item) });
   } catch (error) {
     return failure(error);
   }
