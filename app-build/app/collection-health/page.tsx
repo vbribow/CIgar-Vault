@@ -1,6 +1,6 @@
 import { loadInventory as loadAllInventory } from "@/lib/inventory";
 import { loadCollections } from "@/lib/data";
-import { hasInventoryProvenance, inventoryCompleteness } from "@/lib/inventory-model";
+import { hasInventoryProvenance, hasPhysicalQuantityBreakdown, inventoryCompleteness } from "@/lib/inventory-model";
 import { auditCollectionMembership } from "@/lib/collection-membership-audit";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
@@ -40,7 +40,7 @@ export default async function CollectionHealth() {
       key: "quantity",
       label: "Physical quantity",
       detail: "Boxes and loose sticks",
-      missing: activeItems.filter((item) => item.fullBoxQty === undefined || item.looseStickQty === undefined),
+      missing: activeItems.filter((item) => !hasPhysicalQuantityBreakdown(item)),
     },
     {
       key: "value",

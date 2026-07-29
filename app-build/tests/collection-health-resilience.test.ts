@@ -17,3 +17,8 @@ test("inventory audit fails closed when ownership data is incomplete", () => {
 test("inventory audit recognizes either provenance notes or a linked document", () => {
   assert.match(page, /hasInventoryProvenance\(item\)/);
 });
+
+test("inventory audit and score share the physical quantity definition", () => {
+  assert.match(page, /!hasPhysicalQuantityBreakdown\(item\)/);
+  assert.match(page, /inventoryCompleteness\(item\)/);
+});
