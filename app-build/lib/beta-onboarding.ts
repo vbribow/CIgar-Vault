@@ -3,5 +3,25 @@ export const BetaStage=z.enum(["Prospect","Invited","Signed up","Imported","Acti
 export const BetaCollectorInput=z.object({id:z.string().uuid().optional(),name:z.string().trim().min(1).max(100),email:z.string().email(),stage:BetaStage.default("Prospect"),notes:z.string().trim().max(1000).optional(),invitedAt:z.string().optional(),lastContactAt:z.string().optional()});
 export type BetaCollector=z.infer<typeof BetaCollectorInput>&{id:string;createdAt:string;updatedAt:string};
 const stageOrder:BetaStage[]=["Prospect","Invited","Signed up","Imported","Activated"];
+export const betaSignupUrl="https://hojavia.com/login?mode=signup";
+export function betaInvitationMailto(collector:Pick<BetaCollector,"name"|"email">){
+ const subject="Your Hojavía private beta invitation";
+ const body=[
+  `Hi ${collector.name},`,
+  "",
+  "You’re invited to join the Hojavía private beta.",
+  "",
+  `Create your account: ${betaSignupUrl}`,
+  `Use this exact invited email address: ${collector.email}`,
+  "",
+  "Before beginning, please review:",
+  "Beta Agreement: https://hojavia.com/beta-agreement",
+  "Terms of Use: https://hojavia.com/terms",
+  "Privacy Notice: https://hojavia.com/privacy",
+  "",
+  "This invitation is personal and may not be transferred.",
+ ].join("\n");
+ return `mailto:${encodeURIComponent(collector.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 export function advancedBetaStage(current:BetaStage,signals:{signedUp:boolean;inventoryLots:number;activated:boolean}){const detected:BetaStage=signals.activated||signals.inventoryLots>=20?"Activated":signals.inventoryLots>0?"Imported":signals.signedUp?"Signed up":current;return stageOrder.indexOf(detected)>stageOrder.indexOf(current)?detected:current}
 export function betaSummary(collectors:BetaCollector[]){const count=(stage:BetaStage)=>collectors.filter(item=>item.stage===stage).length;const activated=count("Activated");return{total:collectors.length,prospects:count("Prospect"),invited:count("Invited"),signedUp:count("Signed up"),imported:count("Imported"),activated,founderSeatsRemaining:Math.max(0,25-activated)}}
