@@ -26,6 +26,9 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(manager,/!initialActiveOnly \|\| \(item\.currentQty \?\? 0\) > 0/);
  assert.match(manager,/missing==="storage".*Add storage location/);
  assert.match(manager,/missing==="provenance".*Add provenance/);
+ assert.match(manager,/missing==="quantity".*Fix quantity/);
+ assert.match(manager,/missing==="vintage".*Add production year/);
+ assert.match(manager,/missing==="value".*Add retail price/);
  assert.match(manager,/textarea name="provenanceNotes"/);
  assert.doesNotMatch(page,/Confirm my collection/);
 });
