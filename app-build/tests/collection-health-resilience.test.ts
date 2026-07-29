@@ -7,9 +7,9 @@ const page = readFileSync(
   "utf8",
 );
 
-test("Collection Health fails closed when ownership data is incomplete", () => {
+test("inventory audit fails closed when ownership data is incomplete", () => {
   assert.match(page, /Promise\.allSettled/);
-  assert.match(page, /status!=="fulfilled"/);
+  assert.match(page, /status\s*!==\s*"fulfilled"/);
   assert.match(page, /No lot has been classified as incomplete, mismatched, or missing/);
   assert.doesNotMatch(page, /Promise\.all\(\[loadInventory/);
 });

@@ -72,7 +72,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const collectionRelationships = useMemo(() => inventoryCollectionRelationships(items,collections), [items,collections]);
   const filtered = useMemo(() => items.filter((item) => {
     const haystack = `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola}`.toLowerCase();
-    const missingMatch = missing === "all" || (missing === "quantity" && item.originalQty === undefined) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
+    const missingMatch = missing === "all" || (missing === "quantity" && (item.fullBoxQty === undefined || item.looseStickQty === undefined)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
     const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
     return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch;
@@ -176,7 +176,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const suggestedFormat = findBoxFormat(formItem);
   return <>
     <PhotoInventoryIntake catalog={catalog} inventory={items} mode={mode} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("")}} onApproved={(approved)=>{setItems(current=>[...current,...approved.filter(item=>!current.some(existing=>existing.inventoryId===item.inventoryId))]);setDraft(null)}} />
-    <section className="toolbar" aria-label="Inventory filters">
+    <section className="toolbar" id="inventory-records" aria-label="Inventory records and filters">
       <label><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label>
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>

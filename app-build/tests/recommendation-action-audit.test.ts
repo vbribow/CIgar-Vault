@@ -25,7 +25,7 @@ test("representative year, provenance, and storage recommendations have direct a
 });
 
 test("aggregate recommendations route to the correct safe correction workspace", () => {
-  assert.match(inventory, /title:"Correct quantities and years".*href:"\/inventory-count"/);
+  assert.match(inventory, /title:"Reconcile boxes and loose sticks".*href:"\/inventory-count"/);
   assert.match(command, /Review undated lots →/);
   assert.match(intelligence, /Complete missing facts/);
 });
