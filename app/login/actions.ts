@@ -6,15 +6,15 @@ import { redirect } from "next/navigation";
 import { appOrigin } from "@/lib/app-origin";
 import { claimPartnerReferral } from "@/lib/partner-platform";
 import { requireBetaInvitation } from "@/lib/beta-access";
+import { safeAuthNext } from "@/lib/auth-navigation";
 
-const safeNext = (value: FormDataEntryValue | null) => typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/";
 const failure = (message: string, mode: string, next: string) => `/login?mode=${mode}&next=${encodeURIComponent(next)}&error=${encodeURIComponent(message)}`;
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
-  const next = safeNext(formData.get("next"));
+  const next = safeAuthNext(formData.get("next"));
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) redirect(failure(error.message, "signin", next));
   redirect(next);
@@ -28,7 +28,8 @@ export async function signUp(formData: FormData) {
   const ageConfirmed = formData.get("ageConfirmation") === "on";
   const termsAccepted = formData.get("termsAcceptance") === "on";
   const privacyAccepted = formData.get("privacyAcceptance") === "on";
-  const next = safeNext(formData.get("next")) === "/" ? "/account" : safeNext(formData.get("next"));
+  const requestedNext = safeAuthNext(formData.get("next"));
+  const next = requestedNext === "/" ? "/account" : requestedNext;
   if (!ageConfirmed) redirect(failure("Confirm that you are of legal age where you live and at least 21.", "signup", next));
   if (!termsAccepted || !privacyAccepted) redirect(failure("Accept the Beta Agreement, Terms, and Privacy Notice to continue.", "signup", next));
   try {
@@ -44,7 +45,7 @@ export async function signUp(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({ email, password, options: { data: {
     full_name: fullName,
     age_confirmed_at: consentedAt,
-    cedriva_consent_version: "beta-1.0-2026-07-24",
+    hojavia_consent_version: "beta-1.0-2026-07-24",
     brand_presentation: "hojavia",
   }, emailRedirectTo: `${origin}/auth/callback?next=${next}` } });
   if (error) redirect(failure(error.message, "signup", next));
