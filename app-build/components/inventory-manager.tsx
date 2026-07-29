@@ -14,7 +14,7 @@ import { PhotoInventoryIntake } from "@/components/photo-inventory-intake";
 import { ratingSummary } from "@/lib/cigar-ratings";
 import { PhotoManager } from "@/components/photo-manager";
 import { InventoryCorrectionAssistant } from "@/components/inventory-correction-assistant";
-import { collectionContentsSummary, inventoryCollectionRelationships } from "@/lib/collection-presentation";
+import { cigarInventoryRecords, collectionContentsSummary, inventoryCollectionRelationships } from "@/lib/collection-presentation";
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import { brand } from "@/lib/brand";
 import { recordRevision } from "@/lib/record-revision";
@@ -41,13 +41,13 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   useEffect(()=>{
     if(editing||draft||saving||bulkSaving)return;
     let active=true;
-    async function refresh(){try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)return;const result=await response.json();if(active&&Array.isArray(result.data)){setItems(result.data);setLastSynced(new Date())}}catch{/* retain the last known inventory during a network interruption */}}
+    async function refresh(){try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)return;const result=await response.json();if(active&&Array.isArray(result.data)){setItems(cigarInventoryRecords(result.data,collections));setLastSynced(new Date())}}catch{/* retain the last known inventory during a network interruption */}}
     const onFocus=()=>void refresh();
     const onVisibility=()=>{if(document.visibilityState==="visible")void refresh()};
     window.addEventListener("focus",onFocus);document.addEventListener("visibilitychange",onVisibility);void refresh();
     const timer=window.setInterval(()=>{if(document.visibilityState==="visible")void refresh()},30_000);
     return()=>{active=false;window.removeEventListener("focus",onFocus);document.removeEventListener("visibilitychange",onVisibility);window.clearInterval(timer)};
-  },[editing,draft,saving,bulkSaving]);
+  },[editing,draft,saving,bulkSaving,collections]);
 
   useEffect(() => {
     if (!recentlySaved || editing) return;
