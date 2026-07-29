@@ -27,5 +27,14 @@ export function betaInvitationMailto(collector:Pick<BetaCollector,"name"|"email"
  const{recipient,subject,body}=betaInvitationEmail(collector);
  return `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+export function betaInvitationWebmailLinks(collector:Pick<BetaCollector,"name"|"email">){
+ const{recipient,subject,body}=betaInvitationEmail(collector);
+ const to=encodeURIComponent(recipient);const encodedSubject=encodeURIComponent(subject);const encodedBody=encodeURIComponent(body);
+ return{
+  gmail:`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${encodedSubject}&body=${encodedBody}`,
+  outlook:`https://outlook.live.com/mail/0/deeplink/compose?to=${to}&subject=${encodedSubject}&body=${encodedBody}`,
+  yahoo:`https://compose.mail.yahoo.com/?to=${to}&subject=${encodedSubject}&body=${encodedBody}`,
+ };
+}
 export function advancedBetaStage(current:BetaStage,signals:{signedUp:boolean;inventoryLots:number;activated:boolean}){const detected:BetaStage=signals.activated||signals.inventoryLots>=20?"Activated":signals.inventoryLots>0?"Imported":signals.signedUp?"Signed up":current;return stageOrder.indexOf(detected)>stageOrder.indexOf(current)?detected:current}
 export function betaSummary(collectors:BetaCollector[]){const count=(stage:BetaStage)=>collectors.filter(item=>item.stage===stage).length;const activated=count("Activated");return{total:collectors.length,prospects:count("Prospect"),invited:count("Invited"),signedUp:count("Signed up"),imported:count("Imported"),activated,founderSeatsRemaining:Math.max(0,25-activated)}}
