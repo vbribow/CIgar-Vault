@@ -11,6 +11,7 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(page,/presentationAssetCount/);
  assert.match(page,/tracked separately/);
  assert.match(page,/Open Valuable Collections/);
+ assert.match(manager,/setItems\(cigarInventoryRecords\(result\.data,collections\)\)/);
  assert.match(page,/href="#inventory-records"/);
  assert.match(page,/Audit My Inventory/);
  assert.match(page,/href="\/collection-health"/);
