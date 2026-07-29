@@ -43,10 +43,20 @@ export function FounderBetaFeedback({
   const evidence = useMemo(() => buildBetaEvidenceSummary(items.map(item => ({ ...item, mode: item.mode || "Issue report" }))), [items]);
 
   useEffect(() => {
+    if (!writeKey) return;
+    let active = true;
     fetch("/api/beta-readiness/feedback", { headers: { "x-founder-key": writeKey } })
       .then(response => response.json())
-      .then(result => result.data ? setItems(result.data) : setMessage(result.error))
-      .catch(() => setMessage("Unable to load beta feedback."));
+      .then(result => {
+        if (!active) return;
+        result.data ? setItems(result.data) : setMessage(result.error);
+      })
+      .catch(() => {
+        if (active) setMessage("Unable to load beta feedback.");
+      });
+    return () => {
+      active = false;
+    };
   }, [writeKey]);
 
   async function update(item: Item, status: Item["status"], founderNote: string) {
