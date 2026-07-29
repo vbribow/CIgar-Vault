@@ -33,5 +33,8 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(manager,/Audit queue refreshed/);
  assert.match(manager,/inventoryQueueNotice/);
  assert.match(manager,/scrollIntoView\(\{behavior:"smooth",block:"start"\}\)/);
+ assert.match(manager,/missing==="all"&&<button className="danger"/);
+ assert.match(manager,/Save storage location/);
+ assert.match(manager,/Save provenance/);
  assert.doesNotMatch(page,/Confirm my collection/);
 });
