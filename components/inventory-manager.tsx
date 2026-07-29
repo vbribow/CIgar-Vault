@@ -21,7 +21,7 @@ import { recordRevision } from "@/lib/record-revision";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","score","action","habanosSealPhotoLink","notes"]);
 
-export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialMissing = "all", initialStorage = "all", initialCollectionId }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialCollectionId?: string }) {
+export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialMissing = "all", initialStorage = "all", initialCollectionId, initialActiveOnly = false }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialCollectionId?: string; initialActiveOnly?: boolean }) {
   const [items, setItems] = useState(initialItems);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
@@ -76,8 +76,9 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     const missingMatch = missing === "all" || (missing === "quantity" && (item.fullBoxQty === undefined || item.looseStickQty === undefined)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
     const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
-    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch;
-  }), [items, query, status, missing, storage, initialCollectionId]);
+    const activityMatch = !initialActiveOnly || (item.currentQty ?? 0) > 0;
+    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && activityMatch;
+  }), [items, query, status, missing, storage, initialCollectionId, initialActiveOnly]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
