@@ -34,6 +34,9 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(manager,/missing==="storage".*Add storage location/);
  assert.match(manager,/missing==="provenance".*Add provenance/);
  assert.match(manager,/missing==="quantity".*Fix quantity/);
+ assert.match(manager,/focusedQuantity&&missing==="all".*Correct total cigars now/);
+ assert.match(manager,/focusedQuantity&&missing==="quantity".*Complete the physical count/);
+ assert.match(manager,/missing === "quantity" \? "fullBoxQty" : "quickTotal"/);
  assert.match(manager,/missing==="vintage".*Add production year/);
  assert.match(manager,/missing==="value".*Add retail price/);
  assert.match(manager,/textarea name="provenanceNotes"/);
