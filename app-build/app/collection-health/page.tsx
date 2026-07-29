@@ -99,7 +99,7 @@ export default async function CollectionHealth() {
     </section>
 
     <section className="healthGrid" aria-label="Inventory audit categories">
-      {checks.map((check) => <a className="healthCard" href={`/inventory?missing=${check.key}#inventory-records`} key={check.key}>
+      {checks.map((check) => <a className="healthCard" href={`/inventory?missing=${check.key}&active=1#inventory-records`} key={check.key}>
         <div><span>{check.label}</span><strong>{check.missing.length}</strong></div>
         <p>{check.missing.length ? `${check.missing.length} active lots need attention` : "Complete across active inventory"}</p>
         <small>{check.detail}</small>
@@ -139,7 +139,7 @@ export default async function CollectionHealth() {
     <section className="section">
       <div className="sectionHead">
         <div><div className="eyebrow">Highest impact</div><h2>Complete these next</h2></div>
-        <a className="button secondary" href="/inventory?missing=quantity#inventory-records">Start with quantities</a>
+        <a className="button secondary" href="/inventory?missing=quantity&active=1#inventory-records">Start with quantities</a>
       </div>
       <div className="cleanupList">
         {[...activeItems].sort((a, b) => inventoryCompleteness(a) - inventoryCompleteness(b)).slice(0, 8).map((item) => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}>
