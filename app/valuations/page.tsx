@@ -1,6 +1,7 @@
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadValuations } from "@/lib/data";
+import { loadCollections, loadValuations } from "@/lib/data";
+import { cigarInventoryRecords } from "@/lib/collection-presentation";
 import { buildValuationIntelligence } from "@/lib/valuation-intelligence";
 import "./valuations.css";
 import "./research.css";
@@ -12,6 +13,7 @@ import { TrustMark } from "@/components/trust-mark";
 import { ValuationCompletionPanel } from "@/components/valuation-completion-panel";
 import { completedSaleLabel, marketAskingPriceLabel, marketRangeText } from "@/lib/valuation-evidence";
 import { valuationNeedsMonitoring } from "@/lib/valuation-monitor";
+import { summarizeCollection } from "@/lib/collection-dashboard";
 
 export const dynamic = "force-dynamic";
 const money = new Intl.NumberFormat("en-US", {
@@ -27,15 +29,17 @@ const unitMoney = new Intl.NumberFormat("en-US", {
 
 export default async function ValuationsPage({ searchParams }: { searchParams: Promise<{ inventoryId?: string;collectionId?:string }> }) {
   const filters = await searchParams;
-  const [modeResult, inventoryResult, valuationsResult] =
+  const [modeResult, inventoryResult, collectionsResult, valuationsResult] =
     await Promise.allSettled([
       accountDataMode(),
       loadInventory(),
+      loadCollections(),
       loadValuations(),
     ]);
   if (
     modeResult.status !== "fulfilled" ||
     inventoryResult.status !== "fulfilled" ||
+    collectionsResult.status !== "fulfilled" ||
     valuationsResult.status !== "fulfilled"
   ) {
     return (
@@ -60,19 +64,22 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
     );
   }
   const mode = modeResult.value;
-  const inventory = inventoryResult.value;
+  const inventory = cigarInventoryRecords(inventoryResult.value, collectionsResult.value);
   const valuations = valuationsResult.value;
   const activeInventory=inventory.filter(item=>(item.currentQty??0)>0);
-  const intelligence = buildValuationIntelligence(activeInventory, valuations);
-  const { totals } = intelligence;
   const scopedInventory=filters.collectionId?activeInventory.filter(item=>item.collectionId===filters.collectionId):activeInventory;
+  const scopedCollection=filters.collectionId?collectionsResult.value.find(collection=>collection.collectionId===filters.collectionId):undefined;
+  const intelligence = buildValuationIntelligence(scopedInventory, valuations);
+  const { totals } = intelligence;
   const completionQueue=intelligence.reviewQueue.filter(row=>
-    (!filters.collectionId||row.item.collectionId===filters.collectionId)
-    &&row.item.status!=="Review"
+    row.item.status!=="Review"
     &&!/verify|unknown/i.test(row.item.vitola)
     &&valuationNeedsMonitoring(row.item,valuations)
   );
   const deferredCount=intelligence.reviewQueue.length-completionQueue.length;
+  const scopeLabel=scopedCollection?.name??(filters.collectionId?"Selected collection":"Entire vault");
+  const scopedCollectionSummary=scopedCollection?summarizeCollection(scopedCollection,scopedInventory,valuations):undefined;
+  const wholeSetReference=scopedCollectionSummary?.wholeValue;
 
   return (
     <main className="shell wideShell valuationWorkspace">
@@ -98,16 +105,21 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           </div>
         </div>
         <div className="valueHeroCard">
-          <span>Documented aftermarket value</span>
-          <strong>{money.format(totals.documentedMarketValue)}</strong>
-          <small>
-            {totals.current} current · {intelligence.reviewQueue.length} need
-            review
-          </small>
+          <span>{wholeSetReference!==undefined?`${scopeLabel} whole-set retail reference`:"Documented aftermarket value"}</span>
+          <strong>{money.format(wholeSetReference??totals.documentedMarketValue)}</strong>
+          <small>{wholeSetReference!==undefined
+            ?`Exact set reference · ${scopedCollectionSummary?.valueAsOf??"date documented"} · excluded from portfolio totals`
+            :`${totals.current} of ${totals.totalLots} lots current · ${intelligence.reviewQueue.length} need review`
+          }</small>
         </div>
       </section>
 
       <section className="valueMetrics valuationMetrics">
+        {wholeSetReference!==undefined&&<article>
+          <span>Component aftermarket evidence</span>
+          <strong>{money.format(totals.documentedMarketValue)}</strong>
+          <small>{totals.marketCovered} of {totals.totalLots} lots · not the intact-set value</small>
+        </article>}
         <article>
           <span>Retail replacement</span>
           <strong>{money.format(totals.retailReplacementValue)}</strong>
@@ -130,8 +142,8 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
         </article>
         <article>
           <span>Research queue</span>
-          <strong>{intelligence.reviewQueue.length}</strong>
-          <small>{totals.neverValued} never valued · {totals.dueSoon + totals.stale} aging</small>
+          <strong>{completionQueue.length}</strong>
+          <small>{deferredCount} evidence gap{deferredCount===1?"":"s"} deferred · {totals.dueSoon + totals.stale} aging</small>
         </article>
       </section>
       <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>AI-assisted source finding and normalization</span></div><a href="/trust">Understand the evidence labels →</a></aside>
@@ -146,7 +158,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
         </div>
       </section>
       <SignalLegend />
-      {filters.collectionId&&<section className="collectionValuationScope"><div><div className="eyebrow">Collection completion</div><h2>{completionQueue.length} component lot{completionQueue.length===1?"":"s"} still need value work</h2><p>This workspace is limited to the selected collection. Exact-match evidence is reused first; uncertain prices remain visibly pending.</p></div><a className="button secondary" href={`/collections/${encodeURIComponent(filters.collectionId)}`}>Back to collection</a></section>}
+      {filters.collectionId&&<section className="collectionValuationScope"><div><div className="eyebrow">Collection completion · {scopeLabel}</div><h2>{completionQueue.length} of {totals.totalLots} component lot{totals.totalLots===1?"":"s"} need active value work</h2><p>The intact-set reference and component evidence are shown separately. {deferredCount?`${deferredCount} current evidence gap${deferredCount===1?" is":"s are"} documented and deferred until the next scheduled review. `:""}Every queue entry and ledger row is limited to this collection; no whole-set premium is added to portfolio totals.</p></div><a className="button secondary" href={`/collections/${encodeURIComponent(filters.collectionId)}`}>Back to collection</a></section>}
       <ValuationCompletionPanel items={completionQueue.map(row=>row.item)} mode={mode} deferredCount={deferredCount}/>
       <RetailPricingControls items={scopedInventory} mode={mode} initialInventoryId={filters.inventoryId} />
       <ValuationResearchPanel items={completionQueue.map((row)=>row.item)} mode={mode}/>
@@ -161,9 +173,9 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
             Prioritized by freshness, source quality, and known lot value
           </span>
         </div>
-        {intelligence.reviewQueue.length ? (
+        {completionQueue.length ? (
           <div className="queueList">
-            {intelligence.reviewQueue.slice(0, 12).map((row) => (
+            {completionQueue.slice(0, 12).map((row) => (
               <article key={row.item.inventoryId}>
                 <div>
                   <MarketSignal label={row.freshness} tone={freshnessTone(row.freshness)} />
@@ -208,7 +220,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           </div>
         ) : (
           <div className="emptyState">
-            Every lot has current, linked valuation evidence.
+            Every active lot is current under the present evidence policy.{deferredCount?` ${deferredCount} evidence gap${deferredCount===1?" is":"s are"} documented for scheduled re-review.`:""}
           </div>
         )}
       </section>

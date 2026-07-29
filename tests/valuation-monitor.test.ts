@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyReusableValuations,copiedValuation,inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationMonitorPriority,valuationNeedsMonitoring,valuationRefreshDays } from "../lib/valuation-monitor";
+import { applyReusableValuations,automaticValuationResearchIssues,automaticValuationResearchReady,copiedValuation,inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationMonitorPriority,valuationNeedsMonitoring,valuationRefreshDays } from "../lib/valuation-monitor";
 import type { InventoryItem,Valuation } from "../lib/types";
 
 const item:InventoryItem={inventoryId:"I1",brand:"Cohiba",line:"Siglo IV",vitola:"Marevas",currentQty:20,retailValue:50,priority:"High"};
@@ -20,3 +20,9 @@ test("collection components move ahead of otherwise equal inventory",()=>{const 
 test("valuation batches default to six and stay within safe limits",()=>{assert.equal(valuationBatchSize(),6);assert.equal(valuationBatchSize("50"),6);assert.equal(valuationBatchSize("0"),1);assert.equal(valuationBatchSize("invalid"),6)});
 test("monthly estimated budget pauses before exceeding 80 percent",()=>{const events=[{created_at:"2026-07-01T00:00:00.000Z",properties:{estimatedCostUsd:6}},{created_at:"2026-06-01T00:00:00.000Z",properties:{estimatedCostUsd:99}},{created_at:"2026-07-02T00:00:00.000Z",properties:{estimatedCostUsd:4,cached:true}}];const status=valuationBudgetStatus(events,new Date("2026-07-21"),10,2.01);assert.equal(status.estimatedSpend,6);assert.equal(status.pauseAt,8);assert.equal(status.paused,true);assert.equal(status.remainingBeforePause,2)});
 test("valuation work runs in bounded batches without losing order",async()=>{let active=0,peak=0;const results=await inValuationBatches([1,2,3,4,5],async value=>{active++;peak=Math.max(peak,active);await Promise.resolve();active--;return value*2},2);assert.deepEqual(results,[2,4,6,8,10]);assert.equal(peak,2)});
+test("automatic research requires the Fox verification result and linked evidence",()=>{
+  const research={replacementValue:25,marketValue:null,marketEvidenceType:"Insufficient evidence" as const,marketRangeLow:null,marketRangeHigh:null,askingPrice:null,askingPriceSource:"",askingPriceSourceUrl:"",lastSaleValue:null,lastSaleDate:null,lastSaleVenue:null,lastSaleSourceUrl:null,source:"Retailer",sourceUrl:"https://example.com/cigar",confidence:"Medium" as const,evidenceDate:"2026-07-29",notes:"Fox Cigar exact check found no usable listing.",comparables:[{title:"Exact retail",url:"https://example.com/cigar",unitPrice:25,kind:"Retail replacement" as const,notes:"Per cigar"}]};
+  assert.equal(automaticValuationResearchReady(research),true);
+  assert.match(automaticValuationResearchIssues({...research,notes:"Current retailer evidence."}).join(" "),/Fox Cigar/);
+  assert.equal(automaticValuationResearchReady({...research,sourceUrl:""}),false);
+});

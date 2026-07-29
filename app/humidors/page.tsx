@@ -2,7 +2,8 @@ import { HumidorManager } from "@/components/humidor-manager";
 import { ClimateAlertDashboard } from "@/components/climate-alert-dashboard";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
+import { loadCollections, loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
+import { cigarInventoryRecords } from "@/lib/collection-presentation";
 import "./humidors.css";
 import "./quick-links.css";
 import { WorkspaceGuide } from "@/components/workspace-guide";
@@ -14,22 +15,24 @@ export default async function HumidorsPage() {
     return <ClimateDataUnavailable />;
   }
   const mode = modeResult[0].value;
-  const [inventoryResult, humidorsResult, readingsResult, sensorsResult] =
+  const [inventoryResult, collectionsResult, humidorsResult, readingsResult, sensorsResult] =
     await Promise.allSettled([
       loadInventory(),
+      loadCollections(),
       mode === "mock" ? Promise.resolve([]) : loadHumidors(),
       mode === "mock" ? Promise.resolve([]) : loadHumidorReadings(),
       mode === "mock" ? Promise.resolve([]) : loadSensors(),
     ]);
   if (
     inventoryResult.status !== "fulfilled" ||
+    collectionsResult.status !== "fulfilled" ||
     humidorsResult.status !== "fulfilled" ||
     readingsResult.status !== "fulfilled" ||
     sensorsResult.status !== "fulfilled"
   ) {
     return <ClimateDataUnavailable />;
   }
-  const inventory = inventoryResult.value;
+  const inventory = cigarInventoryRecords(inventoryResult.value, collectionsResult.value);
   const humidors = humidorsResult.value;
   const readings = readingsResult.value;
   const sensors = sensorsResult.value;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef,useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem } from "@/lib/types";
 
@@ -11,8 +11,9 @@ const BATCH_SIZE=6;
 async function json(response:Response){const value=await response.json();if(!response.ok)throw new Error(value.error||"Valuation request failed");return value}
 
 export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:InventoryItem[];mode:DataMode;deferredCount?:number}){
-  const router=useRouter(),[key,setKey]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0),[outcomes,setOutcomes]=useState<Outcome[]>([]);
+  const router=useRouter(),[key,setKey]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0),[outcomes,setOutcomes]=useState<Outcome[]>([]),[automaticConfigured,setAutomaticConfigured]=useState<boolean|null>(null);
   const submissionIds=useRef(new Map<string,string>());
+  const automaticRunStarted=useRef(false);
   const queue=items.slice(0,BATCH_SIZE);
   async function complete(item:InventoryItem):Promise<Outcome>{
     try{
@@ -21,7 +22,7 @@ export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:Inv
       const headers={"Content-Type":"application/json",...(key?{"x-founder-key":key}:{})};
       const researched=await json(await fetch("/api/valuation-research",{method:"POST",headers,body:JSON.stringify({inventoryId:item.inventoryId})}));
       const draft=researched.data;
-      if(!draft.sourceUrl||draft.confidence==="Low"||(draft.replacementValue===null&&draft.marketValue===null)){
+      if(!draft.automaticSaveEligible){
         await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({
           submissionId,
           inventoryId:item.inventoryId,valuationDate:draft.evidenceDate,marketEvidenceType:"Insufficient evidence",
@@ -52,12 +53,33 @@ export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:Inv
     }
     setBusy(false);router.refresh();
   }
+  useEffect(()=>{
+    if(mode!=="supabase"||!queue.length||automaticRunStarted.current)return;
+    automaticRunStarted.current=true;
+    void (async()=>{
+      try{
+        const [preferencesResponse,readinessResponse]=await Promise.all([
+          fetch("/api/account/preferences",{cache:"no-store"}),
+          fetch("/api/valuation-research",{cache:"no-store"})
+        ]);
+        const [preferences,readiness]=await Promise.all([preferencesResponse.json(),readinessResponse.json()]);
+        const configured=readinessResponse.ok&&readiness.data?.configured===true;
+        setAutomaticConfigured(configured);
+        if(preferencesResponse.ok&&preferences.data?.valuationResearch!==false&&configured)await run();
+      }catch{
+        setAutomaticConfigured(false);
+        // The hourly background monitor remains authoritative when an
+        // immediate signed-in acceleration cannot start.
+      }
+    })();
+  },[mode,queue.length]);
   return <section className="valuationCompletion">
-    <div><div className="eyebrow">Valuation completion</div><h2>{queue.length?`Finish the next ${queue.length} inventory records`:deferredCount?`${deferredCount} records require evidence or identity review`:"Current valuation queue is clear"}</h2><p>Researches exact cigar identity in pairs, saves only source-linked Medium or High confidence evidence, and holds uncertain matches for human review.</p></div>
+    <div><div className="eyebrow">Automated valuation completion</div><h2>{busy?`Researching ${progress} of ${queue.length} priority records`:queue.length?`${queue.length} priority records are queued`:deferredCount?`Current queue is clear · ${deferredCount} evidence gap${deferredCount===1?"":"s"} deferred`:"Current valuation queue is clear"}</h2><p>Missing and stale values are checked automatically. Exact cigar identity, a recorded Fox Cigar verification, direct sources, and Medium or High confidence are required before a price can save.</p></div>
     <div className="completionActions">
       {mode==="smartsheet"&&<label><span>Founder write key</span><input type="password" value={key} onChange={event=>setKey(event.target.value)} placeholder="Required for master inventory"/></label>}
-      <button className="button" disabled={busy||!queue.length||(mode==="smartsheet"&&!key)} onClick={run}>{busy?`Researching ${progress} of ${queue.length}…`:queue.length?`Complete next ${queue.length}`:deferredCount?"Review deferred records":"Queue clear"}</button>
-      <small>{queue.length?"Keep this page open while the batch runs. Existing values are never overwritten without new evidence.":deferredCount?"Coverage remains unresolved while exact identity, evidence, or the research waiting period is incomplete.":"Every active lot is current under the present evidence policy."}</small>
+      <button className="button" disabled={busy||!queue.length||(mode==="smartsheet"&&!key)} onClick={run}>{busy?`Researching ${progress} of ${queue.length}…`:queue.length?`Run next ${queue.length} now`:"Queue clear"}</button>
+      <small>{queue.length?"The production monitor checks the queue hourly; opening this workspace accelerates the next batch immediately. Existing values are never overwritten without new evidence.":deferredCount?`Every active lot is current under the present evidence policy. ${deferredCount} evidence gap${deferredCount===1?" is":"s are"} retained for the next scheduled review; no price has been invented.`:"Every active lot is current under the present evidence policy."}</small>
+      {automaticConfigured===false&&<small role="status">Automatic research is prepared but waiting for its secure research connection. Manual evidence entry remains available.</small>}
     </div>
     {outcomes.length>0&&<div className="completionResults">{outcomes.map(item=><span data-status={item.status} key={item.inventoryId}><strong>{item.inventoryId}</strong>{item.message}</span>)}</div>}
   </section>;

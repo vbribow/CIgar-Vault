@@ -21,3 +21,9 @@ test("counting accepts only defensible whole-number quantities and reports sync 
   assert.match(manager, /Counts must be non-negative whole numbers/);
   assert.match(manager, /Your unsaved entries remain on this device/);
 });
+
+test("cross-device refresh cannot reinsert presentation assets into cigar counts",()=>{
+  assert.match(page,/collections=\{collections\}/);
+  assert.match(manager,/cigarInventoryRecords\(result\.data,collections\)/);
+  assert.match(manager,/setItems\(cigars\)/);
+});

@@ -12,7 +12,7 @@ import { cigarAdvisorActions, cigarAdvisorHref } from "@/lib/cigar-advisor-links
 import { cigarStoryHref } from "@/lib/cigar-story";
 import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType, marketRangeText } from "@/lib/valuation-evidence";
 import { climateIntelligence } from "@/lib/climate-intelligence";
-import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
+import { collectionContentsSummary, inventoryCollectionRelationships, isPresentationInventoryRecord } from "@/lib/collection-presentation";
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import { RecommendationFactEditor } from "@/components/recommendation-fact-editor";
 import { SmokingExperienceScorecardView } from "@/components/smoking-experience-scorecard";
@@ -57,8 +57,14 @@ export default async function CigarPage({
   const ratingsReady = ratingsResult.status === "fulfilled";
   const climateReady = humidorsResult.status === "fulfilled" && climateReadingsResult.status === "fulfilled";
   const timelineReady = smokesReady && valuationsReady && activitiesReady && ratingsReady;
-  const collectionRelationship=inventoryCollectionRelationships(items,collections).get(item.inventoryId);
+  const collectionRelationship=inventoryCollectionRelationships(items,collections).get(item.inventoryId)
+    ??(isPresentationInventoryRecord(item,collections)?{kind:"presentation" as const}:undefined);
   const isPresentationAsset=collectionRelationship?.kind==="presentation";
+  const presentationContents=isPresentationAsset&&collectionRelationship.collection
+    ?collectionContentsSummary(collectionRelationship.collection,items)
+    :undefined;
+  const documentedPresentationCigars=presentationContents?.documentedCigars
+    ??(Number(`${item.provenanceNotes||""} ${item.notes||""}`.match(/\b(\d{2,4}) included cigars\b/i)?.[1]||0)||undefined);
   const history = smokes.filter((s) => s.inventoryId === inventoryId);
   const smokingScorecards = buildSmokingExperienceScorecards(item, items, smokes);
   const values = valuations.filter((v) => v.inventoryId === inventoryId);
@@ -117,8 +123,9 @@ export default async function CigarPage({
           <strong>{item.currentQty ?? "—"}</strong>
         </div>
         <div>
-          <span>{isPresentationAsset?"Originally acquired":"Original"}</span>
-          <strong>{item.originalQty ?? "—"}</strong>
+          <span>{isPresentationAsset?"Documented contents":"Original"}</span>
+          <strong>{isPresentationAsset?(documentedPresentationCigars??presentationContents?.originalCigars??"—"):(item.originalQty ?? "—")}</strong>
+          {isPresentationAsset&&presentationContents&&<small>{presentationContents.currentCigars} currently held across {presentationContents.componentLots} component lots</small>}
         </div>
         <div>
           <span>{isPresentationAsset?"Retail replacement / presentation":"Retail replacement / cigar"}</span>

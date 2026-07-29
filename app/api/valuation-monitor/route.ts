@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { authorizeSensorSync,dataMode } from "@/lib/config";
 import { marketEvidenceType } from "@/lib/valuation-evidence";
 import { researchInventoryValuation } from "@/lib/valuation-research";
-import { inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationCostEstimate,valuationMonitorPriority,valuationNeedsMonitoring } from "@/lib/valuation-monitor";
+import { automaticValuationResearchReady,inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationCostEstimate,valuationMonitorPriority,valuationNeedsMonitoring } from "@/lib/valuation-monitor";
 import { getInventory,getValuations,recordValuation } from "@/lib/smartsheet";
 import type { InventoryItem,Valuation } from "@/lib/types";
 import { scheduledVaultAuthority } from "@/lib/data-authority";
@@ -24,7 +24,7 @@ function cachedValuationResearch(value:Valuation):Awaited<ReturnType<typeof rese
 }
 
 function completionValuation(item:InventoryItem,research:Awaited<ReturnType<typeof researchInventoryValuation>>,cached=false):Valuation{
-  const supported=Boolean(research.sourceUrl)&&/^(High|Medium)$/i.test(research.confidence)&&(research.replacementValue!==null||research.marketValue!==null);
+  const supported=(cached||automaticValuationResearchReady(research))&&(research.replacementValue!==null||research.marketValue!==null);
   const insufficient=research.marketEvidenceType==="Insufficient evidence";
   const stamp=new Date().toISOString().replace(/\D/g,"").slice(0,14);
   return{

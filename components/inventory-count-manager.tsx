@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import { findBoxFormat } from "@/lib/box-formats";
+import { cigarInventoryRecords } from "@/lib/collection-presentation";
+import type { CigarCollection, InventoryItem } from "@/lib/types";
 import { recordRevision } from "@/lib/record-revision";
-import type { InventoryItem } from "@/lib/types";
 
 type CountDraft = { fullBoxQty: string; sticksPerBox: string; looseStickQty: string; storageLocationId: string };
 
@@ -22,7 +23,7 @@ function isCounted(item: InventoryItem) {
   return item.fullBoxQty !== undefined && item.looseStickQty !== undefined;
 }
 
-export function InventoryCountManager({ initialItems, mode }: { initialItems: InventoryItem[]; mode: DataMode }) {
+export function InventoryCountManager({ initialItems, collections, mode }: { initialItems: InventoryItem[]; collections: CigarCollection[]; mode: DataMode }) {
   const [items, setItems] = useState(initialItems);
   const [drafts, setDrafts] = useState<Record<string, CountDraft>>(() => Object.fromEntries(initialItems.map((item) => [item.inventoryId, draftFor(item)])));
   const [query, setQuery] = useState("");
@@ -36,13 +37,13 @@ export function InventoryCountManager({ initialItems, mode }: { initialItems: In
 
   useEffect(()=>{
     let active=true;
-    async function refresh(){if(saving)return;try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)throw new Error("Cross-device refresh unavailable");const result=await response.json();if(!active||!Array.isArray(result.data))throw new Error("Cross-device refresh returned invalid data");setItems(result.data);setDrafts(current=>Object.fromEntries(result.data.map((item:InventoryItem)=>[item.inventoryId,dirty.has(item.inventoryId)?current[item.inventoryId]??draftFor(item):draftFor(item)])));setLastSynced(new Date());setSyncIssue("")}catch(error){if(active)setSyncIssue(error instanceof Error?error.message:"Cross-device refresh unavailable")}}
+    async function refresh(){if(saving)return;try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)throw new Error("Cross-device refresh unavailable");const result=await response.json();if(!active||!Array.isArray(result.data))throw new Error("Cross-device refresh returned invalid data");const cigars=cigarInventoryRecords(result.data,collections);setItems(cigars);setDrafts(current=>Object.fromEntries(cigars.map((item:InventoryItem)=>[item.inventoryId,dirty.has(item.inventoryId)?current[item.inventoryId]??draftFor(item):draftFor(item)])));setLastSynced(new Date());setSyncIssue("")}catch(error){if(active)setSyncIssue(error instanceof Error?error.message:"Cross-device refresh unavailable")}}
     const onFocus=()=>void refresh();
     const onVisibility=()=>{if(document.visibilityState==="visible")void refresh()};
     window.addEventListener("focus",onFocus);document.addEventListener("visibilitychange",onVisibility);void refresh();
     const timer=window.setInterval(()=>{if(document.visibilityState==="visible")void refresh()},30_000);
     return()=>{active=false;window.removeEventListener("focus",onFocus);document.removeEventListener("visibilitychange",onVisibility);window.clearInterval(timer)};
-  },[dirty,saving]);
+  },[collections,dirty,saving]);
 
   const counted = items.filter(isCounted).length;
   const knownTotal = items.reduce((sum, item) => sum + (item.currentQty ?? 0), 0);

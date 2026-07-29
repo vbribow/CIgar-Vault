@@ -58,3 +58,11 @@ export function collectionSearchUrl(query: string) {
   const terms = `${query.trim()} cigar collection contents box set`;
   return `https://www.bing.com/search?format=rss&q=${encodeURIComponent(terms)}`;
 }
+
+export function collectionVerificationSearchUrls(query:string){
+  const exact=query.trim();
+  return[
+    collectionSearchUrl(exact),
+    `https://www.bing.com/search?format=rss&q=${encodeURIComponent(`${exact} site:foxcigar.com cigar collection contents price`)}`,
+  ];
+}

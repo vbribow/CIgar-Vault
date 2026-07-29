@@ -14,6 +14,13 @@ export type InventoryCollectionRelationship = {
   staleCollectionId?:string;
 };
 
+export type CollectionContentsSummary = {
+  documentedCigars?: number;
+  originalCigars: number;
+  currentCigars: number;
+  componentLots: number;
+};
+
 export function isPresentationInventoryMatch(item:InventoryItem,collection:CigarCollection){
   if(collection.presentationInventoryId===item.inventoryId)return true;
   const template=collectionTemplateFor(collection);
@@ -26,7 +33,17 @@ export function cigarInventoryRecords(
   inventory:InventoryItem[],
   collections:CigarCollection[],
 ){
-  return inventory.filter(item=>!collections.some(collection=>isPresentationInventoryMatch(item,collection)));
+  return inventory.filter(item=>!isPresentationInventoryRecord(item,collections));
+}
+
+export function isPresentationInventoryRecord(
+  item:InventoryItem,
+  collections:CigarCollection[],
+){
+  if(collections.some(collection=>isPresentationInventoryMatch(item,collection)))return true;
+  const vitola=normalized(item.vitola);
+  return /\bpresentation (?:humidor|case|box|book|packaging)\b/.test(vitola)
+    ||/\b(?:humidor|case|box|book|packaging) presentation\b/.test(vitola);
 }
 
 /**
@@ -64,4 +81,24 @@ export function inventoryCollectionRelationships(
     if(item.collectionId)relationships.set(item.inventoryId,{kind:"review",staleCollectionId:item.collectionId});
   }
   return relationships;
+}
+
+export function collectionContentsSummary(
+  collection:CigarCollection,
+  inventory:InventoryItem[],
+):CollectionContentsSummary{
+  const linked=inventory.filter(item=>item.collectionId===collection.collectionId);
+  const componentIds=new Set(
+    collectionRequirementMatches(collection,linked)
+      .map(match=>match.inventoryId)
+      .filter((inventoryId):inventoryId is string=>Boolean(inventoryId)),
+  );
+  const components=linked.filter(item=>componentIds.has(item.inventoryId));
+  const template=collectionTemplateFor(collection);
+  return {
+    documentedCigars:collection.expectedCigars??template?.expectedCigars,
+    originalCigars:components.reduce((sum,item)=>sum+(item.originalQty??item.currentQty??0),0),
+    currentCigars:components.reduce((sum,item)=>sum+(item.currentQty??0),0),
+    componentLots:components.length,
+  };
 }
