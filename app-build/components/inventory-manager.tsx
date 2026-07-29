@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { applyTotalQuantityCorrection, inventoryCompleteness } from "@/lib/inventory-model";
+import { applyTotalQuantityCorrection, hasInventoryProvenance, inventoryCompleteness } from "@/lib/inventory-model";
 import type { DataMode } from "@/lib/config";
 import type { CigarCollection, InventoryItem, ProfessionalRating } from "@/lib/types";
 import { lotRetailValue, retailBoxValue } from "@/lib/valuation";
@@ -77,7 +77,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const collectionContents = useMemo(() => new Map(collections.map(collection => [collection.collectionId,collectionContentsSummary(collection,items)])), [collections,items]);
   const filtered = useMemo(() => scopedItems.filter((item) => {
     const haystack = `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola}`.toLowerCase();
-    const missingMatch = missing === "all" || (missing === "quantity" && (item.fullBoxQty === undefined || item.looseStickQty === undefined)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
+    const missingMatch = missing === "all" || (missing === "quantity" && (item.fullBoxQty === undefined || item.looseStickQty === undefined)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !hasInventoryProvenance(item));
     const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
     return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch;

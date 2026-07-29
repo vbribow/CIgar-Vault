@@ -1,6 +1,6 @@
 import { loadInventory as loadAllInventory } from "@/lib/inventory";
 import { loadCollections } from "@/lib/data";
-import { inventoryCompleteness } from "@/lib/inventory-model";
+import { hasInventoryProvenance, inventoryCompleteness } from "@/lib/inventory-model";
 import { auditCollectionMembership } from "@/lib/collection-membership-audit";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
@@ -64,7 +64,7 @@ export default async function CollectionHealth() {
       key: "provenance",
       label: "Provenance",
       detail: "Purchase or ownership evidence",
-      missing: activeItems.filter((item) => !item.provenanceNotes),
+      missing: activeItems.filter((item) => !hasInventoryProvenance(item)),
     },
   ];
   const average = Math.round(activeItems.reduce((sum, item) => sum + inventoryCompleteness(item), 0) / Math.max(activeItems.length, 1));
