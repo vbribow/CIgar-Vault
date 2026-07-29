@@ -93,6 +93,10 @@ export function inventoryCompleteness(item: InventoryItem): number {
   return Math.round((fields.filter((value) => value !== undefined && value !== "").length / fields.length) * 100);
 }
 
+export function hasInventoryProvenance(item: InventoryItem): boolean {
+  return Boolean(item.provenanceNotes?.trim() || item.provenanceDocumentLink?.trim());
+}
+
 export function isCurrentInventoryRecord(item: InventoryItem): boolean {
   return item.currentQty !== 0;
 }
