@@ -17,6 +17,7 @@ import { InventoryCorrectionAssistant } from "@/components/inventory-correction-
 import { inventoryCollectionRelationships } from "@/lib/collection-presentation";
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import { brand } from "@/lib/brand";
+import { recordRevision } from "@/lib/record-revision";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","score","action","habanosSealPhotoLink","notes"]);
 
@@ -100,7 +101,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     const isEdit = Boolean(editing);
     try {
       const response = await fetch(isEdit ? `/api/inventory/${encodeURIComponent(editing!.inventoryId)}` : "/api/inventory", {
-        method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json", "x-founder-key": String(form.get("writeKey") || "") }, body: JSON.stringify(payload),
+        method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json", "x-founder-key": String(form.get("writeKey") || ""), ...(editing ? { "If-Match": recordRevision(editing) } : {}) }, body: JSON.stringify(payload),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Save failed");
@@ -156,7 +157,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       const updated: InventoryItem[] = [];
       for (const item of targets) {
         const payload = { ...item, ...(status ? { status } : {}), ...(storageLocationId ? { storageLocationId } : {}), ...(priority ? { priority } : {}) };
-        const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, { method: "PUT", headers: { "Content-Type": "application/json", "x-founder-key": writeKey }, body: JSON.stringify(payload) });
+        const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, { method: "PUT", headers: { "Content-Type": "application/json", "x-founder-key": writeKey, "If-Match": recordRevision(item) }, body: JSON.stringify(payload) });
         const result = await response.json();
         if (!response.ok) throw new Error(`${item.inventoryId}: ${result.error || "Update failed"}`);
         updated.push(result.data);
