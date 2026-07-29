@@ -40,6 +40,8 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(manager,/missing==="vintage".*Add production year/);
  assert.match(manager,/missing==="value".*Add retail price/);
  assert.match(manager,/textarea name="provenanceNotes"/);
+ assert.match(manager,/input name="provenanceDocumentLink" type="url"/);
+ assert.match(manager,/Either this document or factual notes completes the provenance audit/);
  assert.match(manager,/Audit queue refreshed/);
  assert.match(manager,/inventoryQueueNotice/);
  assert.match(manager,/scrollIntoView\(\{behavior:"smooth",block:"start"\}\)/);
