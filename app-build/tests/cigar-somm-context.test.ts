@@ -29,3 +29,17 @@ test("collector context does not invent value or selected-cigar data", () => {
   assert.equal(context.selectedCigar, undefined);
   assert.equal(context.taste.confidence, "Building");
 });
+
+test("newer retail research does not hide supported market context from Cigar Somm", () => {
+  const item = { inventoryId:"INV-2", brand:"Cohiba", line:"Siglo VI", vitola:"Cañonazo", currentQty:3 };
+  const context = buildCigarSommCollectorContext({
+    inventory:[item],
+    smokes:[],
+    selectedInventoryId:item.inventoryId,
+    valuations:[
+      { valuationId:"VAL-MARKET", inventoryId:item.inventoryId, valuationDate:"2026-07-20", marketValue:88 },
+      { valuationId:"VAL-RETAIL", inventoryId:item.inventoryId, valuationDate:"2026-07-25", replacementValue:62 },
+    ],
+  });
+  assert.equal(context.selectedCigar?.latestValuePerCigar,88);
+});

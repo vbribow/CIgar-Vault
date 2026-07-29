@@ -52,6 +52,7 @@ test("private insurance download uses bounded authenticated server generation an
   const route=readFileSync(new URL("../app/api/reports/insurance-pdf/route.ts",import.meta.url),"utf8");
   const actions=readFileSync(new URL("../components/report-actions.tsx",import.meta.url),"utf8");
   assert.match(route,/auth\.getUser\(\)/);
+  assert.match(route,/\.eq\("user_id",user\.id\)/);
   assert.match(route,/MAX_PRIVATE_RECORDS \+ 1/);
   assert.ok(route.includes('"Content-Type":"application/pdf"'));
   assert.match(route,/"Cache-Control":"private, no-store, max-age=0"/);

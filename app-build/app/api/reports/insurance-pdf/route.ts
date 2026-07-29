@@ -21,6 +21,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("vault_records")
       .select("kind,payload")
+      .eq("user_id",user.id)
       .in("kind", ["inventory", "valuations", "collections"])
       .order("record_id")
       .limit(MAX_PRIVATE_RECORDS + 1);
