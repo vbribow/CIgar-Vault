@@ -110,7 +110,9 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
       const savedId=String(result.data.inventoryId||id);
       const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";
-      setEditing(null); setDraft(null); if(!isEdit)setSubmissionId(crypto.randomUUID());setMessage(`${savedId} saved and synchronized.${valuationStatus}`); if(isEdit)setRecentlySaved({inventoryId:savedId,token:Date.now()}); formElement.reset();
+      const auditing = missing !== "all";
+      setEditing(null); setDraft(null); if(!isEdit)setSubmissionId(crypto.randomUUID());setMessage(`${savedId} saved and synchronized.${valuationStatus}${auditing?" Audit queue refreshed.":""}`); if(isEdit&&!auditing)setRecentlySaved({inventoryId:savedId,token:Date.now()}); formElement.reset();
+      if(auditing)window.setTimeout(()=>document.getElementById("inventory-records")?.scrollIntoView({behavior:"smooth",block:"start"}),120);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
@@ -191,6 +193,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       <label><span>Storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All locations</option><option value="unassigned">Unassigned</option>{locations.map((value)=><option key={value}>{value}</option>)}</select></label>
       <div className="filterCount">{filtered.length} of {items.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
     </section>
+    {message&&missing!=="all"&&<div className="inventoryQueueNotice" role="status" aria-live="polite">{message}<small>{filtered.length} record{filtered.length===1?"":"s"} currently remain in this audit view.</small></div>}
     {initialCollectionId&&<section className="card inventoryDataNotice"><div><strong>{collections.find(collection=>collection.collectionId===initialCollectionId)?.name||"Selected collection"} · focused component queue</strong><p>Showing only linked lots that match the selected data-quality filter.</p></div><a className="button secondary" href={`/inventory?missing=${encodeURIComponent(missing)}#inventory-records`}>Show all matching lots</a></section>}
 
     {selected.size>0&&<form className="bulkInventoryBar" onSubmit={applyBulkUpdate}><div><strong>{selected.size} selected</strong><button type="button" onClick={()=>setSelected(new Set())}>Clear</button></div><label><span>Status</span><select name="bulkStatus" defaultValue=""><option value="">No change</option><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label><label><span>Storage</span><input name="bulkStorage" list="bulk-storage-options" placeholder="No change"/><datalist id="bulk-storage-options">{locations.map((value)=><option key={value}>{value}</option>)}</datalist></label><label><span>Priority</span><select name="bulkPriority" defaultValue=""><option value="">No change</option><option>Low</option><option>Medium</option><option>High</option></select></label>{mode==="smartsheet"&&<label><span>Founder write key</span><input name="writeKey" type="password" required/></label>}<button className="button" disabled={bulkSaving}>{bulkSaving?"Updating…":"Apply changes"}</button></form>}
@@ -224,7 +227,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
         <label className="wide"><span>Recommended action</span><input name="action" defaultValue={formItem.action} /></label>
         <label className="wide"><span>Notes</span><textarea name="notes" defaultValue={formItem.notes} rows={3} /></label></>}
         {mode === "smartsheet" && <label className="wide"><span>Founder write key *</span><input name="writeKey" type="password" required autoComplete="current-password" /></label>}
-        <div className="formActions wide"><button className="button" disabled={saving || (mode === "mock" && !editing)}>{saving ? "Saving…" : editing ? "Save changes" : "Add lot"}</button>{message && <output className="inventorySaveToast">{message}</output>}</div>
+        <div className="formActions wide"><button className="button" disabled={saving || (mode === "mock" && !editing)}>{saving ? "Saving…" : editing ? "Save changes" : "Add lot"}</button>{message&&missing==="all"&&<output className="inventorySaveToast">{message}</output>}</div>
       </form>
       {editing&&<InventoryCorrectionAssistant item={editing} inventory={items} mode={mode} onApplied={(updated)=>{setEditing(updated);setItems(current=>current.map(item=>item.inventoryId===updated.inventoryId?updated:item));setMessage(`${updated.inventoryId} corrected.`)}}/>}
       {editing&&<PhotoManager item={editing} onAttached={(updated)=>{setEditing(updated);setItems(current=>current.map(item=>item.inventoryId===updated.inventoryId?updated:item));}}/>}
