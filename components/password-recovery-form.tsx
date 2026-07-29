@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { formatRecoveryCountdown, LEGACY_RECOVERY_COOLDOWN_KEY, RECOVERY_COOLDOWN_KEY, RECOVERY_RATE_LIMIT_SECONDS, RECOVERY_SUCCESS_COOLDOWN_SECONDS, recoveryCooldownUntil, recoverySecondsRemaining } from "@/lib/recovery-cooldown";
+import { formatRecoveryCountdown, LEGACY_RECOVERY_COOLDOWN_KEY, PREVIOUS_RECOVERY_COOLDOWN_KEY, RECOVERY_COOLDOWN_KEY, RECOVERY_RATE_LIMIT_SECONDS, RECOVERY_SUCCESS_COOLDOWN_SECONDS, recoveryCooldownUntil, recoverySecondsRemaining } from "@/lib/recovery-cooldown";
 import { brand } from "@/lib/brand";
 
 export function PasswordRecoveryForm() {
@@ -14,10 +14,12 @@ export function PasswordRecoveryForm() {
 
   useEffect(() => {
     const saved = Number(window.localStorage.getItem(RECOVERY_COOLDOWN_KEY) || 0);
+    const previous = Number(window.localStorage.getItem(PREVIOUS_RECOVERY_COOLDOWN_KEY) || 0);
     const legacy = Number(window.localStorage.getItem(LEGACY_RECOVERY_COOLDOWN_KEY) || 0);
+    window.localStorage.removeItem(PREVIOUS_RECOVERY_COOLDOWN_KEY);
     window.localStorage.removeItem(LEGACY_RECOVERY_COOLDOWN_KEY);
     const migrated = legacy > Date.now() ? Math.min(legacy, recoveryCooldownUntil(RECOVERY_SUCCESS_COOLDOWN_SECONDS)) : 0;
-    const active = saved > Date.now() ? saved : migrated;
+    const active = Math.max(saved > Date.now() ? saved : 0, previous > Date.now() ? previous : 0, migrated);
     if (active) {
       window.localStorage.setItem(RECOVERY_COOLDOWN_KEY, String(active));
       setCooldownUntil(active);
