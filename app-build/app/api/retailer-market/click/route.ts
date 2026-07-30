@@ -3,7 +3,7 @@ import { createClient as createAdmin } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { loadInventory } from "@/lib/inventory";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
-import { retailerKey, RetailerListingSchema } from "@/lib/retailer-trust";
+import { listingMatchesExactIdentity, retailerKey, RetailerListingSchema } from "@/lib/retailer-trust";
 function admin(){const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),key=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();if(!url||!key)throw new Error("Purchase verification is temporarily unavailable");return createAdmin(url,key,{auth:{persistSession:false,autoRefreshToken:false}})}
 export async function POST(request: Request) {
   if (!supabaseConfigured()) return NextResponse.json({ error: "Sign in before opening a retailer" }, { status: 401 });
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     const listing=RetailerListingSchema.parse(body.listing);
     const item=(await loadInventory()).find(record=>record.inventoryId===body.inventoryId);
     if(!item)return NextResponse.json({error:"Inventory record not found"},{status:404});
+    if(!listingMatchesExactIdentity(item,listing))return NextResponse.json({error:"This seller listing does not match the exact cigar record."},{status:409});
     const id=randomUUID(),fingerprint=createHash("sha256").update(`${body.inventoryId}|${listing.seller}|${listing.url}`).digest("hex");
     const{error}=await admin().from("retailer_purchase_sessions").insert({id,user_id:user.id,inventory_id:item.inventoryId,retailer_key:retailerKey(listing.seller),retailer_name:listing.seller,listing_url:listing.url,listing_fingerprint:fingerprint,status:"clicked"});
     if(error?.code==="23505"){
