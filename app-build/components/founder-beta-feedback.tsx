@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { buildBetaEvidenceSummary, type BetaFeedbackMode } from "@/lib/beta-feedback";
+import { FounderRetailerVerification } from "@/components/founder-retailer-verification";
 
 type Item = {
   id: string;
@@ -75,7 +76,7 @@ export function FounderBetaFeedback({
     setMessage("Feedback record updated.");
   }
 
-  return <section className="founderFeedback">
+  return <><FounderRetailerVerification writeKey={writeKey}/><section className="founderFeedback">
     <header><div><div className="eyebrow">Beta issue desk</div><h2>Review every report before launch.</h2><p>Blocking and trust-related issues remain visible until deliberately resolved.</p></div><strong>{items.filter(item => item.status === "Open" || item.status === "Reviewing").length} open</strong></header>
     <section className="betaEvidenceMetrics" aria-label="Private beta evidence">
       <article><span>Session reviews</span><strong>{evidence.sessionReviews}</strong><small>{evidence.independentCompletions} independent</small></article>
@@ -126,5 +127,5 @@ export function FounderBetaFeedback({
       </form>
     </article>)}</div>
     {!items.length && <div className="emptyState">No beta feedback has been submitted.</div>}
-  </section>;
+  </section></>;
 }
