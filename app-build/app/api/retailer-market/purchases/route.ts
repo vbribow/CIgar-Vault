@@ -17,8 +17,11 @@ export async function POST(request:Request){
     const{data:session,error:loadError}=await db.from("retailer_purchase_sessions").select("id,status").eq("id",input.purchaseSessionId).eq("user_id",user.id).maybeSingle();
     if(loadError)throw loadError;if(!session)return NextResponse.json({error:"Purchase session not found"},{status:404});
     if(session.status==="verified")return NextResponse.json({data:{status:"verified"},message:"This purchase is already verified."});
-    const{error}=await db.from("retailer_purchase_sessions").update({order_reference_hash:privateOrderReference(input.orderReference,credentials().key,user.id),receipt_evidence_url:input.receiptUrl,purchase_date:input.purchaseDate,status:"evidence_pending",updated_at:new Date().toISOString()}).eq("id",session.id).eq("user_id",user.id);
+    if(session.status==="evidence_pending")return NextResponse.json({data:{status:"evidence_pending"},message:"This evidence is already awaiting verification."});
+    if(!["clicked","rejected"].includes(session.status))return NextResponse.json({error:"This purchase session cannot accept evidence in its current state."},{status:409});
+    const{data:updated,error}=await db.from("retailer_purchase_sessions").update({order_reference_hash:privateOrderReference(input.orderReference,credentials().key,user.id),receipt_evidence_url:input.receiptUrl,purchase_date:input.purchaseDate,status:"evidence_pending",updated_at:new Date().toISOString()}).eq("id",session.id).eq("user_id",user.id).in("status",["clicked","rejected"]).select("id").maybeSingle();
     if(error)throw error;
+    if(!updated)return NextResponse.json({error:"This purchase changed while evidence was being submitted. Refresh before trying again."},{status:409});
     return NextResponse.json({data:{status:"evidence_pending"},message:"Evidence received. It will not affect retailer ratings until verified."});
   }catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Purchase evidence was invalid"},{status:422})}
 }
