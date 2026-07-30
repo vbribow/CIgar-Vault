@@ -2,7 +2,7 @@ import { InventoryManager } from "@/components/inventory-manager";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
 import { loadCatalog, mergeCatalogRecords } from "@/lib/catalog";
-import { loadCollections, loadRatings } from "@/lib/data";
+import { loadCollections, loadHumidors, loadRatings } from "@/lib/data";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
@@ -35,14 +35,16 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   }
   const mode = modeResult.value;
   const items = inventoryResult.value;
-  const [catalogResult, ratingsResult, collectionsResult] = await Promise.allSettled([
+  const [catalogResult, ratingsResult, collectionsResult, humidorsResult] = await Promise.allSettled([
     loadCatalog(items),
     mode === "mock" ? Promise.resolve([]) : loadRatings(),
     loadCollections(),
+    mode === "mock" ? Promise.resolve([]) : loadHumidors(),
   ]);
   const catalog = catalogResult.status === "fulfilled" ? catalogResult.value : mergeCatalogRecords([], items);
   const ratings = ratingsResult.status === "fulfilled" ? ratingsResult.value : [];
   const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+  const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
   const cigarItems = cigarInventoryRecords(items, collections);
   const presentationAssetCount = items.length - cigarItems.length;
   const collectionLinksReady = collectionsResult.status === "fulfilled";
@@ -59,6 +61,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     <WorkspaceGuide items={[{label:"Capture",title:"Add by camera or form",detail:"Identify a cigar, review the fields, then approve it into inventory.",href:"#mobile-intake"},{label:"Count",title:"Reconcile boxes and loose sticks",detail:"Record what is physically present without disturbing the rest of the lot.",href:"/inventory-count"},{label:"Protect",title:"Complete value and provenance",detail:"Close evidence gaps for reporting, verification, and climate exposure.",href:"/collection-health"}]}/>
     {!relatedReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Supporting evidence temporarily unavailable</div><p>Your inventory is intact and available. Collection links or published ratings are temporarily hidden rather than shown as absent.</p></section>}
     <UpgradeNudge plan={plan} context="inventory" usage={cigarItems.length} signals={{lotCount:cigarItems.length,portfolioValue:cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}}/>
-    <div><InventoryManager initialItems={cigarItems} catalog={catalog} ratings={ratings} collections={collections} mode={mode} initialQuery={filters.inventoryId} initialMissing={filters.missing} initialStorage={filters.storage} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} /></div>
+    <div><InventoryManager initialItems={cigarItems} catalog={catalog} ratings={ratings} collections={collections} humidors={humidors} storageLocationsReady={humidorsResult.status === "fulfilled"} mode={mode} initialQuery={filters.inventoryId} initialMissing={filters.missing} initialStorage={filters.storage} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} /></div>
   </main>;
 }

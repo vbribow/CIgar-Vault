@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { authorizeWrite, dataMode } from "@/lib/config";
-import { loadValuations } from "@/lib/data";
+import { loadHumidors, loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import {
   InventoryInputSchema,
@@ -43,6 +43,14 @@ export async function POST(request: Request) {
     const submissionId=z.string().uuid().optional().parse(body.submissionId);
     const {submissionId:_submissionId,...fields}=body;
     const draft = normalizeInventory(InventoryInputSchema.parse({...fields,inventoryId:createServerRecordId("inventory",submissionId)}));
+    if (draft.storageLocationId) {
+      const humidors = await loadHumidors();
+      if (!humidors.some(humidor => humidor.humidorId === draft.storageLocationId))
+        return NextResponse.json(
+          { error: "Choose one of your registered humidors or storage locations before saving." },
+          { status: 422 },
+        );
+    }
     const [inventory,valuations,sharedInventory,sharedValuations]=await Promise.all([
       loadInventory(),
       loadValuations().catch(()=>[]),

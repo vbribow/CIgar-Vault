@@ -31,6 +31,8 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(audit,/Active inventory audit complete/);
  assert.match(page,/initialActiveOnly=\{filters\.active === "1"\}/);
  assert.match(page,/initialQuery=\{filters\.inventoryId\}/);
+ assert.match(page,/humidors=\{humidors\}/);
+ assert.match(page,/storageLocationsReady=\{humidorsResult\.status === "fulfilled"\}/);
  assert.match(manager,/const scopedItems = useMemo/);
  assert.match(manager,/initialActiveOnly \? items\.filter\(\(item\) => \(item\.currentQty \?\? 0\) > 0\) : items/);
  assert.match(manager,/\{filtered\.length\} of \{scopedItems\.length\} lots/);
@@ -50,6 +52,9 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(manager,/scrollIntoView\(\{behavior:"smooth",block:"start"\}\)/);
  assert.match(manager,/missing==="all"&&<button className="danger"/);
  assert.match(manager,/Save storage location/);
+ assert.match(manager,/select name="storageLocationId"/);
+ assert.match(manager,/Current legacy location/);
+ assert.match(manager,/Add a new humidor or storage location/);
  assert.match(manager,/Save provenance/);
  assert.doesNotMatch(page,/Confirm my collection/);
 });
