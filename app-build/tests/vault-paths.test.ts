@@ -27,7 +27,10 @@ test("Vault presents separate browse, audit, and valuable collection workspaces"
  assert.match(audit,/Provenance/);
  assert.match(audit,/Membership truth/);
  assert.match(audit,/missing=\$\{check\.key\}&active=1#inventory-records/);
+ assert.match(audit,/missing=\$\{gap\.key\}&active=1&inventoryId=\$\{encodeURIComponent\(item\.inventoryId\)\}#inventory-records/);
+ assert.match(audit,/Active inventory audit complete/);
  assert.match(page,/initialActiveOnly=\{filters\.active === "1"\}/);
+ assert.match(page,/initialQuery=\{filters\.inventoryId\}/);
  assert.match(manager,/const scopedItems = useMemo/);
  assert.match(manager,/initialActiveOnly \? items\.filter\(\(item\) => \(item\.currentQty \?\? 0\) > 0\) : items/);
  assert.match(manager,/\{filtered\.length\} of \{scopedItems\.length\} lots/);
