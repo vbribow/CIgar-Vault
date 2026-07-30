@@ -30,10 +30,12 @@ test("retailer market migration and UI preserve transaction-only scoring",()=>{
   const migration=fs.readFileSync("supabase/migrations/202607300002_trusted_retailer_market.sql","utf8");
   const ui=fs.readFileSync("components/retailer-market.tsx","utf8");
   const inventory=fs.readFileSync("app/inventory/[inventoryId]/page.tsx","utf8");
+  const clickRoute=fs.readFileSync("app/api/retailer-market/click/route.ts","utf8");
   assert.match(migration,/purchase_session_id uuid not null unique/);
   assert.match(migration,/order_reference_hash/);
   assert.match(migration,/status in \('verified','review','hidden'\)/);
   assert.match(ui,/Only verified transactions can affect this score/);
   assert.match(ui,/Seller payment never changes ranking/);
   assert.match(inventory,/Find this cigar/);
+  assert.match(clickRoute,/trackingStatus:"unavailable"/);
 });
