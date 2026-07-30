@@ -5,7 +5,7 @@ export const RetailerListingSchema = z.object({
   seller: z.string().trim().min(2).max(120),
   sellerType: z.enum(["Authorized retailer", "Specialty dealer", "Auction", "Manufacturer", "Other"]),
   title: z.string().trim().min(2).max(240),
-  url: z.string().url().refine(value => /^https?:\/\//i.test(value), "A secure web listing is required"),
+  url: z.string().url().refine(value => /^https:\/\//i.test(value), "A secure HTTPS web listing is required"),
   availability: z.enum(["In stock", "Auction open", "Waitlist", "Unknown"]),
   askingPrice: z.number().nonnegative().optional(),
   quantity: z.number().int().positive().optional(),
@@ -49,17 +49,35 @@ export function privateOrderReference(reference: string, secret: string, ownerSc
 
 export function trustedRetailerScore(reviews: RetailerReviewEvidence[]) {
   const verified = reviews.filter(review => review.status === "verified");
-  if (!verified.length) return { score: undefined, count: 0, confidence: "Not yet rated" as const };
-  const reviewers = new Set(verified.map(review => review.userId)).size;
-  const raw = verified.reduce((sum, review) => sum + review.overall, 0);
+  if (!verified.length) return { score: undefined, count: 0, reviewerCount: 0, confidence: "Not yet rated" as const };
+  const byReviewer = new Map<string, number[]>();
+  for (const review of verified) byReviewer.set(review.userId, [...(byReviewer.get(review.userId) || []), review.overall]);
+  const reviewerMeans = [...byReviewer.values()].map(values => values.reduce((sum, value) => sum + value, 0) / values.length);
+  const reviewers = reviewerMeans.length;
+  const raw = reviewerMeans.reduce((sum, value) => sum + value, 0);
   const priorScore = 4;
   const priorWeight = 8;
-  const score = (priorScore * priorWeight + raw) / (priorWeight + verified.length);
+  const score = (priorScore * priorWeight + raw) / (priorWeight + reviewers);
   return {
     score: Number(score.toFixed(1)),
     count: verified.length,
+    reviewerCount: reviewers,
     confidence: reviewers >= 25 ? "Established" as const : reviewers >= 8 ? "Developing" as const : "Early evidence" as const,
   };
+}
+
+const identityStopWords = new Set(["cigar", "cigars", "the", "and", "edition", "series"]);
+function identityTokens(value: string) {
+  return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().match(/[a-z0-9]+/g)?.filter(token => token.length > 1 && !identityStopWords.has(token)) || [];
+}
+export function listingMatchesExactIdentity(
+  item: { brand: string; line: string; vitola: string },
+  listing: { title: string; url: string },
+) {
+  if (!/^https:\/\//i.test(listing.url)) return false;
+  const title = new Set(identityTokens(listing.title));
+  const fields = [item.brand, item.line, item.vitola].map(identityTokens);
+  return fields.every(tokens => tokens.length > 0 && tokens.every(token => title.has(token)));
 }
 
 export function ratingCanAffectPublicScore(input: {

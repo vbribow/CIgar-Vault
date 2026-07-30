@@ -16,6 +16,11 @@ export async function POST(request: Request) {
     if(!item)return NextResponse.json({error:"Inventory record not found"},{status:404});
     const id=randomUUID(),fingerprint=createHash("sha256").update(`${body.inventoryId}|${listing.seller}|${listing.url}`).digest("hex");
     const{error}=await admin().from("retailer_purchase_sessions").insert({id,user_id:user.id,inventory_id:item.inventoryId,retailer_key:retailerKey(listing.seller),retailer_name:listing.seller,listing_url:listing.url,listing_fingerprint:fingerprint,status:"clicked"});
+    if(error?.code==="23505"){
+      const{data:existing,error:existingError}=await admin().from("retailer_purchase_sessions").select("id").eq("user_id",user.id).eq("listing_fingerprint",fingerprint).eq("status","clicked").maybeSingle();
+      if(existingError)throw existingError;
+      if(existing)return NextResponse.json({data:{purchaseSessionId:existing.id,outboundUrl:listing.url,trackingStatus:"active"},message:"Existing purchase session reused safely."});
+    }
     if(error){
       if(["42P01","PGRST205"].includes(error.code||""))return NextResponse.json({data:{outboundUrl:listing.url,trackingStatus:"unavailable"},message:"Seller opened without transaction tracking. Verified ratings remain disabled until secure purchase verification is active."});
       throw error;

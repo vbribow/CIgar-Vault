@@ -2,6 +2,7 @@ import { AvailabilityResearchSchema, availabilityResearchJsonSchema } from "./av
 import { FOX_CIGAR_VERIFICATION_POLICY } from "./verification-sources";
 import type { InventoryItem } from "./types";
 import { responseOutputText } from "./cigar-vision";
+import { listingMatchesExactIdentity, RetailerListingSchema } from "./retailer-trust";
 
 export async function researchInventoryAvailability(item: InventoryItem) {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
@@ -28,5 +29,10 @@ Return up to eight direct product or auction-lot pages. Require an exact brand, 
   if (!response.ok) throw new Error((payload as { error?: { message?: string } }).error?.message || "Retailer research failed");
   const output = responseOutputText(payload);
   if (!output) throw new Error("Retailer research returned no results");
-  return AvailabilityResearchSchema.parse(JSON.parse(output));
+  const parsed = AvailabilityResearchSchema.parse(JSON.parse(output));
+  const listings = parsed.listings
+    .filter(listing => RetailerListingSchema.safeParse(listing).success)
+    .filter(listing => listingMatchesExactIdentity(item, listing))
+    .filter((listing, index, all) => all.findIndex(candidate => candidate.url === listing.url) === index);
+  return { ...parsed, listings };
 }
