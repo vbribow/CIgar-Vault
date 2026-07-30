@@ -21,9 +21,9 @@ import { recordRevision } from "@/lib/record-revision";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","provenanceNotes","score","action","habanosSealPhotoLink","notes"]);
 
-export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialMissing = "all", initialStorage = "all", initialCollectionId, initialActiveOnly = false }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialCollectionId?: string; initialActiveOnly?: boolean }) {
+export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialQuery = "", initialMissing = "all", initialStorage = "all", initialCollectionId, initialActiveOnly = false }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialQuery?: string; initialMissing?: string; initialStorage?: string; initialCollectionId?: string; initialActiveOnly?: boolean }) {
   const [items, setItems] = useState(initialItems);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [status, setStatus] = useState("all");
   const [missing, setMissing] = useState(initialMissing);
   const [storage, setStorage] = useState(initialStorage);

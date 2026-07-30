@@ -69,6 +69,20 @@ export default async function CollectionHealth() {
   ];
   const average = Math.round(activeItems.reduce((sum, item) => sum + inventoryCompleteness(item), 0) / Math.max(activeItems.length, 1));
   const ready = activeItems.filter((item) => inventoryCompleteness(item) === 100).length;
+  const prioritized = activeItems.flatMap((item) => {
+    const gap = !hasPhysicalQuantityBreakdown(item)
+      ? { key: "quantity", action: "Complete physical count" }
+      : item.retailValue === undefined
+        ? { key: "value", action: "Add replacement value" }
+        : item.vintage === undefined || String(item.vintage).trim() === ""
+          ? { key: "vintage", action: "Add production year" }
+          : !item.storageLocationId?.trim()
+            ? { key: "storage", action: "Add storage location" }
+            : !hasInventoryProvenance(item)
+              ? { key: "provenance", action: "Add provenance" }
+              : undefined;
+    return gap ? [{ item, gap }] : [];
+  }).sort((a, b) => inventoryCompleteness(a.item) - inventoryCompleteness(b.item)).slice(0, 8);
 
   return <main className="shell">
     <nav className="nav">
@@ -142,10 +156,11 @@ export default async function CollectionHealth() {
         <a className="button secondary" href="/inventory?missing=quantity&active=1#inventory-records">Start with quantities</a>
       </div>
       <div className="cleanupList">
-        {[...activeItems].sort((a, b) => inventoryCompleteness(a) - inventoryCompleteness(b)).slice(0, 8).map((item) => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}>
-          <span><strong>{item.brand} {item.line}</strong><small>{item.inventoryId} · {item.vitola}</small></span>
-          <span className="completionMeter"><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{inventoryCompleteness(item)}%</b></span>
+        {prioritized.map(({ item, gap }) => <a href={`/inventory?missing=${gap.key}&active=1&inventoryId=${encodeURIComponent(item.inventoryId)}#inventory-records`} key={item.inventoryId}>
+          <span><strong>{item.brand} {item.line}</strong><small>{item.inventoryId} · {item.vitola} · {gap.action}</small></span>
+          <span className="completionMeter"><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{gap.action} →</b></span>
         </a>)}
+        {prioritized.length === 0 && <div className="healthCard"><strong>Active inventory audit complete</strong><p>No active cigar lot is waiting for these five record corrections.</p></div>}
       </div>
     </section>
   </main>;
