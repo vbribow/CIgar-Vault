@@ -37,6 +37,7 @@ export type RetailerReviewEvidence = z.infer<typeof RetailerReviewSchema> & {
   retailerKey: string;
   verifiedAt: string;
 };
+export type RetailerRatingSummary = ReturnType<typeof trustedRetailerScore>;
 
 export function retailerKey(seller: string) {
   return seller.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 90);
@@ -72,4 +73,28 @@ export function ratingCanAffectPublicScore(input: {
     && Boolean(input.receiptVerifiedAt)
     && input.transactionUserId === input.reviewerUserId
     && !input.existingReview;
+}
+
+const availabilityRank:Record<string,number>={"In stock":3,"Auction open":2,"Waitlist":1,"Unknown":0};
+export function foxLaunchPlacementWeight(verifiedReviewCount:number){
+  return Math.max(0,30*(1-Math.min(verifiedReviewCount,12)/12));
+}
+export function rankRetailerListings<T extends {seller:string;availability:string;unitPrice?:number}>(
+  listings:T[],
+  ratings:Record<string,RetailerRatingSummary>,
+){
+  return [...listings].sort((left,right)=>{
+    const availability=(availabilityRank[right.availability]??0)-(availabilityRank[left.availability]??0);
+    if(availability)return availability;
+    const score=(listing:T)=>{
+      const summary=ratings[retailerKey(listing.seller)];
+      const performance=(summary?.score??4)*20+Math.min(summary?.count??0,30)*.35;
+      const disclosedLaunchPrior=retailerKey(listing.seller)==="fox-cigar"?foxLaunchPlacementWeight(summary?.count??0):0;
+      return performance+disclosedLaunchPrior;
+    };
+    const trust=score(right)-score(left);
+    if(trust)return trust;
+    const leftPrice=left.unitPrice??Number.POSITIVE_INFINITY,rightPrice=right.unitPrice??Number.POSITIVE_INFINITY;
+    return leftPrice-rightPrice||left.seller.localeCompare(right.seller);
+  });
 }
