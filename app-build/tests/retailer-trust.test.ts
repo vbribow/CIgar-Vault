@@ -74,6 +74,8 @@ test("retailer market migration and UI preserve transaction-only scoring",()=>{
   assert.match(ui,/Seller payment never changes ranking/);
   assert.match(ui,/temporary launch placement/);
   assert.match(inventory,/Find this cigar/);
+  assert.match(clickRoute,/listingMatchesExactIdentity\(item,listing\)/);
+  assert.match(clickRoute,/does not match the exact cigar record/);
   assert.match(clickRoute,/trackingStatus:"unavailable"/);
   assert.match(clickRoute,/error\?\.code==="23505"/);
   assert.match(purchaseRoute,/reviewed:reviewed\.has/);
