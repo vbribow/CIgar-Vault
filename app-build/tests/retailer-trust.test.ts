@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import fs from "node:fs";
-import { foxLaunchPlacementWeight, privateOrderReference, rankRetailerListings, ratingCanAffectPublicScore, retailerKey, trustedRetailerScore, type RetailerReviewEvidence } from "../lib/retailer-trust";
+import { foxLaunchPlacementWeight, listingMatchesExactIdentity, privateOrderReference, rankRetailerListings, ratingCanAffectPublicScore, retailerKey, RetailerListingSchema, trustedRetailerScore, type RetailerReviewEvidence } from "../lib/retailer-trust";
 
 const review=(userId:string,overall:number):RetailerReviewEvidence=>({purchaseSessionId:"00000000-0000-0000-0000-000000000000",overall,fulfillment:overall,packaging:overall,authenticityConfidence:"High",status:"verified",userId,retailerKey:"trusted-cigars",verifiedAt:"2026-07-30"});
 
@@ -17,6 +17,21 @@ test("one extreme review cannot swing a retailer score",()=>{
   const established=trustedRetailerScore(Array.from({length:25},(_,index)=>review(`u${index}`,5)));
   assert.equal(established.confidence,"Established");
   assert.equal(established.count,25);
+});
+test("one frequent buyer cannot dominate a retailer score",()=>{
+  const one=trustedRetailerScore([review("u1",5)]);
+  const repeated=trustedRetailerScore(Array.from({length:20},()=>review("u1",5)));
+  assert.equal(repeated.score,one.score);
+  assert.equal(repeated.count,20);
+  assert.equal(repeated.reviewerCount,1);
+  assert.equal(repeated.confidence,"Early evidence");
+});
+test("retailer results pass an exact HTTPS identity gate",()=>{
+  const item={brand:"Arturo Fuente",line:"Don Carlos",vitola:"Double Robusto"};
+  assert.equal(listingMatchesExactIdentity(item,{title:"Arturo Fuente Don Carlos Double Robusto",url:"https://example.com/cigar"}),true);
+  assert.equal(listingMatchesExactIdentity(item,{title:"Arturo Fuente Don Carlos Lancero",url:"https://example.com/cigar"}),false);
+  assert.equal(listingMatchesExactIdentity(item,{title:"Arturo Fuente Don Carlos Double Robusto",url:"http://example.com/cigar"}),false);
+  assert.equal(RetailerListingSchema.safeParse({seller:"Seller",sellerType:"Authorized retailer",title:"Exact cigar",url:"http://example.com",availability:"In stock",notes:""}).success,false);
 });
 test("order references are stored as stable non-readable hashes",()=>{
   const hashed=privateOrderReference(" Order-123 ","secret","u1");
@@ -49,6 +64,9 @@ test("retailer market migration and UI preserve transaction-only scoring",()=>{
   const ui=fs.readFileSync("components/retailer-market.tsx","utf8");
   const inventory=fs.readFileSync("app/inventory/[inventoryId]/page.tsx","utf8");
   const clickRoute=fs.readFileSync("app/api/retailer-market/click/route.ts","utf8");
+  const purchaseRoute=fs.readFileSync("app/api/retailer-market/purchases/route.ts","utf8");
+  const availability=fs.readFileSync("lib/retailer-availability.ts","utf8");
+  const clickMigration=fs.readFileSync("supabase/migrations/202607300003_retailer_click_idempotency.sql","utf8");
   assert.match(migration,/purchase_session_id uuid not null unique/);
   assert.match(migration,/order_reference_hash/);
   assert.match(migration,/status in \('verified','review','hidden'\)/);
@@ -57,4 +75,8 @@ test("retailer market migration and UI preserve transaction-only scoring",()=>{
   assert.match(ui,/temporary launch placement/);
   assert.match(inventory,/Find this cigar/);
   assert.match(clickRoute,/trackingStatus:"unavailable"/);
+  assert.match(clickRoute,/error\?\.code==="23505"/);
+  assert.match(purchaseRoute,/reviewed:reviewed\.has/);
+  assert.match(availability,/listingMatchesExactIdentity/);
+  assert.match(clickMigration,/unique index[\s\S]*user_id, listing_fingerprint[\s\S]*status = 'clicked'/);
 });
