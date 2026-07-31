@@ -132,8 +132,9 @@ export function CollectorWalkthrough() {
       </div>}
 
       {step === 1 && <div className="walkthroughAcquisition">
-        <dl><div><dt>Seller</dt><dd>Synthetic authorized-retail example</dd></div><div><dt>Channel check</dt><dd>Official producer network checked independently</dd></div><div><dt>Jurisdiction</dt><dd>Illustrative non-U.S. market</dd></div><div><dt>Representation</dt><dd>“Seller represented as genuine Habanos.”</dd></div></dl>
-        <p className="walkthroughCaution">Authorization, legality, authenticity, custody, and condition answer different questions. The record keeps them separate.</p>
+        <p className="walkthroughStageIntro">This step records how the cigar was offered and acquired. In a real collector record, you would preserve the seller, purchase location, receipt, and the seller’s exact claim so you can evaluate the source later.</p>
+        <dl><div><dt>Seller</dt><dd>Example authorized retailer (synthetic)</dd></div><div><dt>Retailer check</dt><dd>Seller status checked in the producer’s official directory</dd></div><div><dt>Purchase location</dt><dd>Example purchase outside the United States</dd></div><div><dt>What the seller claimed</dt><dd>“Seller described the sealed box as genuine Habanos.”</dd></div></dl>
+        <div className="walkthroughCaution"><strong>Why record each detail?</strong><span>A listed retailer, a lawful purchase, matching packaging, documented ownership history, and good condition are separate checks. One positive sign does not prove all the others.</span></div>
       </div>}
 
       {step === 2 && <fieldset className="walkthroughEvidence">

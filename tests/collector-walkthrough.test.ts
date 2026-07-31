@@ -22,6 +22,8 @@ test("the walkthrough covers the complete evidence journey and portable export",
   for (const state of ["Official result recorded", "Partially supported", "Conflicting", "Tool unavailable", "Unresolved"]) assert.match(component, new RegExp(state));
   assert.match(component, /hojavia-synthetic-evidence-record\.json/);
   assert.match(component, /Nothing was added to your account/);
+  assert.match(component, /This step records how the cigar was offered and acquired/);
+  assert.match(component, /One positive sign does not prove all the others/);
   assert.match(component, /Restart walkthrough/);
   assert.match(component, /role="progressbar"/);
   assert.match(navigation, /\/collector-walkthrough/);
