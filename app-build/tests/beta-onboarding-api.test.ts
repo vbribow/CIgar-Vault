@@ -21,8 +21,16 @@ test("Hojavía sends reinstall notices only through the protected onboarding rou
   const route = readFileSync(new URL("../app/api/founder-onboarding/reinstall-notice/route.ts", import.meta.url), "utf8");
   assert.match(route, /authorizeWrite/);
   assert.match(route, /beta_collectors/);
-  assert.match(route, /sendAccountEmail/);
+  assert.match(route, /submitAccountEmail/);
   assert.match(route, /accountEmailConfiguration/);
   assert.match(route, /Only an invited or active beta tester/);
   assert.match(route, /last_contact_at/);
+  assert.match(route, /acceptedAt/);
+  assert.doesNotMatch(route, /sent: true/);
+});
+
+test("founder onboarding never describes provider acceptance as confirmed delivery", () => {
+  const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
+  assert.match(component, /delivery is not yet confirmed/);
+  assert.doesNotMatch(component, /Hojavía sent the reinstall notice/);
 });

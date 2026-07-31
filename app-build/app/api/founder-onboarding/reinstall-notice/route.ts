@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { authorizeWrite } from "@/lib/config";
-import { betaReinstallEmail } from "@/lib/beta-onboarding";
-import { accountEmailConfiguration, sendAccountEmail } from "@/lib/alert-notifications";
+import { betaReinstallEmail, legacyBetaAppOrigin } from "@/lib/beta-onboarding";
+import { accountEmailConfiguration, submitAccountEmail } from "@/lib/alert-notifications";
 
 const Input = z.object({ collectorId: z.string().uuid() });
 
@@ -28,21 +28,19 @@ export async function POST(request: Request) {
     if (!collector) return NextResponse.json({ error: "Beta tester not found" }, { status: 404 });
     if (collector.stage === "Prospect") return NextResponse.json({ error: "Only an invited or active beta tester may receive an operational notice" }, { status: 422 });
 
-    const previousOrigin = process.env.BETA_PREVIOUS_APP_ORIGIN?.trim() || "http://192.168.1.104:3102";
-    const replacementOrigin = process.env.BETA_CURRENT_APP_ORIGIN?.trim() || new URL(request.url).origin;
-    if (previousOrigin === replacementOrigin) throw new Error("The previous and replacement beta origins must be different");
-    const email = betaReinstallEmail(collector, previousOrigin, replacementOrigin);
+    const previousOrigin = process.env.BETA_PREVIOUS_APP_ORIGIN?.trim() || legacyBetaAppOrigin;
+    const email = betaReinstallEmail(collector, previousOrigin);
     const configuration = accountEmailConfiguration();
     if (!configuration.configured) {
       return NextResponse.json({ error: "Hojavía system email is not configured. Add RESEND_API_KEY and HOJAVIA_EMAIL_FROM before sending." }, { status: 503 });
     }
-    const key = `beta-reinstall-${collector.id}-${replacementOrigin}`.replace(/[^A-Za-z0-9_.:-]/g, "-").slice(0, 200);
-    const sent = await sendAccountEmail(email.recipient, email.subject, email.body, key);
-    if (!sent) throw new Error("Hojavía system email did not confirm delivery");
-    const sentAt = new Date().toISOString();
-    const { error: updateError } = await client.from("beta_collectors").update({ last_contact_at: sentAt, updated_at: sentAt }).eq("id", collector.id);
+    const key = `beta-reinstall-${collector.id}-${email.replacementUrl}`.replace(/[^A-Za-z0-9_.:-]/g, "-").slice(0, 200);
+    const submission = await submitAccountEmail(email.recipient, email.subject, email.body, key);
+    if (!submission) throw new Error("Hojavía system email is not configured");
+    const acceptedAt = new Date().toISOString();
+    const { error: updateError } = await client.from("beta_collectors").update({ last_contact_at: acceptedAt, updated_at: acceptedAt }).eq("id", collector.id);
     if (updateError) throw updateError;
-    return NextResponse.json({ data: { sent: true, sentAt, recipient: email.recipient, subject: email.subject, replacementUrl: email.replacementUrl } });
+    return NextResponse.json({ data: { accepted: true, acceptedAt, providerId: submission.providerId, recipient: email.recipient, subject: email.subject, replacementUrl: email.replacementUrl } });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to send the beta app update notice" }, { status: 502 });
   }
