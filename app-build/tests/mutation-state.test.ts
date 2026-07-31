@@ -9,6 +9,7 @@ test("shared mutation labels communicate pending and completed states",()=>{
   assert.equal(mutationButtonText("pending",labels),"Saving…");
   assert.equal(mutationButtonText("success",labels),"Saved");
   assert.equal(mutationButtonText("error",labels),"Save");
+  assert.equal(mutationButtonText("error",{...labels,error:"Retry save"}),"Retry save");
 });
 
 test("shared mutation guard uses an immediate ref lock rather than state alone",()=>{
