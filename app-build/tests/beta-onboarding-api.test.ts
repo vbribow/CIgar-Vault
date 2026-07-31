@@ -16,3 +16,11 @@ test("the database applies a transaction-safe 25-collector cohort limit", () => 
   assert.match(migration, /occupied >= 25/);
   assert.match(migration, /before insert or update of stage/);
 });
+
+test("founder onboarding prepares permanent-address app updates through copyable webmail", () => {
+  const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
+  assert.match(component, /betaReinstallEmail/);
+  assert.match(component, /betaReinstallWebmailLinks/);
+  assert.match(component, /App-update instructions/);
+  assert.doesNotMatch(component, /reinstall-notice/);
+});
