@@ -101,8 +101,12 @@ test("public Industry Hub visibly identifies official source limits",async()=>{
 test("public registry withholds incomplete canonical research",async()=>{
   const registry=await readFile(new URL("../app/industry/registry/page.tsx",import.meta.url),"utf8");
   assert.match(registry,/filter\(item=>item\.status==="Verified foundation"\)/);
-  assert.match(registry,/No canonical cigar identity has met the public evidence threshold yet/i);
+  assert.match(registry,/hasPublishedRegistry/);
+  assert.match(registry,/The shelves remain clear until the evidence is ready/i);
+  assert.match(registry,/A quiet registry is more useful than a crowded collection of uncertain claims/i);
   assert.match(registry,/Developing and research-required records remain in the private research workflow/i);
+  assert.match(registry,/products\.length>0&&<section/);
+  assert.match(registry,/canonical\.length>0&&<section/);
 });
 
 test("published Industry Hub pages are publicly reachable",async()=>{
