@@ -80,8 +80,8 @@ export function PasswordRecoveryForm() {
   return <form onSubmit={submit}>
     <label><span>Email</span><input name="email" type="email" autoComplete="email" required disabled={busy || secondsRemaining > 0} /></label>
     <button className="button" disabled={busy || secondsRemaining > 0}>{busy ? "Sending…" : secondsRemaining ? `Try again in ${formatRecoveryCountdown(secondsRemaining)}` : "Send reset link"}</button>
-    {error && <div className="loginMessage error">{error}</div>}
-    {message && <div className="loginMessage">{message}</div>}
+    {error && <div className="loginMessage error" role="alert">{error}</div>}
+    {message && <div className="loginMessage" role="status">{message}</div>}
     {secondsRemaining > 0 && <div className="recoveryStatus" role="status"><strong>Recovery request paused</strong><span>Do not request another message yet. Check spam or junk and use only the newest email. Successful requests pause for 10 minutes; provider rate limits pause for 65 minutes.</span></div>}
     <p className="recoveryHelp">Still locked out after the timer ends? {supportEmail ? <a href={`mailto:${supportEmail}?subject=Collector%20account%20recovery`}>Contact support</a> : `Contact the ${brand.name} administrator`} before requesting repeatedly.</p>
   </form>;

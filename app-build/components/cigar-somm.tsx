@@ -99,7 +99,7 @@ export function CigarSomm({inventory,smokes=[],initialInventoryId="",initialColl
 <span>Source-aware research normally takes 30–90 seconds. Keep this page open.</span>
 </output>}</form>
 <div className="sommPrompts">{prompts.map(prompt=>
-<button type="button" onClick={()=>setQuestion(prompt)} key={prompt}>{prompt}</button>)}</div>{error&&<output className="sommError">{error}</output>}</section>
+<button type="button" onClick={()=>setQuestion(prompt)} key={prompt}>{prompt}</button>)}</div>{error&&<output className="sommError" aria-live="polite" aria-atomic="true">{error}</output>}</section>
   {result&&<section className="sommAnswer">
 <header>
 <div>
