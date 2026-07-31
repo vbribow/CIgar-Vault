@@ -8,6 +8,7 @@ import { mutationButtonText } from "@/lib/mutation-state";
 import { useMutationGuard } from "@/components/use-mutation-guard";
 import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType } from "@/lib/valuation-evidence";
 import { burnQualityOptions, constructionQualityOptions } from "@/lib/records-model";
+import { captureOperationalFailure } from "@/lib/operational-failure";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
@@ -53,6 +54,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       headers: { "Content-Type": "application/json", "x-founder-key": key },
       body: JSON.stringify(payload),
     }).catch(error => {
+      if(kind==="smoke")void captureOperationalFailure("smoke-save");
       mutation.fail();
       setMessage(error instanceof Error ? error.message : "Save failed");
       return undefined;
@@ -60,6 +62,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     if (!response) return;
     const result = await response.json();
     if (!response.ok) {
+      if(kind==="smoke")void captureOperationalFailure("smoke-save",response.status);
       setMessage(result.error || "Save failed");
       mutation.fail();
       return;

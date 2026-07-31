@@ -12,6 +12,7 @@ export type TesterActivityRow={
 
 const latest=(values:Array<string|undefined>)=>values.filter((value):value is string=>Boolean(value)).sort((a,b)=>b.localeCompare(a))[0];
 const failedEvent=(event:BetaActivityEvent)=>event.properties?.failed===true||event.properties?.failed==="true"||event.event_type==="app-operation-failed";
+const failureLabels:Record<string,string>={"inventory-save":"Could not save inventory","smoke-save":"Could not save smoke log","photo-upload":"Could not upload photo","feedback-submit":"Could not submit feedback","auth-sign-in":"Could not sign in","auth-recovery":"Could not recover account"};
 const failedRun=(record:BetaActivityRecord)=>record.kind==="system-runs"&&String(record.payload?.status||"").toLowerCase()==="failed";
 
 export function buildBetaActivityDashboard(collectors:BetaActivityCollector[],accounts:BetaActivityAccount[],records:BetaActivityRecord[],events:BetaActivityEvent[],feedback:BetaActivityFeedback[]){
@@ -31,6 +32,7 @@ export function buildBetaActivityDashboard(collectors:BetaActivityCollector[],ac
       ...owned.filter(record=>record.kind==="activities"&&record.updated_at).map(record=>({at:record.updated_at!,label:"Recorded inventory activity"})),
       ...userFeedback.map(item=>({at:item.created_at,label:`Submitted ${item.severity.toLowerCase()} feedback`})),
       ...installs.map(event=>({at:event.created_at,label:"Confirmed phone app"})),
+      ...userEvents.filter(event=>event.event_type==="app-operation-failed").map(event=>({at:event.created_at,label:failureLabels[String(event.properties?.action||"")]||"App operation failed"})),
     ].sort((a,b)=>b.at.localeCompare(a.at)).slice(0,3);
     const reasons:string[]=[];
     if(!account)reasons.push("Account not created");

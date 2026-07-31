@@ -2,6 +2,7 @@
 
 import { FormEvent, useRef, useState } from "react";
 import type { InventoryItem } from "@/lib/types";
+import { captureOperationalFailure } from "@/lib/operational-failure";
 
 const kinds = [
   ["cigar", "Cigar"], ["box", "Box"], ["habanos-seal", "Habanos seal"], ["box-code", "Box code"], ["provenance", "Receipt / provenance"],
@@ -57,6 +58,7 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
     setUploading(true);
     setPhase("Uploading securely…");
     setMessage("");
+    let failureStatus=0;
 
     try {
       const request = fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}/photos`, {
@@ -73,6 +75,7 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
           }, 60_000);
         }),
       ]);
+      failureStatus=response.status;
       setPhase("Confirming inventory sync…");
       const result = await response.json().catch(() => ({ error: `Upload service returned ${response.status}` }));
       if (!response.ok) throw new Error(result.error || "Upload failed");
@@ -85,8 +88,10 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
       if (timedOut && await reconcile(kind, previousUrl)) {
         formElement.reset();
       } else if (timedOut) {
+        void captureOperationalFailure("photo-upload");
         setMessage("The upload did not finish within one minute. Nothing new is attached; you can safely try again.");
       } else {
+        void captureOperationalFailure("photo-upload",failureStatus);
         setMessage(error instanceof Error ? error.message : "Upload failed. Please try again.");
       }
     } finally {

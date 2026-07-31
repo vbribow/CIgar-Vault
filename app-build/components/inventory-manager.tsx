@@ -18,6 +18,7 @@ import { cigarInventoryRecords, collectionContentsSummary, inventoryCollectionRe
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import { brand } from "@/lib/brand";
 import { recordRevision } from "@/lib/record-revision";
+import { captureOperationalFailure } from "@/lib/operational-failure";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","provenanceNotes","score","action","habanosSealPhotoLink","notes"]);
 
@@ -104,10 +105,12 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     payload.brand = canonicalBrand(String(payload.brand || ""));
     const id = String(payload.inventoryId);
     const isEdit = Boolean(editing);
+    let failureStatus=0;
     try {
       const response = await fetch(isEdit ? `/api/inventory/${encodeURIComponent(editing!.inventoryId)}` : "/api/inventory", {
         method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json", "x-founder-key": String(form.get("writeKey") || ""), ...(editing ? { "If-Match": recordRevision(editing) } : {}) }, body: JSON.stringify(payload),
       });
+      failureStatus=response.status;
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Save failed");
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
@@ -116,7 +119,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       const auditing = missing !== "all";
       setEditing(null); setDraft(null); if(!isEdit)setSubmissionId(crypto.randomUUID());setMessage(`${savedId} saved and synchronized.${valuationStatus}${auditing?" Audit queue refreshed.":""}`); if(isEdit&&!auditing)setRecentlySaved({inventoryId:savedId,token:Date.now()}); formElement.reset();
       if(auditing)window.setTimeout(()=>document.getElementById("inventory-records")?.scrollIntoView({behavior:"smooth",block:"start"}),120);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
+    } catch (error) { void captureOperationalFailure("inventory-save",failureStatus);setMessage(error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
 

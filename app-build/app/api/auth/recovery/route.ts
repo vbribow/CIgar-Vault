@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { appOrigin } from "@/lib/app-origin";
 import { recoveryAuthOptions } from "@/lib/supabase/recovery-client";
+import { recordKnownAccountFailure } from "@/lib/operational-failure-server";
 
 const Input=z.object({email:z.string().trim().email()});
 
@@ -10,8 +11,9 @@ export async function POST(request:Request){
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
   if(!url||!key)return NextResponse.json({error:"Authentication is not configured"},{status:503});
+  let accountEmail="";
   try{
-    const{email}=Input.parse(await request.json());
+    const{email}=Input.parse(await request.json());accountEmail=email;
     const origin=appOrigin(
       new URL(request.url).origin,
       process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
@@ -23,6 +25,7 @@ export async function POST(request:Request){
   }catch(error){
     const message=error instanceof Error?error.message:"Unable to send recovery email";
     const rateLimited=message.toLowerCase().includes("rate limit");
-    return NextResponse.json({error:rateLimited?"Supabase did not send an email because its hourly limit is active. Wait for the countdown to finish, then try exactly once.":message,...(rateLimited?{retryAfterSeconds:65*60}:{})},{status:error instanceof z.ZodError?422:rateLimited?429:502,headers:rateLimited?{"Retry-After":String(65*60)}:undefined});
+    const status=error instanceof z.ZodError?422:rateLimited?429:502;if(accountEmail)await recordKnownAccountFailure(accountEmail,"auth-recovery",status,"/recover");
+    return NextResponse.json({error:rateLimited?"Supabase did not send an email because its hourly limit is active. Wait for the countdown to finish, then try exactly once.":message,...(rateLimited?{retryAfterSeconds:65*60}:{})},{status,headers:rateLimited?{"Retry-After":String(65*60)}:undefined});
   }
 }

@@ -23,7 +23,7 @@ test("installation health covers obsolete hosts, connectivity, updates, home scr
 test("installation confirmation is operational and remains available when analytics are disabled",()=>{
   const route=readFileSync(new URL("../app/api/product-events/route.ts",import.meta.url),"utf8");
   assert.match(route,/app-install-confirmed/);
-  assert.match(route,/eventType!=="app-install-confirmed"/);
+  assert.match(route,/const operational=eventType==="app-install-confirmed"/);
 });
 
 test("founder installation status separates account, login, and phone confirmation",()=>{
