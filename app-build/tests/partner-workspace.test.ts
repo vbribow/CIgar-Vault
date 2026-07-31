@@ -75,19 +75,21 @@ test("partner workspace exposes no founder approval or launch controls",async()=
 });
 
 test("partner readiness covers trust, brand, commercial, operations, and launch controls",()=>{
-  assert.equal(readinessDefinitions.length,9);
-  assert.deepEqual(new Set(readinessDefinitions.map(item=>item.category)),new Set(["Trust","Brand","Commercial","Operations","Launch"]));
+  assert.equal(readinessDefinitions.length,12);
+  assert.deepEqual(new Set(readinessDefinitions.map(item=>item.category)),new Set(["Trust","Brand","Commercial","Legal","Operations","Launch"]));
   assert.match(readinessDefinitions.find(item=>item.key==="privacy_data_use")?.description||"",/no access to private collector records/i);
   assert.match(readinessDefinitions.find(item=>item.key==="commission_payout")?.description||"",/Never store bank or tax credentials/i);
+  assert.match(readinessDefinitions.find(item=>item.key==="editorial_independence")?.description||"",/listing order/i);
+  assert.match(readinessDefinitions.find(item=>item.key==="age_jurisdiction")?.description||"",/retailer age verification/i);
 });
 
 test("readiness requires every defined control before activation",()=>{
   const partnerId="2544af61-5328-4a82-9780-b50c996b298f";
   const rows=readinessSeedRows(partnerId);
-  assert.deepEqual(readinessSummary(rows),{approved:0,required:9,complete:false});
+  assert.deepEqual(readinessSummary(rows),{approved:0,required:12,complete:false});
   const approved=rows.map(row=>({...row,status:"approved" as const}));
-  assert.deepEqual(readinessSummary(approved),{approved:9,required:9,complete:true});
-  assert.equal(readinessSummary(approved.slice(0,8)).complete,false);
+  assert.deepEqual(readinessSummary(approved),{approved:12,required:12,complete:true});
+  assert.equal(readinessSummary(approved.slice(0,11)).complete,false);
 });
 
 test("only operational partner roles can submit readiness evidence",()=>{

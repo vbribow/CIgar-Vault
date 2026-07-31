@@ -20,13 +20,33 @@ async function ensureBucket(){
  const{data,error}=await client.storage.getBucket(bucketName);
  if(data)return;
  if(error&&!/not found/i.test(error.message))throw error;
- const created=await client.storage.createBucket(bucketName,{public:false,fileSizeLimit:12*1024*1024,allowedMimeTypes:["image/jpeg","image/png","image/webp","image/heic","image/heif","application/pdf"]});
+ const created=await client.storage.createBucket(bucketName,{public:false,fileSizeLimit:12*1024*1024,allowedMimeTypes:["image/jpeg","image/png","image/webp","application/pdf"]});
  if(created.error&&!/already exists/i.test(created.error.message))throw created.error;
 }
 
 export const photoKinds=["cigar","box","habanos-seal","box-code","provenance"] as const;
 export type PhotoKind=typeof photoKinds[number];
 export const photoFields:Record<PhotoKind,"photoLink"|"boxPhotoLink"|"habanosSealPhotoLink"|"boxCodePhotoLink"|"provenanceDocumentLink">={cigar:"photoLink",box:"boxPhotoLink","habanos-seal":"habanosSealPhotoLink","box-code":"boxCodePhotoLink",provenance:"provenanceDocumentLink"};
+
+export function photoBytesMatchType(value:ArrayBuffer|Uint8Array,type:string){
+ const bytes=value instanceof Uint8Array?value:new Uint8Array(value);
+ if(type==="image/jpeg")return bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff;
+ if(type==="image/png")return bytes.length>=8&&[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a].every((byte,index)=>bytes[index]===byte);
+ if(type==="image/webp")return bytes.length>=12&&String.fromCharCode(...bytes.slice(0,4))==="RIFF"&&String.fromCharCode(...bytes.slice(8,12))==="WEBP";
+ if(type==="application/pdf")return bytes.length>=5&&String.fromCharCode(...bytes.slice(0,5))==="%PDF-";
+ return false;
+}
+
+export function storedPhotoKey(value:string|undefined,ownerId:string){
+ if(!value)return undefined;
+ try{
+  const url=new URL(value,"https://local.invalid"),prefix="/api/photos/";
+  if(!url.pathname.startsWith(prefix))return undefined;
+  const segments=url.pathname.slice(prefix.length).split("/").map(decodeURIComponent);
+  if(segments.some(segment=>!segment||segment==="."||segment==="..")||segments[0]!==ownerId)return undefined;
+  return segments.join("/");
+ }catch{return undefined}
+}
 
 export async function photoBucket():Promise<PhotoBucket>{
  bucketReady??=ensureBucket();await bucketReady;
@@ -37,4 +57,4 @@ export async function photoBucket():Promise<PhotoBucket>{
  };
 }
 
-export function safePhotoKey(inventoryId:string,kind:PhotoKind,file:File,ownerId?:string){const extension=file.name.toLowerCase().match(/\.(jpe?g|png|webp|heic|heif|pdf)$/)?.[1]||(file.type==="application/pdf"?"pdf":"jpg"),owner=(ownerId||"founder").replace(/[^a-zA-Z0-9_-]/g,"-");return`${owner}/${inventoryId.replace(/[^a-zA-Z0-9_-]/g,"-")}/${kind}/${crypto.randomUUID()}.${extension}`}
+export function safePhotoKey(inventoryId:string,kind:PhotoKind,file:File,ownerId?:string){const extension=file.name.toLowerCase().match(/\.(jpe?g|png|webp|pdf)$/)?.[1]||(file.type==="application/pdf"?"pdf":"jpg"),owner=(ownerId||"founder").replace(/[^a-zA-Z0-9_-]/g,"-");return`${owner}/${inventoryId.replace(/[^a-zA-Z0-9_-]/g,"-")}/${kind}/${crypto.randomUUID()}.${extension}`}

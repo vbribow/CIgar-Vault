@@ -55,7 +55,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
             </p>
           </div>
           <div className="valueHeroCard valuationUnavailable">
-            <span>Documented aftermarket value</span>
+            <span>Documented market value</span>
             <strong>—</strong>
             <small>Refresh after the account service recovers</small>
           </div>
@@ -71,6 +71,11 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
   const scopedCollection=filters.collectionId?collectionsResult.value.find(collection=>collection.collectionId===filters.collectionId):undefined;
   const intelligence = buildValuationIntelligence(scopedInventory, valuations);
   const { totals } = intelligence;
+  const marketStandardCoverageLabel = totals.habanosLots === totals.totalLots
+    ? "Verified-sale coverage"
+    : totals.newWorldLots === totals.totalLots
+      ? "Retail-consensus coverage"
+      : "Market-standard coverage";
   const completionQueue=intelligence.reviewQueue.filter(row=>
     row.item.status!=="Review"
     &&!/verify|unknown/i.test(row.item.vitola)
@@ -88,8 +93,8 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           <div className="eyebrow">Valuation intelligence</div>
           <h1>Keep every value current.</h1>
           <p className="lede">
-            A rolling review system that separates retail replacement, aftermarket
-            value, and verified completed sales—calculated per cigar and
+            A rolling review system that separates retail replacement, New World
+            retail consensus, secondary-market evidence, and verified completed sales—calculated per cigar and
             never presented as an independent appraisal.
           </p>
           <div className="ctaRow">
@@ -105,7 +110,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           </div>
         </div>
         <div className="valueHeroCard">
-          <span>{wholeSetReference!==undefined?`${scopeLabel} whole-set retail reference`:"Documented aftermarket value"}</span>
+          <span>{wholeSetReference!==undefined?`${scopeLabel} whole-set retail reference`:"Documented market value"}</span>
           <strong>{money.format(wholeSetReference??totals.documentedMarketValue)}</strong>
           <small>{wholeSetReference!==undefined
             ?`Exact set reference · ${scopedCollectionSummary?.valueAsOf??"date documented"} · excluded from portfolio totals`
@@ -116,7 +121,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
 
       <section className="valueMetrics valuationMetrics">
         {wholeSetReference!==undefined&&<article>
-          <span>Component aftermarket evidence</span>
+          <span>Component market evidence</span>
           <strong>{money.format(totals.documentedMarketValue)}</strong>
           <small>{totals.marketCovered} of {totals.totalLots} lots · not the intact-set value</small>
         </article>}
@@ -136,9 +141,9 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           <small>{totals.marketCovered} of {totals.totalLots} lots</small>
         </article>
         <article>
-          <span>Verified-sale coverage</span>
-          <strong>{totals.saleCoveragePercent}%</strong>
-          <small>{totals.saleCovered} exact completed sales</small>
+          <span>{marketStandardCoverageLabel}</span>
+          <strong>{totals.standardCoveragePercent}%</strong>
+          <small>{totals.standardCovered} of {totals.totalLots} meet the applicable standard</small>
         </article>
         <article>
           <span>Research queue</span>
@@ -148,13 +153,14 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
       </section>
       <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>AI-assisted source finding and normalization</span></div><a href="/trust">Understand the evidence labels →</a></aside>
       <section className="valueEvidenceStandard" aria-labelledby="value-evidence-standard">
-        <header><div className="eyebrow">The New World evidence standard</div><h2 id="value-evidence-standard">Precision must be earned.</h2><p>The record states only what the evidence proves. A listing is useful—but it is not a sale.</p></header>
+        <header><div className="eyebrow">Market-specific evidence standards</div><h2 id="value-evidence-standard">Precision must be earned.</h2><p>New World cigars can establish retail consensus from multiple exact listings. Habanos retain the stricter completed-sale standard. A listing is never called a sale.</p></header>
         <div>
           <article><span>01</span><h3>Retail replacement</h3><p>Current exact-cigar price from a manufacturer or established retailer.</p></article>
-          <article><span>02</span><h3>{marketAskingPriceLabel}</h3><p>A public secondary listing, documented with its observation date and source. It is never presented as a completed sale.</p></article>
-          <article><span>03</span><h3>Verified completed sale</h3><p>Exact identity, sold status, date, venue, quantity, and direct proof.</p></article>
-          <article><span>04</span><h3>Estimated market range</h3><p>At least two independent secondary signals; shown as a range, not false precision.</p></article>
-          <article><span>05</span><h3>Insufficient evidence</h3><p>The trusted answer when the public market cannot support a defensible value.</p></article>
+          <article><span>02</span><h3>Retail consensus value</h3><p>New World only: at least two independent exact retailer listings, shown with a defensible range. It is not a completed sale.</p></article>
+          <article><span>03</span><h3>{marketAskingPriceLabel}</h3><p>A public secondary listing, documented with its observation date and source. It is never presented as a completed sale.</p></article>
+          <article><span>04</span><h3>Verified completed sale</h3><p>Exact identity, sold status, date, venue, quantity, and direct proof; the required Habanos market standard.</p></article>
+          <article><span>05</span><h3>Estimated market range</h3><p>At least two independent secondary signals; shown as a range, not false precision.</p></article>
+          <article><span>06</span><h3>Insufficient evidence</h3><p>The trusted answer when the public market cannot support a defensible value.</p></article>
         </div>
       </section>
       <SignalLegend />

@@ -23,3 +23,9 @@ test("a stalled response reconciles a photo that the server already saved", () =
   assert.match(source, /await reconcile\(kind, previousUrl\)/);
   assert.match(source, /Photo attached and inventory synced/);
 });
+
+test("manual attachment accepts only browser-displayable formats and explains replacement cleanup", () => {
+  assert.match(source, /accept="image\/jpeg,image\/png,image\/webp,application\/pdf"/);
+  assert.doesNotMatch(source, /accept="[^"]*image\/heic/);
+  assert.match(source, /successful replacement removes the prior private file/);
+});

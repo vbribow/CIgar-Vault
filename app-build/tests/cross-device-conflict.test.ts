@@ -16,10 +16,24 @@ test("all collector inventory editors send change tokens", async () => {
     "../components/inventory-manager.tsx",
     "../components/inventory-count-manager.tsx",
     "../components/inventory-correction-assistant.tsx",
+    "../components/recommendation-fact-editor.tsx",
   ]) {
     const source = await readFile(new URL(file, import.meta.url), "utf8");
     assert.match(source, /"If-Match": recordRevision\(/);
   }
+});
+
+test("collection facts and membership corrections reject stale device state", async () => {
+  const collectionManager = await readFile(new URL("../components/collections-manager.tsx", import.meta.url), "utf8");
+  const collectionRoute = await readFile(new URL("../app/api/collections/route.ts", import.meta.url), "utf8");
+  const assignmentReview = await readFile(new URL("../components/collection-assignment-review.tsx", import.meta.url), "utf8");
+  const memberRoute = await readFile(new URL("../app/api/collections/[collectionId]/members/route.ts", import.meta.url), "utf8");
+  assert.match(collectionManager, /"If-Match":collectionRevision\(editing,inventory\)/);
+  assert.match(collectionRoute, /collectionRevision\(existingCollection,inventory\)/);
+  assert.match(collectionRoute, /changed on another device/);
+  assert.match(assignmentReview, /"If-Match":recordRevision\(item\)/);
+  assert.match(memberRoute, /saveOwnedRecordIfUnchanged/);
+  assert.match(memberRoute, /newer record was preserved/);
 });
 
 test("inventory and photo saves reject stale records instead of overwriting them", async () => {

@@ -1,9 +1,10 @@
 import { loadInventory as loadAllInventory } from "@/lib/inventory";
 import { loadCollections } from "@/lib/data";
-import { inventoryCompleteness } from "@/lib/inventory-model";
+import { hasDocumentedCurrentQuantity, inventoryCompleteness } from "@/lib/inventory-model";
 import { auditCollectionMembership } from "@/lib/collection-membership-audit";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
+import { auditCollectionTemplateLibrary, collectionTemplates } from "@/lib/collection-templates";
 import "./health.css";
 
 export const dynamic = "force-dynamic";
@@ -34,13 +35,14 @@ export default async function CollectionHealth() {
   const collections = collectionsResult.value;
   const activeItems = items.filter((item) => (item.currentQty ?? 0) > 0);
   const membership = auditCollectionMembership(activeItems, collections);
+  const library = auditCollectionTemplateLibrary(collectionTemplates);
   const reviews = membership.rows.filter((row) => row.classification === "Review");
   const checks = [
     {
       key: "quantity",
       label: "Physical quantity",
-      detail: "Boxes and loose sticks",
-      missing: activeItems.filter((item) => item.fullBoxQty === undefined || item.looseStickQty === undefined),
+      detail: "Saved total; box and loose-stick detail is optional",
+      missing: activeItems.filter((item) => !hasDocumentedCurrentQuantity(item)),
     },
     {
       key: "value",
@@ -105,6 +107,25 @@ export default async function CollectionHealth() {
         <small>{check.detail}</small>
         <b>{check.missing.length ? "Review these records →" : "Complete ✓"}</b>
       </a>)}
+    </section>
+
+    <section className="section">
+      <div className="sectionHead">
+        <div>
+          <div className="eyebrow">Collection catalog truth</div>
+          <h2>One evidence protocol governs every collection.</h2>
+          <p>Automatic population is allowed only when every physical lot has attributable exact-vitola evidence and documented quantities reconcile to the collection total.</p>
+        </div>
+        <span className={`statusBadge ${library.automationReady ? "statusOwned" : "statusMissing"}`}>
+          {library.automationReady ? `${library.ready}/${library.total} verified` : `${library.blocked.length} blocked`}
+        </span>
+      </div>
+      <div className="healthGrid">
+        <div className="healthCard"><div><span>Researched templates</span><strong>{library.total}</strong></div><p>Current and future collections use the same admission rules.</p></div>
+        <div className="healthCard"><div><span>Automation-ready</span><strong>{library.ready}</strong></div><p>Exact lots, sources, and quantities reconcile.</p></div>
+        <div className="healthCard"><div><span>Blocked from population</span><strong>{library.blocked.length}</strong></div><p>{library.blocked.length?"Evidence gaps remain visible and cannot create inventory.":"No incomplete template can silently create inventory."}</p></div>
+      </div>
+      {library.blocked.length>0&&<div className="cleanupList">{library.blocked.map(({template,audit})=><a href={template.sourceUrl} target="_blank" rel="noreferrer" key={template.templateId}><span><strong>{template.name}</strong><small>{audit.issues.join(" · ")}</small></span><b>Research source ↗</b></a>)}</div>}
     </section>
 
     <section className="section">

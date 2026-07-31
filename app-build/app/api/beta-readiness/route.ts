@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     admin.from("beta_feedback").select("status,severity"),
     admin.from("vault_records").select("user_id,payload").eq("kind", "integrity").limit(10000),
   ]);
+  const serviceCredentials = !auth.error && !collectors.error && !audits.error;
   const migrationsReady = !consents.error && !feedback.error;
   const users = auth.data?.users || [];
   const invitedRows = (collectors.data || []).filter(row => row.stage !== "Prospect");
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
   const openRows = (feedback.data || []).filter(row => row.status === "Open" || row.status === "Reviewing");
   return NextResponse.json({ data: buildBetaReadiness({
     inviteOnly: privateBetaEnabled(),
-    serviceCredentials: true,
+    serviceCredentials,
     migrationsReady,
     invited: invitedRows.length,
     signedUp: signedUpUsers.length,

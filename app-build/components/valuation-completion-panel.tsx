@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect,useRef,useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem } from "@/lib/types";
+import { createClientUuid } from "@/lib/client-uuid";
 
 type Outcome={inventoryId:string;status:"saved"|"review"|"failed";message:string};
 const BATCH_SIZE=6;
@@ -17,7 +18,7 @@ export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:Inv
   const queue=items.slice(0,BATCH_SIZE);
   async function complete(item:InventoryItem):Promise<Outcome>{
     try{
-      const submissionId=submissionIds.current.get(item.inventoryId)||crypto.randomUUID();
+      const submissionId=submissionIds.current.get(item.inventoryId)||createClientUuid();
       submissionIds.current.set(item.inventoryId,submissionId);
       const headers={"Content-Type":"application/json",...(key?{"x-founder-key":key}:{})};
       const researched=await json(await fetch("/api/valuation-research",{method:"POST",headers,body:JSON.stringify({inventoryId:item.inventoryId})}));

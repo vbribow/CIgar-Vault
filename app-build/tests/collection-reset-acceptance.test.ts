@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   auditCollectionTemplateProtocol,
+  auditCollectionTemplateLibrary,
   collectionTemplates,
   completeCollectionComponentEvidence,
 } from "../lib/collection-templates";
@@ -114,4 +115,12 @@ test("every collection admitted for automation satisfies the same exact-lot and 
     assert.equal(audit.documentedPhysicalLots,audit.expectedPhysicalLots,value.name);
     if(audit.expectedCigars!==undefined)assert.equal(audit.documentedCigars,audit.expectedCigars,value.name);
   }
+});
+
+test("the launch collection library exposes one automatic truth gate",()=>{
+  const audit=auditCollectionTemplateLibrary(collectionTemplates);
+  assert.equal(audit.total,21);
+  assert.equal(audit.ready,21);
+  assert.equal(audit.blocked.length,0);
+  assert.equal(audit.automationReady,true);
 });

@@ -1,6 +1,8 @@
 import type { InventoryItem } from "./types";
+import { isHabanosInventoryItem } from "./cigar-market-standard";
 
 type ValuationEvidenceLike = {
+  marketEvidenceType?: string | null;
   replacementValue?: number | null;
   marketValue?: number | null;
   marketRangeLow?: number | null;
@@ -51,9 +53,13 @@ export function hasMixedCollectionAllocation(value: ValuationEvidenceLike) {
 }
 
 export function valuationIntegrityIssues(
-  item: Pick<InventoryItem, "collectionId">,
+  item: Pick<InventoryItem, "collectionId" | "habanosVerified"> & { brand?: string },
   value: ValuationEvidenceLike,
 ) {
+  const issues: string[] = [];
+  if (value.marketEvidenceType === "Retail consensus value" && item.brand && isHabanosInventoryItem({ ...item, brand:item.brand })) {
+    issues.push("Retail consensus value is a New World standard. Habanos market value requires verified completed-sale or auction evidence.");
+  }
   const carriesPrice = [
     value.replacementValue,
     value.marketValue,
@@ -63,14 +69,14 @@ export function valuationIntegrityIssues(
     value.lastSaleValue,
   ].some(amount => amount !== undefined && amount !== null);
 
-  if (!item.collectionId || !carriesPrice || !hasMixedCollectionAllocation(value)) return [];
-  return [
-    "A mixed collection, sampler, or presentation price cannot be allocated to an individual component cigar. Use exact individual-cigar evidence.",
-  ];
+  if (item.collectionId && carriesPrice && hasMixedCollectionAllocation(value)) {
+    issues.push("A mixed collection, sampler, or presentation price cannot be allocated to an individual component cigar. Use exact individual-cigar evidence.");
+  }
+  return issues;
 }
 
 export function assertValuationIntegrity(
-  item: Pick<InventoryItem, "collectionId">,
+  item: Pick<InventoryItem, "collectionId" | "habanosVerified"> & { brand?: string },
   value: ValuationEvidenceLike,
 ) {
   const issues = valuationIntegrityIssues(item, value);

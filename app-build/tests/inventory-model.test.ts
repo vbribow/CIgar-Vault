@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyTotalQuantityCorrection, consumeOneInventory, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate } from "../lib/inventory-model";
+import { applyTotalQuantityCorrection, consumeOneInventory, hasDocumentedCurrentQuantity, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate } from "../lib/inventory-model";
 
 test("remaining quantity is derived from original and smoked quantities", () => {
   const item = normalizeInventory({ inventoryId: "INV-1", brand: "Test", line: "Line", vitola: "Toro", originalQty: 10, smokedQty: 3 });
@@ -69,8 +69,38 @@ test("completeness reflects the five launch-critical fields", () => {
   assert.equal(inventoryCompleteness({ inventoryId: "INV-1", brand: "Test", line: "", vitola: "Toro", originalQty: 10, currentQty: 10, vintage: 2024 }), 60);
 });
 
+test("a saved total is documented quantity without requiring a box and loose-stick split", () => {
+  const totalOnly = { inventoryId: "INV-TOTAL", brand: "Test", line: "", vitola: "Toro", currentQty: 10 };
+  const boxCount = normalizeInventory({ inventoryId: "INV-BOX", brand: "Test", line: "", vitola: "Toro", fullBoxQty: 1, sticksPerBox: 10 });
+  const looseCount = normalizeInventory({ inventoryId: "INV-LOOSE", brand: "Test", line: "", vitola: "Toro", looseStickQty: 3 });
+  const unknown = { inventoryId: "INV-UNKNOWN", brand: "Test", line: "", vitola: "Toro" };
+  assert.equal(hasDocumentedCurrentQuantity(totalOnly), true);
+  assert.equal(hasDocumentedCurrentQuantity(boxCount), true);
+  assert.equal(hasDocumentedCurrentQuantity(looseCount), true);
+  assert.equal(hasDocumentedCurrentQuantity(unknown), false);
+});
+
 test("Cuban verification accepts a box code and seal photo URL", () => {
   const parsed = InventoryInputSchema.parse({ inventoryId: "INV-CU", brand: "Cohiba", line: "Robustos", vitola: "Robusto", boxCode: "AMO OCT 16", habanosSealPhotoLink: "https://example.com/seal.jpg" });
   assert.equal(parsed.boxCode, "AMO OCT 16");
   assert.equal(parsed.habanosSealPhotoLink, "https://example.com/seal.jpg");
+});
+
+test("Habanos evidence keeps acquisition, jurisdiction, and official lookup details separate", () => {
+  const parsed = InventoryInputSchema.parse({
+    inventoryId: "INV-CU-EVIDENCE",
+    brand: "Cohiba",
+    line: "Robustos",
+    vitola: "Robusto",
+    acquisitionSeller: "Example seller",
+    acquisitionDate: "2026-07-29",
+    acquisitionSourceUrl: "https://example.com/listing",
+    acquisitionReceiptLink: "https://example.com/receipt",
+    purchaseJurisdiction: "Example jurisdiction",
+    habanosVerificationDate: "2026-07-29",
+    habanosVerificationResult: "Producer lookup response recorded",
+    habanosVerificationEvidenceLink: "https://example.com/private-evidence",
+  });
+  assert.equal(parsed.purchaseJurisdiction, "Example jurisdiction");
+  assert.equal(parsed.habanosVerificationResult, "Producer lookup response recorded");
 });

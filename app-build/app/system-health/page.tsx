@@ -9,11 +9,11 @@ import {
 } from "@/lib/system-health";
 import { loadAccountRecords } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadValuations } from "@/lib/data";
+import { loadCollections, loadValuations } from "@/lib/data";
 import { checkSmartsheet } from "@/lib/smartsheet";
 import { SystemHealthManager } from "@/components/system-health-manager";
 import { valuationBatchSize, valuationCostEstimate, valuationMonthlyBudget } from "@/lib/valuation-monitor";
-import type { InventoryItem, Valuation } from "@/lib/types";
+import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
 import "./system-health.css";
 
 export const dynamic = "force-dynamic";
@@ -40,18 +40,21 @@ export default async function SystemHealthPage() {
     }
   }
 
-  const [runsResult, inventoryResult, valuationsResult] = await Promise.allSettled([
+  const [runsResult, inventoryResult, valuationsResult, collectionsResult] = await Promise.allSettled([
     loadAccountRecords<SystemRun>("system-runs"),
     loadInventory(),
     loadValuations(),
+    loadCollections(),
   ]);
   const runs = validSystemRuns(settledValue(runsResult, []) ?? []);
   const inventory = settledValue<InventoryItem[]>(inventoryResult, []);
   const valuations = settledValue<Valuation[]>(valuationsResult, []);
+  const collections = settledValue<CigarCollection[]>(collectionsResult, []);
   const failedLoads = [
     runsResult.status === "rejected" && `run ledger: ${readableError(runsResult.reason)}`,
     inventoryResult.status === "rejected" && `inventory: ${readableError(inventoryResult.reason)}`,
     valuationsResult.status === "rejected" && `valuations: ${readableError(valuationsResult.reason)}`,
+    collectionsResult.status === "rejected" && `collections: ${readableError(collectionsResult.reason)}`,
   ].filter((value): value is string => Boolean(value));
   const runtimeCheck: HealthCheck = {
     id: "runtime-data",
@@ -68,7 +71,7 @@ export default async function SystemHealthPage() {
     monthlyBudget: valuationMonthlyBudget(),
     estimatedCostPerResearch: valuationCostEstimate(),
   };
-  const valuationSnapshot = valuationOperationsSnapshot(inventory, valuations);
+  const valuationSnapshot = valuationOperationsSnapshot(inventory, valuations, collections);
 
   return <main className="shell wideShell systemHealth">
     <section className="systemHero">

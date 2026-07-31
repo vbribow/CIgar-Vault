@@ -26,7 +26,7 @@ export function CollectorCommandCenter({ intelligence }: { intelligence: ReturnT
     </div>
     <div className="terminalHead">
       <div><div className="eyebrow">Live collection intelligence</div><h2 id="command-center-heading">Collector command center</h2><p>Portfolio movement, cellar decisions, and record exceptions—one private view.</p></div>
-      <div className="terminalActions"><a href="/inventory#photo-intake">＋ Add by photo</a><a href="/inventory-count">Count vault</a><a href="/reports">Export report</a></div>
+      <div className="terminalActions"><a href="/inventory#mobile-intake">＋ Add by photo</a><a href="/inventory-count">Count vault</a><a href="/reports">Export report</a></div>
     </div>
     <div className="terminalGrid">
       <article className="portfolioPanel">

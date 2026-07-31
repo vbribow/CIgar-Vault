@@ -25,7 +25,7 @@ export default async function AccountPage({searchParams}:{searchParams:Promise<{
   ]);
   if(profileResult.error||preferencesResult.error||vaultResult.error||consentResult.error)return <main className="shell accountShell"><section className="section card"><div className="eyebrow">Account records protected</div><h1>Your account controls are temporarily paused.</h1><p className="lede">{brand.name} could not verify profile, preferences, private Vault records, and consent together. Nothing is being shown as missing, expired, or reset.</p><a className="button secondary" href="/account">Try again</a></section></main>;
   const profile=profileResult.data,preferences=preferencesResult.data,vaultRecords=vaultResult.data,consent=consentResult.data;
-  const founder=profile?.billing_plan==="founder";
+  const founder=profile?.billing_plan==="founder"&&["active","trialing"].includes(profile?.billing_status||"");
   const records=(vaultRecords||[]) as AccountVaultRecord[];
   const checklist=buildAccountChecklist(Boolean(profile?.onboarding_completed),records);
   const completed=checklist.filter(item=>item.complete).length;

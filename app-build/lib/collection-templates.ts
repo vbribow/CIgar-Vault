@@ -63,6 +63,17 @@ export function auditCollectionTemplateProtocol(template:CollectionTemplate):Col
   issues,
  };
 }
+export function auditCollectionTemplateLibrary(templates:CollectionTemplate[]){
+ const rows=templates.map(template=>({template,audit:auditCollectionTemplateProtocol(template)}));
+ const blocked=rows.filter(row=>!row.audit.readyForInventoryAutomation);
+ return{
+  total:rows.length,
+  ready:rows.length-blocked.length,
+  blocked,
+  rows,
+  automationReady:rows.length>0&&blocked.length===0,
+ };
+}
 export const collectionTemplates:CollectionTemplate[]=[
  {templateId:"TPL-COHIBA-SELECCION-RESERVA",name:"Cohiba Selección Reserva",maker:"Cohiba",releaseYear:2003,edition:"Selección Reserva",expectedComponents:5,expectedCigars:30,requirements:["6 Coronas Especiales","4 Espléndidos","6 Robustos","8 Pirámides","6 Medias Coronas"],componentEvidence:[{requirement:"6 Coronas Especiales",brand:"Cohiba",line:"Selección Reserva Coronas Especiales",vitola:"Laguito No. 2 (152 mm × 38)",sourceUrl:"https://www.cigaraficionado.com/article/for-the-love-of-cohiba-8221",sourceLabel:"Cigar Aficionado measured collection report"},{requirement:"4 Espléndidos",brand:"Cohiba",line:"Selección Reserva Espléndidos",vitola:"Julieta No. 2 (178 mm × 47)",sourceUrl:"https://www.cigaraficionado.com/article/for-the-love-of-cohiba-8221",sourceLabel:"Cigar Aficionado measured collection report"},{requirement:"6 Robustos",brand:"Cohiba",line:"Selección Reserva Robustos",vitola:"Robusto (124 mm × 50)",sourceUrl:"https://www.cigaraficionado.com/article/for-the-love-of-cohiba-8221",sourceLabel:"Cigar Aficionado measured collection report"},{requirement:"8 Pirámides",brand:"Cohiba",line:"Selección Reserva Pirámides",vitola:"Pirámides (156 mm × 52)",sourceUrl:"https://www.cigaraficionado.com/article/for-the-love-of-cohiba-8221",sourceLabel:"Cigar Aficionado measured collection report"},{requirement:"6 Medias Coronas",brand:"Cohiba",line:"Selección Reserva Medias Coronas",vitola:"Media Corona (142 mm × 38)",sourceUrl:"https://www.cigaraficionado.com/article/for-the-love-of-cohiba-8221",sourceLabel:"Cigar Aficionado measured collection report"}],packaging:"Humidified selection box",matchingRule:"Match all five Cohiba Selección Reserva vitolas and stated quantities; retain bands, seals, and box evidence.",accent:"#d2a527",sourceUrl:"https://www.habanos.com/en/news/cohiba-seleccion-reserva-en/",sourceLabel:"Habanos official release",researchStatus:"Verified"},
  {templateId:"TPL-HABANOS-PARTAGAS-2001",name:"Colección Habanos Partagás Serie C No. 1",maker:"Partagás",releaseYear:2001,edition:"Colección Habanos Volume II",expectedComponents:1,expectedCigars:20,requirements:["20 Partagás Serie C No. 1"],componentEvidence:[{requirement:"20 Partagás Serie C No. 1",brand:"Partagás",line:"Serie C No. 1",vitola:"Dalias Extra (170 mm × 48)",sourceUrl:"https://www.habanos.com/en/news/coleccion-habanos-2011-obras-completas-edicion-unica-en/",sourceLabel:"Habanos official retrospective"}],packaging:"Numbered book-form case",releaseQuantity:"500 numbered cases",matchingRule:"Match the exact Serie C No. 1 dimensions and retain the Volume II case and serial number.",accent:"#9d3028",sourceUrl:"https://www.habanos.com/en/news/coleccion-habanos-tomo-ii-partagas-serie-c-no-1-en/",sourceLabel:"Habanos official release",researchStatus:"Verified"},

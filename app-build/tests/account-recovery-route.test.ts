@@ -3,9 +3,11 @@ import fs from "node:fs";
 import test from "node:test";
 
 const route = fs.readFileSync("app/api/account/recovery/restore/route.ts", "utf8");
+const previewRoute = fs.readFileSync("app/api/account/recovery/preview/route.ts", "utf8");
 
 test("vault recovery reads only the authenticated collector's records", () => {
   assert.match(route, /\.select\("kind,record_id,payload,updated_at"\)\.eq\("user_id",user\.id\)/);
+  assert.match(previewRoute, /\.select\("kind,record_id,payload,updated_at"\)\.eq\("user_id",user\.id\)/);
 });
 
 test("vault recovery writes restored records and its audit atomically", () => {

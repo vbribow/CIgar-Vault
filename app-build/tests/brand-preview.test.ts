@@ -7,6 +7,8 @@ test("Hojavía is the sole product presentation", () => {
   const active = resolveBrand();
   assert.equal(active.key, "hojavia");
   assert.equal(active.name, "Hojavía");
+  assert.equal(active.pronunciation, "oh-ha-VEE-ah");
+  assert.equal(active.spokenName, "Hojavía (pronounced oh-ha-VEE-ah)");
   assert.equal(active.isPreview, false);
   assert.equal(active.labels.communityRanking, "Hojavía 25");
   assert.equal(active.labels.places, "Places");
@@ -44,6 +46,8 @@ test("Hojavía owns metadata, install identity, and legacy presentation safeguar
   const resetPassword = readFileSync(new URL("../app/reset-password/page.tsx", import.meta.url), "utf8");
   const recommendationEditor = readFileSync(new URL("../components/recommendation-fact-editor.tsx", import.meta.url), "utf8");
   const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const navigation = readFileSync(new URL("../components/app-navigation.tsx", import.meta.url), "utf8");
+  const home = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 
   assert.match(seo, /index:\s*!brand\.isPreview/);
   assert.match(seo, /follow:\s*!brand\.isPreview/);
@@ -55,5 +59,8 @@ test("Hojavía owns metadata, install identity, and legacy presentation safeguar
   assert.match(recommendationEditor, /\$\{brand\.name\}\s+has refreshed this recommendation/);
   assert.match(layout, /themeColor:"#173A37"/);
   assert.match(layout, /\/hojavia-mark\.svg/);
+  assert.match(navigation, /brand\.spokenName/);
+  assert.match(navigation, /brandPronunciation/);
+  assert.match(home, /brand\.spokenName/);
   assert.doesNotMatch(layout, /Cedriva is a retired legacy placeholder/);
 });

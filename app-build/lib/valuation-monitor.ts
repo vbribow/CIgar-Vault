@@ -76,10 +76,16 @@ export function applyReusableValuations(items:InventoryItem[],inventory:Inventor
   return{items:valuedItems,valuations:shared,valuedImmediately:shared.length};
 }
 
+export function valuationQuantityPriority(item:InventoryItem){
+  const quantity=Math.max(0,Math.floor(item.currentQty??0));
+  return Math.min(50_000,quantity*1_000);
+}
+
 export function valuationMonitorPriority(item:InventoryItem){
   return(item.retailValue===undefined?50_000:0)
-    +(item.collectionId?25_000:0)
+    +(item.collectionId?10_000:0)
     +(item.priority==="High"?10_000:0)
+    +(item.retailValue===undefined?valuationQuantityPriority(item):0)
     +(item.retailValue??0)*(item.currentQty??0);
 }
 
@@ -98,4 +104,31 @@ export async function inValuationBatches<T,R>(items:T[],worker:(item:T)=>Promise
   const results:R[]=[];
   for(let index=0;index<items.length;index+=concurrency)results.push(...await Promise.all(items.slice(index,index+concurrency).map(worker)));
   return results;
+}
+
+export function valuationWorkPlan<T extends {item:InventoryItem}>(
+  eligible:T[],
+  candidates:Array<{item:InventoryItem;valuation:Valuation}>,
+  batchSize:number,
+  researchSlots:number,
+  now=new Date(),
+):Array<T&{cached?:Valuation}>{
+  const limit=Math.max(0,Math.floor(batchSize));
+  let availableResearch=Math.max(0,Math.floor(researchSlots));
+  const reservedResearchIdentities=new Set<string>();
+  const work:Array<T&{cached?:Valuation}>=[];
+  for(const row of eligible){
+    if(work.length>=limit)break;
+    const cached=reusableValuation(row.item,candidates,now);
+    if(cached){
+      work.push({...row,cached});
+      continue;
+    }
+    const identity=valuationIdentityKey(row.item);
+    if(availableResearch<=0||reservedResearchIdentities.has(identity))continue;
+    reservedResearchIdentities.add(identity);
+    availableResearch--;
+    work.push(row);
+  }
+  return work;
 }

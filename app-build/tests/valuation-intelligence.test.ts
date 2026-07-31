@@ -36,7 +36,22 @@ test("keeps retail replacement separate from documented aftermarket value and re
  assert.equal(result.totals.retailCoveragePercent,100);
  assert.equal(result.totals.marketCoveragePercent,50);
  assert.equal(result.totals.saleCoveragePercent,50);
- assert.deepEqual(result.rows[0].missingEvidence,["Aftermarket evidence","Completed sale","Linked source"]);
+ assert.deepEqual(result.rows[0].missingEvidence,["Aftermarket evidence","Retail consensus","Linked source"]);
+});
+
+test("uses retail consensus for New World coverage while retaining the Habanos sale standard",()=>{
+ const inventory:InventoryItem[]=[
+  {inventoryId:"NW",brand:"Arturo Fuente",line:"OpusX",vitola:"Reserva d'Chateau",currentQty:2},
+  {inventoryId:"CU",brand:"Cohiba",line:"Siglo VI",vitola:"Cañonazo",currentQty:2},
+ ];
+ const valuations:Valuation[]=[
+  {valuationId:"NW-V",inventoryId:"NW",valuationDate:"2026-07-29",marketEvidenceType:"Retail consensus value",marketValue:55,marketRangeLow:50,marketRangeHigh:60,comparableCount:2,sourceUrl:"https://example.com/retail",confidence:"Medium"},
+  {valuationId:"CU-V",inventoryId:"CU",valuationDate:"2026-07-29",marketEvidenceType:"Retail consensus value",marketValue:90,marketRangeLow:85,marketRangeHigh:95,comparableCount:2,sourceUrl:"https://example.com/retail",confidence:"Medium"},
+ ];
+ const result=buildValuationIntelligence(inventory,valuations,new Date("2026-07-29"));
+ assert.equal(result.rows.find(row=>row.item.inventoryId==="NW")?.standardCovered,true);
+ assert.equal(result.rows.find(row=>row.item.inventoryId==="CU")?.standardCovered,false);
+ assert.equal(result.totals.standardCoveragePercent,50);
 });
 
 test("current insufficient evidence is a trusted result, not an immediate retry loop",()=>{
@@ -66,4 +81,13 @@ test("latest verified sale is derived from complete proof across retained histor
  assert.equal(result.rows[0].latestVerifiedSale?.valuationId,"OLD");
  assert.equal(result.rows[0].latestLegacySaleClaim?.valuationId,"NEW");
  assert.equal(result.totals.saleCovered,1);
+});
+
+test("the visible research queue puts higher unknown quantity at risk first",()=>{
+ const inventory:InventoryItem[]=[
+  {inventoryId:"ONE",brand:"Brand",line:"Rare",vitola:"Toro",currentQty:1},
+  {inventoryId:"FIFTY",brand:"Brand",line:"Regular",vitola:"Robusto",currentQty:50},
+ ];
+ const result=buildValuationIntelligence(inventory,[]);
+ assert.deepEqual(result.reviewQueue.map(row=>row.item.inventoryId),["FIFTY","ONE"]);
 });

@@ -16,6 +16,15 @@ export const InventoryInputSchema = z.object({
   boxCode: optionalText,
   habanosSealPhotoLink: z.string().trim().url().optional().or(z.literal("")),
   habanosVerified: z.boolean().optional(),
+  acquisitionSeller: optionalText,
+  acquisitionDate: optionalText,
+  acquisitionSourceUrl: z.string().trim().url().optional().or(z.literal("")),
+  acquisitionReceiptLink: z.string().trim().url().optional().or(z.literal("")),
+  purchaseJurisdiction: optionalText,
+  habanosVerificationDate: optionalText,
+  habanosVerificationResult: optionalText,
+  habanosVerificationEvidenceLink: z.string().trim().url().optional().or(z.literal("")),
+  habanosVerificationNotes: optionalText,
   originalQty: optionalNumber,
   smokedQty: optionalNumber,
   currentQty: optionalNumber,
@@ -45,7 +54,7 @@ export const InventoryInputSchema = z.object({
     context.addIssue({ code: "custom", path: ["sticksPerBox"], message: "Cigars per box is required when full boxes are entered" });
   }
   if (item.habanosVerified && (!item.boxCode || !item.habanosSealPhotoLink)) {
-    context.addIssue({ code: "custom", path: ["habanosVerified"], message: "Add both a box code and Habanos seal photo before marking this lot verified" });
+    context.addIssue({ code: "custom", path: ["habanosVerified"], message: "Add both a box code and Habanos seal photo before recording a matching official lookup" });
   }
 });
 
@@ -91,6 +100,10 @@ export function manualInventoryId(now=Date.now(),random=Math.random()){
 export function inventoryCompleteness(item: InventoryItem): number {
   const fields = [item.originalQty, item.currentQty, item.retailValue, item.vintage, item.storageLocationId];
   return Math.round((fields.filter((value) => value !== undefined && value !== "").length / fields.length) * 100);
+}
+
+export function hasDocumentedCurrentQuantity(item: InventoryItem): boolean {
+  return typeof item.currentQty === "number" && Number.isFinite(item.currentQty) && item.currentQty >= 0;
 }
 
 export function isCurrentInventoryRecord(item: InventoryItem): boolean {

@@ -32,7 +32,7 @@ export const ValuationSchema = z.object({
   invalidatedAt: z.iso.datetime().optional(), invalidationReason: z.string().trim().min(1).max(1000).optional(),
   replacementValue: z.coerce.number().nonnegative().optional(), replacementSticksPerBox: z.coerce.number().int().positive().optional(),
   marketValue: z.coerce.number().nonnegative().optional(), source: z.string().max(500).optional(),
-  marketEvidenceType: z.enum(["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]).optional(),
+  marketEvidenceType: z.enum(["Verified completed sale","Retail consensus value","Estimated market range","Observed asking price","Insufficient evidence"]).optional(),
   marketRangeLow: z.coerce.number().nonnegative().optional(), marketRangeHigh: z.coerce.number().nonnegative().optional(),
   askingPrice: z.coerce.number().nonnegative().optional(), askingPriceSource: z.string().max(500).optional(), askingPriceSourceUrl: z.string().url().optional().or(z.literal("")),
   comparableCount: z.coerce.number().int().nonnegative().max(100).optional(),
@@ -43,6 +43,7 @@ export const ValuationSchema = z.object({
   .refine(value => Boolean(value.invalidatedAt) === Boolean(value.invalidationReason), { message:"Invalidated evidence requires both a timestamp and reason" })
   .refine(value => value.marketRangeLow === undefined || value.marketRangeHigh === undefined || value.marketRangeLow <= value.marketRangeHigh, { message:"Market range low must not exceed market range high" })
   .refine(value => value.marketEvidenceType !== "Verified completed sale" || Boolean(value.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl), { message:"Verified completed-sale evidence requires value, date, and direct proof" })
+  .refine(value => value.marketEvidenceType !== "Retail consensus value" || Boolean(value.marketValue !== undefined && value.marketRangeLow !== undefined && value.marketRangeHigh !== undefined && (value.comparableCount ?? 0) >= 2 && value.sourceUrl && /^(High|Medium)$/i.test(value.confidence ?? "")), { message:"A retail consensus value requires a value, range, linked source, Medium or High confidence, and at least two independent retail comparables" })
   .refine(value => value.marketEvidenceType !== "Estimated market range" || Boolean(value.marketValue !== undefined && value.marketRangeLow !== undefined && value.marketRangeHigh !== undefined && (value.comparableCount ?? 0) >= 2), { message:"An estimated market range requires a value, range, and at least two comparables" })
   .refine(value => value.marketEvidenceType !== "Observed asking price" || Boolean(value.askingPrice !== undefined && value.askingPriceSourceUrl && value.marketValue === undefined), { message:"An observed asking price requires a linked asking price and cannot be saved as market value" })
   .refine(value => value.marketEvidenceType !== "Insufficient evidence" || value.marketValue === undefined, { message:"Insufficient evidence cannot carry a market value" });
@@ -53,7 +54,7 @@ export const ValuationCreateSchema = z.object({
   invalidatedAt: z.iso.datetime().optional(), invalidationReason: z.string().trim().min(1).max(1000).optional(),
   replacementValue: z.coerce.number().nonnegative().optional(), replacementSticksPerBox: z.coerce.number().int().positive().optional(),
   marketValue: z.coerce.number().nonnegative().optional(), source: z.string().max(500).optional(),
-  marketEvidenceType: z.enum(["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]).optional(),
+  marketEvidenceType: z.enum(["Verified completed sale","Retail consensus value","Estimated market range","Observed asking price","Insufficient evidence"]).optional(),
   marketRangeLow: z.coerce.number().nonnegative().optional(), marketRangeHigh: z.coerce.number().nonnegative().optional(),
   askingPrice: z.coerce.number().nonnegative().optional(), askingPriceSource: z.string().max(500).optional(), askingPriceSourceUrl: z.string().url().optional().or(z.literal("")),
   comparableCount: z.coerce.number().int().nonnegative().max(100).optional(),
@@ -65,6 +66,7 @@ export const ValuationCreateSchema = z.object({
   .refine(value => Boolean(value.invalidatedAt) === Boolean(value.invalidationReason), { message:"Invalidated evidence requires both a timestamp and reason" })
   .refine(value => value.marketRangeLow === undefined || value.marketRangeHigh === undefined || value.marketRangeLow <= value.marketRangeHigh, { message:"Market range low must not exceed market range high" })
   .refine(value => value.marketEvidenceType !== "Verified completed sale" || Boolean(value.lastSaleValue !== undefined && value.lastSaleDate && value.lastSaleSourceUrl), { message:"Verified completed-sale evidence requires value, date, and direct proof" })
+  .refine(value => value.marketEvidenceType !== "Retail consensus value" || Boolean(value.marketValue !== undefined && value.marketRangeLow !== undefined && value.marketRangeHigh !== undefined && (value.comparableCount ?? 0) >= 2 && value.sourceUrl && /^(High|Medium)$/i.test(value.confidence ?? "")), { message:"A retail consensus value requires a value, range, linked source, Medium or High confidence, and at least two independent retail comparables" })
   .refine(value => value.marketEvidenceType !== "Estimated market range" || Boolean(value.marketValue !== undefined && value.marketRangeLow !== undefined && value.marketRangeHigh !== undefined && (value.comparableCount ?? 0) >= 2), { message:"An estimated market range requires a value, range, and at least two comparables" })
   .refine(value => value.marketEvidenceType !== "Observed asking price" || Boolean(value.askingPrice !== undefined && value.askingPriceSourceUrl && value.marketValue === undefined), { message:"An observed asking price requires a linked asking price and cannot be saved as market value" })
   .refine(value => value.marketEvidenceType !== "Insufficient evidence" || value.marketValue === undefined, { message:"Insufficient evidence cannot carry a market value" });

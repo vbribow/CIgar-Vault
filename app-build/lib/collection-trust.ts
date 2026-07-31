@@ -85,9 +85,11 @@ export function collectionTrustAudit(
     },
     {
       id: "aftermarket",
-      label: "Completed sales",
-      status: expected > 0 && summary.completedSaleCoverage === expected ? "Verified" : "Researching",
-      detail: `${summary.completedSaleCoverage} of ${expected || summary.ownedComponents} components have a dated, source-linked completed sale. Asking prices do not count.`,
+      label: summary.marketStandardLabel === "verified-sale standard" ? "Completed sales" : "Market standard",
+      status: expected > 0 && summary.marketStandardCoverage === expected ? "Verified" : "Researching",
+      detail: summary.marketStandardLabel === "verified-sale standard"
+        ? `${summary.marketStandardCoverage} of ${expected || summary.ownedComponents} Habanos components have a dated, source-linked completed sale.`
+        : `${summary.marketStandardCoverage} of ${expected || summary.ownedComponents} components meet the ${summary.marketStandardLabel}. New World retail consensus requires multiple exact listings and is never called a sale.`,
       href: `/valuations?collectionId=${encodeURIComponent(collection.collectionId)}`,
     },
     {

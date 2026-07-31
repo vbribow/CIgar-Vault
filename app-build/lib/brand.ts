@@ -16,6 +16,8 @@ export function resolveBrand(_legacyPresentationValue?: string) {
     key: "hojavia" as const,
     name: "Hojavía",
     asciiName: "Hojavia",
+    pronunciation: "oh-ha-VEE-ah",
+    spokenName: "Hojavía (pronounced oh-ha-VEE-ah)",
     isPreview: false,
     brandLine: "Knowledge carried forward.",
     productLine: "Know what you collect.",

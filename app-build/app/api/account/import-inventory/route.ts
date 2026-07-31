@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { InventoryInputSchema,normalizeInventory } from "@/lib/inventory-model";
 import { inventoryImportIdentity,MAX_IMPORT_BYTES,parseInventoryFile } from "@/lib/inventory-import";
-import { deleteOwnedRecords,importOwnedRecords,loadAccountRecords,saveOwnedRecord } from "@/lib/user-data";
+import { createOwnedRecords,deleteOwnedRecords,loadAccountRecords,saveOwnedRecord } from "@/lib/user-data";
 import { importRecordFingerprint,safelyRollbackImportedRecords } from "@/lib/import-safety";
 import { copiedValuation,reusableValuation } from "@/lib/valuation-monitor";
 import { getInventory,getValuations } from "@/lib/smartsheet";
@@ -51,13 +51,14 @@ export async function POST(request:Request){
    const batchId=`IMPORT-BATCH-${new Date().toISOString()}-${crypto.randomUUID()}`;
    const inventoryFingerprints=Object.fromEntries(items.map(item=>[item.inventoryId,importRecordFingerprint(item)]));
    const valuationFingerprints=Object.fromEntries(shared.map(value=>[value.valuationId,importRecordFingerprint(value)]));
-   const audit={action:"inventory-spreadsheet-import",status:"pending",batchId,fileName:String(body.fileName||"upload"),inventoryIds:items.map(item=>item.inventoryId),valuationIds:shared.map(value=>value.valuationId),inventoryFingerprints,valuationFingerprints,count:items.length,createdAt:new Date().toISOString()};
-   await saveOwnedRecord("integrity",batchId,audit);
-   await importOwnedRecords([
+   const completedAt=new Date().toISOString();
+   const audit={action:"inventory-spreadsheet-import",status:"complete",batchId,fileName:String(body.fileName||"upload"),inventoryIds:items.map(item=>item.inventoryId),valuationIds:shared.map(value=>value.valuationId),inventoryFingerprints,valuationFingerprints,count:items.length,createdAt:completedAt,completedAt};
+   const created=await createOwnedRecords([
     ...items.map((item:InventoryItem)=>({kind:"inventory" as const,recordId:item.inventoryId,payload:item})),
     ...shared.map(value=>({kind:"valuations" as const,recordId:value.valuationId,payload:value})),
+    {kind:"integrity" as const,recordId:batchId,payload:audit},
    ]);
-   await saveOwnedRecord("integrity",batchId,{...audit,status:"complete",completedAt:new Date().toISOString()});
+   if(!created)throw new Error("Sign in before importing records");
    return NextResponse.json({data:{batchId,imported:items.length,valuedImmediately:shared.length,valuationStatus:shared.length===items.length?"All uploaded cigars received current exact-match values.":"Remaining cigars entered the priority research queue."}});
   }
   if(body.action==="rollback"){

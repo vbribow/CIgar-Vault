@@ -1,0 +1,60 @@
+.affiliateReadinessHero{display:grid;grid-template-columns:1fr 330px;gap:30px;align-items:end}
+.affiliateReadinessHero h1{font-size:clamp(46px,7vw,80px)}
+.affiliateReadinessHero aside{display:grid;gap:8px;padding:24px;border:1px solid var(--line);background:#181411}
+.affiliateReadinessHero aside strong{font:30px var(--display);color:var(--gold2)}
+.affiliateReadinessHero aside span{color:var(--muted)}
+.affiliateReadinessMetrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0 18px}
+.affiliateReadinessMetrics article{display:grid;gap:4px;padding:18px;border:1px solid var(--line);background:#17130f}
+.affiliateReadinessMetrics span,.affiliateReadinessMetrics small{color:var(--muted)}
+.affiliateReadinessMetrics strong{font:32px var(--display);color:var(--gold2)}
+.affiliateGateMap{margin-top:18px}
+.affiliateGateMap>.sectionHead p{max-width:700px}
+.affiliateGateMap>div:last-child{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.affiliateGateMap article{display:grid;gap:5px;padding:14px;border-top:1px solid var(--line)}
+.affiliateGateMap article span{color:var(--gold2);font-size:10px}
+.affiliateGateMap article small{color:var(--muted)}
+.affiliateProgramList{display:grid;gap:14px;margin-top:18px}
+.affiliateProgramList>article{padding:20px;border:1px solid var(--line);background:#17130f}
+.affiliateProgramList>article.ready{border-color:#426d55}
+.affiliateProgramList>article.blocked,.affiliateEmptyState.attention{border-color:#74453d}
+.affiliateProgramList header{display:flex;justify-content:space-between;gap:20px}
+.affiliateProgramList header small{color:var(--gold2);text-transform:uppercase}
+.affiliateProgramList h2{margin:5px 0}
+.affiliateProgramList p,.affiliateProgramList li{color:var(--muted)}
+.affiliateProgramList header>strong{color:var(--gold2)}
+.affiliateLaunchBoundary{padding-top:12px;border-top:1px solid var(--line);font-size:12px}
+.affiliateEmptyState{display:block!important}
+.affiliateEmptyState h2{font-size:34px}
+.affiliateResearchSection,.affiliateWatchlist{margin-top:18px}
+.researchOnlyBadge{align-self:start;padding:8px 10px;border:1px solid var(--gold2);color:var(--gold2);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.affiliateScoreKey{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0 18px}
+.affiliateScoreKey span{display:grid;gap:2px;padding:10px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+.affiliateScoreKey strong{font:22px var(--display);color:var(--gold2)}
+.affiliateShortlist{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.affiliateShortlist article,.affiliateWatchlist article{padding:18px;border:1px solid var(--line);background:#17130f}
+.affiliateShortlist header,.affiliateWatchlist header{display:flex;justify-content:space-between;gap:14px}
+.affiliateShortlist header small,.affiliateWatchlist header small{color:var(--gold2);text-transform:uppercase}
+.affiliateShortlist h3,.affiliateWatchlist h3{margin:4px 0;font:28px var(--display)}
+.affiliateShortlist header>strong{font:34px var(--display);color:var(--gold2)}
+.affiliateShortlist header>strong span{font:12px var(--sans);color:var(--muted)}
+.candidateFacts{display:grid;gap:7px;margin:14px 0}
+.candidateFacts span{display:grid;gap:2px;color:var(--text);font-size:12px}
+.candidateFacts small{color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.affiliateShortlist p,.affiliateWatchlist p{color:var(--muted)}
+.candidateRestriction{padding-top:10px;border-top:1px solid var(--line);font-size:12px}
+.sourceLink{display:inline-block;margin-top:8px;color:var(--gold2);font-size:12px}
+.affiliateWatchlist>div:last-child{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.affiliateWatchlist article.locked{border-color:#74453d}
+.affiliateWatchlist header>strong{color:var(--muted);font-size:12px}
+
+@media(max-width:900px){
+  .affiliateReadinessHero{grid-template-columns:1fr}
+  .affiliateReadinessMetrics,.affiliateGateMap>div:last-child{grid-template-columns:repeat(2,1fr)}
+  .affiliateShortlist{grid-template-columns:1fr}
+  .affiliateScoreKey{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:620px){
+  .affiliateReadinessMetrics,.affiliateGateMap>div:last-child,.affiliateScoreKey,.affiliateWatchlist>div:last-child{grid-template-columns:1fr}
+  .affiliateProgramList header{display:grid}
+}

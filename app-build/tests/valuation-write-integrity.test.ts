@@ -20,6 +20,13 @@ test("scheduled retail research saves valuation and inventory in one statement",
   assert.doesNotMatch(source,/from\("vault_records"\)\.update\(\{payload:updated/);
 });
 
+test("scheduled valuation research excludes collection presentation assets",()=>{
+  const source=fs.readFileSync(path.join(process.cwd(),"app/api/valuation-monitor/route.ts"),"utf8");
+  assert.match(source,/\["inventory","valuations","collections"\]/);
+  assert.match(source,/cigarInventoryRecords\(allInventory,collections\)/);
+  assert.match(source,/cigarInventoryRecords\(group\.inventory,group\.collections\)/);
+});
+
 test("retail autofill saves the full private batch atomically",()=>{
   const source=fs.readFileSync(path.join(process.cwd(),"app/api/retail-prices/autofill/route.ts"),"utf8");
   assert.match(source,/suggestions\.flatMap/);

@@ -18,7 +18,7 @@ export async function accountDataMode(): Promise<DataMode> { return await accoun
 export async function loadOwnedRecords<T>(kind: VaultRecordKind, _fallback: () => Promise<T[]>): Promise<T[]> {
   const context = await accountContext();
   if (!context) return [];
-  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("kind", kind).order("record_id");
+  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("user_id", context.user.id).eq("kind", kind).order("record_id");
   if (error) throw error;
   return (data ?? []).map(row => row.payload as T);
 }
@@ -26,7 +26,7 @@ export async function loadOwnedRecords<T>(kind: VaultRecordKind, _fallback: () =
 export async function loadAccountRecords<T>(kind: VaultRecordKind): Promise<T[] | undefined> {
   const context = await accountContext();
   if (!context) return undefined;
-  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("kind", kind).order("record_id");
+  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("user_id", context.user.id).eq("kind", kind).order("record_id");
   if (error) throw error;
   return (data ?? []).map(row => row.payload as T);
 }
@@ -50,6 +50,7 @@ export async function saveOwnedRecordIfUnchanged(
   const { data: current, error: loadError } = await context.supabase
     .from("vault_records")
     .select("payload,updated_at")
+    .eq("user_id", context.user.id)
     .eq("kind", kind)
     .eq("record_id", recordId)
     .maybeSingle();
@@ -58,6 +59,7 @@ export async function saveOwnedRecordIfUnchanged(
   const { data: saved, error: saveError } = await context.supabase
     .from("vault_records")
     .update({ payload, updated_at: new Date().toISOString() })
+    .eq("user_id", context.user.id)
     .eq("kind", kind)
     .eq("record_id", recordId)
     .eq("updated_at", current.updated_at)
@@ -85,7 +87,7 @@ export async function createOwnedRecord(kind: VaultRecordKind, recordId: string,
 export async function loadOwnedRecord<T>(kind: VaultRecordKind, recordId: string): Promise<T | undefined> {
   const context = await accountContext();
   if (!context) return undefined;
-  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("kind", kind).eq("record_id", recordId).maybeSingle();
+  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("user_id", context.user.id).eq("kind", kind).eq("record_id", recordId).maybeSingle();
   if (error) throw error;
   return data?.payload as T | undefined;
 }
@@ -107,7 +109,7 @@ export async function createOwnedRecords(records:Array<{kind:VaultRecordKind;rec
 export async function deleteOwnedRecord(kind: VaultRecordKind, recordId: string): Promise<boolean> {
   const context = await accountContext();
   if (!context) return false;
-  const { error } = await context.supabase.from("vault_records").delete().eq("kind", kind).eq("record_id", recordId);
+  const { error } = await context.supabase.from("vault_records").delete().eq("user_id", context.user.id).eq("kind", kind).eq("record_id", recordId);
   if (error) throw error;
   return true;
 }
@@ -117,7 +119,7 @@ export async function deleteOwnedRecords(kind: VaultRecordKind, recordIds: strin
   if (!context) return 0;
   const ids = [...new Set(recordIds.filter(Boolean))];
   if (!ids.length) return 0;
-  const { error } = await context.supabase.from("vault_records").delete().eq("kind", kind).in("record_id", ids);
+  const { error } = await context.supabase.from("vault_records").delete().eq("user_id", context.user.id).eq("kind", kind).in("record_id", ids);
   if (error) throw error;
   return ids.length;
 }
