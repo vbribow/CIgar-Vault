@@ -39,6 +39,7 @@ test("offline, install, and social-preview assets bypass protected-route middlew
   assert.match(proxy, /pathname === "\/offline"/);
   assert.match(proxy, /icons\/\|sw\.js\|manifest\.webmanifest/);
   assert.match(proxy, /hojavia-mark\.svg/);
+  assert.match(proxy, /pathname === "\/install"/);
 });
 
 test("mobile install guidance remains actionable across supported platforms",()=>{
@@ -51,6 +52,8 @@ test("mobile install guidance remains actionable across supported platforms",()=
   assert.match(manager,/production app/);
   assert.match(manager,/const productionHost="hojavia\.com"/);
   assert.match(manager,/isActiveProductHostname\(window\.location\.hostname\)/);
+  assert.match(manager,/standalone\)\)setLegacyHost/);
+  assert.match(manager,/Reinstall safely/);
 });
 
 test("authentication survives reloads and sign-out clears the server session",()=>{
