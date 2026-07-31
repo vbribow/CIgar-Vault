@@ -21,8 +21,36 @@ export const habanosBrandSource = "https://www.habanos.com/en/the-habanos-brands
 const brandAliases = new Map([
   ["bolivar", "Bolívar"], ["ramon allones", "Ramón Allones"], ["avo", "AVO"],
   ["juan lopez", "Juan López"], ["partagas", "Partagás"], ["cohiba ambar", "Cohiba"],
+  ["drew state", "Drew Estate"],
 ]);
 
+function comparable(value: string) {
+  return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function editDistance(left: string, right: string) {
+  const row = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= left.length; i += 1) {
+    let previous = row[0];
+    row[0] = i;
+    for (let j = 1; j <= right.length; j += 1) {
+      const current = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (left[i - 1] === right[j - 1] ? 0 : 1));
+      previous = current;
+    }
+  }
+  return row[right.length];
+}
+
 export function canonicalBrand(value: string) {
-  return brandAliases.get(value.trim().toLocaleLowerCase()) || cigarBrands.find((brand) => brand.name.toLocaleLowerCase() === value.trim().toLocaleLowerCase())?.name || value.trim();
+  const trimmed = value.trim();
+  const normalized = comparable(trimmed);
+  const direct = brandAliases.get(normalized) || cigarBrands.find((brand) => comparable(brand.name) === normalized)?.name;
+  if (direct) return direct;
+  const close = cigarBrands.filter((brand) => {
+    const candidate = comparable(brand.name);
+    const distance = editDistance(normalized, candidate);
+    return distance <= (Math.max(normalized.length, candidate.length) >= 9 ? 2 : 1) && distance / Math.max(normalized.length, candidate.length, 1) <= 0.22;
+  });
+  return close.length === 1 ? close[0].name : trimmed;
 }

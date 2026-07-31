@@ -7,10 +7,11 @@ import {
   InventoryInputSchema,
   normalizeInventory,
 } from "@/lib/inventory-model";
-import { addInventoryRow, getInventory, getValuations, recordValuation } from "@/lib/smartsheet";
+import { addInventoryRow, getCatalog, getInventory, getValuations, recordValuation } from "@/lib/smartsheet";
 import { accountDataMode, createOwnedRecords } from "@/lib/user-data";
 import { applyReusableValuations } from "@/lib/valuation-monitor";
 import { createServerRecordId } from "@/lib/server-record-id";
+import { canonicalizeInventoryNaming } from "@/lib/canonical-cigar-naming";
 
 function errorResponse(error: unknown) {
   if (error instanceof ZodError)
@@ -42,16 +43,18 @@ export async function POST(request: Request) {
     if("inventoryId" in body)return NextResponse.json({error:"Hojavía creates inventory references automatically. Open an existing record to edit it."},{status:409});
     const submissionId=z.string().uuid().optional().parse(body.submissionId);
     const {submissionId:_submissionId,...fields}=body;
-    const draft = normalizeInventory(InventoryInputSchema.parse({...fields,inventoryId:createServerRecordId("inventory",submissionId)}));
-    const [inventory,valuations,sharedInventory,sharedValuations]=await Promise.all([
+    const parsed = normalizeInventory(InventoryInputSchema.parse({...fields,inventoryId:createServerRecordId("inventory",submissionId)}));
+    const [inventory,valuations,sharedInventory,sharedValuations,catalog]=await Promise.all([
       loadInventory(),
       loadValuations().catch(()=>[]),
       getInventory().catch(()=>[]),
       getValuations().catch(()=>[]),
+      getCatalog().catch(()=>[]),
     ]);
+    const draft=canonicalizeInventoryNaming(parsed,catalog);
     const duplicate=[...inventory,...sharedInventory].find(item=>item.inventoryId===draft.inventoryId);
     if(duplicate){
-      const unchanged=Object.entries(fields).every(([key,value])=>JSON.stringify(duplicate[key as keyof typeof duplicate])===JSON.stringify(value));
+      const unchanged=Object.keys(fields).every(key=>JSON.stringify(duplicate[key as keyof typeof duplicate])===JSON.stringify(draft[key as keyof typeof draft]));
       if(unchanged)return NextResponse.json({data:duplicate,retry:true},{status:200});
       return NextResponse.json({error:"This submission was already used for a different inventory entry."},{status:409});
     }

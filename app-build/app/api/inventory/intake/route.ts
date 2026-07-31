@@ -3,10 +3,11 @@ import { z } from "zod";
 import { authorizeWrite, dataMode } from "@/lib/config";
 import { findInventoryDuplicates } from "@/lib/photo-intake";
 import { InventoryInputSchema, normalizeInventory } from "@/lib/inventory-model";
-import { addInventoryRows, getInventory, getValuations, recordValuation } from "@/lib/smartsheet";
+import { addInventoryRows, getCatalog, getInventory, getValuations, recordValuation } from "@/lib/smartsheet";
 import { importOwnedRecords, loadAccountRecords } from "@/lib/user-data";
 import type { InventoryItem,Valuation } from "@/lib/types";
 import { applyReusableValuations } from "@/lib/valuation-monitor";
+import { canonicalizeInventoryNaming } from "@/lib/canonical-cigar-naming";
 
 const Body=z.object({
   drafts:z.array(InventoryInputSchema).min(1).max(25),
@@ -17,7 +18,8 @@ const Body=z.object({
 export async function POST(request:Request){
   try{
     const input=Body.parse(await request.json());
-    const submitted=input.drafts.map(normalizeInventory);
+    const catalog=await getCatalog().catch(()=>[]);
+    const submitted=input.drafts.map(item=>canonicalizeInventoryNaming(normalizeInventory(item),catalog));
     if(new Set(submitted.map(item=>item.inventoryId)).size!==submitted.length)return NextResponse.json({error:"The selected drafts contain duplicate inventory IDs"},{status:409});
     const account=await loadAccountRecords<InventoryItem>("inventory");
     const signedIn=account!==undefined;

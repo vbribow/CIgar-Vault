@@ -9,6 +9,7 @@ test("brand directory includes all 27 official Habanos brands", () => {
 test("common spelling variants normalize to a canonical brand", () => {
   assert.equal(canonicalBrand("Ramon Allones"), "Ramón Allones");
   assert.equal(canonicalBrand("Bolivar"), "Bolívar");
+  assert.equal(canonicalBrand("Drew state"), "Drew Estate");
 });
 
 test("brand directory includes a broad boutique segment", () => {
