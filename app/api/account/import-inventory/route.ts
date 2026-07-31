@@ -4,8 +4,9 @@ import { inventoryImportIdentity,MAX_IMPORT_BYTES,parseInventoryFile } from "@/l
 import { createOwnedRecords,deleteOwnedRecords,loadAccountRecords,saveOwnedRecord } from "@/lib/user-data";
 import { importRecordFingerprint,safelyRollbackImportedRecords } from "@/lib/import-safety";
 import { copiedValuation,reusableValuation } from "@/lib/valuation-monitor";
-import { getInventory,getValuations } from "@/lib/smartsheet";
+import { getCatalog,getInventory,getValuations } from "@/lib/smartsheet";
 import type { InventoryItem,Valuation } from "@/lib/types";
+import { canonicalizeInventoryNaming } from "@/lib/canonical-cigar-naming";
 
 export const runtime="nodejs";
 function reply(error:unknown,status=400){return NextResponse.json({error:error instanceof Error?error.message:"Import failed"},{status})}
@@ -25,7 +26,8 @@ export async function POST(request:Request){
   if(body.action==="commit"){
    if(!Array.isArray(body.items)||!body.items.length)return reply(new Error("Select at least one valid row"));
    if(body.items.length>5000)return reply(new Error("Import is limited to 5000 rows"),413);
-   const parsedItems:InventoryItem[]=body.items.map((value:unknown)=>normalizeInventory(InventoryInputSchema.parse(value)));
+   const catalog=await getCatalog().catch(()=>[]);
+   const parsedItems:InventoryItem[]=body.items.map((value:unknown)=>canonicalizeInventoryNaming(normalizeInventory(InventoryInputSchema.parse(value)),catalog));
    const existingIds=new Set(existing.map((item:InventoryItem)=>item.inventoryId));
    if(parsedItems.some((item:InventoryItem)=>existingIds.has(item.inventoryId)))return reply(new Error("One or more inventory IDs already exist. Preview the file again."),409);
    if(new Set(parsedItems.map(item=>item.inventoryId)).size!==parsedItems.length)return reply(new Error("The selected rows contain duplicate inventory IDs."),409);
