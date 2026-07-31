@@ -21,6 +21,19 @@ export function Dashboard({ items, onboarding,intelligence }: { items: Inventory
   const statuses = current.reduce<Record<string, number>>((counts, item) => { const key=item.status||"Review"; counts[key]=(counts[key]||0)+1; return counts; },{});
   const maxStatus = Math.max(...Object.values(statuses),1);
   const aging = active.filter((item) => item.status === "Hold" || item.status === "Preserve").sort((a,b)=>(a.vintage?Number(a.vintage):9999)-(b.vintage?Number(b.vintage):9999)).slice(0,3);
+  if (!current.length) return <>
+    <section className="card firstSessionWelcome" aria-labelledby="first-session-title">
+      <div><div className="eyebrow">Your first ten minutes</div><h2 id="first-session-title">Begin with one cigar you know.</h2><p>You do not need to catalog everything today. One accurate record is enough for {brand.name} to begin protecting its identity, story, and care.</p></div>
+      <div className="firstSessionSteps" aria-label="First collection steps">
+        <article><span>01</span><strong>Document one cigar</strong><small>Start with the band, box, or details already in front of you.</small></article>
+        <article><span>02</span><strong>Preserve what you know</strong><small>Add quantity, provenance, and authenticity evidence without guessing.</small></article>
+        <article><span>03</span><strong>See the first insight</strong><small>Return home to see what is documented and what deserves attention next.</small></article>
+      </div>
+      <div className="ctaRow"><a className="button" href="/inventory#mobile-intake">Document my first cigar</a><a className="button secondary" href="/collector-walkthrough">Practice with a synthetic example</a></div>
+      <small className="firstSessionAssurance">Private by default · You remain in control · Uncertain details can stay blank</small>
+    </section>
+    <OnboardingDashboard steps={onboarding} />
+  </>;
   return <>
     <CollectorCommandCenter intelligence={intelligence} />
     <div className="grid">

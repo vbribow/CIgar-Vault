@@ -38,6 +38,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const [bulkSaving, setBulkSaving] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date>();
   const [recentlySaved, setRecentlySaved] = useState<{ inventoryId: string; token: number }>();
+  const [lastCreated, setLastCreated] = useState<InventoryItem | null>(null);
 
   useEffect(()=>{
     if(editing||draft||saving||bulkSaving)return;
@@ -111,7 +112,12 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
       const savedId=String(result.data.inventoryId||id);
       const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";
-      setEditing(null); setDraft(null); if(!isEdit)setSubmissionId(createClientUuid());setMessage(`${savedId} saved and synchronized.${valuationStatus}`); if(isEdit)setRecentlySaved({inventoryId:savedId,token:Date.now()}); formElement.reset();
+      setEditing(null); setDraft(null); if(!isEdit)setSubmissionId(createClientUuid());
+      const savedItem=result.data as InventoryItem;
+      setMessage(isEdit?`${savedItem.brand} ${savedItem.line} was updated in your private Vault.${valuationStatus}`:`${savedItem.brand} ${savedItem.line} was saved to your private Vault. Choose what to do next below.${valuationStatus}`);
+      setRecentlySaved({inventoryId:savedId,token:Date.now()});
+      if(!isEdit)setLastCreated(savedItem);
+      formElement.reset();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
@@ -184,7 +190,8 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const showAll = !editing || editMode === "all";
   const suggestedFormat = findBoxFormat(formItem);
   return <>
-    <PhotoInventoryIntake catalog={catalog} inventory={items} mode={mode} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("")}} onApproved={(approved)=>{setItems(current=>[...current,...approved.filter(item=>!current.some(existing=>existing.inventoryId===item.inventoryId))]);setDraft(null)}} />
+    <PhotoInventoryIntake catalog={catalog} inventory={items} mode={mode} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("");setLastCreated(null)}} onApproved={(approved)=>{setItems(current=>[...current,...approved.filter(item=>!current.some(existing=>existing.inventoryId===item.inventoryId))]);setDraft(null);const saved=approved.at(-1);if(saved){setLastCreated(saved);setRecentlySaved({inventoryId:saved.inventoryId,token:Date.now()});setMessage(`${approved.length} ${approved.length===1?"cigar record was":"cigar records were"} saved to your private Vault. Choose what to do next below.`)}}} />
+    {lastCreated&&<section className="card firstRecordSuccess" aria-live="polite"><div><div className="eyebrow">Saved to your private Vault</div><h2>{lastCreated.brand} {lastCreated.line}</h2><p>Your first useful record is complete. You can stop here with confidence or add the next piece of its story.</p></div><div className="firstRecordActions"><a className="button" href={`/inventory/${encodeURIComponent(lastCreated.inventoryId)}`}>Open saved record</a><button type="button" className="button secondary" onClick={()=>startEditing(lastCreated,"storage")}>Assign storage</button>{isCubanInventory(lastCreated)&&<a className="button secondary" href="/verification">Review Habanos evidence</a>}<a className="button secondary" href="/">See my first collection insight</a><button type="button" className="textLink" onClick={()=>setLastCreated(null)}>I’m done for now</button></div></section>}
     <section className="toolbar" id="inventory-records" aria-label="Inventory records and filters">
       <label><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label>
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>

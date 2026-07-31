@@ -30,7 +30,8 @@ test("manual intake generates references and offers verified collection choices"
   assert.match(manager,/const formElement = event\.currentTarget/);
   assert.match(manager,/formElement\.reset\(\)/);
   assert.match(manager,/delete payload\[key as keyof typeof payload\]/);
-  assert.match(manager,/saved and synchronized/);
+  assert.match(manager,/saved to your private Vault/);
+  assert.doesNotMatch(manager,/saved and synchronized/);
 });
 
 test("photo-assisted intake attaches its primary evidence after approval",()=>{
