@@ -12,8 +12,9 @@ import {
   savePreviewInventoryOverride,
 } from "@/lib/preview-inventory";
 import { recordRevision } from "@/lib/record-revision";
-import { deleteInventoryRow, updateInventoryRow } from "@/lib/smartsheet";
+import { deleteInventoryRow, getCatalog, updateInventoryRow } from "@/lib/smartsheet";
 import { deleteOwnedRecord, saveOwnedRecordIfUnchanged } from "@/lib/user-data";
+import { canonicalizeInventoryNaming } from "@/lib/canonical-cigar-naming";
 
 type Context = { params: Promise<{ inventoryId: string }> };
 function failure(error: unknown) {
@@ -54,7 +55,8 @@ export async function PUT(request: Request, context: Context) {
         { error: "This record changed on another device. Refresh your Vault, review the newer information, and try again." },
         { status: 409 },
       );
-    const item = normalizeInventory(parseInventoryUpdate(await request.json(), existing));
+    const parsed = normalizeInventory(parseInventoryUpdate(await request.json(), existing));
+    const item = canonicalizeInventoryNaming(parsed, await getCatalog().catch(() => []));
     if (item.inventoryId !== inventoryId)
       return NextResponse.json(
         { error: "Inventory ID cannot be changed" },
