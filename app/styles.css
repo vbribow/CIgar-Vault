@@ -217,5 +217,5 @@ html[data-brand="hojavia"] .cultureHero>img,html[data-brand="hojavia"] .discover
 .walkthroughHero aside{padding:24px}
 .walkthroughStage>header h2:focus{outline:0}
 .walkthroughFinishActions{display:flex;justify-content:flex-end;gap:12px}
-@media(max-width:900px){.walkthroughHero{gap:24px;padding:28px 0 24px}.walkthroughHero h1{font-size:clamp(44px,8vw,62px)}}
+@media(max-width:900px){.walkthroughHero{grid-template-columns:1fr;gap:24px;padding:28px 0 24px}.walkthroughHero h1{font-size:clamp(44px,8vw,62px)}}
 @media(max-width:620px){.walkthroughHero{gap:18px;padding:24px 0 20px}.walkthroughHero h1{font-size:clamp(42px,12vw,54px)}.walkthroughHero .lede{font-size:18px;line-height:1.55}.walkthroughHero aside{padding:20px}.walkthroughFinishActions{display:grid;gap:10px}.walkthroughStage>footer .walkthroughFinishActions{width:100%}}
