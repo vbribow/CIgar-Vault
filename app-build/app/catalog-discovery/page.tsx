@@ -35,10 +35,10 @@ export default async function CatalogDiscoveryPage({searchParams}:{searchParams:
     </section>
     {focus&&<section className="catalogResearchFocus">
       <div>
-        <div className="eyebrow">Active canonical research brief · {focus.catalogId}</div>
+        <div className="eyebrow">Active cigar research brief · {focus.catalogId}</div>
         <h2>{focus.brand} <span>{focus.line} · {focus.vitola}</span></h2>
         <p>This record is {focus.completion}% complete. Resolve fields with attributable product-level evidence; brand context must not be promoted into release fact without support.</p>
-        <div className="ctaRow"><a className="button secondary" href={canonicalCatalogHref(focus.catalogId)}>Return to canonical record</a><a className="button secondary" href="#research-backlog">Compare brand backlog</a></div>
+        <div className="ctaRow"><a className="button secondary" href={canonicalCatalogHref(focus.catalogId)}>Return to cigar record</a><a className="button secondary" href="#research-backlog">Compare brand backlog</a></div>
       </div>
       <div><strong>{focus.researchGaps.length} open fields</strong><div>{focus.researchGaps.map((gap)=><span key={gap}>{gap}</span>)}</div></div>
     </section>}

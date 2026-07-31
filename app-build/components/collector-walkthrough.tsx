@@ -9,7 +9,7 @@ const steps = [
   ["Acquisition", "Preserve the offer and transaction context"],
   ["Package", "Connect photographs, codes, and seals"],
   ["Official check", "Record the dated producer-tool result"],
-  ["Conclusion", "Keep the evidence state narrower than the claim"],
+  ["Conclusion", "Say only what the records support"],
   ["Export", "Carry the record forward without exposing private data"],
 ] as const;
 
@@ -156,7 +156,7 @@ export function CollectorWalkthrough() {
       </div>}
 
       {step === 4 && <div className="walkthroughConclusion">
-        <div><span>Evidence state</span><strong>{result}</strong><small>{evidenceCount} of 5 package and acquisition items connected</small></div>
+        <div><span>What the records support</span><strong>{result}</strong><small>{evidenceCount} of 5 package and acquisition items connected</small></div>
         <div><span>Authentication claim</span><strong>Not made</strong><small>The conclusion remains narrower than the evidence.</small></div>
         <div><span>Collector action</span><strong>{result === "Official result recorded" && evidenceCount === 5 ? "Preserve and monitor" : "Keep open for review"}</strong><small>Unresolved or conflicting evidence never becomes an invented answer.</small></div>
       </div>}

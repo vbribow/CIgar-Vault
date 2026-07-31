@@ -55,13 +55,13 @@ export default function VitolasPage() {
         </div>
         <figure className="vitolaHeroPhoto">
           <img src="/learn/vitolas/wide-churchill.jpg" alt="A wide Churchill cigar photographed against a dark background"/>
-          <figcaption><strong>Length × ring gauge</strong><span>A Wide Churchill measuring 130 mm with a 55 ring gauge.</span><a href="https://commons.wikimedia.org/wiki/File:Romeo_y_Julieta_-_Wide_Churchill.jpg" target="_blank" rel="noreferrer">Photo: Christoph Braun · CC0 ↗</a></figcaption>
+          <figcaption><strong>Length × ring gauge</strong><span>A Wide Churchill measuring 130 mm with a 55 ring gauge.</span><a href="https://commons.wikimedia.org/wiki/File:Romeo_y_Julieta_-_Wide_Churchill.jpg">Photo: Christoph Braun · CC0 ↗</a></figcaption>
         </figure>
       </section>
 
       <section className="vitolaDefinition">
         <div><div className="eyebrow">Begin with the precise meaning</div><h2>Vitola is a format—not a measure of quality or strength.</h2></div>
-        <div><p>In general collector use, vitola means the combination of size and shape. In the Cuban system, <em>vitola de galera</em> is the factory format name, while <em>vitola de salida</em> is the commercial name used for a particular cigar.</p><p>That distinction matters because two brands may sell the same factory format under different names—and two manufacturers may use the same familiar name for different dimensions.</p><a className="textLink" href="https://www.habanos.com/es/glossary/vitola/" target="_blank" rel="noreferrer">Official Habanos vitola definition ↗</a></div>
+        <div><p>In general collector use, vitola means the combination of size and shape. In the Cuban system, <em>vitola de galera</em> is the factory format name, while <em>vitola de salida</em> is the commercial name used for a particular cigar.</p><p>That distinction matters because two brands may sell the same factory format under different names—and two manufacturers may use the same familiar name for different dimensions.</p><a className="textLink" href="https://www.habanos.com/es/glossary/vitola/">Official Habanos vitola definition ↗</a></div>
       </section>
 
       <section className="measureSection" id="measure">
@@ -82,7 +82,7 @@ export default function VitolasPage() {
       </section>
 
       <section className="shapePhoto">
-        <figure><img src="/learn/vitolas/cigar-shapes.png" alt="Comparison showing parejo, torpedo, pyramid, perfecto, and presidente cigar shapes"/><figcaption><strong>Five recognizable silhouettes</strong><span>Parejo, torpedo, pyramid, perfecto, and presidente.</span><a href="https://commons.wikimedia.org/wiki/File:Cigarshapes1.png" target="_blank" rel="noreferrer">Image: Hellahulla · CC BY-SA ↗</a></figcaption></figure>
+        <figure><img src="/learn/vitolas/cigar-shapes.png" alt="Comparison showing parejo, torpedo, pyramid, perfecto, and presidente cigar shapes"/><figcaption><strong>Five recognizable silhouettes</strong><span>Parejo, torpedo, pyramid, perfecto, and presidente.</span><a href="https://commons.wikimedia.org/wiki/File:Cigarshapes1.png">Image: Hellahulla · CC BY-SA ↗</a></figcaption></figure>
         <div><div className="eyebrow">Learn the silhouette</div><h2>The shape tells you where construction becomes difficult.</h2><p>A straight body asks for uniform density. A taper asks the roller to change diameter without blocking airflow. A curved double figurado must transition through several proportions while maintaining the intended blend and burn.</p><blockquote>Shape is the visible record of decisions made inside the bunch.</blockquote></div>
       </section>
 
@@ -96,8 +96,8 @@ export default function VitolasPage() {
       </section>
 
       <section className="photoStudy">
-        <figure><img src="/learn/vitolas/parejo-comparison.jpg" alt="Three straight-sided Padrón cigars shown together for comparison"/><figcaption><strong>Similarity does not mean sameness</strong><span>Three parejo cigars show differences in length, diameter, finish, and presentation.</span><a href="https://commons.wikimedia.org/wiki/File:Padroncigars.jpg" target="_blank" rel="noreferrer">Photo: Magnetic Rag · Public domain ↗</a></figcaption></figure>
-        <figure><img src="/learn/vitolas/culebras.jpg" alt="Three narrow twisted Culebra cigars tied together with red ribbon"/><figcaption><strong>Culebra</strong><span>Three narrow cigars formed and presented together, then separated before smoking.</span><a href="https://commons.wikimedia.org/wiki/File:Partag%C3%A1s_Culebras_edit.jpg" target="_blank" rel="noreferrer">Photo: Christoph Braun · CC0 ↗</a></figcaption></figure>
+        <figure><img src="/learn/vitolas/parejo-comparison.jpg" alt="Three straight-sided Padrón cigars shown together for comparison"/><figcaption><strong>Similarity does not mean sameness</strong><span>Three parejo cigars show differences in length, diameter, finish, and presentation.</span><a href="https://commons.wikimedia.org/wiki/File:Padroncigars.jpg">Photo: Magnetic Rag · Public domain ↗</a></figcaption></figure>
+        <figure><img src="/learn/vitolas/culebras.jpg" alt="Three narrow twisted Culebra cigars tied together with red ribbon"/><figcaption><strong>Culebra</strong><span>Three narrow cigars formed and presented together, then separated before smoking.</span><a href="https://commons.wikimedia.org/wiki/File:Partag%C3%A1s_Culebras_edit.jpg">Photo: Christoph Braun · CC0 ↗</a></figcaption></figure>
       </section>
 
       <section className="figuradoGuide">

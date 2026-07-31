@@ -18,3 +18,28 @@ test("official Habanos journeys preserve browser history so Back returns to Hoja
   }
   assert.doesNotMatch(catalog, /href=\{habanosBrandSource\} target="_blank"/);
 });
+
+test("read-only education and reference journeys stay in one browser tab", () => {
+  const readOnlyJourneys = [
+    "app/page.tsx",
+    "app/discover/page.tsx",
+    "app/box-formats/page.tsx",
+    "app/catalog/page.tsx",
+    "app/catalog/[catalogId]/page.tsx",
+    "app/collection-catalog/page.tsx",
+    "app/collections/[collectionId]/page.tsx",
+    "app/cigars/[identityId]/page.tsx",
+    "app/industry/registry/page.tsx",
+    "app/industry/[slug]/page.tsx",
+    "app/learn/blending/page.tsx",
+    "app/learn/humidor-climate/page.tsx",
+    "app/learn/seed-to-smoke/page.tsx",
+    "app/learn/vitolas/page.tsx",
+    "components/manufacturing-truth-directory.tsx",
+  ];
+
+  for (const journey of readOnlyJourneys) {
+    const source = fs.readFileSync(path.join(root, journey), "utf8");
+    assert.doesNotMatch(source, /\btarget=/, `${journey} should preserve browser Back history`);
+  }
+});

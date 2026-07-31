@@ -156,11 +156,11 @@ export default function HumidorClimatePage() {
       <section className="climateSources">
         <div><div className="eyebrow">Evidence behind the guidance</div><h2>Know whose standard you are following.</h2></div>
         <div>
-          <a href="https://www.habanos.com/en/keeping-habanos/" target="_blank" rel="noreferrer"><span>Official · Habanos</span><strong>Storage conditions, acclimatization, dryness, excess moisture, and beetles ↗</strong></a>
-          <a href="https://www.habanos.com/en/ageing-finished-cigars/" target="_blank" rel="noreferrer"><span>Official · Habanos</span><strong>Temperature and humidity for aging finished Habanos ↗</strong></a>
-          <a href="https://bovedainc.com/the-art-of-aging-cigars/" target="_blank" rel="noreferrer"><span>Manufacturer guidance · Boveda</span><strong>65–70°F and 65–69% RH aging guidance ↗</strong></a>
-          <a href="https://bovedainc.com/question/what-boveda-rh-do-i-need/" target="_blank" rel="noreferrer"><span>Manufacturer guidance · Boveda</span><strong>How storage type and smoking preference affect RH selection ↗</strong></a>
-          <a href="https://urbanentomology.tamu.edu/stored-product-pests/cigarette-beetles/" target="_blank" rel="noreferrer"><span>Academic extension · Texas A&amp;M</span><strong>Temperature, humidity, and cigarette-beetle development ↗</strong></a>
+          <a href="https://www.habanos.com/en/keeping-habanos/"><span>Official · Habanos</span><strong>Storage conditions, acclimatization, dryness, excess moisture, and beetles ↗</strong></a>
+          <a href="https://www.habanos.com/en/ageing-finished-cigars/"><span>Official · Habanos</span><strong>Temperature and humidity for aging finished Habanos ↗</strong></a>
+          <a href="https://bovedainc.com/the-art-of-aging-cigars/"><span>Manufacturer guidance · Boveda</span><strong>65–70°F and 65–69% RH aging guidance ↗</strong></a>
+          <a href="https://bovedainc.com/question/what-boveda-rh-do-i-need/"><span>Manufacturer guidance · Boveda</span><strong>How storage type and smoking preference affect RH selection ↗</strong></a>
+          <a href="https://urbanentomology.tamu.edu/stored-product-pests/cigarette-beetles/"><span>Academic extension · Texas A&amp;M</span><strong>Temperature, humidity, and cigarette-beetle development ↗</strong></a>
         </div>
         <small>This educational material is intended only for adults of legal age. Suggested ranges are starting guidance, not guarantees of condition, flavor, safety, or value.</small>
       </section>

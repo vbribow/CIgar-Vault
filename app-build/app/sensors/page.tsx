@@ -57,7 +57,7 @@ export default async function SensorsPage() {
       <section className="sensorHero">
         <div>
           <div className="eyebrow">Connected climate</div>
-          <h1>Sensors, normalized.</h1>
+          <h1>Your humidor climate, together.</h1>
           <p className="lede">
             Register Tempi now and preserve one clean reading format for every
             future Bluetooth, gateway, and cloud provider.

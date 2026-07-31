@@ -44,9 +44,9 @@ export default async function ReportsPage() {
             <div className="eyebrow">Collection protection</div>
             <h1>The insurance schedule is temporarily protected.</h1>
             <p className="lede">
-              The platform could not safely load the authoritative inventory. No
-              scheduled value, coverage percentage, or evidence exception has
-              been inferred from partial data.
+              Hojavía could not safely load your complete collection. No
+              scheduled value, coverage percentage, or missing-evidence warning
+              was calculated from incomplete information.
             </p>
           </div>
           <div className="reportValue reportUnavailable">

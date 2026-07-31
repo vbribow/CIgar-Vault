@@ -18,9 +18,9 @@ export default async function StoragePage() {
           <div className="eyebrow">Storage record protected</div>
           <h1>Storage is temporarily unavailable.</h1>
           <p>
-            The platform could not safely load the authoritative inventory. No
-            location has been classified as empty and no cigar has been
-            classified as unassigned.
+            Hojavía could not safely load your complete collection. No storage
+            location has been shown as empty, and no cigar has been marked
+            unassigned.
           </p>
         </section>
       </main>

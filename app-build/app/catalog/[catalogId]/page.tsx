@@ -105,7 +105,7 @@ export default async function CanonicalCigarRecordPage({ params }: { params: Pro
           <div><span>{source.sourceType}</span><span>{source.confidence} confidence</span>{source.checkedAt && <span>Checked {source.checkedAt}</span>}</div>
           <h3>{source.sourceName}</h3>
           <p>{source.supports}</p>
-          {source.sourceUrl && <a href={source.sourceUrl} target="_blank" rel="noreferrer">Inspect source ↗</a>}
+          {source.sourceUrl && <a href={source.sourceUrl}>Inspect source ↗</a>}
         </article>)}
         {!record.evidence.length && <article className="canonicalEmptyEvidence"><h3>No attributable source is attached yet.</h3><p>The identity remains searchable, but all substantive claims stay in research status.</p></article>}
       </div>

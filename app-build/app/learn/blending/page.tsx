@@ -456,7 +456,7 @@ export default function BlendingPage() {
       </section>
 
       <section className="primingLesson">
-        <div><div className="eyebrow">The vertical leaf library</div><h2>Position on the plant changes the raw material.</h2><p>Upper leaves generally receive more sun, grow thicker, contain more oils and nicotine, and burn more slowly. Lower leaves tend to be thinner, lighter in strength, and more combustible. These are working tendencies—not substitutes for tasting the actual lot.</p><a className="textLink" href="https://www.habanos.com/en/the-anatomy-of-a-habano/" target="_blank" rel="noreferrer">Official Habanos leaf anatomy ↗</a></div>
+        <div><div className="eyebrow">The vertical leaf library</div><h2>Position on the plant changes the raw material.</h2><p>Upper leaves generally receive more sun, grow thicker, contain more oils and nicotine, and burn more slowly. Lower leaves tend to be thinner, lighter in strength, and more combustible. These are working tendencies—not substitutes for tasting the actual lot.</p><a className="textLink" href="https://www.habanos.com/en/the-anatomy-of-a-habano/">Official Habanos leaf anatomy ↗</a></div>
         <div className="primingStack">{primings.map(([name,body],index)=><article key={name}><span>{5-index}</span><div><h3>{name}</h3><p>{body}</p></div></article>)}</div>
       </section>
 
@@ -478,7 +478,7 @@ export default function BlendingPage() {
             <p>Earth, cedar, pepper, leather, coffee, and concentrated sweetness are common descriptions. Sun-grown does not automatically mean dark, maduro, full-strength, or better.</p>
           </article>
         </div>
-        <div className="sourceRail"><a href="https://www.habanos.com/en/the-perfect-leaf/" target="_blank" rel="noreferrer">Habanos: shade wrapper vs. sun filler and binder ↗</a><a href="https://portal.ct.gov/-/media/CAES/DOCUMENTS/Publications/Bulletins/B364pdf.pdf" target="_blank" rel="noreferrer">Connecticut Agricultural Experiment Station: shade and outdoor tobacco ↗</a></div>
+        <div className="sourceRail"><a href="https://www.habanos.com/en/the-perfect-leaf/">Habanos: shade wrapper vs. sun filler and binder ↗</a><a href="https://portal.ct.gov/-/media/CAES/DOCUMENTS/Publications/Bulletins/B364pdf.pdf">Connecticut Agricultural Experiment Station: shade and outdoor tobacco ↗</a></div>
       </section>
 
       <section className="maduroLesson">
@@ -495,7 +495,7 @@ export default function BlendingPage() {
         </div>
         <div className="maduroProcess"><span>Selected resilient leaf</span><i>→</i><span>Controlled curing</span><i>→</i><span>Extended or intensified fermentation</span><i>→</i><span>Rest and aging</span><i>→</i><span>Dark, mature wrapper</span></div>
         <p className="maduroCaution">There is no universal Maduro timetable or temperature. Producers protect different methods, and the leaf—not a marketing color target—must guide the process.</p>
-        <div className="sourceRail"><a href="https://store.davidoffgeneva.com/" target="_blank" rel="noreferrer">Davidoff: “Maduro is not color only” ↗</a><a href="https://www.perdomocigars.com/10th-anniversary" target="_blank" rel="noreferrer">Perdomo: Connecticut, sun-grown, and Maduro blend examples ↗</a></div>
+        <div className="sourceRail"><a href="https://store.davidoffgeneva.com/">Davidoff: “Maduro is not color only” ↗</a><a href="https://www.perdomocigars.com/10th-anniversary">Perdomo: Connecticut, sun-grown, and Maduro blend examples ↗</a></div>
       </section>
 
       <section className="wrapperLibrary">
@@ -518,7 +518,7 @@ export default function BlendingPage() {
 
       <section className="wrapperExperiment">
         <div><div className="eyebrow">The most useful tasting exercise</div><h2>Change one wrapper. Observe the whole system.</h2></div>
-        <div><p>Find a producer offering Connecticut, sun-grown, and Maduro versions built around closely related binder and filler tobaccos. Smoke the same vitola under similar conditions. Record aroma before lighting, first-light character, sweetness, spice, body, nicotine strength, texture, combustion, transitions, and finish.</p><p>The goal is not to prove that the wrapper supplies a percentage of flavor. It is to notice how changing one leaf changes the relationships among every leaf.</p><a className="textLink" href="https://www.perdomocigars.com/10th-anniversary" target="_blank" rel="noreferrer">Study an official three-wrapper comparison ↗</a></div>
+        <div><p>Find a producer offering Connecticut, sun-grown, and Maduro versions built around closely related binder and filler tobaccos. Smoke the same vitola under similar conditions. Record aroma before lighting, first-light character, sweetness, spice, body, nicotine strength, texture, combustion, transitions, and finish.</p><p>The goal is not to prove that the wrapper supplies a percentage of flavor. It is to notice how changing one leaf changes the relationships among every leaf.</p><a className="textLink" href="https://www.perdomocigars.com/10th-anniversary">Study an official three-wrapper comparison ↗</a></div>
       </section>
 
       <section className="strengthLanguage">
@@ -561,7 +561,7 @@ export default function BlendingPage() {
             <div><dt>Collector fieldwork</dt><dd>{profile.project}</dd></div>
           </dl>
           <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
-          <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
+          <div className="profileSources"><a href={profile.factorySource}><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source}><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2}><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
         </article>)}</div>
         <div className="profilePolicy"><strong>Profile standard</strong><p>Biographical facts require attributable sources. Company claims are labeled as company claims. {brand.name} analysis is labeled as analysis. Sensory reputation is never presented as biography, and living craft is never reduced to an unsourced legend.</p></div>
       </section>
@@ -586,7 +586,7 @@ export default function BlendingPage() {
             <div><dt>Collector fieldwork</dt><dd>{profile.project}</dd></div>
           </dl>
           <div className="profileThemes">{profile.themes.map(theme=><span key={theme}>{theme}</span>)}</div>
-          <div className="profileSources"><a href={profile.factorySource} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2} target="_blank" rel="noreferrer"><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
+          <div className="profileSources"><a href={profile.factorySource}><small>{profileTrustLabel(profile.factoryLabel)}</small>{profile.factoryLabel} ↗</a><a href={profile.source}><small>{profileTrustLabel(profile.label)}</small>{profile.label} ↗</a>{"source2" in profile&&<a href={profile.source2}><small>{profileTrustLabel(profile.label2)}</small>{profile.label2} ↗</a>}<a className="truthProfileLink" href={manufacturingTruthHrefForHouse(profile.house)}><small>Connected evidence</small>Open manufacturing truth →</a></div>
         </article>)}</div>
         <div className="profilePolicy"><strong>A note on authorship</strong><p>A compelling independent brand may be highly personal and still be collaborative. {brand.name} names the manufacturing partner whenever the record supports it, because honoring the factory, rollers, tobacco teams, and blender is more truthful than constructing a lone-genius story.</p></div>
       </section>

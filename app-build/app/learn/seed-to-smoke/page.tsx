@@ -174,7 +174,7 @@ export default function SeedToSmokePage() {
           <div className="eyebrow">Quality makes the craft visible</div>
           <h2>The finished cigar is inspected, tested, and traceable.</h2>
           <p>In the documented Habanos process, supervisors oversee rolling teams; production trays identify the roller, vitola, and date; cigars are checked for construction and appearance; bunches are draw-tested; and samples may be opened to inspect their internal build and blend.</p>
-          <a className="textLink" href="https://www.habanos.com/en/checking-the-work/" target="_blank" rel="noreferrer">Read the official Habanos quality-control account ↗</a>
+          <a className="textLink" href="https://www.habanos.com/en/checking-the-work/">Read the official Habanos quality-control account ↗</a>
         </div>
         <ul>{qualityChecks.map((check) => <li key={check}>{check}</li>)}</ul>
       </section>
@@ -195,8 +195,8 @@ export default function SeedToSmokePage() {
         <div>
           <p>When {brand.name} describes a roller’s qualification, we identify whether the designation is official, historical, factory-specific, expert-reported, or promotional. We do not quietly convert one factory’s language into a universal industry standard.</p>
           <div className="sourceLinks">
-            <a href="https://www.habanos.com/en/the-craft-of-the-torcedor/" target="_blank" rel="noreferrer"><span>Official source</span><strong>Habanos: The craft of the torcedor ↗</strong></a>
-            <a href="https://www.miamiandbeaches.com/things-to-do/shopping/visit-cuban-cigar-shops-in-miami" target="_blank" rel="noreferrer"><span>Regional source</span><strong>Greater Miami: Cuban rolling tradition in Miami ↗</strong></a>
+            <a href="https://www.habanos.com/en/the-craft-of-the-torcedor/"><span>Official source</span><strong>Habanos: The craft of the torcedor ↗</strong></a>
+            <a href="https://www.miamiandbeaches.com/things-to-do/shopping/visit-cuban-cigar-shops-in-miami"><span>Regional source</span><strong>Greater Miami: Cuban rolling tradition in Miami ↗</strong></a>
           </div>
         </div>
       </section>

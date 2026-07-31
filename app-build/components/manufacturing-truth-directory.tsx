@@ -44,7 +44,7 @@ export function ManufacturingTruthDirectory({ records }: { records: Manufacturin
         </div>
         <footer>
           <div>{record.examples.map((example) => <span key={example}>{example}</span>)}</div>
-          <a href={record.sourceUrl} target="_blank" rel="noreferrer"><small>Checked {record.checkedAt}</small><strong>{record.sourceName} ↗</strong></a>
+          <a href={record.sourceUrl}><small>Checked {record.checkedAt}</small><strong>{record.sourceName} ↗</strong></a>
         </footer>
       </article>)}
       {!filtered.length && <div className="truthEmpty"><strong>No record matches those terms yet.</strong><p>Try a factory, country, blender, or broader brand name. The directory will grow as evidence is verified.</p></div>}
@@ -99,7 +99,7 @@ export function ManufacturingCoverageIndex({ records }: { records: BrandManufact
             {record.recordId
               ? <a href={record.href}>Open verified system →</a>
               : <button type="button" aria-expanded={expanded} aria-controls={gapId} onClick={() => setExpandedBrand(expanded ? null : record.brand)}>{expanded ? "Close evidence gap ↑" : "View evidence gap ↓"}</button>}
-            {record.sourceUrl && <a href={record.sourceUrl} target="_blank" rel="noreferrer">Source ↗</a>}
+            {record.sourceUrl && <a href={record.sourceUrl}>Source ↗</a>}
           </div>
         </article>;
       })}

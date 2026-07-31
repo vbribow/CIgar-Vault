@@ -10,7 +10,7 @@ const page = readFileSync(
 test("Storage never interprets unavailable inventory as an empty vault", () => {
   assert.match(page, /Promise\.allSettled/);
   assert.match(page, /inventoryResult\.status !== "fulfilled"/);
-  assert.match(page, /No\s+location has been classified as empty/);
+  assert.match(page, /No storage\s+location has been shown as empty/);
 });
 
 test("Storage represents current holdings rather than consumed history", () => {
