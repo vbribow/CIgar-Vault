@@ -8,16 +8,16 @@ test("manifesto artwork has intrinsic dimensions and a resilient fallback", asyn
   const [page, styles, primary, fallback] = await Promise.all([
     readFile(new URL("app/manifesto/page.tsx", root), "utf8"),
     readFile(new URL("app/manifesto/manifesto.css", root), "utf8"),
-    readFile(new URL("public/editorial/cigar-roller-hojavia.png", root)),
+    readFile(new URL("public/editorial/cigar-roller-hojavia.jpg", root)),
     stat(new URL("public/editorial/cigar-roller.jpg", root)),
   ]);
 
-  assert.match(page, /src=\{"\/editorial\/cigar-roller-hojavia\.png"\}/);
+  assert.match(page, /src=\{"\/editorial\/cigar-roller-hojavia\.jpg"\}/);
   assert.match(page, /width="1540" height="1021"/);
   assert.match(page, /fetchPriority="high"/);
   assert.match(styles, /url\("\/editorial\/cigar-roller\.jpg"\) center \/ cover no-repeat/);
-  assert.equal(primary.toString("ascii", 1, 4), "PNG");
-  assert.equal(primary.readUInt32BE(16), 1540);
-  assert.equal(primary.readUInt32BE(20), 1021);
+  assert.equal(primary[0], 0xff);
+  assert.equal(primary[1], 0xd8);
+  assert.ok(primary.byteLength <= 425 * 1024);
   assert.ok(fallback.size > 100_000);
 });
