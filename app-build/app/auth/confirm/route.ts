@@ -1,8 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-
-const allowedTypes = new Set<EmailOtpType>(["recovery", "signup", "invite", "magiclink", "email_change", "email"]);
+import { allowedEmailLinkTypes, emailLinkDestination, invalidEmailLinkPath } from "@/lib/auth-email-link";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -15,11 +14,13 @@ export async function GET(request: Request) {
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL(type === "recovery" ? "/reset-password" : next, url.origin));
+    if (!error) return NextResponse.redirect(new URL(emailLinkDestination(type, next), url.origin));
   }
-  if (tokenHash && type && allowedTypes.has(type)) {
+  if (tokenHash && type && allowedEmailLinkTypes.has(type)) {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-    if (!error) return NextResponse.redirect(new URL(type === "recovery" ? "/reset-password" : next, url.origin));
+    if (!error) return NextResponse.redirect(new URL(emailLinkDestination(type, next), url.origin));
   }
-  return NextResponse.redirect(new URL("/login?error=The%20email%20link%20is%20invalid%20or%20has%20expired", url.origin));
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) return NextResponse.redirect(new URL(emailLinkDestination(type, next), url.origin));
+  return NextResponse.redirect(new URL(invalidEmailLinkPath(next), url.origin));
 }
