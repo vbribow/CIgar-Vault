@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import type { BetaFeedbackMode } from "@/lib/beta-feedback";
-import { captureOperationalFailure } from "@/lib/operational-failure";
+import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 type Feedback = {
   id: string;
@@ -72,6 +72,7 @@ export function BetaFeedbackForm() {
       setMessage(result.error || "Unable to send feedback.");
       return;
     }
+    void captureOperationalSuccess("feedback-submit",response.status);
     setItems(current => [result.data, ...current]);
     event.currentTarget.reset();
     setMode("Issue report");

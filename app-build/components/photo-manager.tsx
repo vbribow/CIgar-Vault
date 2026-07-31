@@ -2,7 +2,7 @@
 
 import { FormEvent, useRef, useState } from "react";
 import type { InventoryItem } from "@/lib/types";
-import { captureOperationalFailure } from "@/lib/operational-failure";
+import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 const kinds = [
   ["cigar", "Cigar"], ["box", "Box"], ["habanos-seal", "Habanos seal"], ["box-code", "Box code"], ["provenance", "Receipt / provenance"],
@@ -38,6 +38,7 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
       const url = updated?.[fields[kind]];
       if (response.ok && updated && typeof url === "string" && url && url !== previousUrl) {
         attach(updated, kind, url);
+        void captureOperationalSuccess("photo-upload");
         setMessage("Photo attached and inventory synced ✓");
         return true;
       }
@@ -80,6 +81,7 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
       const result = await response.json().catch(() => ({ error: `Upload service returned ${response.status}` }));
       if (!response.ok) throw new Error(result.error || "Upload failed");
 
+      void captureOperationalSuccess("photo-upload",response.status);
       attach(result.data, result.kind, result.url);
       setMessage("Photo attached and inventory synced ✓");
       formElement.reset();

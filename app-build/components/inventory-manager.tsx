@@ -18,7 +18,7 @@ import { cigarInventoryRecords, collectionContentsSummary, inventoryCollectionRe
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import { brand } from "@/lib/brand";
 import { recordRevision } from "@/lib/record-revision";
-import { captureOperationalFailure } from "@/lib/operational-failure";
+import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","provenanceNotes","score","action","habanosSealPhotoLink","notes"]);
 
@@ -113,6 +113,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       failureStatus=response.status;
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Save failed");
+      void captureOperationalSuccess("inventory-save",response.status);
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
       const savedId=String(result.data.inventoryId||id);
       const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";

@@ -8,7 +8,7 @@ import { claimPartnerReferral } from "@/lib/partner-platform";
 import { requireBetaInvitation } from "@/lib/beta-access";
 import { safeAuthNext } from "@/lib/auth-navigation";
 import { isEmailNotConfirmed } from "@/lib/auth-errors";
-import { recordKnownAccountFailure } from "@/lib/operational-failure-server";
+import { recordKnownAccountFailure, recordKnownAccountSuccess } from "@/lib/operational-failure-server";
 
 const failure = (message: string, mode: string, next: string) => `/login?mode=${mode}&next=${encodeURIComponent(next)}&error=${encodeURIComponent(message)}`;
 
@@ -19,6 +19,7 @@ export async function signIn(formData: FormData) {
   const next = safeAuthNext(formData.get("next"));
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error){await recordKnownAccountFailure(email,"auth-sign-in",error.status||0,"/login");redirect(failure(isEmailNotConfirmed(error) ? "Your email is not confirmed yet. Resend the confirmation email below, then follow its link." : error.message, "signin", next))}
+  await recordKnownAccountSuccess(email,"auth-sign-in",200,"/login");
   redirect(next);
 }
 

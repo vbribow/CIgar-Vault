@@ -8,7 +8,7 @@ import { mutationButtonText } from "@/lib/mutation-state";
 import { useMutationGuard } from "@/components/use-mutation-guard";
 import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType } from "@/lib/valuation-evidence";
 import { burnQualityOptions, constructionQualityOptions } from "@/lib/records-model";
-import { captureOperationalFailure } from "@/lib/operational-failure";
+import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
@@ -67,6 +67,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       mutation.fail();
       return;
     }
+    if(kind==="smoke")void captureOperationalSuccess("smoke-save",response.status);
     if (kind === "smoke") {
       setSmokes(values => values.some(value => value.smokeId === result.data.smokeId) ? values : [result.data, ...values]);
       setSmokeSubmissionId(crypto.randomUUID());

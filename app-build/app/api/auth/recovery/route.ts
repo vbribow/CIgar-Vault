@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { appOrigin } from "@/lib/app-origin";
 import { recoveryAuthOptions } from "@/lib/supabase/recovery-client";
-import { recordKnownAccountFailure } from "@/lib/operational-failure-server";
+import { recordKnownAccountFailure, recordKnownAccountSuccess } from "@/lib/operational-failure-server";
 
 const Input=z.object({email:z.string().trim().email()});
 
@@ -21,6 +21,7 @@ export async function POST(request:Request){
     const supabase=createClient(url,key,{auth:{...recoveryAuthOptions,persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const{error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${origin}/reset-password`});
     if(error)throw error;
+    await recordKnownAccountSuccess(email,"auth-recovery",200,"/recover");
     return NextResponse.json({data:{sent:true,cooldownSeconds:10*60}});
   }catch(error){
     const message=error instanceof Error?error.message:"Unable to send recovery email";
