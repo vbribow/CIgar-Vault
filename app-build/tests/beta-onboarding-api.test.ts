@@ -16,3 +16,13 @@ test("the database applies a transaction-safe 25-collector cohort limit", () => 
   assert.match(migration, /occupied >= 25/);
   assert.match(migration, /before insert or update of stage/);
 });
+
+test("Hojavía sends reinstall notices only through the protected onboarding route", () => {
+  const route = readFileSync(new URL("../app/api/founder-onboarding/reinstall-notice/route.ts", import.meta.url), "utf8");
+  assert.match(route, /authorizeWrite/);
+  assert.match(route, /beta_collectors/);
+  assert.match(route, /sendAccountEmail/);
+  assert.match(route, /accountEmailConfiguration/);
+  assert.match(route, /Only an invited or active beta tester/);
+  assert.match(route, /last_contact_at/);
+});

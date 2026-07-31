@@ -1,7 +1,9 @@
 import { collectionTemplates, completeCollectionComponentEvidence } from "@/lib/collection-templates";
 import { collectionComponentMarketEvidence } from "@/lib/collection-market-evidence";
 import { cigarProductKey } from "@/lib/cigar-identity";
+import { cigarMarketStandard } from "@/lib/cigar-market-standard";
 import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
+import { isRetailConsensusValue } from "@/lib/valuation-evidence";
 
 export type CollectionValuePoint = {
   date: string;
@@ -30,6 +32,8 @@ export type CollectionDashboardSummary = {
   retailCoverage: number;
   marketCoverage: number;
   completedSaleCoverage: number;
+  marketStandardCoverage: number;
+  marketStandardLabel: "verified-sale standard" | "retail-consensus standard" | "applicable market standard";
   verifiedInventoryIds: string[];
   excludedAssignedLots: string[];
   editionIssue?: string;
@@ -184,6 +188,17 @@ export function summarizeCollection(
   const premiumSupported = completionPercent === 100
     && componentEvidence.length === ownedComponents
     && componentEvidence.every(evidence => evidence.marketUnit !== undefined);
+  const marketStandards = members.map(cigarMarketStandard);
+  const marketStandardCoverage = componentEvidence.filter((evidence,index) =>
+    marketStandards[index] === "Habanos"
+      ? evidence.completedSale !== undefined
+      : evidence.completedSale !== undefined || isRetailConsensusValue(evidence.valuation)
+  ).length;
+  const marketStandardLabel = marketStandards.length > 0 && marketStandards.every(standard=>standard==="Habanos")
+    ? "verified-sale standard"
+    : marketStandards.length > 0 && marketStandards.every(standard=>standard==="New World")
+      ? "retail-consensus standard"
+      : "applicable market standard";
   return {
     componentValue,
     cigarRetailValue,
@@ -208,6 +223,8 @@ export function summarizeCollection(
     retailCoverage: componentEvidence.filter(evidence => evidence.retailUnit !== undefined).length,
     marketCoverage: componentEvidence.filter(evidence => evidence.marketUnit !== undefined).length,
     completedSaleCoverage: componentEvidence.filter(evidence => evidence.completedSale !== undefined).length,
+    marketStandardCoverage,
+    marketStandardLabel,
     verifiedInventoryIds: members.map(item=>item.inventoryId),
     excludedAssignedLots,
     editionIssue,

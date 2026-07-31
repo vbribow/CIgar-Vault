@@ -18,17 +18,25 @@ import { RecommendationFactEditor } from "@/components/recommendation-fact-edito
 import { SmokingExperienceScorecardView } from "@/components/smoking-experience-scorecard";
 import { buildSmokingExperienceScorecards } from "@/lib/smoking-scorecard";
 import { brand } from "@/lib/brand";
+import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
+import { HABANOS_AUTHENTICITY_URL, HABANOS_EVIDENCE_CAUTION, OFAC_CUBAN_GOODS_URL } from "@/lib/habanos-protection";
+import { safeInternalHref } from "@/lib/search-navigation";
 import "./climate.css";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ inventoryId: string }>;
+  searchParams: Promise<{ searchReturn?: string }>;
 }) {
-  const { inventoryId } = await params;
+  const [{ inventoryId }, query] = await Promise.all([params, searchParams]);
+  const searchReturn = safeInternalHref(query.searchReturn);
+  const backHref = searchReturn || "/inventory";
+  const backLabel = searchReturn ? "← Back to search results" : "← Collection";
   const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
   if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
-    return <main className="shell"><nav className="nav"><a className="brand" href="/">{brand.name}</a><a className="backLink" href="/inventory">← Collection</a></nav><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><a className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</a></section></main>;
+    return <main className="shell"><nav className="nav"><a className="brand" href="/">{brand.name}</a><a className="backLink" href={backHref}>{backLabel}</a></nav><a className="button secondary detailReturnLink" href={backHref}>{backLabel}</a><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><a className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</a></section></main>;
   }
   const items = inventoryResult.value;
   const item = items.find((i) => i.inventoryId === inventoryId);
@@ -88,10 +96,13 @@ export default async function CigarPage({
         <a className="brand" href="/">
           {brand.name}
         </a>
-        <a className="backLink" href="/inventory">
-          ← Collection
+        <a className="backLink" href={backHref}>
+          {backLabel}
         </a>
       </nav>
+      <a className="button secondary detailReturnLink" href={backHref}>
+        {backLabel}
+      </a>
       <section className="detailHero">
         <div>
           <div className="eyebrow">
@@ -116,8 +127,8 @@ export default async function CigarPage({
         <div className="cigarStoryFacts"><article><span>{isPresentationAsset?"Presentation asset":"Canonical identity"}</span><strong>{item.brand} · {item.line}</strong><small>{isPresentationAsset?"Tracked separately from the collection’s cigar components":<>{item.vitola}{item.vintage?` · ${item.vintage}`:""} · {identity.identityId}</>}</small>{isPresentationAsset&&collectionRelationship.collection?<a className="textLink" href={`/collections/${encodeURIComponent(collectionRelationship.collection.collectionId)}`}>Open collection record →</a>:<a className="textLink" href={cigarStoryHref(item)}>Open unified Cigar Story →</a>}</article><article><span>Connected knowledge</span><strong>{isPresentationAsset?(valuationsReady?`${values.length} presentation value record${values.length===1?"":"s"}`:"Values unavailable"):<>{ratingsReady?`${publishedRatings.length} review${publishedRatings.length===1?"":"s"}`:"Reviews unavailable"} · {valuationsReady?`${values.length} value record${values.length===1?"":"s"}`:"values unavailable"}</>}</strong><small>{isPresentationAsset?"Presentation evidence does not create a cigar identity":identity.complete?"Exact identity ready":"Identity needs review before evidence can be reused"}</small></article><article><span>Your chapter</span><strong>{isPresentationAsset?(activitiesReady?`${events.length} documented collection event${events.length===1?"":"s"}`:"Collection events unavailable"):(smokesReady?`${history.length} smoking experience${history.length===1?"":"s"}`:"Smoking history unavailable")}</strong><small>{isPresentationAsset?"Record acquisition, serial number, certificate, and provenance":activitiesReady?`${events.length} documented collection event${events.length===1?"":"s"}`:"Collection events unavailable"}</small></article><article><span>Provenance</span><strong>{item.boxCode||item.provenanceDocumentLink?"Evidence started":item.provenanceNotes?"Story documented":"Story waiting"}</strong><small>{item.storageLocationId?`Cared for in ${item.storageLocationId}`:"Storage not yet documented"}</small></article></div>
       </section>
       <EvidenceLabel evidence={{kind:"Community",sourceName:"Your private collector record",confidence:item.provenanceNotes||item.boxCode?"Medium":"Unrated",supports:"Identity, ownership context, and personal provenance",commercialInfluence:"None disclosed"}}/>
+      {isCubanInventory(item)&&<section className="section card"><div className="sectionHead"><div><div className="eyebrow">Habanos evidence record</div><h2>{cubanVerificationStatus(item)==="Verified"?"Official lookup result recorded":cubanVerificationStatus(item)}</h2><p>{HABANOS_EVIDENCE_CAUTION}</p></div><a className="button secondary" href="/verification">Open evidence ledger</a></div><div className="detailStats"><div><span>Seller</span><strong>{item.acquisitionSeller||"Not recorded"}</strong><small>{item.acquisitionDate||"Acquisition date not recorded"}</small></div><div><span>Jurisdiction</span><strong>{item.purchaseJurisdiction||"Not recorded"}</strong><small><a className="textLink" href={OFAC_CUBAN_GOODS_URL} target="_blank" rel="noreferrer">Current U.S. guidance ↗</a></small></div><div><span>Package evidence</span><strong>{item.boxCode||"Box code not recorded"}</strong><small>{item.habanosSealPhotoLink?"Seal evidence linked":"Seal evidence not linked"}</small></div><div><span>Official lookup</span><strong>{item.habanosVerificationResult||"Result not recorded"}</strong><small>{item.habanosVerificationDate||"Lookup date not recorded"}</small></div></div><div className="ctaRow"><a className="button secondary" href={HABANOS_AUTHENTICITY_URL} target="_blank" rel="noreferrer">Official lookup ↗</a><a className="button secondary" href="/learn/habanos-authenticity">Collector guide →</a></div></section>}
       {ratingsReady?<section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>:<UnavailableEvidence label="Published reviews"/>}
-      {!isPresentationAsset&&<section className="section card retailerMarketCta"><div><div className="eyebrow">Retailer market</div><h2>See who has this exact cigar.</h2><p>Compare current asking prices by cigar and package. Hojavía ratings count only verified transactions and remain independent of affiliate relationships.</p></div><a className="button" href={`/inventory/${encodeURIComponent(item.inventoryId)}/availability`}>Find this cigar</a></section>}
       <section className="detailStats">
         <div>
           <span>{isPresentationAsset?"Presentation units owned":"Remaining"}</span>

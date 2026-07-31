@@ -5,6 +5,12 @@ import {
   valuationIntegrityIssues,
 } from "../lib/valuation-integrity";
 
+test("retail consensus is allowed for New World cigars and blocked for Habanos",()=>{
+  const evidence={marketEvidenceType:"Retail consensus value",marketValue:40,marketRangeLow:38,marketRangeHigh:42};
+  assert.deepEqual(valuationIntegrityIssues({brand:"Arturo Fuente"},evidence),[]);
+  assert.match(valuationIntegrityIssues({brand:"Cohiba"},evidence)[0],/New World standard/);
+});
+
 test("blocks a whole collection price allocated to one component", () => {
   const evidence = {
     replacementValue: 500,

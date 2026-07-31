@@ -74,8 +74,8 @@ export type ValuationOperationsSnapshot = {
   status:"Ready"|"Attention";
 };
 
-export function valuationOperationsSnapshot(inventory:InventoryItem[],valuations:Valuation[]):ValuationOperationsSnapshot{
-  inventory=inventory.filter(item=>(item.currentQty??0)>0);
+export function valuationOperationsSnapshot(inventory:InventoryItem[],valuations:Valuation[],collections:CigarCollection[]=[]):ValuationOperationsSnapshot{
+  inventory=cigarInventoryRecords(inventory,collections).filter(item=>(item.currentQty??0)>0);
   const latestEvidenceAt=valuations.map(value=>value.valuationDate).filter(Boolean).sort().at(-1);
   const latestAutomatedAt=valuations.filter(value=>/automated scheduled|shared exact-match/i.test(value.notes||"")).map(value=>value.valuationDate).filter(Boolean).sort().at(-1);
   const valuedIds=new Set(valuations.filter(value=>value.replacementValue!==undefined||value.marketValue!==undefined||value.askingPrice!==undefined||value.lastSaleValue!==undefined||value.marketEvidenceType==="Insufficient evidence").map(value=>value.inventoryId));
@@ -85,5 +85,6 @@ export function valuationOperationsSnapshot(inventory:InventoryItem[],valuations
   return{totalLots:inventory.length,retailCovered,retailCoveragePercent:inventory.length?Math.round(retailCovered/inventory.length*100):100,due,neverValued,latestEvidenceAt,latestAutomatedAt,status:due===0?"Ready":"Attention"};
 }
 import { dataAuthorityIsUnambiguous } from "./data-authority";
+import { cigarInventoryRecords } from "./collection-presentation";
 import { valuationNeedsMonitoring } from "./valuation-monitor";
-import type { InventoryItem, Valuation } from "./types";
+import type { CigarCollection, InventoryItem, Valuation } from "./types";

@@ -1,29 +1,42 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { billingProfileChangeForEvent, validStripeSignature } from "@/lib/billing-webhook";
 import { partnerAdmin, recordPaidPartnerConversion, reversePartnerConversion } from "@/lib/partner-platform";
 
 export const runtime = "nodejs";
-
-function validStripeSignature(payload: string, signature: string | null, secret: string) {
-  if (!signature) return false;
-  const parts = Object.fromEntries(signature.split(",").map(part => part.split("=", 2)));
-  const timestamp = parts.t;
-  const supplied = parts.v1;
-  if (!timestamp || !supplied || Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
-  const expected = createHmac("sha256", secret).update(`${timestamp}.${payload}`).digest("hex");
-  const a = Buffer.from(expected);
-  const b = Buffer.from(supplied);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!secret) return NextResponse.json({ error: "Stripe webhook is not configured" }, { status: 503 });
   const payload = await request.text();
   if (!validStripeSignature(payload, request.headers.get("stripe-signature"), secret)) return NextResponse.json({ error: "Invalid Stripe signature" }, { status: 401 });
-  const event = JSON.parse(payload) as { id:string;type:string;data:{object:Record<string,unknown>} };
-  const object = event.data.object;
   try {
+    const event = JSON.parse(payload) as { id:string;type:string;data?:{object?:Record<string,unknown>} };
+    const object = event.data?.object;
+    if (!event.id || !event.type || !object) return NextResponse.json({ error: "Invalid Stripe event" }, { status: 400 });
+
+    const profileChange = billingProfileChangeForEvent(event.type, object);
+    if (profileChange) {
+      const admin = partnerAdmin();
+      if (!admin) throw new Error("Billing profile storage is not configured");
+      const { data: profile, error: profileError } = await admin
+        .from("profiles")
+        .select("user_id")
+        .eq("stripe_customer_id", profileChange.customerId)
+        .maybeSingle();
+      if (profileError) throw profileError;
+      if (!profile?.user_id) throw new Error("Billing customer is not linked to an account");
+      const { error: updateError } = await admin
+        .from("profiles")
+        .update({
+          billing_plan: profileChange.billingPlan,
+          billing_status: profileChange.billingStatus,
+          ...(profileChange.subscriptionId ? { stripe_subscription_id: profileChange.subscriptionId } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", profile.user_id);
+      if (updateError) throw updateError;
+    }
+
     if (event.type === "invoice.paid" && object.billing_reason !== "subscription_create") {
       const customerId = typeof object.customer === "string" ? object.customer : "";
       const admin = partnerAdmin();

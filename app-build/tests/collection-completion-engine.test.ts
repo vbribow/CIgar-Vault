@@ -29,7 +29,7 @@ test("value completion can be scoped to a single collection",()=>{
  assert.match(valuations,/buildValuationIntelligence\(scopedInventory, valuations\)/);
  assert.match(valuations,/summarizeCollection\(scopedCollection,scopedInventory,valuations\)/);
  assert.match(valuations,/whole-set retail reference/);
- assert.match(valuations,/Component aftermarket evidence/);
+ assert.match(valuations,/Component market evidence/);
  assert.match(valuations,/no whole-set premium is added to portfolio totals/);
  assert.match(valuations,/Collection completion/);
 });

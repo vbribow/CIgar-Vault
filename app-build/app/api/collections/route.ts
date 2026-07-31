@@ -11,6 +11,7 @@ import { auditCollectionTemplateProtocol } from "@/lib/collection-templates";
 import { createServerRecordId } from "@/lib/server-record-id";
 import { isPrivateInventoryPreviewRequest, savePreviewInventoryOverride } from "@/lib/preview-inventory";
 import { loadPreviewCollections, savePreviewCollection } from "@/lib/preview-collections";
+import { collectionRevision } from "@/lib/collection-revision";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: await loadPreviewCollections() });
   try {
@@ -27,11 +28,17 @@ export async function POST(request: Request) {
     const parsed = CollectionCreateInputSchema.parse(await request.json());
     const { memberIds, submissionId, ...fields } = parsed;
     const existingCollections=await loadCollections();
-    const suppliedExisting=Boolean(fields.collectionId&&existingCollections.some(value=>value.collectionId===fields.collectionId));
+    const existingCollection=fields.collectionId?existingCollections.find(value=>value.collectionId===fields.collectionId):undefined;
+    const suppliedExisting=Boolean(existingCollection);
     const suppliedTemplate=Boolean(fields.collectionId&&collectionTemplateFor(fields as Parameters<typeof collectionTemplateFor>[0]));
     if(fields.collectionId&&!suppliedExisting&&!suppliedTemplate)return NextResponse.json({error:"Hojavía creates collection references automatically. Choose a researched edition or edit an existing collection."},{status:409});
     const collection={...fields,collectionId:fields.collectionId||createServerRecordId("collection",submissionId)};
     const inventory=await loadInventory();
+    if(existingCollection){
+      const expectedRevision=request.headers.get("if-match");
+      if(!expectedRevision)return NextResponse.json({error:"Refresh this collection before saving so Hojavía can protect changes made on another device."},{status:428});
+      if(expectedRevision!==collectionRevision(existingCollection,inventory))return NextResponse.json({error:"This collection or its membership changed on another device. Refresh, review the newer information, and try again."},{status:409});
+    }
     const presentationAsset=collection.presentationInventoryId
       ? inventory.find(item=>item.inventoryId===collection.presentationInventoryId)
       : undefined;

@@ -1,7 +1,7 @@
 # Private Beta Operations
 
-Version: 1.2
-Updated: July 26, 2026
+Version: 1.3
+Updated: July 30, 2026
 Owner: Brian Bowers
 
 Cedriva is retired as a brand and remains only in unchanged legacy technical
@@ -60,13 +60,26 @@ Do not launch the lounge partner program while any item above is incomplete.
 
 ## Incident and rollback procedure
 
-1. Stop new invitations.
-2. Record the issue as Blocking in the beta feedback channel.
-3. Preserve the affected user's export and relevant timestamps.
-4. Revert the application to the last known-good deployment when the issue risks data, privacy, authentication, or trust.
-5. Test restoration using a founder-owned account before asking a collector to restore.
-6. Document the resolution in the feedback record.
-7. Resume invitations only when the readiness dashboard returns to six of six.
+Use `corporate-docs/INCIDENT_RESPONSE_AND_LAUNCH_HOLD_RUNBOOK.md` as the
+controlling internal procedure.
+
+1. Stop new invitations and affected launch activity for every Severity 1 or
+   critical-path Severity 2 incident.
+2. Open `/launch-readiness`, classify the incident, and review the prefilled
+   private incident record before submitting it.
+3. Preserve the affected user's complete export, recovery point, record IDs,
+   timestamps, screenshots, and relevant logs without copying unrelated private
+   collection details.
+4. Contain the affected access, automation, deployment, or feature. Do not
+   delete evidence.
+5. Revert to the last known-good deployment when rollback is safer than a
+   forward correction.
+6. Prove restoration and correction with a founder-controlled or synthetic
+   account before asking a collector to restore.
+7. Add exact regression coverage, reconcile affected records and totals, and
+   document the root cause and residual risk.
+8. Resume invitations or affected launch activity only after every impacted
+   gate is reassessed and the accountable owner explicitly approves reopening.
 
 ## Non-negotiable exclusions
 

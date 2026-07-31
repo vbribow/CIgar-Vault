@@ -88,7 +88,7 @@ export function InventoryFileImport() {
 
   return <section className="card inventoryFileImport">
     <div><div className="eyebrow">Secure inventory migration</div><h2>Import Excel or CSV</h2><p>Upload one `.xlsx` worksheet or CSV. The platform rejects macros, formulas, links, embedded objects, and unsupported files. Nothing is saved until you review and confirm.</p></div>
-    <form onSubmit={inspect} aria-busy={busy}><input name="file" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required disabled={busy||Boolean(batch)}/><button className="button" disabled={busy||Boolean(batch)}>{busy ? "Inspecting…" : batch ? "Import completed" : "Preview inventory"}</button></form>
+    <form onSubmit={inspect} aria-busy={busy}><input aria-label="Choose CSV or XLSX inventory file" name="file" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required disabled={busy||Boolean(batch)}/><button className="button" disabled={busy||Boolean(batch)}>{busy ? "Inspecting…" : batch ? "Import completed" : "Preview inventory"}</button></form>
     {batch&&<button type="button" className="button secondary" onClick={()=>{setBatch("");setPreview(undefined);setSelected(new Set());setMessage("")}}>Import another file</button>}
     {message && <output aria-live="polite">{message}</output>}
     {preview && <div className="importPreview">

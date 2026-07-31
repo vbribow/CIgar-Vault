@@ -2,9 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { mostCompleteAlertDeliveries, notificationConfiguration } from "../lib/alert-notifications";
+import { accountEmailConfiguration, mostCompleteAlertDeliveries, notificationConfiguration } from "../lib/alert-notifications";
 import type { AlertDelivery } from "../lib/types";
 test("notification channels remain disabled without complete credentials",()=>{const keys=["RESEND_API_KEY","ALERT_EMAIL_TO","ALERT_EMAIL_FROM","TWILIO_ACCOUNT_SID","TWILIO_AUTH_TOKEN","TWILIO_FROM_NUMBER","ALERT_SMS_TO","SMARTSHEET_ALERTS_SHEET_ID"];const previous=Object.fromEntries(keys.map(k=>[k,process.env[k]]));keys.forEach(k=>delete process.env[k]);assert.deepEqual(notificationConfiguration(),{email:false,sms:false,history:false});for(const[k,v]of Object.entries(previous))if(v!==undefined)process.env[k]=v;});
+test("account messages require a Hojavía-controlled transactional sender",()=>{const keys=["RESEND_API_KEY","HOJAVIA_EMAIL_FROM","ALERT_EMAIL_FROM"];const previous=Object.fromEntries(keys.map(k=>[k,process.env[k]]));keys.forEach(k=>delete process.env[k]);assert.equal(accountEmailConfiguration().configured,false);process.env.RESEND_API_KEY="test";process.env.HOJAVIA_EMAIL_FROM="Hojavía <updates@hojavia.com>";assert.deepEqual(accountEmailConfiguration(),{configured:true,from:"Hojavía <updates@hojavia.com>"});keys.forEach(k=>delete process.env[k]);for(const[k,v]of Object.entries(previous))if(v!==undefined)process.env[k]=v;});
 
 test("test delivery reports email and text outcomes independently",()=>{
   const notifications=fs.readFileSync(path.join(process.cwd(),"lib/alert-notifications.ts"),"utf8");

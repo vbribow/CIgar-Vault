@@ -91,9 +91,18 @@ test("public Industry Hub visibly identifies official source limits",async()=>{
   const profile=await readFile(new URL("../app/industry/[slug]/page.tsx",import.meta.url),"utf8");
   assert.match(page,/TrustMark kind="Official"/);
   assert.match(page,/does not mean \{brand\.name\} independently endorses every claim/i);
-  assert.match(page,/Drafts and submissions never appear here/i);
+  assert.match(page,/Drafts, submissions, incomplete research, and paid placement never appear/i);
+  assert.match(page,/Study the craft\. Preserve the history\./i);
+  assert.match(page,/Represent an organization/i);
   assert.match(profile,/Authorized organization/);
   assert.match(profile,/Revision and correction history/);
+});
+
+test("public registry withholds incomplete canonical research",async()=>{
+  const registry=await readFile(new URL("../app/industry/registry/page.tsx",import.meta.url),"utf8");
+  assert.match(registry,/filter\(item=>item\.status==="Verified foundation"\)/);
+  assert.match(registry,/No canonical cigar identity has met the public evidence threshold yet/i);
+  assert.match(registry,/Developing and research-required records remain in the private research workflow/i);
 });
 
 test("published Industry Hub pages are publicly reachable",async()=>{

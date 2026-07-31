@@ -24,6 +24,7 @@ test("mobile manifest exposes only the Hojavía product identity", () => {
 test("offline support caches only public shell assets", () => {
   const worker = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(worker, /SAFE_ASSETS/);
+  assert.match(worker, /hojavia-beta-shell-v2/);
   assert.match(worker, /\/offline/);
   assert.match(worker, /\/manifest\.webmanifest/);
   assert.match(worker, /hojavia-mark\.svg/);
@@ -32,6 +33,7 @@ test("offline support caches only public shell assets", () => {
   assert.doesNotMatch(worker, /\/inventory/);
   assert.doesNotMatch(worker, /\/api\//);
   assert.doesNotMatch(worker, /cache\.put\(event\.request/);
+  assert.match(worker, /fetch\(event\.request,\{cache:"no-store"\}\)/);
 });
 
 test("offline, install, and social-preview assets bypass protected-route middleware", () => {

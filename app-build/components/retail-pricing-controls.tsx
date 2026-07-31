@@ -5,6 +5,7 @@ import { FormEvent, useMemo, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import { existingRetailPriceForBasis, normalizeManualRetailPrice } from "@/lib/retail-pricing";
 import type { InventoryItem } from "@/lib/types";
+import { createClientUuid } from "@/lib/client-uuid";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const money = (value: number | undefined) => value === undefined ? "—" : value.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -22,7 +23,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
   const [writeKey, setWriteKey] = useState("");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
-  const [submissionId, setSubmissionId] = useState(() => crypto.randomUUID());
+  const [submissionId, setSubmissionId] = useState(createClientUuid);
   const selected = useMemo(() => items.find(item => item.inventoryId === inventoryId), [inventoryId, items]);
   const normalized = useMemo(() => {
     try {
@@ -74,7 +75,7 @@ export function RetailPricingControls({ items, mode, initialInventoryId }: { ite
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Manual price save failed");
       setPrice(inputValue(basis === "Per cigar" ? values.unitPrice : values.boxPrice));
-      setSubmissionId(crypto.randomUUID());
+      setSubmissionId(createClientUuid());
       setMessage(`Saved to inventory: ${money(values.unitPrice)} per cigar${values.boxPrice === undefined ? "" : ` · ${money(values.boxPrice)} per box across ${savedSticksPerBox} cigars`}.`);
       router.refresh();
     } catch (error) {

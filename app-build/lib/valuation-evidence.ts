@@ -2,6 +2,7 @@ import type { Valuation } from "./types";
 
 export const marketEvidenceTypes = [
   "Verified completed sale",
+  "Retail consensus value",
   "Estimated market range",
   "Observed asking price",
   "Insufficient evidence",
@@ -60,6 +61,18 @@ export function marketEvidenceType(value?: Valuation): MarketEvidenceType {
     return "Observed asking price";
   }
   return "Insufficient evidence";
+}
+
+export function isRetailConsensusValue(value?: Valuation): boolean {
+  return Boolean(
+    value?.marketEvidenceType === "Retail consensus value"
+    && value.marketValue !== undefined
+    && value.marketRangeLow !== undefined
+    && value.marketRangeHigh !== undefined
+    && (value.comparableCount ?? 0) >= 2
+    && value.sourceUrl
+    && /^(High|Medium)$/i.test(value.confidence ?? ""),
+  );
 }
 
 export function marketRangeText(value?: Valuation) {

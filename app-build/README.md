@@ -1,4 +1,4 @@
-# Hojavía MVP
+# Hojavía (pronounced oh-ha-VEE-ah) MVP
 
 A speed-to-market collector application with **Smartsheet as the complete source of truth**.
 
@@ -71,3 +71,29 @@ Defer: social network, marketplace, AI chat, auction integrations and automated 
 ## Security
 
 The Smartsheet token is used only in server code. Do not prefix it with `NEXT_PUBLIC_` and never place it in client components.
+
+## Outbound retailer affiliate controls
+
+Retailer compensation is a server-only presentation layer applied after
+availability research. It cannot select, sort, score, price, or validate a
+listing. With no valid active configuration, links remain direct and untracked.
+
+Configure `RETAILER_AFFILIATE_PROGRAMS_JSON` only after the agreement, legal,
+privacy, adult/jurisdiction, editorial-independence, and separate founder
+launch gates are complete. Every active record must include:
+
+- the retailer’s exact approved domains;
+- the network’s query parameter and affiliate value;
+- plain-language compensation disclosure;
+- dated agreement, legal, privacy, adult/jurisdiction, and founder approvals;
+- `editorialIndependenceConfirmed: true`; and
+- `status: "active"`.
+
+Malformed or incomplete configuration fails closed. Active compensated links
+are labeled beside the link and use the `sponsored` link relationship. Price
+alerts repeat the disclosure and preserve the original retailer URL as the
+stable evidence and deduplication key.
+
+The complete internal policy, reporting boundary, rollback procedure, and
+launch gates are maintained in
+`../corporate-docs/AFFILIATE_AND_RETAILER_MONETIZATION_STANDARD.md`.

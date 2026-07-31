@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { brand } from "@/lib/brand";
+import { recordRevision } from "@/lib/record-revision";
 import type { InventoryItem } from "@/lib/types";
 
 type RequiredInventoryFact = "vintage" | "actualCost" | "provenanceNotes" | "storageLocationId";
@@ -72,7 +73,7 @@ export function RecommendationFactEditor({
     try {
       const response = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "If-Match": recordRevision(item) },
         body: JSON.stringify({ ...item, [fact]: value }),
       });
       const payload = await response.json();

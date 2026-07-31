@@ -20,6 +20,15 @@ export type InventoryItem = {
   boxCode?: string;
   habanosSealPhotoLink?: string;
   habanosVerified?: boolean;
+  acquisitionSeller?: string;
+  acquisitionDate?: string;
+  acquisitionSourceUrl?: string;
+  acquisitionReceiptLink?: string;
+  purchaseJurisdiction?: string;
+  habanosVerificationDate?: string;
+  habanosVerificationResult?: string;
+  habanosVerificationEvidenceLink?: string;
+  habanosVerificationNotes?: string;
   storageLocationId?: string;
   status?: string;
   priority?: string;
@@ -47,7 +56,7 @@ export type Valuation = {
   replacementValue?: number;
   replacementSticksPerBox?: number;
   marketValue?: number;
-  marketEvidenceType?: "Verified completed sale" | "Estimated market range" | "Observed asking price" | "Insufficient evidence";
+  marketEvidenceType?: "Verified completed sale" | "Retail consensus value" | "Estimated market range" | "Observed asking price" | "Insufficient evidence";
   marketRangeLow?: number;
   marketRangeHigh?: number;
   askingPrice?: number;
@@ -104,6 +113,6 @@ export type CatalogCigar = {
   masterNotes?: string;
   researchStatus?: string;
 };
-export type AvailabilityListing={seller:string;sellerType:"Authorized retailer"|"Specialty dealer"|"Auction"|"Manufacturer"|"Other";title:string;url:string;availability:"In stock"|"Auction open"|"Waitlist"|"Unknown";askingPrice?:number;quantity?:number;unitPrice?:number;listingDate?:string;condition?:string;notes:string};
+export type AvailabilityListing={seller:string;sellerType:"Authorized retailer"|"Specialty dealer"|"Auction"|"Manufacturer"|"Other";title:string;url:string;availability:"In stock"|"Auction open"|"Waitlist"|"Unknown";askingPrice?:number;quantity?:number;unitPrice?:number;listingDate?:string;condition?:string;notes:string;outboundUrl?:string;commercialRelationship?:"Affiliate — compensated link";commercialDisclosure?:string};
 export type PriceMatch={url:string;seller:string;price:number;targetPrice:number;basis:"Per cigar";availability:"In stock"|"Auction open"};
 export type WishlistItem = { wishlistId:string; brand:string; line:string; vitola:string; collectionId?:string; collectionName?:string; priority:"High"|"Medium"|"Standard"; targetPrice?:number; sourceUrl?:string; status:"Watching"|"Purchased"|"Added to vault"|"Passed"; notes?:string; createdAt:string; purchasedAt?:string; inventoryId?:string; availabilityLastCheckedAt?:string; availabilityListings?:AvailabilityListing[]; priceMatches?:PriceMatch[]; priceAlertedUrls?:string[]; acknowledgedNotificationIds?:string[] };

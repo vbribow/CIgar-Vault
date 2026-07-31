@@ -3,6 +3,12 @@ import { z } from "zod";
 export const BetaFeedbackMode = z.enum(["Issue report", "Session review", "Name and culture"]);
 export type BetaFeedbackMode = z.infer<typeof BetaFeedbackMode>;
 
+export const AccountDataRequestKind = z.enum(["access", "correction", "deletion"]);
+export type AccountDataRequestKind = z.infer<typeof AccountDataRequestKind>;
+
+export const LaunchIncidentSeverity = z.enum(["severity-1", "severity-2", "severity-3", "severity-4"]);
+export type LaunchIncidentSeverity = z.infer<typeof LaunchIncidentSeverity>;
+
 export const BetaFeedbackInput = z.object({
   mode: BetaFeedbackMode.default("Issue report"),
   category: z.enum(["Bug", "Confusing", "Suggestion", "Trust or data", "Other"]),
@@ -51,12 +57,66 @@ export const BetaFeedbackInput = z.object({
 
 export type BetaFeedbackInput = z.infer<typeof BetaFeedbackInput>;
 
+export function accountDataRequestTemplate(value?: string) {
+  const parsed = AccountDataRequestKind.safeParse(value);
+  if (!parsed.success) return undefined;
+  const common = {
+    mode: "Issue report" as const,
+    category: "Trust or data" as const,
+    pageUrl: "/account",
+  };
+  if (parsed.data === "access") {
+    return {
+      ...common,
+      kind: parsed.data,
+      severity: "Medium" as const,
+      summary: "Request access to my account data",
+      details: "Please confirm what account data is held, provide the available export, and identify any data that requires a separate access process.",
+    };
+  }
+  if (parsed.data === "correction") {
+    return {
+      ...common,
+      kind: parsed.data,
+      severity: "Medium" as const,
+      summary: "Request correction of my account data",
+      details: "Please review the account data I identify below, confirm the source of truth, and explain the correction and verification process before changing it.",
+    };
+  }
+  return {
+    ...common,
+    kind: parsed.data,
+    severity: "High" as const,
+    summary: "Request account and data deletion",
+    details: "Please verify my identity and confirm the deletion scope, required retention, export option, timing, and irreversible effects before removing my account or data.",
+  };
+}
+
+export function launchIncidentReportTemplate(value?: string) {
+  const parsed = LaunchIncidentSeverity.safeParse(value);
+  if (!parsed.success) return undefined;
+  const number = parsed.data.slice(-1);
+  const severity = parsed.data === "severity-1"
+    ? "Blocking" as const
+    : parsed.data === "severity-2"
+      ? "High" as const
+      : parsed.data === "severity-3"
+        ? "Medium" as const
+        : "Low" as const;
+  return {
+    mode: "Issue report" as const,
+    category: "Trust or data" as const,
+    severity,
+    pageUrl: "/launch-readiness",
+    summary: `Launch incident — Severity ${number}`,
+    details: "Record the affected journey and record IDs, exact reproduction steps, expected and observed result, data/privacy/authentication/valuation/trust impact, environment, timestamps, containment already taken, recovery evidence, and current owner.",
+  };
+}
+
 export type BetaEvidenceRecord = {
   mode: BetaFeedbackMode;
   status: "Open" | "Reviewing" | "Resolved" | "Closed";
   severity: "Low" | "Medium" | "High" | "Blocking";
-  summary?: string | null;
-  page_url?: string | null;
   task_outcome?: string | null;
   trust_score?: number | null;
   learning_depth_score?: number | null;
@@ -64,22 +124,15 @@ export type BetaEvidenceRecord = {
   cultural_fit?: string | null;
 };
 
-export function isFounderAcceptanceTestRecord(record: Pick<BetaEvidenceRecord, "summary" | "page_url">) {
-  return record.summary?.startsWith("[Founder test]") === true
-    && record.page_url?.includes("founder") === true
-    && record.page_url?.includes("acceptance") === true;
-}
-
 function average(values: Array<number | null | undefined>) {
   const present = values.filter((value): value is number => typeof value === "number");
   return present.length ? present.reduce((sum, value) => sum + value, 0) / present.length : undefined;
 }
 
 export function buildBetaEvidenceSummary(records: BetaEvidenceRecord[]) {
-  const evidenceRecords = records.filter(record => !isFounderAcceptanceTestRecord(record));
-  const active = evidenceRecords.filter(record => record.status === "Open" || record.status === "Reviewing");
-  const sessions = evidenceRecords.filter(record => record.mode === "Session review");
-  const cultural = evidenceRecords.filter(record => record.mode === "Name and culture");
+  const active = records.filter(record => record.status === "Open" || record.status === "Reviewing");
+  const sessions = records.filter(record => record.mode === "Session review");
+  const cultural = records.filter(record => record.mode === "Name and culture");
   const independentCompletions = sessions.filter(record => record.task_outcome === "Completed independently").length;
   const trustAverage = average(sessions.map(record => record.trust_score));
   const learningAverage = average(sessions.map(record => record.learning_depth_score));
@@ -97,7 +150,7 @@ export function buildBetaEvidenceSummary(records: BetaEvidenceRecord[]) {
   ];
 
   return {
-    totalReports: evidenceRecords.length,
+    totalReports: records.length,
     openReports: active.length,
     sessionReviews: sessions.length,
     culturalReviews: cultural.length,

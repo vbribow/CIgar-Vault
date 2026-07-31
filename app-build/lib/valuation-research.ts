@@ -3,10 +3,11 @@ import type { InventoryItem } from "./types";
 import { responseOutputText } from "./cigar-vision";
 import { FOX_CIGAR_VERIFICATION_POLICY } from "./verification-sources";
 import { assertValuationIntegrity } from "./valuation-integrity";
+import { cigarMarketStandard } from "./cigar-market-standard";
 
 export const ValuationResearchSchema = z.object({
   replacementValue: z.number().nonnegative().nullable(), marketValue: z.number().nonnegative().nullable(), source: z.string(), sourceUrl: z.string(),
-  marketEvidenceType: z.enum(["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]).default("Insufficient evidence"),
+  marketEvidenceType: z.enum(["Verified completed sale","Retail consensus value","Estimated market range","Observed asking price","Insufficient evidence"]).default("Insufficient evidence"),
   marketRangeLow: z.number().nonnegative().nullable().default(null), marketRangeHigh: z.number().nonnegative().nullable().default(null),
   askingPrice: z.number().nonnegative().nullable().default(null), askingPriceSource: z.string().default(""), askingPriceSourceUrl: z.string().default(""),
   lastSaleValue: z.number().nonnegative().nullable().default(null), lastSaleDate: z.string().nullable().default(null), lastSaleVenue: z.string().nullable().default(null), lastSaleSourceUrl: z.string().nullable().default(null),
@@ -29,6 +30,9 @@ export const ValuationResearchSchema = z.object({
   if (value.marketEvidenceType === "Verified completed sale" && !(value.lastSaleValue !== null && value.lastSaleDate && value.lastSaleSourceUrl)) {
     context.addIssue({ code:"custom", message:"Verified completed sale requires value, date, and direct proof" });
   }
+  if (value.marketEvidenceType === "Retail consensus value" && !(value.marketValue !== null && value.marketRangeLow !== null && value.marketRangeHigh !== null && value.sourceUrl && value.confidence !== "Low" && value.comparables.filter(item => item.kind === "Retail replacement" && item.unitPrice !== null).length >= 2)) {
+    context.addIssue({ code:"custom", message:"Retail consensus value requires two independent exact retail comparables, a linked source, a value and range, and Medium or High confidence" });
+  }
   if (value.marketEvidenceType === "Estimated market range" && !(value.marketValue !== null && value.marketRangeLow !== null && value.marketRangeHigh !== null && value.comparables.filter(item => item.kind === "Secondary asking price" || item.kind === "Verified completed sale").length >= 2)) {
     context.addIssue({ code:"custom", message:"Estimated market range requires two independent secondary-market comparables" });
   }
@@ -42,7 +46,7 @@ export const ValuationResearchSchema = z.object({
 export type ValuationResearch = z.infer<typeof ValuationResearchSchema>;
 export const valuationResearchJsonSchema = { type:"object", additionalProperties:false, properties:{
   replacementValue:{type:["number","null"],minimum:0},marketValue:{type:["number","null"],minimum:0},
-  marketEvidenceType:{type:"string",enum:["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]},
+  marketEvidenceType:{type:"string",enum:["Verified completed sale","Retail consensus value","Estimated market range","Observed asking price","Insufficient evidence"]},
   marketRangeLow:{type:["number","null"],minimum:0},marketRangeHigh:{type:["number","null"],minimum:0},
   askingPrice:{type:["number","null"],minimum:0},askingPriceSource:{type:"string"},askingPriceSourceUrl:{type:"string"},
   lastSaleValue:{type:["number","null"],minimum:0},lastSaleDate:{type:["string","null"]},lastSaleVenue:{type:["string","null"]},lastSaleSourceUrl:{type:["string","null"]},
@@ -62,21 +66,25 @@ export function parseValuationResearch(text:string){
 
 export async function researchInventoryValuation(item:InventoryItem){
   const apiKey=process.env.OPENAI_API_KEY?.trim();if(!apiKey)throw new Error("Valuation research is not configured");
+  const marketStandard=cigarMarketStandard(item);
   const prompt=`Research exact current pricing for: ${item.brand}; ${item.line}; ${item.vitola}; release/vintage ${item.vintage??"unknown"}; packaging ${item.packaging??"unknown"}.
 
 ${FOX_CIGAR_VERIFICATION_POLICY}
+
+Applicable market standard: ${marketStandard}.
 
 Return USD per individual cigar. The current owned quantity is inventory balance only (${item.currentQty??"unknown"}). Never treat it as an original box count or infer manufacturer packaging from it. Use no more than three direct comparable pages and normalize a box price only when its original cigar count is documented.
 Never divide, average, normalize, or allocate the price of a mixed collection, sampler, presentation, assortment, or set across unlike component cigars. A box price may be normalized only when every cigar in that box is the same exact cigar. Collection components require exact individual-cigar evidence.
 
 Keep these evidence levels separate:
 - replacementValue: current exact-cigar manufacturer or established-retailer price.
+- Retail consensus value: New World cigars only; at least two independent, current, exact-identity established-retailer listings. Use their cautious midpoint as marketValue and their defensible spread as the range. This is retail consensus, never a completed sale.
 - askingPrice: one observed secondary listing; never a sale or marketValue.
 - lastSaleValue: exact completed sale with date, venue, and direct proof.
 - Estimated market range: at least two independent exact-identity secondary signals; marketValue is a cautious midpoint.
 - Insufficient evidence: no defensible secondary value.
 
-Match brand, line, vitola, release, packaging, and condition. Never substitute another vitola/year, MSRP, ordinary retail, or a closeout for aftermarket evidence. For New World cigars, use traceable specialty listings and sold archives without inventing a market. For Habanos, prioritize completed-result archives from established European auction houses. Confirm whether buyer's premium is included. Classify every comparable. An asking price is not proof—never treat it as a sale. One listing remains an asking price. An estimated range requires at least two independent exact-identity secondary-market signals. Retail evidence never supports an aftermarket range. For a humidor collection, research cigars individually; calculate residual humidor value separately. If evidence is opaque, say so.
+Match brand, line, vitola, release, packaging, and condition. Never substitute another vitola/year, MSRP, ordinary retail, or a closeout for secondary-market evidence. For New World cigars, use two or more traceable exact specialty-retailer listings for Retail consensus value; one retail listing supports replacementValue only. For Habanos, never use Retail consensus value: prioritize completed-result archives from established European auction houses. Confirm whether buyer's premium is included. Classify every comparable. An asking price is not proof—never treat it as a sale. One secondary listing remains an asking price. An estimated range requires at least two independent exact-identity secondary-market signals. For a humidor collection, research cigars individually; calculate residual humidor value separately. If evidence is opaque, say so.
 
 Use the strongest used source in source/sourceUrl. evidenceDate is today (YYYY-MM-DD). Notes under 350 characters; comparable notes under 120. This is evidence, not an appraisal.`;
   let lastError:unknown;

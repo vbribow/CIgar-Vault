@@ -7,6 +7,7 @@ const base = { valuationId:"V", inventoryId:"I", valuationDate:"2026-07-24" };
 test("valuation evidence preserves the strongest proven market level",()=>{
   assert.equal(marketEvidenceType({...base,askingPrice:40,askingPriceSourceUrl:"https://example.com/ask"}),"Observed asking price");
   assert.equal(marketEvidenceType({...base,marketValue:45,marketRangeLow:40,marketRangeHigh:50}),"Estimated market range");
+  assert.equal(marketEvidenceType({...base,marketEvidenceType:"Retail consensus value",marketValue:45,marketRangeLow:40,marketRangeHigh:50,comparableCount:2,sourceUrl:"https://example.com/retail",confidence:"Medium"}),"Retail consensus value");
   assert.equal(marketEvidenceType({...base,lastSaleValue:47,lastSaleDate:"2026-07-01",lastSaleSourceUrl:"https://example.com/sold"}),"Verified completed sale");
   assert.equal(marketEvidenceType(base),"Insufficient evidence");
 });

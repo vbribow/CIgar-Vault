@@ -3,13 +3,14 @@ import { createClient } from "@supabase/supabase-js";
 import { authorizeSensorSync,dataMode } from "@/lib/config";
 import { marketEvidenceType } from "@/lib/valuation-evidence";
 import { researchInventoryValuation } from "@/lib/valuation-research";
-import { automaticValuationResearchReady,inValuationBatches,reusableValuation,valuationBatchSize,valuationBudgetStatus,valuationCostEstimate,valuationMonitorPriority,valuationNeedsMonitoring } from "@/lib/valuation-monitor";
-import { getInventory,getValuations,recordValuation } from "@/lib/smartsheet";
-import type { InventoryItem,Valuation } from "@/lib/types";
+import { automaticValuationResearchReady,inValuationBatches,valuationBatchSize,valuationBudgetStatus,valuationCostEstimate,valuationMonitorPriority,valuationNeedsMonitoring,valuationWorkPlan } from "@/lib/valuation-monitor";
+import { getCollections,getInventory,getValuations,recordValuation } from "@/lib/smartsheet";
+import { cigarInventoryRecords } from "@/lib/collection-presentation";
+import type { CigarCollection,InventoryItem,Valuation } from "@/lib/types";
 import { scheduledVaultAuthority } from "@/lib/data-authority";
 export const maxDuration=300;
 
-type OwnedGroup={inventory:InventoryItem[];valuations:Valuation[]};
+type OwnedGroup={inventory:InventoryItem[];valuations:Valuation[];collections:CigarCollection[]};
 type ValuationWork={userId:string;item:InventoryItem;cached?:Valuation};
 
 function cachedValuationResearch(value:Valuation):Awaited<ReturnType<typeof researchInventoryValuation>>{
@@ -52,12 +53,13 @@ function completionValuation(item:InventoryItem,research:Awaited<ReturnType<type
 }
 
 async function monitorSmartsheet(request:Request){
-  const[inventory,valuations]=await Promise.all([getInventory(),getValuations()]);
+  const[allInventory,valuations,collections]=await Promise.all([getInventory(),getValuations(),getCollections()]);
+  const inventory=cigarInventoryRecords(allInventory,collections);
   const eligible=inventory.filter(item=>valuationNeedsMonitoring(item,valuations)).sort((a,b)=>valuationMonitorPriority(b)-valuationMonitorPriority(a));
   const candidates=inventory.flatMap(item=>{const valuation=valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]});
   const requested=Number(new URL(request.url).searchParams.get("limit"));
   const batchSize=Number.isInteger(requested)&&requested>0?Math.min(requested,valuationBatchSize()):valuationBatchSize();
-  const work=eligible.slice(0,batchSize).map(item=>({item,cached:reusableValuation(item,candidates)}));
+  const work=valuationWorkPlan(eligible.map(item=>({item})),candidates,batchSize,batchSize);
   const outcomes=await inValuationBatches(work,async row=>{
     try{
       const research=row.cached?cachedValuationResearch(row.cached):await researchInventoryValuation(row.item);
@@ -83,22 +85,22 @@ export async function GET(request:Request){
   try{
     const admin=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
     const monthStart=`${new Date().toISOString().slice(0,7)}-01T00:00:00.000Z`;
-    const[{data,error},{data:preferences},{data:usageEvents,error:usageError}]=await Promise.all([
-      admin.from("vault_records").select("user_id,kind,record_id,payload").in("kind",["inventory","valuations"]).limit(4000),
+    const[{data,error},{data:preferences,error:preferencesError},{data:usageEvents,error:usageError}]=await Promise.all([
+      admin.from("vault_records").select("user_id,kind,record_id,payload").in("kind",["inventory","valuations","collections"]).limit(4000),
       admin.from("account_preferences").select("user_id,valuation_research"),
       admin.from("product_events").select("created_at,properties").eq("event_type","valuation-research").gte("created_at",monthStart).limit(5000),
     ]);
     if(error)throw error;
+    if(preferencesError)throw preferencesError;
     if(usageError)throw usageError;
     const users=new Map<string,OwnedGroup>();
-    for(const row of data||[]){const group=users.get(row.user_id)||{inventory:[],valuations:[]};if(row.kind==="inventory")group.inventory.push(row.payload as InventoryItem);else group.valuations.push(row.payload as Valuation);users.set(row.user_id,group)}
+    for(const row of data||[]){const group=users.get(row.user_id)||{inventory:[],valuations:[],collections:[]};if(row.kind==="inventory")group.inventory.push(row.payload as InventoryItem);else if(row.kind==="valuations")group.valuations.push(row.payload as Valuation);else group.collections.push(row.payload as CigarCollection);users.set(row.user_id,group)}
     const disabled=new Set((preferences||[]).filter(row=>row.valuation_research===false).map(row=>row.user_id));
-    const eligible=[...users.entries()].filter(([userId])=>!disabled.has(userId)).flatMap(([userId,group])=>group.inventory.filter(item=>valuationNeedsMonitoring(item,group.valuations)).map(item=>({userId,item}))).sort((a,b)=>valuationMonitorPriority(b.item)-valuationMonitorPriority(a.item));
-    const candidates=[...users.values()].flatMap(group=>group.inventory.flatMap(item=>{const valuation=group.valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]}));
+    const eligible=[...users.entries()].filter(([userId])=>!disabled.has(userId)).flatMap(([userId,group])=>cigarInventoryRecords(group.inventory,group.collections).filter(item=>valuationNeedsMonitoring(item,group.valuations)).map(item=>({userId,item}))).sort((a,b)=>valuationMonitorPriority(b.item)-valuationMonitorPriority(a.item));
+    const candidates=[...users.values()].flatMap(group=>cigarInventoryRecords(group.inventory,group.collections).flatMap(item=>{const valuation=group.valuations.filter(value=>value.inventoryId===item.inventoryId).sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];return valuation?[{item,valuation}]:[]}));
     const requested=Number(new URL(request.url).searchParams.get("limit"));const batchSize=Number.isInteger(requested)&&requested>0?Math.min(requested,valuationBatchSize()):valuationBatchSize();
-    const estimatedCallCost=valuationCostEstimate();const budget=valuationBudgetStatus(usageEvents||[],new Date(),undefined,estimatedCallCost);let researchSlots=Math.min(batchSize,Math.max(0,Math.floor(budget.remainingBeforePause/estimatedCallCost)));
-    const work:ValuationWork[]=[];
-    for(const row of eligible){const cached=reusableValuation(row.item,candidates);if(cached)work.push({...row,cached});else if(researchSlots>0){researchSlots--;work.push(row)}}
+    const estimatedCallCost=valuationCostEstimate();const budget=valuationBudgetStatus(usageEvents||[],new Date(),undefined,estimatedCallCost);const researchSlots=Math.min(batchSize,Math.max(0,Math.floor(budget.remainingBeforePause/estimatedCallCost)));
+    const work:ValuationWork[]=valuationWorkPlan(eligible,candidates,batchSize,researchSlots);
     const outcomes=await inValuationBatches(work,async row=>{
       let researchRecorded=false;
       try{

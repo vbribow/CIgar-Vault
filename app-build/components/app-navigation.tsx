@@ -14,13 +14,14 @@ export function AppNavigation() {
   const pathname = usePathname();
   const publicPaths = ["/manifesto", "/constitution", "/industry", "/login", "/recover", "/reset-password", "/privacy", "/terms", "/beta-agreement", "/partners/join", "/partners/invite", "/r"];
   if (publicPaths.some((path) => matches(pathname, path))) return <header className="publicHeader"><div className="publicHeaderInner">
-    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}</strong><small>{brand.brandLine}</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.spokenName} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}<span className="brandPronunciation">({brand.pronunciation})</span></strong><small>{brand.brandLine}</small></span></Link>
     <nav aria-label="Public navigation"><Link href="/industry" className={matches(pathname,"/industry")?"active":undefined}>Industry Hub</Link><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><Link href="/login" className="button secondary">Sign in</Link></nav>
   </div></header>;
   const moreLinks=[
     ["/records","Review","Learn from your own experience and trusted voices"],
     ["/valuations","Market","Understand value through dated evidence"],
     ["/verification","Verify","Protect authenticity and provenance"],
+    ["/collector-walkthrough","Walkthrough","Try the complete evidence journey with synthetic data"],
     ["/trust","Trust Center",`Understand every ${brand.name} source label`],
     ["/trust-scorecard","Trust Scorecard","Measure verified coverage and visible research gaps"],
     ["/industry","Industry Hub","Official profiles, releases, and alerts from verified organizations"],
@@ -29,6 +30,8 @@ export function AppNavigation() {
     ["/briefing","Daily Briefing","Review proactive collection and industry intelligence"],
     ["/places","Cigar Places","Find lounges, cigar bars, and retailers with transparent ratings"],
     ["/partner-platform","Partner Network","Manage attribution, commissions, and industry relationships"],
+    ["/affiliate-readiness","Affiliate Readiness","Review compensation safeguards without activating a program"],
+    ["/launch-readiness","Launch Readiness","Track the baseline, active gates, and deferred decisions"],
     ["/partner-workspace","Partner Workspace","Collaborate inside your organization’s private workspace"],
     ["/feedback","Beta Feedback","Report bugs, confusion, trust concerns, and ideas"],
     ["/pricing","Reserve","Explore deeper intelligence and service"],
@@ -36,7 +39,7 @@ export function AppNavigation() {
   ] as const;
   const moreActive=moreLinks.some(([href])=>matches(pathname,href));
   return <><header className="appHeader"><div className="appHeaderInner">
-    <Link className="appBrand" href="/" aria-label={`${brand.name} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}</strong><small>{brand.communityLine}</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.spokenName} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}<span className="brandPronunciation">({brand.pronunciation})</span></strong><small>{brand.communityLine}</small></span></Link>
     <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <Link href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</Link>
       <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>

@@ -1,9 +1,10 @@
 import { loadInventory as loadAllInventory } from "@/lib/inventory";
 import { loadCollections } from "@/lib/data";
-import { hasInventoryProvenance, hasPhysicalQuantityBreakdown, inventoryCompleteness } from "@/lib/inventory-model";
+import { hasDocumentedCurrentQuantity, inventoryCompleteness } from "@/lib/inventory-model";
 import { auditCollectionMembership } from "@/lib/collection-membership-audit";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
+import { auditCollectionTemplateLibrary, collectionTemplates } from "@/lib/collection-templates";
 import "./health.css";
 
 export const dynamic = "force-dynamic";
@@ -34,13 +35,14 @@ export default async function CollectionHealth() {
   const collections = collectionsResult.value;
   const activeItems = items.filter((item) => (item.currentQty ?? 0) > 0);
   const membership = auditCollectionMembership(activeItems, collections);
+  const library = auditCollectionTemplateLibrary(collectionTemplates);
   const reviews = membership.rows.filter((row) => row.classification === "Review");
   const checks = [
     {
       key: "quantity",
       label: "Physical quantity",
-      detail: "Boxes and loose sticks",
-      missing: activeItems.filter((item) => !hasPhysicalQuantityBreakdown(item)),
+      detail: "Saved total; box and loose-stick detail is optional",
+      missing: activeItems.filter((item) => !hasDocumentedCurrentQuantity(item)),
     },
     {
       key: "value",
@@ -64,25 +66,11 @@ export default async function CollectionHealth() {
       key: "provenance",
       label: "Provenance",
       detail: "Purchase or ownership evidence",
-      missing: activeItems.filter((item) => !hasInventoryProvenance(item)),
+      missing: activeItems.filter((item) => !item.provenanceNotes),
     },
   ];
   const average = Math.round(activeItems.reduce((sum, item) => sum + inventoryCompleteness(item), 0) / Math.max(activeItems.length, 1));
   const ready = activeItems.filter((item) => inventoryCompleteness(item) === 100).length;
-  const prioritized = activeItems.flatMap((item) => {
-    const gap = !hasPhysicalQuantityBreakdown(item)
-      ? { key: "quantity", action: "Complete physical count" }
-      : item.retailValue === undefined
-        ? { key: "value", action: "Add replacement value" }
-        : item.vintage === undefined || String(item.vintage).trim() === ""
-          ? { key: "vintage", action: "Add production year" }
-          : !item.storageLocationId?.trim()
-            ? { key: "storage", action: "Add storage location" }
-            : !hasInventoryProvenance(item)
-              ? { key: "provenance", action: "Add provenance" }
-              : undefined;
-    return gap ? [{ item, gap }] : [];
-  }).sort((a, b) => inventoryCompleteness(a.item) - inventoryCompleteness(b.item)).slice(0, 8);
 
   return <main className="shell">
     <nav className="nav">
@@ -124,6 +112,25 @@ export default async function CollectionHealth() {
     <section className="section">
       <div className="sectionHead">
         <div>
+          <div className="eyebrow">Collection catalog truth</div>
+          <h2>One evidence protocol governs every collection.</h2>
+          <p>Automatic population is allowed only when every physical lot has attributable exact-vitola evidence and documented quantities reconcile to the collection total.</p>
+        </div>
+        <span className={`statusBadge ${library.automationReady ? "statusOwned" : "statusMissing"}`}>
+          {library.automationReady ? `${library.ready}/${library.total} verified` : `${library.blocked.length} blocked`}
+        </span>
+      </div>
+      <div className="healthGrid">
+        <div className="healthCard"><div><span>Researched templates</span><strong>{library.total}</strong></div><p>Current and future collections use the same admission rules.</p></div>
+        <div className="healthCard"><div><span>Automation-ready</span><strong>{library.ready}</strong></div><p>Exact lots, sources, and quantities reconcile.</p></div>
+        <div className="healthCard"><div><span>Blocked from population</span><strong>{library.blocked.length}</strong></div><p>{library.blocked.length?"Evidence gaps remain visible and cannot create inventory.":"No incomplete template can silently create inventory."}</p></div>
+      </div>
+      {library.blocked.length>0&&<div className="cleanupList">{library.blocked.map(({template,audit})=><a href={template.sourceUrl} target="_blank" rel="noreferrer" key={template.templateId}><span><strong>{template.name}</strong><small>{audit.issues.join(" · ")}</small></span><b>Research source ↗</b></a>)}</div>}
+    </section>
+
+    <section className="section">
+      <div className="sectionHead">
+        <div>
           <div className="eyebrow">Membership truth</div>
           <h2>Every active lot has a documented context</h2>
           <p>Collection links require evidence. The same cigar may remain available as both a standalone lot and a collection component without combining quantities or provenance.</p>
@@ -156,11 +163,10 @@ export default async function CollectionHealth() {
         <a className="button secondary" href="/inventory?missing=quantity&active=1#inventory-records">Start with quantities</a>
       </div>
       <div className="cleanupList">
-        {prioritized.map(({ item, gap }) => <a href={`/inventory?missing=${gap.key}&active=1&inventoryId=${encodeURIComponent(item.inventoryId)}#inventory-records`} key={item.inventoryId}>
-          <span><strong>{item.brand} {item.line}</strong><small>{item.inventoryId} · {item.vitola} · {gap.action}</small></span>
-          <span className="completionMeter"><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{gap.action} →</b></span>
+        {[...activeItems].sort((a, b) => inventoryCompleteness(a) - inventoryCompleteness(b)).slice(0, 8).map((item) => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}>
+          <span><strong>{item.brand} {item.line}</strong><small>{item.inventoryId} · {item.vitola}</small></span>
+          <span className="completionMeter"><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{inventoryCompleteness(item)}%</b></span>
         </a>)}
-        {prioritized.length === 0 && <div className="healthCard"><strong>Active inventory audit complete</strong><p>No active cigar lot is waiting for these five record corrections.</p></div>}
       </div>
     </section>
   </main>;

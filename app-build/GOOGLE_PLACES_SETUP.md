@@ -1,6 +1,6 @@
 # Google Places production setup
 
-Hojavía calls **Places API (New) Text Search** only from its authenticated
+Hojavía (pronounced oh-ha-VEE-ah) calls **Places API (New) Text Search** only from its authenticated
 server route. The credential must never be sent to the browser.
 
 ## Google Cloud

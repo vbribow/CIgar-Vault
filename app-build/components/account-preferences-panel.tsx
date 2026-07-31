@@ -10,4 +10,26 @@ const options:[keyof AccountPreferences,string,string][]=[
   ["productAnalytics","Private product analytics","Share privacy-safe feature events without inventory details or identity."],
   ["upgradeRecommendations","Membership recommendations","Show discreet plan suggestions based on features I use."],
 ];
-export function AccountPreferencesPanel({initial}:{initial:AccountPreferences}){const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState("");async function submit(event:FormEvent){event.preventDefault();setBusy(true);setMessage("");const response=await fetch("/api/account/preferences",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});const result=await response.json();setBusy(false);setMessage(response.ok?"Preferences saved across your devices.":result.error||"Unable to save preferences.")}return <form className="card preferencesCard" onSubmit={submit}><div><div className="eyebrow">Control center</div><h2>Privacy & notifications</h2><p>Choose how the platform works for you. Inventory records remain private regardless of these settings.</p></div><div className="preferenceList">{options.map(([key,title,detail])=><label className="preferenceRow" key={key}><span><strong>{title}</strong><small>{detail}</small></span><input type="checkbox" checked={values[key]} onChange={event=>setValues(current=>({...current,[key]:event.target.checked}))}/></label>)}</div><div className="preferenceFooter"><button className="button" disabled={busy}>{busy?"Saving…":"Save preferences"}</button>{message&&<output>{message}</output>}</div></form>}
+export function AccountPreferencesPanel({initial}:{initial:AccountPreferences}){
+  const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+  async function submit(event:FormEvent){
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    const response=await fetch("/api/account/preferences",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
+    const result=await response.json();
+    setBusy(false);
+    setMessage(response.ok?"Preferences saved across your devices.":result.error||"Unable to save preferences.");
+  }
+  return <>
+    <form className="card preferencesCard" onSubmit={submit}>
+      <div><div className="eyebrow">Control center</div><h2>Privacy & notifications</h2><p>Choose how the platform works for you. Inventory records remain private regardless of these settings.</p></div>
+      <div className="preferenceList">{options.map(([key,title,detail])=><label className="preferenceRow" key={key}><span><strong>{title}</strong><small>{detail}</small></span><input type="checkbox" checked={values[key]} onChange={event=>setValues(current=>({...current,[key]:event.target.checked}))}/></label>)}</div>
+      <div className="preferenceFooter"><button className="button" disabled={busy}>{busy?"Saving…":"Save preferences"}</button>{message&&<output>{message}</output>}</div>
+    </form>
+    <section className="card dataRequestCard">
+      <div><div className="eyebrow">Privacy controls</div><h2>Account data requests</h2><p>Request access to, correction of, or deletion of account data through a signed-in, auditable channel. A deletion request starts identity, scope, export, retention, and irreversible-effects review; it does not immediately delete anything.</p></div>
+      <div className="dataRequestActions"><a className="button secondary" href="/feedback?request=access">Request access</a><a className="button secondary" href="/feedback?request=correction">Request correction</a><a className="textLink destructiveLink" href="/feedback?request=deletion">Request deletion →</a></div>
+    </section>
+  </>;
+}

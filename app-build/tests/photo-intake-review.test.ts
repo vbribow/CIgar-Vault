@@ -30,3 +30,9 @@ test("the photo chooser offers only formats the browser can reliably prepare", (
   assert.match(intake, /accept="image\/jpeg,image\/png,image\/webp"/);
   assert.doesNotMatch(intake, /accept="[^"]*image\/heic/);
 });
+
+test("a saved record with a failed attachment gets a direct recovery path", () => {
+  assert.match(intake, /setPhotoFailures\(failures\)/);
+  assert.match(intake, /Open saved record and attach photo/);
+  assert.match(intake, /photoResult\.error\|\|"Photo attachment failed"/);
+});

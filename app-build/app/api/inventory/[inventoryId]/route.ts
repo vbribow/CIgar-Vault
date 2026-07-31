@@ -6,7 +6,6 @@ import {
   parseInventoryUpdate,
 } from "@/lib/inventory-model";
 import { loadInventory } from "@/lib/inventory";
-import { loadHumidors } from "@/lib/data";
 import {
   isPrivateInventoryPreviewRequest,
   savePreviewInventoryOverride,
@@ -60,14 +59,6 @@ export async function PUT(request: Request, context: Context) {
         { error: "Inventory ID cannot be changed" },
         { status: 409 },
       );
-    if (item.storageLocationId && item.storageLocationId !== existing.storageLocationId) {
-      const humidors = await loadHumidors();
-      if (!humidors.some(humidor => humidor.humidorId === item.storageLocationId))
-        return NextResponse.json(
-          { error: "Choose one of your registered humidors or storage locations before saving." },
-          { status: 422 },
-        );
-    }
     const result = await saveOwnedRecordIfUnchanged("inventory", inventoryId, item, expectedRevision);
     if (result === "saved") return NextResponse.json({ data: item, revision: recordRevision(item) });
     if (result === "conflict")
