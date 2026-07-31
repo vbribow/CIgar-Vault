@@ -29,6 +29,8 @@ export async function GET() {
       "content-type": "application/json; charset=utf-8",
       "content-disposition": `attachment; filename="private-collector-record-${createdAt.slice(0,10)}.json"`,
       "cache-control": "no-store",
+      "x-inventory-record-count": String(inventoryCount),
+      "x-recovery-point-created-at": createdAt,
     } });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Vault export failed" }, { status: 502 });
