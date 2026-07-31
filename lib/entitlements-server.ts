@@ -1,2 +1,0 @@
-import{createClient,supabaseConfigured}from"./supabase/server";import{effectivePlan,type PlanId}from"./entitlements";
-export async function loadAccountPlan():Promise<PlanId|undefined>{if(!supabaseConfigured())return undefined;const supabase=await createClient();const{data:{user}}=await supabase.auth.getUser();if(!user)return undefined;const{data,error}=await supabase.from("profiles").select("billing_plan,billing_status").eq("user_id",user.id).maybeSingle();if(error)return undefined;return effectivePlan(data?.billing_plan,data?.billing_status)}

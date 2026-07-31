@@ -1,0 +1,68 @@
+.registryOpeningStandard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 70px;
+  padding: clamp(28px, 5vw, 48px);
+  border: 1px solid #6b5436;
+  background: radial-gradient(circle at 100% 0, #2c2419, transparent 42%), #17130f;
+}
+
+.registryOpeningStandard h2 {
+  margin: 8px 0 16px;
+  font-size: clamp(38px, 5vw, 58px);
+  line-height: 1;
+}
+
+.registryOpeningStandard > div:first-child > p {
+  max-width: 650px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.registryOpeningStandard .ctaRow {
+  margin-top: 26px;
+}
+
+.registryQualification {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.registryQualification article {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: #110e0c;
+}
+
+.registryQualification span {
+  color: var(--gold2);
+  font: 11px var(--font-data);
+}
+
+.registryQualification strong {
+  font: 23px var(--display);
+}
+
+.registryQualification p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+@media (max-width: 950px) {
+  .registryOpeningStandard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .registryQualification {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,126 @@
+import type { InventoryItem } from "./types";
+
+export type IntegrityStatus = "matched" | "master-only" | "account-only" | "mismatch";
+
+export type InventoryDifference = {
+  field: string;
+  label: string;
+  master: unknown;
+  account: unknown;
+};
+
+export type IntegrityItem = {
+  inventoryId: string;
+  identity: string;
+  status: IntegrityStatus;
+  master?: InventoryItem;
+  account?: InventoryItem;
+  differences: InventoryDifference[];
+};
+
+const comparedFields: Array<[keyof InventoryItem, string]> = [
+  ["catalogId", "Catalog identity"], ["collectionId", "Collection assignment"],
+  ["brand", "Brand"], ["line", "Series"], ["vitola", "Vitola"],
+  ["vintage", "Cigar production or release year"], ["packaging", "Packaging"],
+  ["originalQty", "Original quantity"], ["smokedQty", "Smoked quantity"],
+  ["fullBoxQty", "Full boxes"], ["sticksPerBox", "Cigars per box"],
+  ["looseStickQty", "Loose sticks"], ["currentQty", "Current quantity"],
+  ["retailValue", "Replacement retail value"], ["actualCost", "Acquisition cost"],
+  ["storageLocationId", "Storage"],
+  ["habanosVerified", "Habanos verification"], ["boxCode", "Box code"],
+  ["photoLink", "Primary photo"], ["boxPhotoLink", "Box photo"],
+  ["provenanceDocumentLink", "Provenance document"],
+  ["provenanceNotes", "Provenance notes"],
+];
+
+function normalized(value: unknown) {
+  return value === undefined || value === null || value === "" ? undefined : value;
+}
+
+function identity(item?: InventoryItem) {
+  return item ? [item.brand, item.line, item.vitola, item.vintage].filter(Boolean).join(" · ") : "Unknown inventory lot";
+}
+
+export function findDuplicateInventoryIds(items: InventoryItem[]) {
+  const counts = new Map<string, number>();
+  for (const item of items) counts.set(item.inventoryId, (counts.get(item.inventoryId) ?? 0) + 1);
+  return [...counts].filter(([, count]) => count > 1).map(([inventoryId, count]) => ({ inventoryId, count }));
+}
+
+export function reconcileInventory(master: InventoryItem[], account: InventoryItem[]): IntegrityItem[] {
+  const masterById = new Map(master.map(item => [item.inventoryId, item]));
+  const accountById = new Map(account.map(item => [item.inventoryId, item]));
+  const ids = new Set([...masterById.keys(), ...accountById.keys()]);
+  return [...ids].map(inventoryId => {
+    const masterItem = masterById.get(inventoryId);
+    const accountItem = accountById.get(inventoryId);
+    const differences = masterItem && accountItem ? comparedFields.flatMap(([field, label]) => {
+      const masterValue = normalized(masterItem[field]);
+      const accountValue = normalized(accountItem[field]);
+      return Object.is(masterValue, accountValue) ? [] : [{ field: String(field), label, master: masterValue, account: accountValue }];
+    }) : [];
+    const status: IntegrityStatus = !accountItem ? "master-only" : !masterItem ? "account-only" : differences.length ? "mismatch" : "matched";
+    return { inventoryId, identity: identity(masterItem ?? accountItem), status, master: masterItem, account: accountItem, differences };
+  }).sort((a, b) => {
+    const rank: Record<IntegrityStatus, number> = { mismatch: 0, "master-only": 1, "account-only": 2, matched: 3 };
+    return rank[a.status] - rank[b.status] || a.identity.localeCompare(b.identity);
+  });
+}
+
+export function integritySummary(items: IntegrityItem[]) {
+  const count = (status: IntegrityStatus) => items.filter(item => item.status === status).length;
+  const matched = count("matched");
+  return {
+    total: items.length,
+    matched,
+    mismatched: count("mismatch"),
+    masterOnly: count("master-only"),
+    accountOnly: count("account-only"),
+    score: items.length ? Math.round((matched / items.length) * 100) : 100,
+  };
+}
+
+export function restorableFromMaster(items: IntegrityItem[]) {
+  return items.filter(item => item.status === "master-only");
+}
+
+export function buildInventoryRestorePlan(
+  requestedIds: string[],
+  master: InventoryItem[],
+  account: InventoryItem[],
+) {
+  const inventoryIds = [...new Set(requestedIds)];
+  if (inventoryIds.length !== requestedIds.length) {
+    throw new Error("Choose each inventory record only once");
+  }
+
+  const existing = new Set(account.map((item) => item.inventoryId));
+  const conflicts = inventoryIds.filter((inventoryId) => existing.has(inventoryId));
+  if (conflicts.length) {
+    throw new Error(
+      `Existing private records cannot be overwritten: ${conflicts.join(", ")}`,
+    );
+  }
+
+  const masterById = new Map<string, InventoryItem>();
+  const duplicateMasterIds = new Set<string>();
+  for (const item of master) {
+    if (masterById.has(item.inventoryId)) duplicateMasterIds.add(item.inventoryId);
+    masterById.set(item.inventoryId, item);
+  }
+  const selectedDuplicates = inventoryIds.filter((inventoryId) =>
+    duplicateMasterIds.has(inventoryId),
+  );
+  if (selectedDuplicates.length) {
+    throw new Error(
+      `Duplicate Smartsheet records require manual review: ${selectedDuplicates.join(", ")}`,
+    );
+  }
+
+  const missing = inventoryIds.filter((inventoryId) => !masterById.has(inventoryId));
+  if (missing.length) {
+    throw new Error(`Not found in Smartsheet: ${missing.join(", ")}`);
+  }
+
+  return inventoryIds.map((inventoryId) => masterById.get(inventoryId)!);
+}
