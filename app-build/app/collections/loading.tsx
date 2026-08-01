@@ -21,6 +21,7 @@ export default function LoadingCollections() {
           <article className="skeleton collectionLoadingCard" key={item} />
         ))}
       </section>
+      <p className="small" role="status">Preparing collections and their latest confirmed evidence…</p>
     </main>
   );
 }

@@ -40,7 +40,7 @@ export default async function RecordsPage({
           Record every smoke and preserve a dated valuation history.
         </p>
       </section>
-      {!ready?<section className="section card"><div className="eyebrow">Journal records protected</div><h2>Journal and valuation entry is temporarily paused.</h2><p className="small">The platform could not verify inventory, smoking history, and valuation history together. No history is being shown as empty, and no quantity-changing entry can be made against a partial record.</p><a className="button secondary" href="/records">Try again</a></section>:<RecordsManager
+      {!ready?<section className="section card" role="alert" aria-labelledby="records-unavailable-title"><div className="eyebrow">Journal records protected</div><h2 id="records-unavailable-title">Journal and valuation entry is temporarily paused.</h2><p className="small">The platform could not verify inventory, smoking history, and valuation history together. No history is being shown as empty, and no quantity-changing entry can be made against a partial record.</p><a className="button secondary" href="/records">Try again</a></section>:<RecordsManager
         inventory={inventory}
         initialSmokes={smokes}
         initialValuations={valuations}

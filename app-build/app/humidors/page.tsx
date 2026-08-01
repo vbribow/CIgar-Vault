@@ -95,10 +95,10 @@ export default async function HumidorsPage() {
 function ClimateDataUnavailable() {
   return (
     <main className="shell">
-      <section className="humidorHero">
+      <section className="humidorHero" role="alert" aria-labelledby="climate-unavailable-title">
         <div>
           <div className="eyebrow">Environmental storage</div>
-          <h1>Climate intelligence is temporarily protected.</h1>
+          <h1 id="climate-unavailable-title">Climate intelligence is temporarily protected.</h1>
           <p className="lede">
             {brand.name} could not safely load humidor settings, readings, sensors,
             and stored inventory together. No stability score, climate alert,
@@ -108,6 +108,7 @@ function ClimateDataUnavailable() {
         <div className="climateLegend climateUnavailable">
           <strong>Evidence unavailable—not evidence of stability.</strong>
           <span>Refresh after the account service recovers.</span>
+          <a className="button secondary" href="/humidors">Try again</a>
         </div>
       </section>
     </main>

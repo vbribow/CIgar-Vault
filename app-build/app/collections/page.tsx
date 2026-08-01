@@ -48,14 +48,15 @@ export default async function CollectionsPage() {
       </section>
       <WorkspaceGuide items={[{label:"Define",title:"Choose or research a set",detail:"Start from a known template or enter any named release."},{label:"Match",title:"Connect owned components",detail:`${brand.name} compares expected contents with inventory.`},{label:"Value",title:"Track parts and the whole",detail:"Preserve component value and complete-presentation premium."}]}/>
       {!coreReady ? (
-        <section className="card collectionDataNotice">
+        <section className="card collectionDataNotice" role="alert" aria-labelledby="collections-unavailable-title">
           <div className="eyebrow">Collection records protected</div>
-          <h2>The collection workspace is temporarily paused.</h2>
+          <h2 id="collections-unavailable-title">The collection workspace is temporarily paused.</h2>
           <p>
             {brand.name} could not safely load every core ownership source. No
             collection has been classified as empty, incomplete, or missing.
             Refresh after the account service recovers.
           </p>
+          <a className="button secondary" href="/collections">Try again</a>
         </section>
       ) : (
         <>

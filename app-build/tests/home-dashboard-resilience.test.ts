@@ -8,5 +8,6 @@ test("the private dashboard never calculates from partial evidence", () => {
   assert.match(page, /Promise\.allSettled/);
   assert.match(page, /evidenceResults\?\.every\(result => result\.status === "fulfilled"\)/);
   assert.match(page, /Private dashboard protected/);
-  assert.match(page, /No metric is being shown as zero, complete, or safe from partial data/);
+  assert.match(page, /Rather than present partial information as complete/);
+  assert.match(page, /summary will remain paused/);
 });
