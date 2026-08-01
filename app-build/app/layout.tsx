@@ -45,7 +45,7 @@ export const viewport:Viewport={width:"device-width",initialScale:1,viewportFit:
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-brand={brand.key}>
-      <body><AppNavigation /><Suspense fallback={null}><JourneyArrival/></Suspense>{children}<PwaManager/></body>
+      <body><a className="skipLink" href="#main-content">Skip to main content</a><AppNavigation /><Suspense fallback={null}><JourneyArrival/></Suspense><div id="main-content" tabIndex={-1}>{children}</div><PwaManager/></body>
     </html>
   );
 }
