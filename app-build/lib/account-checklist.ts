@@ -8,6 +8,10 @@ export type AccountChecklistItem = {
 
 export function buildAccountChecklist(profileComplete: boolean, records: AccountChecklistRecord[]): AccountChecklistItem[] {
   const has = (kind: string) => records.some(record => record.kind === kind);
+  const inventoryBackup = records.some(record => {
+    if (record.kind !== "integrity" || !record.payload || typeof record.payload !== "object") return false;
+    return (record.payload as { action?: unknown }).action === "inventory-backup";
+  });
   const connectedSensor = records.some(record => {
     if (record.kind !== "sensors" || !record.payload || typeof record.payload !== "object") return false;
     const status = String((record.payload as { connectionStatus?: unknown }).connectionStatus ?? "");
@@ -19,5 +23,6 @@ export function buildAccountChecklist(profileComplete: boolean, records: Account
     { label: "Add first cigar", complete: has("inventory"), href: "/inventory#mobile-intake" },
     { label: "Create a humidor", complete: has("humidors"), href: "/humidors" },
     { label: "Connect a sensor", complete: connectedSensor, href: "/sensors" },
+    { label: "Download inventory backup", complete: inventoryBackup, href: "/api/inventory-integrity/backup?scope=account" },
   ];
 }
