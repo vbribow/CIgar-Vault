@@ -11,6 +11,25 @@ test("invited-email matching is normalized without broad wildcard matching", () 
   assert.doesNotMatch(access, /\.ilike\(/);
 });
 
+test("the controlled onboarding queue claims a cohort seat without a manual stage change", () => {
+  const access = readFileSync(new URL("../lib/beta-access.ts", import.meta.url), "utf8");
+  assert.match(access, /if \(!data\)/);
+  assert.doesNotMatch(access, /data\.stage === "Prospect"/);
+  assert.match(access, /if\(data\.stage==="Prospect"\)/);
+  assert.match(access, /update\(\{stage:"Invited"/);
+  assert.match(access, /advanceBetaCollectorStage/);
+});
+
+test("account and inventory milestones advance the beta pipeline automatically", () => {
+  const actions = readFileSync(new URL("../app/login/actions.ts", import.meta.url), "utf8");
+  const records = readFileSync(new URL("../lib/user-data.ts", import.meta.url), "utf8");
+  assert.match(actions, /advanceBetaCollectorStage\(email,"Signed up"\)/);
+  assert.match(records, /advanceInventoryProgress/);
+  assert.match(records, /\(count\|\|0\)>=20\?"Activated":"Imported"/);
+  assert.match(records, /records\.some\(record=>record\.kind==="inventory"\)/);
+  assert.match(records, /must never turn a successful collector-data save into a failure/);
+});
+
 test("authentication redirects accept only same-origin paths", () => {
   assert.equal(safeAuthNext("/inventory?tab=owned#top"), "/inventory?tab=owned#top");
   assert.equal(safeAuthNext("https://attacker.example"), "/");

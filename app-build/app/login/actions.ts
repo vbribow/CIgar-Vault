@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { appOrigin } from "@/lib/app-origin";
 import { claimPartnerReferral } from "@/lib/partner-platform";
-import { requireBetaInvitation } from "@/lib/beta-access";
+import { advanceBetaCollectorStage,requireBetaInvitation } from "@/lib/beta-access";
 import { safeAuthNext } from "@/lib/auth-navigation";
 import { isEmailNotConfirmed } from "@/lib/auth-errors";
 
@@ -50,7 +50,10 @@ export async function signUp(formData: FormData) {
     brand_presentation: "hojavia",
   }, emailRedirectTo: `${origin}/auth/callback?next=${next}` } });
   if (error) redirect(failure(error.message, "signup", next));
-  if (data.user) await claimPartnerReferral(data.user.id);
+  if (data.user) {
+    await advanceBetaCollectorStage(email,"Signed up");
+    await claimPartnerReferral(data.user.id);
+  }
   if (!data.session) redirect("/login?mode=signin&notice=Check%20your%20email%20to%20confirm%20your%20account.");
   redirect(next);
 }

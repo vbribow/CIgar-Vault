@@ -3,6 +3,7 @@ import { dataMode } from "./config";
 import type { VaultRecordKind } from "./data-authority";
 import { recordRevision } from "./record-revision";
 import { createClient, supabaseConfigured } from "./supabase/server";
+import { advanceBetaCollectorStage } from "./beta-access";
 
 export type { VaultRecordKind } from "./data-authority";
 
@@ -11,6 +12,14 @@ async function accountContext() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   return user ? { supabase, user } : undefined;
+}
+
+async function advanceInventoryProgress(context:Awaited<ReturnType<typeof accountContext>>){
+  if(!context?.user.email)return;
+  try{
+    const{count,error}=await context.supabase.from("vault_records").select("record_id",{count:"exact",head:true}).eq("user_id",context.user.id).eq("kind","inventory");
+    if(!error&&(count||0)>0)await advanceBetaCollectorStage(context.user.email,(count||0)>=20?"Activated":"Imported");
+  }catch{/* Pipeline metadata must never turn a successful collector-data save into a failure. */}
 }
 
 export async function accountDataMode(): Promise<DataMode> { return await accountContext() ? "supabase" : dataMode(); }
@@ -36,6 +45,7 @@ export async function saveOwnedRecord(kind: VaultRecordKind, recordId: string, p
   if (!context) return false;
   const { error } = await context.supabase.from("vault_records").upsert({ user_id: context.user.id, kind, record_id: recordId, payload, updated_at: new Date().toISOString() }, { onConflict: "user_id,kind,record_id" });
   if (error) throw error;
+  if(kind==="inventory")await advanceInventoryProgress(context);
   return true;
 }
 
@@ -66,6 +76,7 @@ export async function saveOwnedRecordIfUnchanged(
     .select("record_id")
     .maybeSingle();
   if (saveError) throw saveError;
+  if(saved&&kind==="inventory")await advanceInventoryProgress(context);
   return saved ? "saved" : "conflict";
 }
 
@@ -79,7 +90,7 @@ export async function createOwnedRecord(kind: VaultRecordKind, recordId: string,
     payload,
     updated_at: new Date().toISOString(),
   });
-  if (!error) return "created";
+  if (!error){if(kind==="inventory")await advanceInventoryProgress(context);return "created"}
   if (error.code === "23505") return "exists";
   throw error;
 }
@@ -103,6 +114,7 @@ export async function createOwnedRecords(records:Array<{kind:VaultRecordKind;rec
     if(error.code==="23505")throw new Error("One of these records already exists. Refresh your Vault before trying again.");
     throw error;
   }
+  if(records.some(record=>record.kind==="inventory"))await advanceInventoryProgress(context);
   return true;
 }
 
@@ -131,6 +143,7 @@ export async function importOwnedRecords(records: Array<{kind:VaultRecordKind;re
   const rows = records.map(record => ({ user_id: context.user.id, kind: record.kind, record_id: record.recordId, payload: record.payload, updated_at: new Date().toISOString() }));
   const { error } = await context.supabase.from("vault_records").upsert(rows, { onConflict: "user_id,kind,record_id" });
   if (error) throw error;
+  if(records.some(record=>record.kind==="inventory"))await advanceInventoryProgress(context);
   return rows.length;
 }
 
@@ -161,5 +174,6 @@ export async function saveOwnedRecordsAtomically(
     .from("vault_records")
     .upsert(rows, { onConflict: "user_id,kind,record_id" });
   if (error) throw error;
+  if(records.some(record=>record.kind==="inventory"))await advanceInventoryProgress(context);
   return true;
 }
