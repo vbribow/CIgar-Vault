@@ -34,3 +34,10 @@ test("founder onboarding never describes provider acceptance as confirmed delive
   assert.match(component, /delivery is not yet confirmed/);
   assert.doesNotMatch(component, /Hojavía sent the reinstall notice/);
 });
+
+test("founder can update a collector stage while readiness evidence remains advisory", () => {
+  const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
+  assert.match(component, /method:"PATCH"/);
+  assert.match(component, /Saving stage…/);
+  assert.doesNotMatch(component, /stage==="Invited"&&!readiness\?\.ready/);
+});
