@@ -10,6 +10,7 @@ import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedS
 import { burnQualityOptions, constructionQualityOptions } from "@/lib/records-model";
 import { createClientUuid } from "@/lib/client-uuid";
 import { readSaveResponse, saveRecoveryMessage } from "@/lib/save-recovery";
+import { useUnsavedChanges } from "@/components/use-unsaved-changes";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
@@ -31,6 +32,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [newSmokeConfirmed, setNewSmokeConfirmed] = useState(false);
   const smokeMutation = useMutationGuard();
   const valuationMutation = useMutationGuard();
+  const recordSafety = useUnsavedChanges();
 
   async function send(event: FormEvent<HTMLFormElement>, kind: "smoke" | "valuation") {
     event.preventDefault();
@@ -69,6 +71,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       setMessage(kind === "smoke" && smokeSource === "MANUAL" ? "Smoking experience saved to your private journal. Inventory was not changed." : kind === "smoke" ? "Smoking experience saved to your private journal." : "Valuation evidence saved to your private Vault.");
       mutation.succeed();
       event.currentTarget.reset();
+      recordSafety.markSaved();
       if (kind === "smoke") setSmokeSource(selectedInventoryId || "");
     } catch (error) {
       mutation.fail();
@@ -95,7 +98,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     {inventory.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}</option>)}
   </select>;
 
-  return <div className="recordsGrid">
+  return <div className="recordsGrid" onChange={recordSafety.markDirty}>
     <section className="card smokeJournal" id="log-smoke">
       <div className="eyebrow">Private tasting journal</div>
       <h2>Log a smoke</h2>

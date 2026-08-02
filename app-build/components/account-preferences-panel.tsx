@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import type { AccountPreferences } from "@/lib/account-preferences";
 
 const options:[keyof AccountPreferences,string,string][]=[
@@ -11,15 +11,12 @@ const options:[keyof AccountPreferences,string,string][]=[
   ["upgradeRecommendations","Membership recommendations","Show discreet plan suggestions based on features I use."],
 ];
 export function AccountPreferencesPanel({initial}:{initial:AccountPreferences}){
-  const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+  const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState("");const saveInFlight=useRef(false);
   async function submit(event:FormEvent){
     event.preventDefault();
-    setBusy(true);
+    if(saveInFlight.current)return;saveInFlight.current=true;setBusy(true);
     setMessage("");
-    const response=await fetch("/api/account/preferences",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
-    const result=await response.json();
-    setBusy(false);
-    setMessage(response.ok?"Preferences saved across your devices.":result.error||"Unable to save preferences.");
+    try{const response=await fetch("/api/account/preferences",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});const result=await response.json().catch(()=>({}));setMessage(response.ok?"Preferences saved across your devices.":result.error||"Unable to save preferences.")}catch(error){setMessage(error instanceof Error?error.message:"Unable to save preferences. Check your connection and try again.")}finally{saveInFlight.current=false;setBusy(false)}
   }
   return <>
     <form className="card preferencesCard" onSubmit={submit}>

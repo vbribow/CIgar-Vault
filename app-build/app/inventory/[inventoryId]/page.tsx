@@ -3,7 +3,7 @@ import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
 import { loadActivities, loadCollections, loadHumidorReadings, loadHumidors, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { ValuationInvalidationControl } from "@/components/valuation-invalidation-control";
-import { ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
+import { ratingResearchHref, ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
 import { InventoryRecordTools } from "@/components/inventory-record-tools";
 import { buildCigarTimeline,estimateAging } from "@/lib/collection-intelligence";
 import { EvidenceLabel } from "@/components/evidence-label";
@@ -21,6 +21,7 @@ import { brand } from "@/lib/brand";
 import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
 import { HABANOS_AUTHENTICITY_URL, HABANOS_EVIDENCE_CAUTION, OFAC_CUBAN_GOODS_URL } from "@/lib/habanos-protection";
 import { safeInternalHref } from "@/lib/search-navigation";
+import Link from "next/link";
 import "./climate.css";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
@@ -32,11 +33,14 @@ export default async function CigarPage({
 }) {
   const [{ inventoryId }, query] = await Promise.all([params, searchParams]);
   const searchReturn = safeInternalHref(query.searchReturn);
-  const backHref = searchReturn || "/inventory";
-  const backLabel = searchReturn ? "← Back to search results" : "← Collection";
+  const focusedVaultHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}#inventory-records`;
+  const backHref = searchReturn || focusedVaultHref;
+  const backLabel = searchReturn ? "← Back to search results" : "← Back to Vault";
+  const storyEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=provenance#inventory-editor`;
+  const allEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=all#inventory-editor`;
   const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
   if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
-    return <main className="shell"><nav className="nav"><a className="brand" href="/">{brand.name}</a><a className="backLink" href={backHref}>{backLabel}</a></nav><a className="button secondary detailReturnLink" href={backHref}>{backLabel}</a><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><a className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</a></section></main>;
+    return <main className="shell"><nav className="nav"><Link className="brand" href="/">{brand.name}</Link><Link className="backLink" href={backHref}>{backLabel}</Link></nav><Link className="button secondary detailReturnLink" href={backHref}>{backLabel}</Link><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><Link className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</Link></section></main>;
   }
   const items = inventoryResult.value;
   const item = items.find((i) => i.inventoryId === inventoryId);
@@ -96,13 +100,13 @@ export default async function CigarPage({
         <a className="brand" href="/">
           {brand.name}
         </a>
-        <a className="backLink" href={backHref}>
+        <Link className="backLink" href={backHref}>
           {backLabel}
-        </a>
+        </Link>
       </nav>
-      <a className="button secondary detailReturnLink" href={backHref}>
+      <Link className="button secondary detailReturnLink" href={backHref}>
         {backLabel}
-      </a>
+      </Link>
       <section className="detailHero">
         <div>
           <div className="eyebrow">
@@ -115,6 +119,7 @@ export default async function CigarPage({
             {item.vintage ? ` · ${item.vintage}` : ""}
           </span>
           <CollectionRelationshipTag relationship={collectionRelationship}/>
+          <div className="ctaRow detailHeroActions"><Link className="button" href={storyEditHref}>Edit story</Link><Link className="button secondary" href={allEditHref}>Edit all details</Link></div>
         </div>
         <div className="scoreCard">
           <small>Personal collection score</small>
@@ -128,7 +133,7 @@ export default async function CigarPage({
       </section>
       <EvidenceLabel evidence={{kind:"Community",sourceName:"Your private collector record",confidence:item.provenanceNotes||item.boxCode?"Medium":"Unrated",supports:"Identity, ownership context, and personal provenance",commercialInfluence:"None disclosed"}}/>
       {isCubanInventory(item)&&<section className="section card"><div className="sectionHead"><div><div className="eyebrow">Habanos evidence record</div><h2>{cubanVerificationStatus(item)==="Verified"?"Official lookup result recorded":cubanVerificationStatus(item)}</h2><p>{HABANOS_EVIDENCE_CAUTION}</p></div><a className="button secondary" href="/verification">Open evidence ledger</a></div><div className="detailStats"><div><span>Seller</span><strong>{item.acquisitionSeller||"Not recorded"}</strong><small>{item.acquisitionDate||"Acquisition date not recorded"}</small></div><div><span>Jurisdiction</span><strong>{item.purchaseJurisdiction||"Not recorded"}</strong><small><a className="textLink" href={OFAC_CUBAN_GOODS_URL}>Open current U.S. guidance →</a></small></div><div><span>Package evidence</span><strong>{item.boxCode||"Box code not recorded"}</strong><small>{item.habanosSealPhotoLink?"Seal evidence linked":"Seal evidence not linked"}</small></div><div><span>Official lookup</span><strong>{item.habanosVerificationResult||"Result not recorded"}</strong><small>{item.habanosVerificationDate||"Lookup date not recorded"}</small></div></div><div className="ctaRow"><a className="button secondary" href={HABANOS_AUTHENTICITY_URL}>Open Habanos official lookup →</a><a className="button secondary" href="/learn/habanos-authenticity">Collector guide →</a></div><p className="sourceReturnNote">Official sources open in this tab. Use your browser’s Back button to return to {brand.name}.</p></section>}
-      {ratingsReady?<section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href="/ratings">Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>:<UnavailableEvidence label="Published reviews"/>}
+      {ratingsReady?<section className="section card professionalRatings"><div className="sectionHead"><div><div className="eyebrow">Published reviews</div><h2>{published.highest ? `${published.highest} highest professional score` : "No professional rating saved"}</h2><p className="small">{published.count ? `${published.average} average across ${published.count} source${published.count===1?"":"s"}` : "Research exact brand, line, vitola, and vintage matches."}</p></div><a className="button secondary" href={ratingResearchHref(item.inventoryId)}>Research ratings</a></div>{publishedRatings.map(rating=><a className="historyRow" href={rating.sourceUrl} target="_blank" rel="noreferrer" key={rating.ratingId}><span>{rating.publication} · {rating.reviewDate||"date not stated"} · {rating.matchConfidence} match</span><strong>{rating.score} ↗</strong></a>)}</section>:<UnavailableEvidence label="Published reviews"/>}
       <section className="detailStats">
         <div>
           <span>{isPresentationAsset?"Presentation units owned":"Remaining"}</span>

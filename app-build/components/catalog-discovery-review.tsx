@@ -123,6 +123,17 @@ export function CatalogDiscoveryReview({initialItems,existingCatalog}:{initialIt
                 <label><span>Vitola</span><input value={item.vitola} onChange={event=>update(item.catalogId,"vitola",event.target.value)}/></label>
                 <label><span>Country</span><input value={item.country||""} onChange={event=>update(item.catalogId,"country",event.target.value)}/></label>
                 <label><span>Actual factory</span><input value={item.factory||""} onChange={event=>update(item.catalogId,"factory",event.target.value)} placeholder="Leave blank if unresolved"/></label>
+                <label><span>Wrapper</span><input value={item.wrapper||""} onChange={event=>update(item.catalogId,"wrapper",event.target.value)} placeholder="Source-backed only"/></label>
+                <label><span>Wrapper origin</span><input value={item.wrapperOrigin||""} onChange={event=>update(item.catalogId,"wrapperOrigin",event.target.value)}/></label>
+                <label><span>Binder</span><input value={item.binder||""} onChange={event=>update(item.catalogId,"binder",event.target.value)} placeholder="Source-backed only"/></label>
+                <label><span>Binder origin</span><input value={item.binderOrigin||""} onChange={event=>update(item.catalogId,"binderOrigin",event.target.value)}/></label>
+                <label><span>Filler</span><input value={item.filler||""} onChange={event=>update(item.catalogId,"filler",event.target.value)} placeholder="Do not infer undisclosed leaf"/></label>
+                <label><span>Filler origins</span><input value={item.fillerOrigins||""} onChange={event=>update(item.catalogId,"fillerOrigins",event.target.value)}/></label>
+                <label><span>Dimensions</span><input value={item.dimensions||""} onChange={event=>update(item.catalogId,"dimensions",event.target.value)}/></label>
+                <label><span>Stated strength</span><input value={item.strength||""} onChange={event=>update(item.catalogId,"strength",event.target.value)}/></label>
+                <label><span>Packaging</span><input value={item.packaging||""} onChange={event=>update(item.catalogId,"packaging",event.target.value)}/></label>
+                <label><span>Release year</span><input value={item.releaseYear||""} onChange={event=>update(item.catalogId,"releaseYear",event.target.value)}/></label>
+                <label><span>Edition</span><input value={item.edition||""} onChange={event=>update(item.catalogId,"edition",event.target.value)}/></label>
                 <label className="discoveryNotes"><span>Ownership, blender, classification, and evidence notes</span><textarea value={item.masterNotes||""} onChange={event=>update(item.catalogId,"masterNotes",event.target.value)} rows={3}/></label>
                 {item.sourceUrl&&<a href={item.sourceUrl} target="_blank" rel="noreferrer">Review exact source ↗</a>}
               </div>

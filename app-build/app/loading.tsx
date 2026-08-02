@@ -1,3 +1,3 @@
-import { brand } from "@/lib/brand";
+import { WorkspaceLoading } from "@/components/workspace-loading";
 
-export default function Loading(){return <main className="shell" aria-busy="true" aria-label="Preparing your private collection"><div className="loadingBrand">{brand.name}</div><div className="skeleton heroSkeleton"/><div className="grid">{[1,2,3,4].map(i=><div className="skeleton cardSkeleton" key={i}/>)}</div><p className="small" role="status">Preparing your private collection…</p></main>}
+export default function Loading(){return <WorkspaceLoading label="Preparing your private collection" message="Preparing your private collection and its latest confirmed evidence…"/>}

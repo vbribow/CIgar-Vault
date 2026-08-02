@@ -48,6 +48,7 @@ test("Hojavía owns metadata, install identity, and legacy presentation safeguar
   const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
   const navigation = readFileSync(new URL("../components/app-navigation.tsx", import.meta.url), "utf8");
   const home = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const culturePromise = readFileSync(new URL("../components/culture-promise.tsx", import.meta.url), "utf8");
 
   assert.match(seo, /index:\s*!brand\.isPreview/);
   assert.match(seo, /follow:\s*!brand\.isPreview/);
@@ -61,6 +62,10 @@ test("Hojavía owns metadata, install identity, and legacy presentation safeguar
   assert.match(layout, /\/hojavia-mark\.svg/);
   assert.match(navigation, /brand\.spokenName/);
   assert.match(navigation, /brandPronunciation/);
+  assert.match(navigation, /<small>\{brand\.brandLine\}<\/small>/);
   assert.match(home, /brand\.spokenName/);
+  assert.match(home, /<CulturePromise\/>/);
+  assert.match(culturePromise, /brand\.journeyLine/);
+  for (const chapter of ["Leaf", "Craft", "Culture", "Legacy"]) assert.match(culturePromise, new RegExp(`label:\"${chapter}\"`));
   assert.doesNotMatch(layout, /Cedriva is a retired legacy placeholder/);
 });

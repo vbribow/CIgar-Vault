@@ -24,7 +24,7 @@ test("mobile manifest exposes only the Hojavía product identity", () => {
 test("offline support caches only public shell assets", () => {
   const worker = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(worker, /SAFE_ASSETS/);
-  assert.match(worker, /hojavia-beta-shell-v2/);
+  assert.match(worker, /hojavia-beta-shell-v3/);
   assert.match(worker, /\/offline/);
   assert.match(worker, /\/manifest\.webmanifest/);
   assert.match(worker, /hojavia-mark\.svg/);
@@ -39,8 +39,14 @@ test("offline support caches only public shell assets", () => {
 test("offline, install, and social-preview assets bypass protected-route middleware", () => {
   const proxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
   assert.match(proxy, /pathname === "\/offline"/);
-  assert.match(proxy, /icons\/\|sw\.js\|manifest\.webmanifest/);
+  assert.match(proxy, /assets\/\|favicon\.ico\|api\/\|icons\/\|sw\.js\|manifest\.webmanifest/);
   assert.match(proxy, /hojavia-mark\.svg/);
+});
+
+test("private phone previews keep install metadata on their reachable HTTP origin",()=>{
+  const layout=readFileSync(new URL("../app/layout.tsx",import.meta.url),"utf8");
+  assert.match(layout,/isPrivatePreviewHostname\(hostname\)/);
+  assert.match(layout,/\?"http":"https"/);
 });
 
 test("mobile install guidance remains actionable across supported platforms",()=>{
@@ -49,10 +55,19 @@ test("mobile install guidance remains actionable across supported platforms",()=
   assert.match(manager,/Keep \{brand\.name\} on your phone/);
   assert.match(manager,/Add to Home Screen/);
   assert.match(manager,/Installation was not completed/);
-  assert.match(manager,/Old \{brand\.name\} installation/);
-  assert.match(manager,/production app/);
+  assert.match(manager,/Older \{brand\.name\} address/);
+  assert.match(manager,/current app/);
+  assert.match(manager,/Your private records remain intact/);
+  assert.match(manager,/Private collection pages are not stored for offline viewing/);
   assert.match(manager,/const productionHost="hojavia\.com"/);
   assert.match(manager,/isActiveProductHostname\(window\.location\.hostname\)/);
+});
+
+test("mobile first-session checklist leads directly to the collector intake and moves before profile on phones",()=>{
+  const checklist=readFileSync(new URL("../lib/account-checklist.ts",import.meta.url),"utf8");
+  const styles=readFileSync(new URL("../app/account/account.css",import.meta.url),"utf8");
+  assert.match(checklist,/href: "\/inventory#mobile-intake"/);
+  assert.match(styles,/\.onboardingCard\{order:-1\}/);
 });
 
 test("authentication survives reloads and sign-out clears the server session",()=>{

@@ -25,6 +25,8 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(audit,/Membership truth/);
  assert.match(audit,/missing=\$\{check\.key\}&active=1#inventory-records/);
  assert.match(page,/initialActiveOnly=\{filters\.active === "1"\}/);
+ assert.match(page,/initialQuery=\{filters\.vaultSearch\}/);
+ assert.match(page,/initialEditId=\{filters\.edit\}/);
  assert.match(manager,/!initialActiveOnly \|\| \(item\.currentQty \?\? 0\) > 0/);
  assert.match(manager,/missing==="storage".*Add storage location/);
  assert.match(manager,/missing==="provenance".*Add provenance/);
@@ -32,6 +34,13 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.doesNotMatch(page,/Confirm my collection/);
  assert.match(detail,/className="button secondary detailReturnLink"/);
  assert.match(detail,/Back to search results/);
+ assert.match(detail,/Back to Vault/);
+ assert.match(detail,/>Edit story<\/Link>/);
+ assert.match(detail,/>Edit all details<\/Link>/);
+ assert.match(detail,/focus=provenance#inventory-editor/);
+ assert.match(detail,/vaultSearch=\$\{encodeURIComponent\(inventoryId\)\}/);
+ assert.match(manager,/id="inventory-editor"/);
+ assert.match(manager,/initialQuery\|\|requestedItem\?\.inventoryId/);
  assert.match(globalSearch,/buildSearchResultHref/);
  assert.match(globalSearch,/aria-label="Recent searches"/);
  assert.match(globalSearch,/Saved only in this browser profile—not to your account/);

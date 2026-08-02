@@ -5,10 +5,12 @@ import test from "node:test";
 const read = (path: string) => fs.readFileSync(path, "utf8");
 
 test("every collector workspace has a reserved loading experience", () => {
+  const sharedLoading = read("components/workspace-loading.tsx");
+  assert.match(sharedLoading, /aria-busy="true"/, "shared loading state announces its busy state");
+  assert.match(sharedLoading, /role="status"/, "shared loading state announces progress");
   for (const route of ["inventory", "humidors", "records", "verification", "collections"]) {
     const loading = read(`app/${route}/loading.tsx`);
-    assert.match(loading, /aria-busy="true"/, `${route} loading state announces its busy state`);
-    assert.match(loading, /role="status"/, `${route} loading state announces progress`);
+    assert.match(loading, /WorkspaceLoading/, `${route} uses the shared accessible loading state`);
   }
 });
 

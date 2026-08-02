@@ -11,7 +11,7 @@ import { CatalogFields } from "@/components/catalog-fields";
 import type { CatalogCigar } from "@/lib/types";
 import { canonicalBrand } from "@/lib/brand-directory";
 import { PhotoInventoryIntake } from "@/components/photo-inventory-intake";
-import { ratingSummary } from "@/lib/cigar-ratings";
+import { ratingResearchHref, ratingSummary } from "@/lib/cigar-ratings";
 import { PhotoManager } from "@/components/photo-manager";
 import { InventoryCorrectionAssistant } from "@/components/inventory-correction-assistant";
 import { collectionContentsSummary, inventoryCollectionRelationships } from "@/lib/collection-presentation";
@@ -19,17 +19,21 @@ import { CollectionRelationshipTag } from "@/components/collection-relationship-
 import { brand } from "@/lib/brand";
 import { recordRevision } from "@/lib/record-revision";
 import { createClientUuid } from "@/lib/client-uuid";
+import { buildSearchResultHref } from "@/lib/search-navigation";
+import { useUnsavedChanges } from "@/components/use-unsaved-changes";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","provenanceNotes","score","action","habanosSealPhotoLink","acquisitionSeller","acquisitionDate","acquisitionSourceUrl","acquisitionReceiptLink","purchaseJurisdiction","habanosVerificationDate","habanosVerificationResult","habanosVerificationEvidenceLink","habanosVerificationNotes","notes"]);
+type EditMode="quantity"|"year"|"price"|"storage"|"provenance"|"all";
 
-export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialMissing = "all", initialStorage = "all", initialCollectionId, initialActiveOnly = false }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialCollectionId?: string; initialActiveOnly?: boolean }) {
+export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all" }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode }) {
   const [items, setItems] = useState(initialItems);
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
+  const requestedItem=initialEditId?initialItems.find(item=>item.inventoryId===initialEditId):undefined;
+  const [query, setQuery] = useState(initialQuery||requestedItem?.inventoryId||"");
+  const [status, setStatus] = useState(initialStatus);
   const [missing, setMissing] = useState(initialMissing);
   const [storage, setStorage] = useState(initialStorage);
-  const [editing, setEditing] = useState<InventoryItem | null>(null);
-  const [editMode, setEditMode] = useState<"quantity" | "year" | "price" | "storage" | "provenance" | "all">("all");
+  const [editing, setEditing] = useState<InventoryItem | null>(requestedItem||null);
+  const [editMode, setEditMode] = useState<EditMode>(initialEditMode);
   const [draft, setDraft] = useState<InventoryItem | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -39,6 +43,17 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const [lastSynced, setLastSynced] = useState<Date>();
   const [recentlySaved, setRecentlySaved] = useState<{ inventoryId: string; token: number }>();
   const [lastCreated, setLastCreated] = useState<InventoryItem | null>(null);
+  const editSafety = useUnsavedChanges();
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const values = { vaultSearch: query, status, missing, storage };
+    for (const [key, value] of Object.entries(values)) {
+      if (value && value !== "all") url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
+    }
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [query, status, missing, storage]);
 
   useEffect(()=>{
     if(editing||draft||saving||bulkSaving)return;
@@ -68,6 +83,15 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       window.clearTimeout(timeout);
     };
   }, [recentlySaved, editing]);
+
+  useEffect(()=>{
+    if(!initialEditId||!editing)return;
+    const frame=window.requestAnimationFrame(()=>{
+      document.getElementById("inventory-editor")?.scrollIntoView({behavior:"auto",block:"start"});
+      if(initialEditMode==="provenance")(document.querySelector('#inventory-editor textarea[name="provenanceNotes"]') as HTMLTextAreaElement|null)?.focus({preventScroll:true});
+    });
+    return()=>window.cancelAnimationFrame(frame);
+  },[initialEditId,initialEditMode,editing]);
 
   const statuses = useMemo(() => [...new Set(items.map((item) => item.status).filter(Boolean))].sort(), [items]);
   const locations = useMemo(() => [...new Set(items.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [items]);
@@ -113,6 +137,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       const savedId=String(result.data.inventoryId||id);
       const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";
       setEditing(null); setDraft(null); if(!isEdit)setSubmissionId(createClientUuid());
+      editSafety.markSaved();
       const savedItem=result.data as InventoryItem;
       setMessage(isEdit?`${savedItem.brand} ${savedItem.line} was updated in your private Vault.${valuationStatus}`:`${savedItem.brand} ${savedItem.line} was saved to your private Vault. Choose what to do next below.${valuationStatus}`);
       setRecentlySaved({inventoryId:savedId,token:Date.now()});
@@ -142,7 +167,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     setSelected((current) => { const next = new Set(current); if (next.has(inventoryId)) next.delete(inventoryId); else next.add(inventoryId); return next; });
   }
 
-  function startEditing(item: InventoryItem, focus: "quantity" | "year" | "price" | "storage" | "provenance" | "all" = "all") {
+  function startEditing(item: InventoryItem, focus: EditMode = "all") {
     setDraft(null); setEditing(item); setEditMode(focus); setMessage("");
     window.setTimeout(() => {
       document.querySelector(".editingEditor")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -153,6 +178,44 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       if (focus === "provenance") (document.querySelector('.editingEditor textarea[name="provenanceNotes"]') as HTMLTextAreaElement | null)?.focus();
     }, 0);
   }
+
+  function recordHref(inventoryId:string) {
+    const params = new URLSearchParams();
+    if (query) params.set("vaultSearch", query);
+    if (status !== "all") params.set("status", status);
+    if (missing !== "all") params.set("missing", missing);
+    if (storage !== "all") params.set("storage", storage);
+    if (initialCollectionId) params.set("collectionId", initialCollectionId);
+    if (initialActiveOnly) params.set("active", "1");
+    const origin = `/inventory${params.size ? `?${params}` : ""}#lot-${encodeURIComponent(inventoryId)}`;
+    return buildSearchResultHref(`/inventory/${encodeURIComponent(inventoryId)}`, origin, query || inventoryId);
+  }
+
+  useEffect(() => {
+    const records = document.querySelectorAll<HTMLElement>("[data-inventory-id]");
+    records.forEach(record => { record.removeAttribute("id"); });
+    const visibleRecords = Array.from(records).filter(record => record.getClientRects().length > 0);
+    visibleRecords.forEach(record => { record.id = `lot-${record.dataset.inventoryId}`; });
+    const returnTarget = window.location.hash.startsWith("#lot-")
+      ? document.getElementById(window.location.hash.slice(1))
+      : null;
+    returnTarget?.scrollIntoView({ block: "center" });
+    const preserveView = (event:MouseEvent) => {
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="/inventory/"]');
+      const record = link?.closest<HTMLElement>("[data-inventory-id]");
+      const inventoryId = record?.dataset.inventoryId;
+      if (!link || !inventoryId) return;
+      event.preventDefault();
+      window.location.assign(recordHref(inventoryId));
+    };
+    const workspace = document.getElementById("inventory-records")?.parentElement;
+    workspace?.addEventListener("click", preserveView);
+    return () => workspace?.removeEventListener("click", preserveView);
+  }, [query, status, missing, storage, initialCollectionId, initialActiveOnly]);
+
+  useEffect(() => {
+    if (!editing && !draft) editSafety.markSaved();
+  }, [editing, draft]);
 
   async function applyBulkUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -205,12 +268,12 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
 
     <section className="inventoryMobileList" aria-label="Inventory lots">{filtered.map(item=>{const relationship=collectionRelationships.get(item.inventoryId),contents=relationship?.kind==="presentation"&&relationship.collection?collectionContents.get(relationship.collection.collectionId):undefined;return <article key={item.inventoryId} data-inventory-id={item.inventoryId} data-recently-saved={recentlySaved?.inventoryId===item.inventoryId||undefined} tabIndex={-1}><div><span>{item.vintage?`Production / release year ${item.vintage}`:"Production / release year needed"} · {item.status||"Review"}</span><h3>{item.brand} {item.line}</h3><p>{item.vitola}</p><CollectionRelationshipTag relationship={relationship}/></div><div className="mobileQuantity"><strong>{contents?.documentedCigars??item.currentQty??"—"}</strong><span>{contents?"documented cigars in collection":"total cigars"}</span><small>{contents?`${contents.currentCigars} currently held · ${contents.componentLots} component lots`:`${item.fullBoxQty??0} box${item.fullBoxQty===1?"":"es"} · ${item.looseStickQty??0} loose`}</small><small>{contents?`${item.currentQty??1} presentation humidor tracked separately`:item.retailValue===undefined?"Retail value needed":`$${item.retailValue.toFixed(2)} / cigar${retailBoxValue(item)===undefined?"":` · $${retailBoxValue(item)!.toFixed(2)} / box`}`}</small></div><div className="mobileLotActions">{missing==="storage"?<button className="button" onClick={()=>startEditing(item,"storage")}>Add storage location</button>:missing==="provenance"?<button className="button" onClick={()=>startEditing(item,"provenance")}>Add provenance</button>:<><button className="button" onClick={()=>startEditing(item,"quantity")}>{contents?"Set presentation units":"Fix quantity"}</button><button className="button secondary" onClick={()=>startEditing(item,"year")}>{item.vintage?"Edit year":"Add year"}</button><button className="button secondary" onClick={()=>startEditing(item,"price")}>{contents?"Set presentation value":item.retailValue===undefined?"Add retail price":"Update retail price"}</button></>}<button className="button secondary" onClick={()=>startEditing(item)}>Edit all details</button><a href={`/inventory/${item.inventoryId}`}>Open record →</a></div></article>})}</section>
     <div className="tableWrap inventoryDesktopTable"><table className="table"><thead><tr><th><input type="checkbox" aria-label="Select visible inventory" checked={filtered.length>0&&filtered.every((item)=>selected.has(item.inventoryId))} onChange={(event)=>setSelected((current)=>{const next=new Set(current);filtered.forEach((item)=>event.target.checked?next.add(item.inventoryId):next.delete(item.inventoryId));return next})}/></th><th>ID</th><th>Cigar</th><th>Year</th><th>Owned</th><th>Total sticks</th><th>Unit retail</th><th>Box retail</th><th>Lot value</th><th>Habanos</th><th>Status</th><th>Personal</th><th>Published</th><th>Complete</th><th /></tr></thead><tbody>{filtered.map((item) => {const published=ratingSummary(ratings,item.inventoryId),relationship=collectionRelationships.get(item.inventoryId),contents=relationship?.kind==="presentation"&&relationship.collection?collectionContents.get(relationship.collection.collectionId):undefined;return <tr className={selected.has(item.inventoryId)?"selectedRow":""} key={item.inventoryId} data-inventory-id={item.inventoryId} data-recently-saved={recentlySaved?.inventoryId===item.inventoryId||undefined} tabIndex={-1}>
-      <td><input type="checkbox" aria-label={`Select ${item.inventoryId}`} checked={selected.has(item.inventoryId)} onChange={()=>toggleSelected(item.inventoryId)}/></td><td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a><CollectionRelationshipTag relationship={relationship}/></td><td>{item.vintage || "—"}</td><td className="small">{contents?<>{item.currentQty??1} presentation unit<br/>{contents.componentLots} component lots</>:item.fullBoxQty === undefined && item.looseStickQty === undefined ? "Total only" : <>{item.fullBoxQty ?? 0} box{item.fullBoxQty === 1 ? "" : "es"}<br />{item.looseStickQty ?? 0} loose</>}</td><td>{contents?<>{contents.documentedCigars??contents.originalCigars} documented<br/><small>{contents.currentCigars} currently held</small></>:item.currentQty ?? "—"}</td><td>{contents?"Separate":item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{contents?"—":retailBoxValue(item)===undefined?"—":`$${retailBoxValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{contents?"Separate":lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Verified"?<span className="verifyState verify-verified">Verified ✓</span>:<a href="/verification">{cubanVerificationStatus(item)}</a>}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{contents?"—":item.score ?? "—"}</td><td>{contents?"—":published.highest?<a href="/ratings"><strong>{published.highest}</strong><small className="small"> {published.count} source{published.count===1?"":"s"}</small></a>:<a className="textLink" href="/ratings">Research</a>}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
+      <td><input type="checkbox" aria-label={`Select ${item.inventoryId}`} checked={selected.has(item.inventoryId)} onChange={()=>toggleSelected(item.inventoryId)}/></td><td className="small">{item.inventoryId}</td><td><a href={`/inventory/${item.inventoryId}`}><strong>{item.brand}</strong><div className="small">{item.line} · {item.vitola}</div></a><CollectionRelationshipTag relationship={relationship}/></td><td>{item.vintage || "—"}</td><td className="small">{contents?<>{item.currentQty??1} presentation unit<br/>{contents.componentLots} component lots</>:item.fullBoxQty === undefined && item.looseStickQty === undefined ? "Total only" : <>{item.fullBoxQty ?? 0} box{item.fullBoxQty === 1 ? "" : "es"}<br />{item.looseStickQty ?? 0} loose</>}</td><td>{contents?<>{contents.documentedCigars??contents.originalCigars} documented<br/><small>{contents.currentCigars} currently held</small></>:item.currentQty ?? "—"}</td><td>{contents?"Separate":item.retailValue===undefined?"—":`$${item.retailValue.toFixed(2)}`}</td><td>{contents?"—":retailBoxValue(item)===undefined?"—":`$${retailBoxValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{contents?"Separate":lotRetailValue(item)===undefined?"—":`$${lotRetailValue(item)!.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`}</td><td>{!isCubanInventory(item)?"—":cubanVerificationStatus(item)==="Verified"?<span className="verifyState verify-verified">Verified ✓</span>:<a href="/verification">{cubanVerificationStatus(item)}</a>}</td><td><span className={`statusPill status-${(item.status||"review").toLowerCase()}`}>{item.status || "Review"}</span></td><td>{contents?"—":item.score ?? "—"}</td><td>{contents?"—":published.highest?<a href={ratingResearchHref(item.inventoryId)}><strong>{published.highest}</strong><small className="small"> {published.count} source{published.count===1?"":"s"}</small></a>:<a className="textLink" href={ratingResearchHref(item.inventoryId)}>Research</a>}</td><td><span className="completeness">{inventoryCompleteness(item)}%</span></td>
       <td className="rowActions">{missing==="storage"?<button onClick={()=>startEditing(item,"storage")}>Add storage</button>:missing==="provenance"?<button onClick={()=>startEditing(item,"provenance")}>Add provenance</button>:<><button onClick={() => startEditing(item,"quantity")}>Fix quantity</button><button onClick={() => startEditing(item,"price")}>Set price</button></>}<button onClick={() => startEditing(item)}>Edit all</button>{mode !== "mock" && <button className="danger" onClick={() => remove(item)}>Delete</button>}</td>
     </tr>})}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
-    <section className={`section editor ${editing?"editingEditor":""}`}><div className="sectionHead"><div><div className="eyebrow">{editing&&editMode==="quantity"?"Quantity correction":editing&&editMode==="year"?"Production information":editing&&editMode==="price"?"Retail price correction":"Inventory editor"}</div><h2>{editing ? `${editMode==="quantity"?"Correct quantity":editMode==="year"?"Add production / release year":editMode==="price"?"Set retail price":"Edit"} · ${editing.brand} ${editing.line}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{editing&&editMode==="quantity"?"Enter full boxes, cigars per box, and loose sticks. Total owned recalculates automatically when saved.":editing&&editMode==="year"?"Enter the exact cigar’s four-digit production or release year. Leave it blank when the year is not verified.":editing&&editMode==="price"?"Enter the current replacement price for one cigar. Saving returns you to this inventory record; market research remains a separate workflow.":mode === "mock" ? "Private preview: existing-record edits save on this computer. New lots require a connected private vault." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && <button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>}</div>
-      <form key={formItem.inventoryId || "new"} className={`inventoryForm ${focusedQuantity||focusedYear||focusedPrice||focusedStorage||focusedProvenance?"focusedInventoryForm":""}`} onSubmit={submit}>
+    <section id="inventory-editor" className={`section editor ${editing?"editingEditor":""}`}><div className="sectionHead"><div><div className="eyebrow">{editing&&editMode==="quantity"?"Quantity correction":editing&&editMode==="year"?"Production information":editing&&editMode==="price"?"Retail price correction":editing&&editMode==="provenance"?"Story and provenance":"Inventory editor"}</div><h2>{editing ? `${editMode==="quantity"?"Correct quantity":editMode==="year"?"Add production / release year":editMode==="price"?"Set retail price":editMode==="provenance"?"Edit story":"Edit all details"} · ${editing.brand} ${editing.line}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{editing&&editMode==="quantity"?"Enter full boxes, cigars per box, and loose sticks. Total owned recalculates automatically when saved.":editing&&editMode==="year"?"Enter the exact cigar’s four-digit production or release year. Leave it blank when the year is not verified.":editing&&editMode==="price"?"Enter the current replacement price for one cigar. Saving returns you to this inventory record; market research remains a separate workflow.":editing&&editMode==="provenance"?"Update the known story for this exact lot, then save. Other record fields remain unchanged.":mode === "mock" ? "Private preview: existing-record edits save on this computer. New lots require a connected private vault." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && <button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>}</div>
+      <form key={formItem.inventoryId || "new"} className={`inventoryForm ${focusedQuantity||focusedYear||focusedPrice||focusedStorage||focusedProvenance?"focusedInventoryForm":""}`} onSubmit={submit} onChange={editSafety.markDirty}>
         {showAll&&<>
 {editing&&<input name="inventoryId" type="hidden" value={formItem.inventoryId}/>}
 <CatalogFields item={formItem} catalog={catalog} /></>}

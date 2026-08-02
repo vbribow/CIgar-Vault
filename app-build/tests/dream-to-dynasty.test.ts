@@ -51,6 +51,22 @@ test("an incorrectly attached cigar is excluded from Dream to Dynasty completion
   assert.equal(summary.missingComponents.length,22);
 });
 
+test("an exact component remains matched when the collector owns more than the edition requires",()=>{
+  const collection={collectionId:"COL-FUENTE-DREAM-DYNASTY",name:"From Dream to Dynasty Collection",releaseYear:2024};
+  const component={
+    inventoryId:"INV-FUENTE-DREAM-DYNASTY-C09",
+    collectionId:collection.collectionId,
+    brand:"Arturo Fuente",
+    line:"Don Arturo Gran AniverXario",
+    vitola:"Gran Corona (6 × 48)",
+    originalQty:2,
+    currentQty:2,
+  };
+  const summary=summarizeCollection(collection,[component],[]);
+  assert.equal(summary.verifiedInventoryIds.includes(component.inventoryId),true);
+  assert.equal(summary.excludedAssignedLots.includes(component.inventoryId),false);
+});
+
 test("only the exact sourced Angel’s Share Fuente Fuente component can satisfy Dream to Dynasty",()=>{
   const collection={collectionId:"COL-FUENTE-DREAM-DYNASTY",name:"From Dream to Dynasty Collection",releaseYear:2024};
   const wrong={inventoryId:"INV-DESTINO-SIGLO",collectionId:collection.collectionId,brand:"Arturo Fuente",line:"OpusX Angel’s Share Destino Siglo",vitola:"Figurado",vintage:2025,currentQty:1,retailValue:120};

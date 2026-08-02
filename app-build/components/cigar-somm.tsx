@@ -103,7 +103,7 @@ export function CigarSomm({inventory,smokes=[],initialInventoryId="",initialColl
   {result&&<section className="sommAnswer">
 <header>
 <div>
-<div className="eyebrow">{brand.name} AI · {result.confidence} confidence</div>
+<div className="eyebrow">Cigar Somm · AI-assisted · {result.confidence} confidence</div>
 <h2>{cleanSommText(result.cigarContext)}</h2>
 </div>
 <span>AI-assisted · Source-aware</span>

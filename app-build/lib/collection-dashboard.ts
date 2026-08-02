@@ -86,7 +86,10 @@ export function collectionRequirementMatches(collection: CigarCollection, member
       const exact=ownedMembers.find(item=>{
         if(assigned.has(item.inventoryId)||cigarProductKey(item)!==productKey)return false;
         const documentedQuantity=item.originalQty??item.currentQty;
-        return documentedQuantity===quantity;
+        // Quantity is a sufficiency check, not part of a cigar's identity.
+        // A collector may own more than the edition requires without turning
+        // an otherwise exact component into a mismatched assignment.
+        return documentedQuantity!==undefined&&documentedQuantity>=quantity;
       });
       if(!exact)return{requirement,score:0};
       assigned.add(exact.inventoryId);

@@ -15,7 +15,7 @@ import "./vault-paths.css";
 export const dynamic = "force-dynamic";
 export const metadata:Metadata={title:"My Collection",description:"Document, care for, understand, and preserve every box, collection, and individual cigar."};
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; collectionId?: string; active?: string }> }) {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; status?: string; collectionId?: string; active?: string; vaultSearch?: string; edit?: string; focus?: string }> }) {
   const [modeResult, inventoryResult, filters, planResult] = await Promise.all([
     accountDataMode().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
     loadInventory().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
@@ -47,6 +47,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const collectionLinksReady = collectionsResult.status === "fulfilled";
   const relatedReady = ratingsResult.status === "fulfilled" && collectionLinksReady;
   const plan = planResult.ok ? planResult.value : undefined;
+  const editFocus = ["quantity","year","price","storage","provenance","all"].includes(filters.focus||"")
+    ? filters.focus as "quantity"|"year"|"price"|"storage"|"provenance"|"all"
+    : "all";
   return <main className="shell">
     <section className="section inventoryHeader"><div><div className="eyebrow">{brand.name} Vault · Your private record</div><h1>My collection</h1><p className="lede">Document every box and individual cigar, preserve provenance, understand what you own, and care for the story it carries.</p></div></section>
     <nav className="vaultPaths" aria-label="Vault workspaces">
@@ -58,6 +61,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     <WorkspaceGuide items={[{label:"Capture",title:"Add by camera or form",detail:"Identify a cigar, review the fields, then approve it into inventory.",href:"#mobile-intake"},{label:"Count",title:"Reconcile boxes and loose sticks",detail:"Record what is physically present without disturbing the rest of the lot.",href:"/inventory-count"},{label:"Protect",title:"Complete value and provenance",detail:"Close evidence gaps for reporting, verification, and climate exposure.",href:"/collection-health"}]}/>
     {!relatedReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Supporting evidence temporarily unavailable</div><p>Your inventory is intact and available. Collection links or published ratings are temporarily hidden rather than shown as absent.</p></section>}
     <UpgradeNudge plan={plan} context="inventory" usage={cigarItems.length} signals={{lotCount:cigarItems.length,portfolioValue:cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}}/>
-    <div><InventoryManager initialItems={items} catalog={catalog} ratings={ratings} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} /></div>
+    <div><InventoryManager initialItems={items} catalog={catalog} ratings={ratings} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch} initialEditId={filters.edit} initialEditMode={editFocus} /></div>
   </main>;
 }

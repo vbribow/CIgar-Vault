@@ -327,31 +327,31 @@ export default async function ReportsPage() {
             <tbody>
               {report.rows.map((row) => (
                 <tr key={row.inventoryId}>
-                  <td>
+                  <td data-label="Inventory item">
                     <a href={`/inventory/${row.inventoryId}`}>
                       <strong>{row.cigar}</strong>
                       <small>{row.inventoryId}</small>
                     </a>
                   </td>
-                  <td>
+                  <td data-label="Vintage / package">
                     {row.vintage}
                     <small>{row.packaging}</small>
                   </td>
-                  <td>{row.quantity ?? "—"}</td>
-                  <td>
+                  <td data-label="Quantity">{row.quantity ?? "Not documented"}</td>
+                  <td data-label="Unit replacement">
                     {row.unitReplacement === undefined
-                      ? "—"
+                      ? "Not documented"
                       : unitMoney.format(row.unitReplacement)}
                   </td>
-                  <td>
+                  <td data-label="Scheduled value">
                     <strong>
                       {row.scheduledValue === undefined
-                        ? "—"
+                        ? "Pending evidence"
                         : money.format(row.scheduledValue)}
                     </strong>
                   </td>
-                  <td>{row.storage}</td>
-                  <td>
+                  <td data-label="Storage">{row.storage}</td>
+                  <td data-label="Evidence">
                     <span>{row.photo ? "Photo ✓" : "No photo"}</span>
                     <small>
                       {row.provenance ? "Provenance ✓" : "No provenance"} ·{" "}

@@ -48,9 +48,9 @@ export const productDomains:ProductDomain[]=[
     {href:"/learn/manufacturing-truth",label:"Manufacturing Truth",description:"Find the brand owner, blender, actual factory, tobacco regions, and supporting evidence"},
     {href:"/catalog",label:"Cigar reference",description:"Learn through documented cigar identities"},
     {href:"/data-model",label:`How ${brand.name} understands a cigar`,description:"Follow identity, release, provenance, evidence, and collector history"},
-    {href:"/sommelier-library",label:"Curated knowledge",description:`Review the evidence library behind ${brand.name} AI`},
+    {href:"/sommelier-library",label:"Curated knowledge",description:"Review the evidence library behind Cigar Somm’s AI-assisted guidance"},
   ]},
-  {id:"ai",label:"Cigar Somm",promise:`Elevate collector judgment with trusted, personal guidance powered by ${brand.name} AI.`,href:"/cigar-somm",links:[
+  {id:"ai",label:"Cigar Somm",promise:`Elevate collector judgment with trusted, personal, AI-assisted guidance from ${brand.name}.`,href:"/cigar-somm",links:[
     {href:"/cigar-somm",label:"Open Cigar Somm",description:"Choose one cigar for its profile, readiness, and complete pairing plan"},
     {href:"/intelligence",label:"Collection intelligence",description:"Understand patterns, priorities, and evidence gaps"},
     {href:"/acquisitions",label:"Collection goals",description:"See documented pieces that would complete a set"},

@@ -17,7 +17,7 @@ const trustLevels=[
   ["02","Verified Historical","Information confirmed through multiple trusted sources."],
   ["03","Expert","Knowledge contributed by a verified expert or independent publication."],
   ["04","Community","Collector reviews, tasting notes, questions, and lived experience."],
-  ["05","AI",`Clearly identified guidance generated from trusted ${brand.name} knowledge.`],
+  ["05","AI-assisted",`Clearly labeled guidance generated from permitted ${brand.name} knowledge, with sources and uncertainty available for review.`],
 ] as const;
 export default async function DiscoverPage(){
   const inventory=await loadInventory();

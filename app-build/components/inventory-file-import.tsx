@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import type { InventoryItem } from "@/lib/types";
+import { useMutationGuard } from "@/components/use-mutation-guard";
 
 type Row = { row: number; item?: InventoryItem; errors: string[]; warnings: string[]; duplicate: boolean };
 type Preview = { fileName: string; rows: Row[]; valid: number; invalid: number; duplicates: number; columns: string[] };
@@ -21,6 +22,8 @@ export function InventoryFileImport() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [batch, setBatch] = useState("");
+  const importMutation = useMutationGuard();
+  const rollbackMutation = useMutationGuard();
 
   async function inspect(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,6 +35,8 @@ export function InventoryFileImport() {
       if (!response.ok) throw new Error(result.error || "Preview failed");
       setPreview(result.data);
       setSelected(new Set(result.data.rows.filter((row: Row) => row.item && !row.duplicate).map((row: Row) => row.row)));
+      importMutation.reset();
+      rollbackMutation.reset();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Preview failed. Nothing was imported.");
     } finally {
@@ -41,10 +46,12 @@ export function InventoryFileImport() {
 
   async function commit() {
     if (!preview) return;
+    const selectedRows = preview.rows.filter(row => row.item && selected.has(row.row));
+    const duplicateCount = selectedRows.filter(row => row.duplicate).length;
+    if (!selectedRows.length || !window.confirm(`Import ${selectedRows.length} reviewed inventory lot${selectedRows.length === 1 ? "" : "s"} from ${preview.fileName}? This adds new records only and will not replace existing Vault records.${duplicateCount ? ` ${duplicateCount} possible duplicate${duplicateCount === 1 ? " has" : "s have"} been explicitly selected.` : ""}`) || !importMutation.begin()) return;
     setBusy(true);
     setMessage("");
     try {
-      const selectedRows = preview.rows.filter(row => row.item && selected.has(row.row));
       const items = selectedRows.map(row => row.item);
       const acknowledgedDuplicateIds = selectedRows.filter(row => row.duplicate).map(row => row.item!.inventoryId);
       const response = await fetch("/api/account/import-inventory", {
@@ -55,8 +62,10 @@ export function InventoryFileImport() {
       const result = await responseJson(response);
       if (!response.ok) throw new Error(result.error || "Import failed");
       setBatch(result.data.batchId);
-      setMessage(`${result.data.imported} inventory lots imported safely. ${result.data.valuationStatus}`);
+      importMutation.succeed();
+      setMessage(`${result.data.imported} inventory lots imported safely. Existing Vault records were not replaced. ${result.data.valuationStatus} Import receipt: ${result.data.batchId}.`);
     } catch (error) {
+      importMutation.fail();
       setMessage(error instanceof Error ? error.message : "Import failed. Refresh the preview before retrying.");
     } finally {
       setBusy(false);
@@ -64,7 +73,7 @@ export function InventoryFileImport() {
   }
 
   async function rollback() {
-    if (!batch) return;
+    if (!batch || !window.confirm("Undo this import? Only records that remain exactly as imported will be removed. Any record edited afterward will stay protected in your Vault.") || !rollbackMutation.begin()) return;
     setBusy(true);
     setMessage("");
     try {
@@ -75,11 +84,14 @@ export function InventoryFileImport() {
       });
       const result = await responseJson(response);
       if (!response.ok) throw new Error(result.error || "Rollback failed");
+      rollbackMutation.succeed();
       setMessage(`${result.data.removed} unchanged imported lots removed.${result.data.protected ? ` ${result.data.protected} later-edited record(s) were preserved and remain in your Vault.` : ""}`);
       setBatch("");
       setPreview(undefined);
       setSelected(new Set());
+      importMutation.reset();
     } catch (error) {
+      rollbackMutation.fail();
       setMessage(error instanceof Error ? error.message : "Rollback failed. No records were assumed removed.");
     } finally {
       setBusy(false);
@@ -87,9 +99,9 @@ export function InventoryFileImport() {
   }
 
   return <section className="card inventoryFileImport">
-    <div><div className="eyebrow">Secure inventory migration</div><h2>Import Excel or CSV</h2><p>Upload one `.xlsx` worksheet or CSV. The platform rejects macros, formulas, links, embedded objects, and unsupported files. Nothing is saved until you review and confirm.</p></div>
+    <div><div className="eyebrow">Secure inventory migration</div><h2>Import Excel or CSV</h2><p>Upload one `.xlsx` worksheet or CSV. The platform rejects macros, formulas, links, embedded objects, and unsupported files. Nothing is saved until you review and confirm.</p><p className="small">For an additional recovery point, <a className="textLink" href="/account">download a complete Vault export</a> before a large import.</p></div>
     <form onSubmit={inspect} aria-busy={busy}><input aria-label="Choose CSV or XLSX inventory file" name="file" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required disabled={busy||Boolean(batch)}/><button className="button" disabled={busy||Boolean(batch)}>{busy ? "Inspecting…" : batch ? "Import completed" : "Preview inventory"}</button></form>
-    {batch&&<button type="button" className="button secondary" onClick={()=>{setBatch("");setPreview(undefined);setSelected(new Set());setMessage("")}}>Import another file</button>}
+    {batch&&<button type="button" className="button secondary" onClick={()=>{setBatch("");setPreview(undefined);setSelected(new Set());setMessage("");importMutation.reset();rollbackMutation.reset()}}>Import another file</button>}
     {message && <output aria-live="polite">{message}</output>}
     {preview && <div className="importPreview">
       <p><strong>{preview.valid} valid</strong> · {preview.invalid} need correction · {preview.duplicates} possible duplicates</p>

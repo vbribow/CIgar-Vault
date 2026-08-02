@@ -99,26 +99,30 @@ export async function getInventory(): Promise<InventoryItem[]> {
 
 export async function getCatalog(): Promise<CatalogCigar[]> {
   const sheet = await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");
-  return sheet.rows.map((row) => {
-    const values = recordValues(row, sheet.columns);
-    return {
-      catalogId: String(values.get("Catalog ID") || row.id),
-      brand: String(values.get("Brand") || ""),
-      line: String(values.get("Line / Series") || ""),
-      vitola: String(values.get("Cigar / Vitola") || ""),
-      country: values.get("Country") as string | undefined,
-      factory: values.get("Factory") as string | undefined,
-      sourceUrl: values.get("Source URL") as string | undefined,
-      masterNotes: values.get("Master Notes") as string | undefined,
-      researchStatus: values.get("Research Status") as string | undefined,
-    };
-  }).filter((item) => item.brand && !["Pending review","Rejected"].includes(item.researchStatus || ""));
+  return sheet.rows.map((row) => catalogFromRow(row, sheet.columns))
+    .filter((item) => item.brand && !["Pending review","Rejected"].includes(item.researchStatus || ""));
 }
 
-function catalogFromRow(row:SmartsheetRow,columns:SmartsheetColumn[]):CatalogCigar{const values=recordValues(row,columns);return{catalogId:String(values.get("Catalog ID")||row.id),brand:String(values.get("Brand")||""),line:String(values.get("Line / Series")||""),vitola:String(values.get("Cigar / Vitola")||""),country:values.get("Country") as string|undefined,factory:values.get("Factory") as string|undefined,sourceUrl:values.get("Source URL") as string|undefined,masterNotes:values.get("Master Notes") as string|undefined,researchStatus:values.get("Research Status") as string|undefined}}
+const catalogFieldColumns: Array<[keyof CatalogCigar, string]> = [
+  ["catalogId","Catalog ID"],["brand","Brand"],["line","Line / Series"],["vitola","Cigar / Vitola"],
+  ["country","Country"],["factory","Factory"],["brandOwner","Brand Owner"],["blender","Blender"],
+  ["wrapper","Wrapper"],["wrapperOrigin","Wrapper Origin"],["binder","Binder"],["binderOrigin","Binder Origin"],
+  ["filler","Filler"],["fillerOrigins","Filler Origins"],["dimensions","Dimensions"],["strength","Strength"],
+  ["msrp","MSRP"],["releaseYear","Release Year"],["edition","Edition"],["packaging","Packaging"],
+  ["bandHistory","Band History"],["discontinued","Discontinued"],["sourceUrl","Source URL"],["sourceName","Source Name"],
+  ["sourceType","Source Type"],["confidence","Confidence"],["verifiedAt","Verified At"],["correctionNotes","Correction Notes"],
+  ["masterNotes","Master Notes"],["researchStatus","Research Status"],
+];
+function catalogFromRow(row:SmartsheetRow,columns:SmartsheetColumn[]):CatalogCigar{
+  const values=recordValues(row,columns);const result:Record<string,unknown>={};
+  for(const[field,title]of catalogFieldColumns){const value=values.get(title);if(value===undefined||value==="")continue;result[field]=field==="msrp"?Number(value):field==="discontinued"?(value===true||String(value).toLowerCase()==="true"):value}
+  result.catalogId||=String(row.id);result.brand||="";result.line||="";result.vitola||="";
+  return result as CatalogCigar;
+}
+function catalogCells(item:CatalogCigar,columns:SmartsheetColumn[],status?:string){return recordCells(catalogFieldColumns.map(([field,title])=>[title,field==="researchStatus"&&status?status:item[field] as RecordValue]),columns)}
 export async function getCatalogDiscoveries(){const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");return sheet.rows.map(row=>catalogFromRow(row,sheet.columns)).filter(item=>item.brand&&item.researchStatus==="Pending review")}
-export async function addCatalogDiscoveries(items:CatalogCigar[]){if(!items.length)return 0;const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const existing=new Set(sheet.rows.map(row=>catalogFromRow(row,sheet.columns).catalogId));const pending=items.filter(item=>!existing.has(item.catalogId));if(!pending.length)return 0;const rows=pending.map(item=>({toBottom:true,cells:recordCells([["Catalog ID",item.catalogId],["Brand",item.brand],["Line / Series",item.line],["Cigar / Vitola",item.vitola],["Country",item.country],["Factory",item.factory],["Source URL",item.sourceUrl],["Master Notes",item.masterNotes],["Research Status","Pending review"]],sheet.columns)}));await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify(rows)});return pending.length}
-export async function reviewCatalogDiscoveries(items:CatalogCigar[],status:"Approved"|"Rejected"){if(!items.length)return 0;const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const byId=new Map(sheet.rows.map(row=>[catalogFromRow(row,sheet.columns).catalogId,row]));const updates=items.map(item=>{const row=byId.get(item.catalogId);if(!row)throw new Error(`Catalog discovery ${item.catalogId} was not found`);return{id:row.id,cells:recordCells([["Brand",item.brand],["Line / Series",item.line],["Cigar / Vitola",item.vitola],["Country",item.country],["Factory",item.factory],["Source URL",item.sourceUrl],["Master Notes",item.masterNotes],["Research Status",status]],sheet.columns)}});await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"PUT",body:JSON.stringify(updates)});return updates.length}
+export async function addCatalogDiscoveries(items:CatalogCigar[]){if(!items.length)return 0;const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const existing=new Set(sheet.rows.map(row=>catalogFromRow(row,sheet.columns).catalogId));const pending=items.filter(item=>!existing.has(item.catalogId));if(!pending.length)return 0;const rows=pending.map(item=>({toBottom:true,cells:catalogCells(item,sheet.columns,"Pending review")}));await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify(rows)});return pending.length}
+export async function reviewCatalogDiscoveries(items:CatalogCigar[],status:"Approved"|"Rejected"){if(!items.length)return 0;const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const byId=new Map(sheet.rows.map(row=>[catalogFromRow(row,sheet.columns).catalogId,row]));const updates=items.map(item=>{const row=byId.get(item.catalogId);if(!row)throw new Error(`Catalog discovery ${item.catalogId} was not found`);return{id:row.id,cells:catalogCells(item,sheet.columns,status)}});await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"PUT",body:JSON.stringify(updates)});return updates.length}
 
 export async function addInventoryRow(input: InventoryItem): Promise<void> {
   const item = normalizeInventory(input);

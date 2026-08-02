@@ -16,7 +16,7 @@ export function buildAccountChecklist(profileComplete: boolean, records: Account
 
   return [
     { label: "Account profile", complete: profileComplete, href: "/account" },
-    { label: "Add first cigar", complete: has("inventory"), href: "/inventory" },
+    { label: "Add first cigar", complete: has("inventory"), href: "/inventory#mobile-intake" },
     { label: "Create a humidor", complete: has("humidors"), href: "/humidors" },
     { label: "Connect a sensor", complete: connectedSensor, href: "/sensors" },
   ];

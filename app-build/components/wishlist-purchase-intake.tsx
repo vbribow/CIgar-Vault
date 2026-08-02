@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import type { WishlistItem } from "@/lib/types";
 import { OFAC_CUBAN_GOODS_URL } from "@/lib/habanos-protection";
 
@@ -8,16 +8,12 @@ const today=()=>new Date().toISOString().slice(0,10);
 export function WishlistPurchaseIntake({items}:{items:WishlistItem[]}){
   const[pending,setPending]=useState(items.filter(item=>item.status==="Purchased"&&!item.inventoryId));
   const[message,setMessage]=useState("");
-  const[saving,setSaving]=useState<string>();
+  const[saving,setSaving]=useState<string>();const conversionInFlight=useRef(false);
   async function convert(event:FormEvent<HTMLFormElement>,item:WishlistItem){
-    event.preventDefault();setSaving(item.wishlistId);setMessage("");
+    event.preventDefault();if(conversionInFlight.current)return;conversionInFlight.current=true;setSaving(item.wishlistId);setMessage("");
     const form=new FormData(event.currentTarget);
     const body={wishlistId:item.wishlistId,quantity:Number(form.get("quantity")),packaging:String(form.get("packaging")||"")||undefined,vintage:String(form.get("vintage")||"")||undefined,totalCost:form.get("totalCost")?Number(form.get("totalCost")):undefined,storageLocationId:String(form.get("storageLocationId")||"")||undefined,purchaseDate:String(form.get("purchaseDate")),acquisitionSeller:String(form.get("acquisitionSeller")||"")||undefined,acquisitionSourceUrl:String(form.get("acquisitionSourceUrl")||"")||undefined,acquisitionReceiptLink:String(form.get("acquisitionReceiptLink")||"")||undefined,purchaseJurisdiction:String(form.get("purchaseJurisdiction")||"")||undefined,notes:String(form.get("notes")||"")||undefined};
-    const response=await fetch("/api/wishlist/convert",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-    const result=await response.json();setSaving(undefined);
-    if(!response.ok){setMessage(result.error||"Could not add purchase");return}
-    setPending(current=>current.filter(value=>value.wishlistId!==item.wishlistId));
-    setMessage(`${item.brand} ${item.vitola} added to inventory as ${result.data.inventory.inventoryId}.`);
+    try{const response=await fetch("/api/wishlist/convert",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||"Could not add purchase");setPending(current=>current.filter(value=>value.wishlistId!==item.wishlistId));setMessage(`${item.brand} ${item.vitola} added to inventory as ${result.data.inventory.inventoryId}.`)}catch(error){setMessage(error instanceof Error?error.message:"Could not add purchase. Check your connection and try again.")}finally{conversionInFlight.current=false;setSaving(undefined)}
   }
   return <section className="purchaseIntake"><div className="sectionHead"><div><div className="eyebrow">Purchase handoff</div><h2>Add purchased cigars to the vault</h2><p>Confirm the physical quantity and preserve who sold it, where the transaction occurred, and the original evidence.</p></div></div>
     <p className="legalCaution">For Cuban-origin tobacco, authenticity and legality are separate. U.S. persons should review <a href={OFAC_CUBAN_GOODS_URL} target="_blank" rel="noreferrer">current Treasury guidance ↗</a> before purchasing, transporting, or importing.</p>

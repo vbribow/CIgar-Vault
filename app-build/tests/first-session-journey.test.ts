@@ -13,7 +13,7 @@ test("an empty collection receives one focused first-session path", () => {
   assert.match(dashboard, /Your first ten minutes/);
   assert.match(dashboard, /Begin with one cigar you know/);
   assert.match(dashboard, /Document my first cigar/);
-  assert.match(dashboard, /Practice with a synthetic example/);
+  assert.match(dashboard, /Practice with a safe example/);
   assert.match(dashboard, /Uncertain details can stay blank/);
   assert.match(inventoryPage, /Start with one cigar—not the whole collection/);
   assert.match(inventoryPage, /href="#mobile-intake"/);

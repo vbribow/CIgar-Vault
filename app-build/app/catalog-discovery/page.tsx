@@ -5,13 +5,23 @@ import { BrandResearchBacklog } from "@/components/brand-research-backlog";
 import { brandResearchBacklog, brandResearchSources } from "@/lib/brand-research";
 import { buildCanonicalCigarRecord, canonicalCatalogHref } from "@/lib/canonical-cigar-record";
 import { groupCatalogDiscoveries } from "@/lib/catalog-discovery";
+import { loadInventory } from "@/lib/inventory";
+import { mergeCatalogRecords } from "@/lib/catalog";
+import { blendResearchCoverage } from "@/lib/blend-research-coverage";
 import { brand } from "@/lib/brand";
 import "./discovery.css";
 import "./operations.css";
 export const dynamic="force-dynamic";
 export default async function CatalogDiscoveryPage({searchParams}:{searchParams:Promise<{catalogId?:string}>}){
   const {catalogId}=await searchParams;
-  const [items,catalog]=dataMode()==="mock"?[[],[]]:await Promise.all([getCatalogDiscoveries(),getCatalog()]);
+  const mock=dataMode()==="mock";
+  const [items,master,inventory]=await Promise.all([
+    mock?Promise.resolve([]):getCatalogDiscoveries(),
+    mock?Promise.resolve([]):getCatalog(),
+    loadInventory(),
+  ]);
+  const catalog=mergeCatalogRecords(master,inventory);
+  const blendCoverage=blendResearchCoverage(catalog);
   const releaseCount=groupCatalogDiscoveries(items).length;
   const backlog=brandResearchBacklog();
   const boutiqueOpen=backlog.filter((item)=>item.priority==="Boutique priority").length;
@@ -42,6 +52,23 @@ export default async function CatalogDiscoveryPage({searchParams}:{searchParams:
       </div>
       <div><strong>{focus.researchGaps.length} open fields</strong><div>{focus.researchGaps.map((gap)=><span key={gap}>{gap}</span>)}</div></div>
     </section>}
+    <section className="approvalSection" id="blend-research-coverage">
+      <div className="researchSectionHead"><div><div className="eyebrow">Known-cigar blend coverage</div><h2>Every exact cigar has a research state.</h2></div><p>Product-level sources govern wrapper, binder, filler, origin, dimensions, and stated strength. Blank fields stay visibly unresolved; the system never borrows a blend from another vitola or nearby release.</p></div>
+      <div className="researchMetrics">
+        <article><strong>{blendCoverage.total}</strong><span>known exact cigars</span></article>
+        <article><strong>{blendCoverage.sourceBacked}</strong><span>source-backed blends</span></article>
+        <article><strong>{blendCoverage.partial}</strong><span>partial evidence</span></article>
+        <article><strong>{blendCoverage.needsSource+blendCoverage.queued}</strong><span>open research records</span></article>
+      </div>
+      <details className="releaseDetails">
+        <summary>Review the complete cigar-by-cigar coverage queue</summary>
+        <div className="releaseRecords">{blendCoverage.records.map(({item,state,documented,total})=><section key={item.catalogId}>
+          <div className="recordHeading"><strong>{item.brand} · {item.line} · {item.vitola}</strong><span>{state}</span></div>
+          <p>{documented} of {total} blend fields documented{item.sourceUrl?" · attributable source retained":" · product-level source required"}</p>
+          <a href={`/catalog-discovery?catalogId=${encodeURIComponent(item.catalogId)}#blend-research-coverage`}>Open exact research brief →</a>
+        </section>)}</div>
+      </details>
+    </section>
     <section className="approvalSection"><div className="researchSectionHead"><div><div className="eyebrow">Release review queue</div><h2>Review the release, not every cigar.</h2></div><p>Each source-backed release is one decision. The review queue highlights duplicates, weak confidence, and conflicting evidence; individual cigar fields stay tucked away unless an exception needs correction.</p></div><CatalogDiscoveryReview initialItems={items} existingCatalog={catalog}/></section>
     <BrandResearchBacklog items={backlog}/>
     <section className="sourceRegistry"><div className="researchSectionHead"><div><div className="eyebrow">Monitoring registry</div><h2>Signals lead. Sources prove.</h2></div><p>Trade-show and publication coverage can surface a candidate. Direct manufacturer evidence remains preferred before publishing ownership or manufacturing claims.</p></div><div>{brandResearchSources.map((source)=><a key={source.name} href={source.href} target={source.href.startsWith("http")?"_blank":undefined} rel={source.href.startsWith("http")?"noreferrer":undefined}><span>{source.kind} · {source.cadence}</span><h3>{source.name}</h3><p>{source.use}</p><strong>Open source ↗</strong></a>)}</div></section>

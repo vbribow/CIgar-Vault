@@ -65,8 +65,18 @@ export function GlobalSearch() {
       }
       if (event.key === "Escape") closeSearch();
     };
+    const requestedOpen = () => {
+      setOriginHref(
+        `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      );
+      setOpen(true);
+    };
     window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
+    window.addEventListener("hojavia:open-search", requestedOpen);
+    return () => {
+      window.removeEventListener("keydown", key);
+      window.removeEventListener("hojavia:open-search", requestedOpen);
+    };
   }, []);
 
   useEffect(() => {

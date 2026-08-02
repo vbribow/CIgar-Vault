@@ -27,10 +27,12 @@ test("high-value pages reserve image space and defer below-fold work", () => {
 });
 
 test("slow private workspaces provide stable, accessible loading states", () => {
+  const sharedLoading = read("components/workspace-loading.tsx");
+  assert.match(sharedLoading, /aria-busy="true"/);
+  assert.match(sharedLoading, /role="status"/);
+  assert.match(sharedLoading, /skeleton/);
   for (const route of ["app/loading.tsx", "app/inventory/loading.tsx", "app/humidors/loading.tsx", "app/records/loading.tsx", "app/verification/loading.tsx"]) {
     const loading = read(route);
-    assert.match(loading, /aria-busy="true"/, `${route} must announce that it is busy`);
-    assert.match(loading, /role="status"/, `${route} must provide a readable loading status`);
-    assert.match(loading, /skeleton/, `${route} must reserve meaningful layout space`);
+    assert.match(loading, /WorkspaceLoading/, `${route} must use the shared stable loading state`);
   }
 });

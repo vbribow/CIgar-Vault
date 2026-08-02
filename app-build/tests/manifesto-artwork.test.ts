@@ -15,7 +15,7 @@ test("manifesto artwork has intrinsic dimensions and a resilient fallback", asyn
   assert.match(page, /src=\{"\/editorial\/cigar-roller-hojavia\.jpg"\}/);
   assert.match(page, /width="1540" height="1021"/);
   assert.match(page, /fetchPriority="high"/);
-  assert.match(styles, /url\("\/editorial\/cigar-roller\.jpg"\) center \/ cover no-repeat/);
+  assert.match(styles, /url\("\/editorial\/cigar-roller-hojavia\.jpg"\) center \/ cover no-repeat/);
   assert.equal(primary[0], 0xff);
   assert.equal(primary[1], 0xd8);
   assert.ok(primary.byteLength <= 425 * 1024);

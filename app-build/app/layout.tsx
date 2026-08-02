@@ -5,14 +5,16 @@ import { AppNavigation } from "@/components/app-navigation";
 import { PwaManager } from "@/components/pwa-manager";
 import { JourneyArrival } from "@/components/journey-arrival";
 import { brand } from "@/lib/brand";
+import { isPrivatePreviewHostname } from "@/lib/preview-host";
 import "./styles.css";
 
 export async function generateMetadata():Promise<Metadata>{
   const requestHeaders=await headers();
   const host=requestHeaders.get("x-forwarded-host")||requestHeaders.get("host")||"hojavia.com";
-  const protocol=requestHeaders.get("x-forwarded-proto")||(host.includes("localhost")?"http":"https");
+  const hostname=host.replace(/^\[/,"").replace(/\](:\d+)?$/,"").replace(/:\d+$/,"");
+  const protocol=requestHeaders.get("x-forwarded-proto")||(isPrivatePreviewHostname(hostname)?"http":"https");
   const origin=new URL(`${protocol}://${host}`);
-  const title=`${brand.name} — The Home of Premium Cigar Collecting`;
+  const title=`${brand.name} — ${brand.brandLine}`;
   const description=brand.description;
   return{
     metadataBase:origin,
@@ -36,7 +38,7 @@ export async function generateMetadata():Promise<Metadata>{
       apple:[{url:"/icons/hojavia-apple-touch.png",sizes:"180x180",type:"image/png"}],
     },
     other:{"mobile-web-app-capable":"yes","apple-mobile-web-app-title":brand.name},
-    openGraph:{type:"website",url:origin,title,description,siteName:brand.name,images:[{url:new URL("/og.png",origin),width:1659,height:948,alt:`${brand.name} — premium cigar knowledge carried forward`}]},
+    openGraph:{type:"website",url:origin,title,description,siteName:brand.name,images:[{url:new URL("/og.png",origin),width:1200,height:630,alt:`${brand.spokenName} — ${brand.brandLine} Premium cigar knowledge and collection stewardship.`}]},
     twitter:{card:"summary_large_image",title,description,images:[new URL("/og.png",origin)]},
   };
 }

@@ -6,13 +6,17 @@ export const CatalogDiscoverySchema = z.object({
   discoveries: z.array(z.object({
     brand:z.string().min(1), line:z.string().min(1), vitola:z.string().min(1), country:z.string(),
     factory:z.string(), brandOwner:z.string(), blender:z.string(),
+    wrapper:z.string(), wrapperOrigin:z.string(), binder:z.string(), binderOrigin:z.string(),
+    filler:z.string(), fillerOrigins:z.string(), dimensions:z.string(), strength:z.string(),
+    packaging:z.string(), releaseYear:z.string(), edition:z.string(),
     entityType:z.enum(["Brand owner","Factory brand","Private label","Sub-brand","Unresolved"]),
     sourceUrl:z.string().url(), sourceTitle:z.string(), evidenceDate:z.string(), notes:z.string(),
     confidence:z.enum(["High","Medium","Low"]),
   })).max(40),
 });
 export type CatalogDiscoveryResult = z.infer<typeof CatalogDiscoverySchema>;
-export const catalogDiscoveryJsonSchema = {type:"object",additionalProperties:false,properties:{discoveries:{type:"array",maxItems:40,items:{type:"object",additionalProperties:false,properties:{brand:{type:"string"},line:{type:"string"},vitola:{type:"string"},country:{type:"string"},factory:{type:"string"},brandOwner:{type:"string"},blender:{type:"string"},entityType:{type:"string",enum:["Brand owner","Factory brand","Private label","Sub-brand","Unresolved"]},sourceUrl:{type:"string"},sourceTitle:{type:"string"},evidenceDate:{type:"string"},notes:{type:"string"},confidence:{type:"string",enum:["High","Medium","Low"]}},required:["brand","line","vitola","country","factory","brandOwner","blender","entityType","sourceUrl","sourceTitle","evidenceDate","notes","confidence"]}}},required:["discoveries"]} as const;
+const discoveryStringFields=["brand","line","vitola","country","factory","brandOwner","blender","wrapper","wrapperOrigin","binder","binderOrigin","filler","fillerOrigins","dimensions","strength","packaging","releaseYear","edition","sourceUrl","sourceTitle","evidenceDate","notes"] as const;
+export const catalogDiscoveryJsonSchema = {type:"object",additionalProperties:false,properties:{discoveries:{type:"array",maxItems:40,items:{type:"object",additionalProperties:false,properties:{...Object.fromEntries(discoveryStringFields.map(field=>[field,{type:"string"}])),entityType:{type:"string",enum:["Brand owner","Factory brand","Private label","Sub-brand","Unresolved"]},confidence:{type:"string",enum:["High","Medium","Low"]}},required:[...discoveryStringFields,"entityType","confidence"]}}},required:["discoveries"]} as const;
 
 const key=(item:Pick<CatalogCigar,"brand"|"line"|"vitola">)=>cigarProductKey(item);
 export function newCatalogDiscoveries(discoveries:CatalogDiscoveryResult["discoveries"],existing:CatalogCigar[]){const known=new Set(existing.map(key));return discoveries.filter(item=>!known.has(key(item))).filter((item,index,all)=>all.findIndex(candidate=>key(candidate)===key(item))===index)}

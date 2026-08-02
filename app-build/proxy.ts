@@ -21,4 +21,4 @@ export async function proxy(request: NextRequest) {
   return new NextResponse("Authentication required", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Hojavía", charset="UTF-8"' } });
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|icons/|sw.js|manifest.webmanifest|robots.txt|sitemap.xml|og.png|hojavia-mark.svg).*)"] };
+export const config = { matcher: ["/((?!_next/static|_next/image|assets/|favicon.ico|api/|icons/|sw.js|manifest.webmanifest|robots.txt|sitemap.xml|og.png|hojavia-mark.svg).*)"] };

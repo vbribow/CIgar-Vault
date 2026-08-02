@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent,useMemo,useState } from "react";
+import { FormEvent,useMemo,useRef,useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { CigarCollection,InventoryItem,Valuation } from "@/lib/types";
 import { collectionTemplates } from "@/lib/collection-templates";
@@ -13,12 +13,13 @@ import { collectionRevision } from "@/lib/collection-revision";
 import { createClientUuid } from "@/lib/client-uuid";
 export function CollectionsManager({initialCollections,inventory,valuations,mode}:{initialCollections:CigarCollection[];inventory:InventoryItem[];valuations:Valuation[];mode:DataMode}){
  const[collections,setCollections]=useState(initialCollections);const[editing,setEditing]=useState<CigarCollection>();const[draft,setDraft]=useState<CigarCollection>();const[templateId,setTemplateId]=useState("");const[message,setMessage]=useState("");const[saving,setSaving]=useState(false);const[submissionId,setSubmissionId]=useState(createClientUuid);const[researchBrand,setResearchBrand]=useState("");const[researchYear,setResearchYear]=useState("");const[researchQuery,setResearchQuery]=useState("");const[researching,setResearching]=useState(false);const[researchMessage,setResearchMessage]=useState("");const[webResults,setWebResults]=useState<WebCollectionResult[]>([]);
+ const saveInFlight=useRef(false),removalInFlight=useRef(false);
  const totalWhole=collections.reduce((sum,c)=>sum+summarizeCollection(c,inventory,valuations).wholeValue,0);
  const catalogMatches=useMemo(()=>{const words=researchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);if(!words.length)return[];return collectionTemplates.filter(item=>(!researchYear||String(item.releaseYear||"")===researchYear)&&words.every(word=>`${item.name} ${item.maker} ${item.edition||""}`.toLowerCase().includes(word)))},[researchQuery,researchYear]);
  async function research(event:FormEvent<HTMLFormElement>){event.preventDefault();if(researchQuery.trim().length<3)return;setResearching(true);setResearchMessage("");setWebResults([]);const query=[researchBrand,researchQuery,researchYear].filter(Boolean).join(" ");try{const response=await fetch(`/api/collection-research?q=${encodeURIComponent(query)}`);const result=await response.json();if(!response.ok)throw new Error(result.error||"Search failed");setWebResults(result.data||[]);if(!catalogMatches.length&&!result.data?.length)setResearchMessage("No strong match found. Try adding the maker or release year.")}catch(error){setResearchMessage(error instanceof Error?error.message:"Search failed")}finally{setResearching(false)}}
  function useWebResult(result:WebCollectionResult){setEditing(undefined);setTemplateId("");setDraft({collectionId:"",name:researchQuery.trim(),maker:researchBrand||result.inferred.maker,releaseYear:researchYear||result.inferred.releaseYear,expectedCigars:result.inferred.expectedCigars,wholeMarketValue:result.inferred.marketValue,valuationSource:result.title,valuationSourceUrl:result.url,status:"Incomplete",notes:`Research confidence: ${result.inferred.confidence}. Expected cigar count: ${result.inferred.expectedCigars??"not confirmed"}. Source summary: ${result.summary}`});document.querySelector(".collectionEditor")?.scrollIntoView({behavior:"smooth"})}
  async function submit(event:FormEvent<HTMLFormElement>){
-  event.preventDefault();setSaving(true);setMessage("");
+  event.preventDefault();if(saveInFlight.current)return;saveInFlight.current=true;setSaving(true);setMessage("");
   const form=event.currentTarget;const data=new FormData(form);const numeric=new Set(["expectedComponents","expectedCigars","wholeMarketValue","acquisitionCost"]);const memberIds=data.getAll("memberIds").map(String);const payload=Object.fromEntries([...data.entries()].flatMap(([key,value])=>key==="writeKey"||key==="memberIds"||value===""?[]:[[key,numeric.has(key)?Number(value):value]]));
   try{
    const response=await fetch("/api/collections",{method:"POST",headers:{"Content-Type":"application/json","x-founder-key":String(data.get("writeKey")||""),...(editing?{"If-Match":collectionRevision(editing,inventory)}:{})},body:JSON.stringify({...payload,memberIds,submissionId})});
@@ -33,13 +34,13 @@ export function CollectionsManager({initialCollections,inventory,valuations,mode
    window.location.reload();
   }catch(error){
    setMessage(error instanceof Error?error.message:"Collection save failed. Check your connection and try again.");
-  }finally{
-   setSaving(false);
-  }
+  }finally{setSaving(false);}
+  saveInFlight.current=false;
  }
  async function removeEmptyCollection(){
-  if(!editing||inventory.some(item=>item.collectionId===editing.collectionId))return;
-  setSaving(true);setMessage("");
+  if(!editing||inventory.some(item=>item.collectionId===editing.collectionId)||removalInFlight.current)return;
+  if(!window.confirm(`Remove the empty duplicate “${editing.name}”? This removes only the collection label and its saved collection details. No cigar inventory, photos, journal entries, or valuations will be deleted.`))return;
+  removalInFlight.current=true;setSaving(true);setMessage("");
   try{
    const response=await fetch("/api/collections",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({collectionId:editing.collectionId})});
    const result=await response.json().catch(()=>({}));
@@ -47,7 +48,7 @@ export function CollectionsManager({initialCollections,inventory,valuations,mode
    setCollections(current=>current.filter(item=>item.collectionId!==editing.collectionId));setEditing(undefined);
    window.location.reload();
   }catch(error){setMessage(error instanceof Error?error.message:"Collection removal failed.")}
-  finally{setSaving(false)}
+  finally{removalInFlight.current=false;setSaving(false);}
  }
  const template=collectionTemplates.find(item=>item.templateId===templateId);const current=editing??draft??(template?{collectionId:template.templateId.replace("TPL-","COL-"),name:template.name,maker:template.maker,releaseYear:template.releaseYear,edition:template.edition,expectedComponents:template.expectedComponents,expectedCigars:template.expectedCigars,valuationSource:template.sourceLabel,valuationSourceUrl:template.sourceUrl,status:"Incomplete" as const,notes:`Expected contents:\n${template.requirements.map(item=>`• ${item}`).join("\n")}`} : undefined);const templateMatches=useMemo(()=>template&&current?collectionRequirementMatches(current,inventory.filter(item=>item.collectionId===current.collectionId)):[],[template,current,inventory]);
  const presentationCandidates=useMemo(()=>current?inventory.filter(item=>isPresentationInventoryMatch(item,current)):[],[current,inventory]);

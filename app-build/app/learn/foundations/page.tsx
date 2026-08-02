@@ -137,8 +137,8 @@ export default function FoundationsPage() {
     </section>
 
     <section className="foundationNext">
-      <div><div className="eyebrow">You have the foundations</div><h2>Curiosity is the next lesson.</h2><p>Explore documented cigars when you feel ready, or ask {brand.name} AI a plain-language question without embarrassment.</p></div>
-      <div><Link className="button" href="/catalog">Explore the cigar reference</Link><Link className="button secondary" href="/cigar-somm">Ask {brand.name} AI</Link><Link className="textLink" href="/learn">Return to all learning pathways →</Link></div>
+      <div><div className="eyebrow">You have the foundations</div><h2>Curiosity is the next lesson.</h2><p>Explore documented cigars when you feel ready, or ask Cigar Somm a plain-language question without embarrassment.</p></div>
+      <div><Link className="button" href="/catalog">Explore the cigar reference</Link><Link className="button secondary" href="/cigar-somm">Ask Cigar Somm</Link><Link className="textLink" href="/learn">Return to all learning pathways →</Link></div>
     </section>
 
     <p className="foundationsDisclosure">Premium cigars contain tobacco and nicotine and are intended only for adults of legal age. {brand.name} provides cultural and educational information, not medical advice.</p>

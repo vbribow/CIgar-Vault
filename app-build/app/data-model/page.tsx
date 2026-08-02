@@ -69,7 +69,7 @@ export default function DataModelPage() {
       <section className="dataModelRelationships">
         <div className="dataModelSectionIntro">
           <div><div className="eyebrow">A living knowledge system</div><h2>Facts become meaningful through connection.</h2></div>
-          <p>One shared cigar identity can support collector experiences across Discover, Vault, Review, Market, Verify, Community, Learn, and {brand.name} AI.</p>
+          <p>One shared cigar identity can support collector experiences across Discover, Vault, Review, Market, Verify, Community, Learn, and Cigar Somm.</p>
         </div>
         <div className="dataModelRelationshipGrid">
           {relationships.map((item, index) => <article key={item.title}><span>0{index + 1}</span><h3>{item.title}</h3><p>{item.body}</p><ul>{item.details.map((detail) => <li key={detail}>{detail}</li>)}</ul></article>)}
@@ -93,7 +93,7 @@ export default function DataModelPage() {
           <ul>
             <li>Publishing a review does not expose the private journal behind it.</li>
             <li>Sharing a collection view does not reveal cost or exact storage.</li>
-            <li>{brand.name} AI uses only the context permitted for the interaction.</li>
+            <li>Cigar Somm’s AI-assisted guidance uses only the context permitted for the interaction.</li>
             <li>Collectors can inspect, correct, remove, and export personal context.</li>
           </ul>
         </div>
