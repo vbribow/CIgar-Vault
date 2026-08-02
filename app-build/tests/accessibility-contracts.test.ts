@@ -7,7 +7,8 @@ test("every route receives a keyboard skip link and focusable content target", (
   const styles = readFileSync(new URL("../app/styles.css", import.meta.url), "utf8");
   assert.match(layout, /className="skipLink" href="#main-content"/);
   assert.match(layout, /id="main-content" tabIndex=\{-1\}/);
-  assert.match(styles, /\.skipLink:focus\{transform:translateY\(0\)\}/);
+  assert.match(styles, /\.skipLink\{[^}]*top:calc\(env\(safe-area-inset-top\) \+ 8px\)[^}]*clip-path:inset\(50%\)/);
+  assert.match(styles, /\.skipLink:focus,\.skipLink:focus-visible\{[^}]*clip-path:none/);
   assert.match(styles, /:focus-visible/);
   assert.match(styles, /prefers-reduced-motion:reduce/);
 });

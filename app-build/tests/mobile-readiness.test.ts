@@ -24,7 +24,7 @@ test("mobile manifest exposes only the Hojavía product identity", () => {
 test("offline support caches only public shell assets", () => {
   const worker = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(worker, /SAFE_ASSETS/);
-  assert.match(worker, /hojavia-beta-shell-v3/);
+  assert.match(worker, /hojavia-beta-shell-v4/);
   assert.match(worker, /\/offline/);
   assert.match(worker, /\/manifest\.webmanifest/);
   assert.match(worker, /hojavia-mark\.svg/);
