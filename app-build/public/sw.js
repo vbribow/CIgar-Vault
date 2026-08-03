@@ -1,4 +1,4 @@
-const CACHE="hojavia-beta-shell-v4";
+const CACHE="hojavia-beta-shell-v4-__HOJAVIA_RELEASE__";
 const SAFE_ASSETS=["/offline","/manifest.webmanifest","/hojavia-mark.svg"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SAFE_ASSETS)));self.skipWaiting()});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))));self.clients.claim()});
