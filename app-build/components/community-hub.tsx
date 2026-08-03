@@ -217,6 +217,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <div>
 <div className="eyebrow">Community consensus</div>
 <h2>The {brand.labels.communityRanking}</h2>
+<p><strong>Rated by smokers. Updated by experience.</strong> The {brand.labels.communityRanking} is a living ranking shaped by what {brand.name} members are actively smoking, rating, and enjoying—not a once-a-year editorial list.</p>
+<p>It reflects the current tasting experiences of real cigar smokers and evolves as the community’s experiences change.</p>
 <p>Each collector contributes one current score per cigar. A mature personal Top 10 can contribute up to 20% preference context; early lists receive proportionally less weight. {brand.name} also adjusts small samples toward the community average so one rating cannot imply broad consensus. Only published ratings count.</p>
 </div>
 </div>

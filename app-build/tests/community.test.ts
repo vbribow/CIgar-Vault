@@ -83,6 +83,9 @@ test("community destinations lead to substantive, distinct content",()=>{
  assert.match(component,/id="rate-a-cigar"/);
  assert.match(component,/Your score enters the ranking only after publication/);
  assert.match(component,/id="top-25"/);
+ assert.match(component,/Rated by smokers\. Updated by experience\./);
+ assert.match(component,/living ranking shaped by what/);
+ assert.match(component,/evolves as the community’s experiences change/);
  assert.match(component,/one rating cannot imply broad consensus/);
 });
 test("Collector 25 is the prominent default community destination",()=>{
