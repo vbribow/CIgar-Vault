@@ -120,6 +120,7 @@ test("resting and aging education separates recovery from deliberate cellar time
   assert.match(agingGuidance, /Commercial technical guidance · Boveda/);
   assert.match(agingGuidance, /Official maker evidence · Perdomo/);
   assert.match(agingGuidance, /Technical method · CORESTA/);
+  assert.match(agingGuidance, /href: "\/learn\/resting-and-aging\/coresta-method"/);
   assert.match(agingGuidance, /No single organization governs every New World producer/);
   assert.match(agingGuidance, /not an official manufacturer standard/);
   assert.match(restingAndAging, /intended only for adults of legal age/);
