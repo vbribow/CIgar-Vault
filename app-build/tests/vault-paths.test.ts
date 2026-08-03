@@ -8,6 +8,7 @@ test("Vault presents separate workspaces and preserves the global-search return 
  const audit=readFileSync(new URL("../app/collection-health/page.tsx",import.meta.url),"utf8");
  const detail=readFileSync(new URL("../app/inventory/[inventoryId]/page.tsx",import.meta.url),"utf8");
  const globalSearch=readFileSync(new URL("../components/global-search.tsx",import.meta.url),"utf8");
+ const story=readFileSync(new URL("../app/cigars/[identityId]/page.tsx",import.meta.url),"utf8");
  assert.match(page,/Browse Vault/);
  assert.match(page,/href="#inventory-records"/);
  assert.match(page,/Audit My Inventory/);
@@ -31,6 +32,12 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(manager,/missing==="storage".*Add storage location/);
  assert.match(manager,/missing==="provenance".*Add provenance/);
  assert.match(manager,/textarea name="provenanceNotes"/);
+ assert.match(manager,/select name="packaging"/);
+ assert.match(manager,/Choose the packaging type/);
+ assert.match(manager,/Presentation humidor \/ case/);
+ assert.match(page,/"packaging"/);
+ assert.match(story,/focus=packaging#inventory-editor/);
+ assert.match(story,/"Add packaging"/);
  assert.doesNotMatch(page,/Confirm my collection/);
  assert.match(detail,/className="button secondary detailReturnLink"/);
  assert.match(detail,/Back to search results/);
