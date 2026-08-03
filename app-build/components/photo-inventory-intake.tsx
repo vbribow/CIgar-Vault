@@ -10,41 +10,195 @@ import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import { VitolaField } from "@/components/vitola-field";
 import { recentYearOptions } from "@/lib/year-options";
 
-const evidenceTypes=["Typed description","Cigar band","Single cigar","Sealed box","Open box","Box code","Habanos seal","Receipt / provenance"];
-const queueKey="cigar-vault:intake-drafts:v1";
-type QueuedDraft={draft:InventoryItem;photoNames:string[];confidence:CigarVisionResult["confidence"]|"manual";duplicateCount:number;uncertaintyCount:number;acknowledged:boolean;selected:boolean};
-type IntakePhotoKind="cigar"|"box"|"habanos-seal"|"box-code"|"provenance";
+const evidenceTypes = ["Typed description", "Cigar band", "Single cigar", "Sealed box", "Open box", "Box code", "Habanos seal", "Receipt / provenance"];
+const queueKey = "cigar-vault:intake-drafts:v1";
+const workingKey = "hojavia:intake-working:v1";
 
-function intakePhotoKind(evidenceType:string):IntakePhotoKind{
-  if(evidenceType==="Sealed box"||evidenceType==="Open box")return"box";
-  if(evidenceType==="Box code")return"box-code";
-  if(evidenceType==="Habanos seal")return"habanos-seal";
-  if(evidenceType==="Receipt / provenance")return"provenance";
-  return"cigar";
+type QueuedDraft = { draft: InventoryItem; photoNames: string[]; confidence: CigarVisionResult["confidence"] | "manual"; duplicateCount: number; uncertaintyCount: number; acknowledged: boolean; selected: boolean };
+type IntakePhotoKind = "cigar" | "box" | "habanos-seal" | "box-code" | "provenance";
+type IntakeStage = "identify" | "review" | "saved";
+type WorkingDraft = { query: string; brand: string; line: string; vitola: string; vintage: string; evidenceType: string; packaging: string; fullBoxQty: string; sticksPerBox: string; looseStickQty: string; stage: "identify" | "review" };
+
+function intakePhotoKind(evidenceType: string): IntakePhotoKind {
+  if (evidenceType === "Sealed box" || evidenceType === "Open box") return "box";
+  if (evidenceType === "Box code") return "box-code";
+  if (evidenceType === "Habanos seal") return "habanos-seal";
+  if (evidenceType === "Receipt / provenance") return "provenance";
+  return "cigar";
 }
 
-export function PhotoInventoryIntake({catalog,inventory,mode,onDraft,onApproved}:{catalog:CatalogCigar[];inventory:InventoryItem[];mode:DataMode;onDraft:(draft:InventoryItem)=>void;onApproved:(items:InventoryItem[])=>void}){
-  const[photos,setPhotos]=useState<Array<{name:string;url:string;file:File}>>([]),[brand,setBrand]=useState(""),[line,setLine]=useState(""),[vitola,setVitola]=useState(""),[vintage,setVintage]=useState("");
-  const[query,setQuery]=useState(""),[message,setMessage]=useState(""),[analyzing,setAnalyzing]=useState(false),[analysis,setAnalysis]=useState<CigarVisionResult|null>(null),[queue,setQueue]=useState<QueuedDraft[]>([]),[captureSession,setCaptureSession]=useState(0),[approving,setApproving]=useState(false),[readyForAnother,setReadyForAnother]=useState(false);
-  const[photoFailures,setPhotoFailures]=useState<Array<{inventoryId:string;reason:string}>>([]);
-  const draftPhotos=useRef(new Map<string,{file:File;kind:IntakePhotoKind}>());
-  const approvalInFlight=useRef(false);
-  const identificationInput=useRef<HTMLInputElement>(null);
-  const brands=useMemo(()=>[...new Set([...cigarBrands.map(item=>item.name),...catalog.map(item=>item.brand)])].sort(),[catalog]);
-  const lines=useMemo(()=>[...new Set(catalog.filter(item=>!brand||item.brand.toLowerCase()===brand.toLowerCase()).map(item=>item.line))].sort(),[brand,catalog]);
-  const vitolas=useMemo(()=>[...new Set(catalog.filter(item=>(!brand||item.brand.toLowerCase()===brand.toLowerCase())&&(!line||item.line.toLowerCase()===line.toLowerCase())).map(item=>item.vitola))].sort(),[brand,line,catalog]);
-  const duplicates=useMemo(()=>findInventoryDuplicates({brand,line,vitola,vintage},inventory),[brand,inventory,line,vintage,vitola]);
+export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onApproved }: { catalog: CatalogCigar[]; inventory: InventoryItem[]; mode: DataMode; onDraft: (draft: InventoryItem) => void; onApproved: (items: InventoryItem[]) => void }) {
+  const [photos, setPhotos] = useState<Array<{ name: string; url: string; file: File }>>([]);
+  const [brand, setBrand] = useState("");
+  const [line, setLine] = useState("");
+  const [vitola, setVitola] = useState("");
+  const [vintage, setVintage] = useState("");
+  const [query, setQuery] = useState("");
+  const [evidenceType, setEvidenceType] = useState(evidenceTypes[0]);
+  const [packaging, setPackaging] = useState("");
+  const [fullBoxQty, setFullBoxQty] = useState("");
+  const [sticksPerBox, setSticksPerBox] = useState("");
+  const [looseStickQty, setLooseStickQty] = useState("");
+  const [stage, setStage] = useState<IntakeStage>("identify");
+  const [workingReady, setWorkingReady] = useState(false);
+  const [message, setMessage] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<CigarVisionResult | null>(null);
+  const [queue, setQueue] = useState<QueuedDraft[]>([]);
+  const [captureSession, setCaptureSession] = useState(0);
+  const [approving, setApproving] = useState(false);
+  const [readyForAnother, setReadyForAnother] = useState(false);
+  const [photoFailures, setPhotoFailures] = useState<Array<{ inventoryId: string; reason: string }>>([]);
+  const draftPhotos=useRef(new Map<string, { file: File; kind: IntakePhotoKind }>());
+  const photosRef = useRef(photos);
+  const approvalInFlight = useRef(false);
+  const identificationInput = useRef<HTMLInputElement>(null);
+  const brands = useMemo(() => [...new Set([...cigarBrands.map((item) => item.name), ...catalog.map((item) => item.brand)])].sort(), [catalog]);
+  const lines = useMemo(() => [...new Set(catalog.filter((item) => !brand || item.brand.toLowerCase() === brand.toLowerCase()).map((item) => item.line))].sort(), [brand, catalog]);
+  const vitolas = useMemo(() => [...new Set(catalog.filter((item) => (!brand || item.brand.toLowerCase() === brand.toLowerCase()) && (!line || item.line.toLowerCase() === line.toLowerCase())).map((item) => item.vitola))].sort(), [brand, line, catalog]);
+  const duplicates = useMemo(() => findInventoryDuplicates({ brand, line, vitola, vintage }, inventory), [brand, inventory, line, vintage, vitola]);
 
-  useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(queueKey)||"[]");if(Array.isArray(saved)){setQueue(saved);if(saved.some((entry:QueuedDraft)=>entry.photoNames?.length))setMessage("Draft details were restored. For privacy and browser security, select the original photos again before approval if you want them attached.")}}catch{/* ignore damaged local draft cache */}},[]);
-  useEffect(()=>{localStorage.setItem(queueKey,JSON.stringify(queue))},[queue]);
-  useEffect(()=>()=>{photos.forEach(photo=>URL.revokeObjectURL(photo.url))},[photos]);
-  function applyIdentification(value:CigarVisionResult){setAnalysis(value);setBrand(value.brand);setLine(value.line);setVitola(value.vitola);setVintage(value.vintage||"");setMessage(`Identification ready (${value.confidence} confidence). Review every field before adding the draft.`)}
-  function chooseFile(event:ChangeEvent<HTMLInputElement>){const files=[...(event.target.files??[])];setMessage("");const error=validatePhotoSelection(photos.map(photo=>photo.file),files);event.target.value="";if(error){setMessage(error);return}setPhotos(current=>[...current,...files.map(file=>({name:file.name,url:URL.createObjectURL(file),file}))]);setAnalysis(null);setMessage(`${files.length} photo${files.length===1?"":"s"} ready. Add another view or identify now.`)}
-  async function preparedPhoto(file:File){const image=document.createElement("img"),source=URL.createObjectURL(file);try{await new Promise<void>((resolve,reject)=>{image.onload=()=>resolve();image.onerror=()=>reject(new Error(photoPreparationError(file.name)));image.src=source});const scale=Math.min(1,1400/Math.max(image.naturalWidth,image.naturalHeight)),canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));const context=canvas.getContext("2d");if(!context)throw new Error(photoPreparationError(file.name));context.drawImage(image,0,0,canvas.width,canvas.height);const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error(photoPreparationError(file.name))),"image/jpeg",.72));return new File([blob],file.name.replace(/\.[^.]+$/,".jpg"),{type:"image/jpeg"})}catch{throw new Error(photoPreparationError(file.name))}finally{URL.revokeObjectURL(source)}}
-  async function identify(kind:"photos"|"text"){setAnalyzing(true);setMessage("");try{let response:Response;if(kind==="text")response=await fetch("/api/photo-identification",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({query})});else{const form=new FormData();for(const photo of photos)form.append("photos",await preparedPhoto(photo.file));response=await fetch("/api/photo-identification",{method:"POST",body:form})}const result=await response.json();if(!response.ok)throw new Error(result.error||"Identification failed");applyIdentification(result.data)}catch(error){setMessage(error instanceof Error?error.message:"Identification failed")}finally{setAnalyzing(false)}}
-  function createDraft(event:FormEvent<HTMLFormElement>){event.preventDefault();const data=new FormData(event.currentTarget),fullBoxRaw=String(data.get("fullBoxQty")??"").trim(),sticksPerBoxRaw=String(data.get("sticksPerBox")??"").trim(),looseStickRaw=String(data.get("looseStickQty")??"").trim(),fullBoxQty=fullBoxRaw===""?undefined:Number(fullBoxRaw),sticksPerBox=sticksPerBoxRaw===""?undefined:Number(sticksPerBoxRaw),looseStickQty=looseStickRaw===""?undefined:Number(looseStickRaw),photoNames=photos.map(photo=>photo.name),evidenceType=String(data.get("evidenceType")||"Typed description");if(!brand.trim()||!line.trim()||!vitola.trim()){setMessage("Brand, cigar line, and exact vitola are required before a draft can enter review.");return}if([fullBoxQty,sticksPerBox,looseStickQty].some(value=>value!==undefined&&(!Number.isInteger(value)||value<0))||sticksPerBox===0){setMessage("Quantities must be whole numbers. Boxes and loose sticks may be 0; cigars per box must be greater than 0.");return}if((fullBoxQty??0)>0&&!sticksPerBox){setMessage("Enter cigars per box when the lot includes a full box.");return}const draft:InventoryItem={inventoryId:photoDraftId(),brand:brand.trim(),line:line.trim(),vitola:vitola.trim(),vintage:vintage.trim()||undefined,fullBoxQty,sticksPerBox,looseStickQty,packaging:String(data.get("packaging")||"").trim()||analysis?.packaging||undefined,boxCode:analysis?.boxCode||undefined,smokedQty:0,status:"Hold",priority:"Medium",provenanceNotes:`Intake evidence: ${photoNames.length?photoNames.join(", "):query||"manual description"}.`,notes:`Assisted intake (${evidenceType}): ${analysis?`AI ${analysis.confidence}: ${analysis.evidenceSummary}${analysis.uncertainties.length?` Uncertain: ${analysis.uncertainties.join("; ")}.`:""}`:"Identification entered manually."} ${duplicates.length?`${duplicates.length} possible duplicate(s) require acknowledgement.`:"No likely duplicate found."}`};if(photos[0])draftPhotos.current.set(draft.inventoryId,{file:photos[0].file,kind:intakePhotoKind(evidenceType)});const entry={draft,photoNames,confidence:analysis?.confidence||"manual" as const,duplicateCount:duplicates.length,uncertaintyCount:analysis?.uncertainties.length||0,acknowledged:duplicates.length===0,selected:true};setQueue(current=>[...current,entry]);onDraft(draft);setReadyForAnother(true);setMessage(`Draft saved locally and opened for review.${photos.length?" Its primary photo will attach automatically when approved.":""} Inventory has not changed.`);document.querySelector(".intakeContinue")?.scrollIntoView({behavior:"smooth",block:"center"})}
-  function nextAsset(){setPhotos(current=>{current.forEach(photo=>URL.revokeObjectURL(photo.url));return[]});setBrand("");setLine("");setVitola("");setVintage("");setQuery("");setAnalysis(null);setReadyForAnother(false);setMessage("Ready to document another cigar.");setCaptureSession(value=>value+1);document.querySelector(".photoIntake")?.scrollIntoView({behavior:"smooth"});window.setTimeout(()=>identificationInput.current?.focus(),350)}
-  async function approve(event:FormEvent<HTMLFormElement>){event.preventDefault();if(approvalInFlight.current)return;const selected=queue.filter(entry=>entry.selected),blocked=selected.filter(entry=>entry.duplicateCount&&!entry.acknowledged);if(!selected.length){setMessage("Select at least one draft.");return}if(blocked.length){setMessage("Acknowledge every possible duplicate before approval.");return}const form=new FormData(event.currentTarget),syncMaster=form.get("syncMaster")==="on";approvalInFlight.current=true;setApproving(true);setMessage("");setPhotoFailures([]);try{const response=await fetch("/api/inventory/intake",{method:"POST",headers:{"content-type":"application/json","x-founder-key":String(form.get("writeKey")||"")},body:JSON.stringify({drafts:selected.map(entry=>entry.draft),acknowledgedDuplicateIds:selected.filter(entry=>entry.acknowledged).map(entry=>entry.draft.inventoryId),syncMaster})});const result=await response.json();if(!response.ok)throw new Error(result.error||"Approval failed");const approvedInventory=[...result.data.inventory] as InventoryItem[];let attached=0,photoRetries=0;const failures:Array<{inventoryId:string;reason:string}>=[];for(let index=0;index<approvedInventory.length;index++){const item=approvedInventory[index],evidence=draftPhotos.current.get(item.inventoryId),queued=selected.find(entry=>entry.draft.inventoryId===item.inventoryId);if(!evidence){if(queued?.photoNames.length){photoRetries++;failures.push({inventoryId:item.inventoryId,reason:"The browser cannot restore the original file after a refresh."})}continue}const upload=new FormData();upload.set("kind",evidence.kind);upload.set("file",evidence.file);try{const photoResponse=await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}/photos`,{method:"POST",body:upload});const photoResult=await photoResponse.json();if(!photoResponse.ok)throw new Error(photoResult.error||"Photo attachment failed");approvedInventory[index]=photoResult.data;attached++}catch(error){photoRetries++;failures.push({inventoryId:item.inventoryId,reason:error instanceof Error?error.message:"Photo attachment failed."})}}setPhotoFailures(failures);onApproved(approvedInventory);const approved=new Set(selected.map(entry=>entry.draft.inventoryId));approved.forEach(id=>draftPhotos.current.delete(id));setQueue(current=>current.filter(entry=>!approved.has(entry.draft.inventoryId)));const masterStatus=syncMaster?` ${result.data.masterSaved} synchronized to the Smartsheet master.`:"";const photoStatus=attached?` ${attached} primary photo${attached===1?"":"s"} attached.`:"";const retryStatus=photoRetries?` ${photoRetries} photo${photoRetries===1?"":"s"} still need to be attached from the saved record.`:"";setMessage(`${result.data.approved} draft${result.data.approved===1?"":"s"} approved and saved to the platform.${masterStatus} ${result.data.valuationStatus}.${photoStatus}${retryStatus}`)}catch(error){setMessage(error instanceof Error?error.message:"Approval failed")}finally{approvalInFlight.current=false;setApproving(false)}}
-  const pending=queue.filter(entry=>entry.selected).length;
-  return <section className="photoIntake card" id="mobile-intake"><div><div className="eyebrow">Safe inventory intake</div><h2>Photograph it or describe it.</h2><p>AI creates suggestions only. Drafts survive refreshes, likely duplicates require acknowledgement, and nothing changes until selected drafts are approved.</p></div><div className="textIdentification"><input ref={identificationInput} aria-label="Describe the cigar or collection to identify" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Type a cigar or collection, e.g. Fuente La Gran Fumada"/><button type="button" className="button secondary" disabled={query.trim().length<3||analyzing} onClick={()=>identify("text")}>{analyzing?"Researching…":"Identify from text"}</button></div><div className="photoIntakeLayout"><div><label className="cameraCapture"><input key={`camera-${captureSession}`} type="file" accept="image/*" capture="environment" onChange={chooseFile}/><span>Open rear camera</span><small>Best for a single band, box, seal, or code</small></label><label className="photoDrop"><input key={captureSession} type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseFile}/>{photos.length?<div className="photoPreviewGrid">{photos.map(photo=><img key={photo.url} src={photo.url} alt={photo.name}/>)}</div>:<span><b>Choose existing photos</b><small>Up to 8 images of one physical asset</small></span>}</label><button type="button" className="button analyzePhotos" disabled={!photos.length||analyzing} onClick={()=>identify("photos")}>{analyzing?"Analyzing…":"Identify from photos"}</button></div><form key={`intake-${captureSession}`} onSubmit={createDraft}><label><span>Evidence type</span><select name="evidenceType">{evidenceTypes.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Brand *</span><input value={brand} onChange={event=>{setBrand(event.target.value);setLine("")}} list="photo-brand-options" required/><datalist id="photo-brand-options">{brands.map(value=><option key={value} value={value}/>)}</datalist></label><label><span>Line</span><input value={line} onChange={event=>setLine(event.target.value)} list="photo-line-options"/><datalist id="photo-line-options">{lines.map(value=><option key={value} value={value}/>)}</datalist></label><VitolaField value={vitola} onChange={setVitola} catalogVitolas={vitolas} constrained={Boolean(brand&&line)} help={brand&&line&&vitolas.length?`${vitolas.length} researched vitola${vitolas.length===1?"":"s"} available for this exact cigar.`:brand&&line?"No confirmed list yet; use Other / custom rather than guessing.":"Select a brand and line to narrow the vitolas."}/><label><span>Release / vintage year</span><select value={vintage} onChange={event=>setVintage(event.target.value)}><option value="">Choose the documented year</option>{recentYearOptions(vintage).map(year=><option key={year} value={year}>{year}</option>)}</select></label><label><span>Packaging</span><input name="packaging" defaultValue={analysis?.packaging||""} key={analysis?.packaging||"packaging"}/></label><label><span>Full boxes</span><input name="fullBoxQty" type="number" min="0" defaultValue={analysis?.fullBoxQty??undefined}/></label><label><span>Cigars per box</span><input name="sticksPerBox" type="number" min="1" defaultValue={analysis?.sticksPerBox??undefined}/></label><label><span>Loose sticks</span><input name="looseStickQty" type="number" min="0" defaultValue={analysis?.looseStickQty??undefined}/></label>{analysis&&<div className={`visionEvidence confidence-${analysis.confidence}`}><strong>{analysis.confidence} confidence</strong><p>{analysis.evidenceSummary}</p>{analysis.uncertainties.length>0&&<small>Check: {analysis.uncertainties.join(" · ")}</small>}</div>}{duplicates.length>0&&<div className="duplicateReview"><strong>{duplicates.length} possible existing lot(s)</strong>{duplicates.map(candidate=><a href={`/inventory/${encodeURIComponent(candidate.item.inventoryId)}`} target="_blank" key={candidate.item.inventoryId}>{candidate.item.brand} · {candidate.item.line} · {candidate.item.vitola} ({candidate.score}%)</a>)}</div>}<button className="button">Add to review queue</button></form></div>{message&&<output className="intakeMessage" aria-live="polite">{message}</output>}{readyForAnother&&<div className="intakeContinue"><button type="button" className="button" onClick={nextAsset}>Document another cigar</button><small>Your saved draft stays in the review queue.</small></div>}{photoFailures.length>0&&<div className="photoRetryList" aria-label="Photo attachment follow-up">{photoFailures.map(failure=><article key={failure.inventoryId}><strong>{failure.inventoryId} was saved</strong><small>{failure.reason}</small><a href={`/inventory/${encodeURIComponent(failure.inventoryId)}#record-tools`}>Open saved record and attach photo →</a></article>)}</div>}{queue.length>0&&<section className="intakeQueue"><div className="intakeQueueHead"><div><div className="eyebrow">Saved review queue</div><h3>{queue.length} draft{queue.length===1?"":"s"}</h3><small>{pending} selected · saved locally until approval</small></div>{!readyForAnother&&<button type="button" className="button secondary" onClick={nextAsset}>Document another cigar</button>}</div><div className="intakeQueueList">{queue.map((entry,index)=><article className={entry.duplicateCount&&!entry.acknowledged?"attention":"ready"} key={entry.draft.inventoryId}><input type="checkbox" checked={entry.selected} onChange={event=>setQueue(current=>current.map(item=>item.draft.inventoryId===entry.draft.inventoryId?{...item,selected:event.target.checked}:item))}/><div><span>Draft {index+1}</span><strong>{entry.draft.brand} · {entry.draft.line}</strong><small>{entry.draft.vitola} · {entry.photoNames.length} photo(s) · {entry.confidence}</small></div><b>{entry.duplicateCount?`${entry.duplicateCount} possible duplicate(s)`:entry.uncertaintyCount?`${entry.uncertaintyCount} check(s)`:"Ready"}</b><div><button type="button" onClick={()=>onDraft(entry.draft)}>Edit</button>{entry.duplicateCount>0&&<label className="acknowledge"><input type="checkbox" checked={entry.acknowledged} onChange={event=>setQueue(current=>current.map(item=>item.draft.inventoryId===entry.draft.inventoryId?{...item,acknowledged:event.target.checked}:item))}/>Reviewed</label>}<button type="button" className="danger" onClick={()=>setQueue(current=>current.filter(item=>item.draft.inventoryId!==entry.draft.inventoryId))}>Remove</button></div></article>)}</div><form className="intakeApproval" onSubmit={approve} aria-busy={approving}><label><input name="syncMaster" type="checkbox"/> Also synchronize selected drafts to the Smartsheet master</label><label><span>Founder write key {mode==="smartsheet"?"*":"(required for master sync)"}</span><input name="writeKey" type="password" required={mode==="smartsheet"}/></label><button className="button" disabled={!pending||approving}>{approving?"Approving…":`Approve ${pending} selected draft${pending===1?"":"s"}`}</button></form></section>}</section>;
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(queueKey) || "[]");
+      if (Array.isArray(saved)) {
+        setQueue(saved);
+        if (saved.some((entry: QueuedDraft) => entry.photoNames?.length)) setMessage("Draft details were restored. For privacy and browser security, select the original photos again before approval if you want them attached.");
+      }
+    } catch { /* ignore damaged local draft cache */ }
+  }, []);
+  useEffect(() => { localStorage.setItem(queueKey,JSON.stringify(queue)); }, [queue]);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(workingKey) || "null") as WorkingDraft | null;
+      if (saved) {
+        setQuery(saved.query || ""); setBrand(saved.brand || ""); setLine(saved.line || ""); setVitola(saved.vitola || ""); setVintage(saved.vintage || "");
+        setEvidenceType(saved.evidenceType || evidenceTypes[0]); setPackaging(saved.packaging || ""); setFullBoxQty(saved.fullBoxQty || ""); setSticksPerBox(saved.sticksPerBox || ""); setLooseStickQty(saved.looseStickQty || "");
+        setStage(saved.stage === "review" ? "review" : "identify");
+        setMessage("Your unfinished typed details were restored on this device. Photos are never stored in the browser and must be selected again.");
+      }
+    } catch { /* ignore damaged working draft */ }
+    setWorkingReady(true);
+  }, []);
+  useEffect(() => {
+    if (!workingReady || stage === "saved") return;
+    const working: WorkingDraft = { query, brand, line, vitola, vintage, evidenceType, packaging, fullBoxQty, sticksPerBox, looseStickQty, stage };
+    if (Object.values(working).some((value) => value && value !== "identify" && value !== evidenceTypes[0])) localStorage.setItem(workingKey, JSON.stringify(working));
+    else localStorage.removeItem(workingKey);
+  }, [brand, evidenceType, fullBoxQty, line, looseStickQty, packaging, query, stage, sticksPerBox, vintage, vitola, workingReady]);
+  useEffect(() => { photosRef.current = photos; }, [photos]);
+  useEffect(() => () => { photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.url)); }, []);
+
+  function applyIdentification(value: CigarVisionResult) {
+    setAnalysis(value); setBrand(value.brand); setLine(value.line); setVitola(value.vitola); setVintage(value.vintage || ""); setPackaging(value.packaging || "");
+    setFullBoxQty(value.fullBoxQty === undefined ? "" : String(value.fullBoxQty)); setSticksPerBox(value.sticksPerBox === undefined ? "" : String(value.sticksPerBox)); setLooseStickQty(value.looseStickQty === undefined ? "" : String(value.looseStickQty));
+    setStage("review"); setMessage(`Identification ready (${value.confidence} confidence). Review every field before adding the draft.`);
+  }
+  function chooseFile(event: ChangeEvent<HTMLInputElement>) {
+    const files = [...(event.target.files ?? [])]; setMessage(""); const error = validatePhotoSelection(photos.map((photo) => photo.file), files); event.target.value = "";
+    if (error) { setMessage(error); return; }
+    setPhotos((current) => [...current, ...files.map((file) => ({ name: file.name, url: URL.createObjectURL(file), file }))]); setAnalysis(null); setMessage(`${files.length} photo${files.length === 1 ? "" : "s"} ready. Add another view or identify now.`);
+  }
+  async function preparedPhoto(file: File) {
+    const image = document.createElement("img"), source = URL.createObjectURL(file);
+    try {
+      await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error(photoPreparationError(file.name))); image.src = source; });
+      const scale = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight)), canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d"); if (!context) throw new Error(photoPreparationError(file.name)); context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error(photoPreparationError(file.name))), "image/jpeg", .72));
+      return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+    } catch { throw new Error(photoPreparationError(file.name)); } finally { URL.revokeObjectURL(source); }
+  }
+  async function identify(kind: "photos" | "text") {
+    setAnalyzing(true); setMessage("");
+    try {
+      let response: Response;
+      if (kind === "text") response = await fetch("/api/photo-identification", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query }) });
+      else { const form = new FormData(); for (const photo of photos) form.append("photos", await preparedPhoto(photo.file)); response = await fetch("/api/photo-identification", { method: "POST", body: form }); }
+      const result = await response.json(); if (!response.ok) throw new Error(result.error || "Identification failed"); applyIdentification(result.data);
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Identification failed"); } finally { setAnalyzing(false); }
+  }
+  function createDraft(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const fullBoxRaw=fullBoxQty.trim(),sticksPerBoxRaw=sticksPerBox.trim(),looseStickRaw=looseStickQty.trim();
+    const fullBoxes = fullBoxRaw===""?undefined:Number(fullBoxRaw), sticks = sticksPerBoxRaw === "" ? undefined : Number(sticksPerBoxRaw), loose = looseStickRaw === "" ? undefined : Number(looseStickRaw), photoNames = photos.map((photo) => photo.name);
+    if (!brand.trim() || !line.trim() || !vitola.trim()) { setMessage("Brand, cigar line, and exact vitola are required before a draft can enter review."); return; }
+    if ([fullBoxes, sticks, loose].some((value) => value !== undefined && (!Number.isInteger(value) || value < 0)) || sticks === 0) { setMessage("Quantities must be whole numbers. Boxes and loose sticks may be 0; cigars per box must be greater than 0."); return; }
+    if ((fullBoxes ?? 0) > 0 && !sticks) { setMessage("Enter cigars per box when the lot includes a full box."); return; }
+    const draft: InventoryItem = { inventoryId: photoDraftId(), brand: brand.trim(), line: line.trim(), vitola: vitola.trim(), vintage: vintage.trim() || undefined, fullBoxQty: fullBoxes, sticksPerBox: sticks, looseStickQty: loose, packaging: packaging.trim() || analysis?.packaging || undefined, boxCode: analysis?.boxCode || undefined, smokedQty: 0, status: "Hold", priority: "Medium", provenanceNotes: `Intake evidence: ${photoNames.length ? photoNames.join(", ") : query || "manual description"}.`, notes: `Assisted intake (${evidenceType}): ${analysis ? `AI ${analysis.confidence}: ${analysis.evidenceSummary}${analysis.uncertainties.length ? ` Uncertain: ${analysis.uncertainties.join("; ")}.` : ""}` : "Identification entered manually."} ${duplicates.length ? `${duplicates.length} possible duplicate(s) require acknowledgement.` : "No likely duplicate found."}` };
+    if (photos[0]) draftPhotos.current.set(draft.inventoryId, { file: photos[0].file, kind: intakePhotoKind(evidenceType) });
+    const entry: QueuedDraft = { draft, photoNames, confidence: analysis?.confidence || "manual", duplicateCount: duplicates.length, uncertaintyCount: analysis?.uncertainties.length || 0, acknowledged: duplicates.length === 0, selected: true };
+    setQueue((current) => [...current, entry]); onDraft(draft); setReadyForAnother(true); setStage("saved"); localStorage.removeItem(workingKey);
+    setMessage(`Draft saved locally and opened for review.${photos.length ? " Its primary photo will attach automatically when approved." : ""} Inventory has not changed.`);
+    document.querySelector(".intakeCompletion")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function nextAsset() {
+    setPhotos((current) => { current.forEach((photo) => URL.revokeObjectURL(photo.url)); return []; }); setBrand(""); setLine(""); setVitola(""); setVintage(""); setQuery(""); setEvidenceType(evidenceTypes[0]); setPackaging(""); setFullBoxQty(""); setSticksPerBox(""); setLooseStickQty(""); setAnalysis(null); setReadyForAnother(false); setStage("identify"); localStorage.removeItem(workingKey);
+    setMessage("Ready to document another cigar."); setCaptureSession((value) => value + 1); document.querySelector(".photoIntake")?.scrollIntoView({ behavior: "smooth" }); window.setTimeout(() => identificationInput.current?.focus(), 350);
+  }
+  async function approve(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if(approvalInFlight.current)return;
+    const selected = queue.filter((entry) => entry.selected), blocked = selected.filter((entry) => entry.duplicateCount && !entry.acknowledged);
+    if (!selected.length) { setMessage("Select at least one draft."); return; } if (blocked.length) { setMessage("Acknowledge every possible duplicate before approval."); return; }
+    const form = new FormData(event.currentTarget), syncMaster = mode === "smartsheet" && form.get("syncMaster") === "on"; approvalInFlight.current = true; setApproving(true); setMessage(""); setPhotoFailures([]);
+    try {
+      const response = await fetch("/api/inventory/intake", { method: "POST", headers: { "content-type": "application/json", "x-founder-key": mode === "smartsheet" ? String(form.get("writeKey") || "") : "" }, body: JSON.stringify({ drafts: selected.map((entry) => entry.draft), acknowledgedDuplicateIds: selected.filter((entry) => entry.acknowledged).map((entry) => entry.draft.inventoryId), syncMaster }) });
+      const result = await response.json(); if (!response.ok) throw new Error(result.error || "Approval failed"); const approvedInventory = [...result.data.inventory] as InventoryItem[]; let attached = 0, photoRetries = 0; const failures: Array<{ inventoryId: string; reason: string }> = [];
+      for (let index = 0; index < approvedInventory.length; index++) {
+        const item = approvedInventory[index], evidence = draftPhotos.current.get(item.inventoryId), queued = selected.find((entry) => entry.draft.inventoryId === item.inventoryId);
+        if (!evidence) { if (queued?.photoNames.length) { photoRetries++; failures.push({ inventoryId: item.inventoryId, reason: "The browser cannot restore the original file after a refresh." }); } continue; }
+        const upload = new FormData(); upload.set("kind", evidence.kind); upload.set("file", evidence.file);
+        try { const photoResponse = await fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}/photos`, { method: "POST", body: upload }); const photoResult = await photoResponse.json(); if (!photoResponse.ok) throw new Error(photoResult.error||"Photo attachment failed"); approvedInventory[index] = photoResult.data; attached++; }
+        catch (error) { photoRetries++; failures.push({ inventoryId: item.inventoryId, reason: error instanceof Error ? error.message : "Photo attachment failed." }); }
+      }
+      setPhotoFailures(failures); onApproved(approvedInventory); const approved = new Set(selected.map((entry) => entry.draft.inventoryId)); approved.forEach((id) => draftPhotos.current.delete(id)); setQueue(current=>current.filter(entry=>!approved.has(entry.draft.inventoryId)));
+      const masterStatus = syncMaster ? ` ${result.data.masterSaved} synchronized to the Smartsheet master.` : "", photoStatus = attached ? ` ${attached} primary photo${attached === 1 ? "" : "s"} attached.` : "", retryStatus = photoRetries ? ` ${photoRetries} photo${photoRetries === 1 ? "" : "s"} still need to be attached from the saved record.` : "";
+      setMessage(`${result.data.approved} draft${result.data.approved === 1 ? "" : "s"} approved and saved to the platform.${masterStatus} ${result.data.valuationStatus}.${photoStatus}${retryStatus}`);
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Approval failed"); } finally { approvalInFlight.current = false; setApproving(false); }
+  }
+
+  const pending = queue.filter((entry) => entry.selected).length;
+  return <section className="photoIntake card" id="mobile-intake">
+    <header className="intakeHeader"><div className="eyebrow">Safe inventory intake</div><h2>Document one cigar with confidence.</h2><p>Identify what you have, review every suggested detail, then save a private draft. Nothing changes in your Vault until you approve it.</p></header>
+    <ol className="intakeProgress" aria-label="Documentation progress">
+      {(["identify", "review", "saved"] as IntakeStage[]).map((value, index) => <li key={value} className={stage === value ? "active" : (["review", "saved"].includes(stage) && index === 0) || (stage === "saved" && index === 1) ? "complete" : ""}><span>{index + 1}</span><strong>{value === "identify" ? "Identify" : value === "review" ? "Review" : "Saved"}</strong></li>)}
+    </ol>
+
+    {stage === "identify" && <section className="intakeStage" aria-labelledby="identify-stage-title">
+      <div><div className="eyebrow">Step 1 of 3</div><h3 id="identify-stage-title">Start with what you know.</h3><p>Type a description or photograph one physical asset. You can always enter details manually.</p></div>
+      <div className="textIdentification"><input ref={identificationInput} aria-label="Describe the cigar or collection to identify" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Type a cigar, e.g. Fuente La Gran Fumada"/><button type="button" className="button secondary" disabled={query.trim().length < 3 || analyzing} onClick={() => identify("text")}>{analyzing ? "Researching…" : "Identify from text"}</button></div>
+      <div className="photoIdentifyGrid"><div><label className="cameraCapture"><input key={`camera-${captureSession}`} type="file" accept="image/*" capture="environment" onChange={chooseFile}/><span>Open rear camera</span><small>Best for a single band, box, seal, or code</small></label><label className="photoDrop"><input key={captureSession} type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseFile}/>{photos.length ? <div className="photoPreviewGrid">{photos.map((photo) => <img key={photo.url} src={photo.url} alt={photo.name}/>)}</div> : <span><b>Choose existing photos</b><small>Up to 8 images of one physical asset</small></span>}</label><button type="button" className="button analyzePhotos" disabled={!photos.length||analyzing} onClick={() => identify("photos")}>{analyzing ? "Analyzing…" : "Identify from photos"}</button></div></div>
+      <div className="intakeStageActions"><button type="button" className="button secondary" onClick={() => { setAnalysis(null); setStage("review"); setMessage("Enter the details you know. Uncertain fields can stay blank."); }}>Enter details manually</button></div>
+    </section>}
+
+    {stage === "review" && <section className="intakeStage" aria-labelledby="review-stage-title">
+      <div className="intakeStageHead"><div><div className="eyebrow">Step 2 of 3</div><h3 id="review-stage-title">Review before saving.</h3><p>Suggestions are not authentication. Correct anything uncertain and leave unknown fields blank.</p></div><button type="button" className="textLink" onClick={() => setStage("identify")}>← Back to identification</button></div>
+      <div className="photoIntakeLayout">{photos.length > 0 && <div className="reviewPhotos"><div className="photoPreviewGrid">{photos.map((photo) => <img key={photo.url} src={photo.url} alt={photo.name}/>)}</div><small>{photos.length} selected photo{photos.length === 1 ? "" : "s"}</small></div>}
+        <form key={`intake-${captureSession}`} onSubmit={createDraft}>
+          <label><span>Evidence type</span><select value={evidenceType} onChange={(event) => setEvidenceType(event.target.value)}>{evidenceTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
+          <label><span>Brand *</span><input value={brand} onChange={(event) => { setBrand(event.target.value); setLine(""); }} list="photo-brand-options" required/><datalist id="photo-brand-options">{brands.map((value) => <option key={value} value={value}/>)}</datalist></label>
+          <label><span>Line *</span><input value={line} onChange={(event) => setLine(event.target.value)} list="photo-line-options" required/><datalist id="photo-line-options">{lines.map((value) => <option key={value} value={value}/>)}</datalist></label>
+          <VitolaField value={vitola} onChange={setVitola} catalogVitolas={vitolas} constrained={Boolean(brand && line)} help={brand && line && vitolas.length ? `${vitolas.length} researched vitola${vitolas.length === 1 ? "" : "s"} available for this exact cigar.` : brand && line ? "No confirmed list yet; use Other / custom rather than guessing." : "Select a brand and line to narrow the vitolas."}/>
+          <label><span>Release / vintage year</span><select value={vintage} onChange={(event) => setVintage(event.target.value)}><option value="">Choose the documented year</option>{recentYearOptions(vintage).map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+          <label><span>Packaging</span><input value={packaging} onChange={(event) => setPackaging(event.target.value)}/></label>
+          <label><span>Full boxes</span><input type="number" min="0" value={fullBoxQty} onChange={(event) => setFullBoxQty(event.target.value)}/></label>
+          <label><span>Cigars per box</span><input type="number" min="1" value={sticksPerBox} onChange={(event) => setSticksPerBox(event.target.value)}/></label>
+          <label><span>Loose sticks</span><input type="number" min="0" value={looseStickQty} onChange={(event) => setLooseStickQty(event.target.value)}/></label>
+          {analysis && <div className={`visionEvidence confidence-${analysis.confidence}`}><strong>{analysis.confidence} confidence</strong><p>{analysis.evidenceSummary}</p>{analysis.uncertainties.length > 0 && <small><b>Details to confirm:</b> {analysis.uncertainties.join(" · ")}</small>}</div>}
+          {duplicates.length > 0 && <div className="duplicateReview"><strong>Possible duplicate — review before saving</strong><p>This may already be in your Vault. Open the existing lot in a new tab and confirm before continuing.</p>{duplicates.map((candidate) => <a href={`/inventory/${encodeURIComponent(candidate.item.inventoryId)}`} target="_blank" rel="noreferrer" key={candidate.item.inventoryId}>{candidate.item.brand} · {candidate.item.line} · {candidate.item.vitola} ({candidate.score}% match)</a>)}</div>}
+          <div className="intakePrimaryAction"><button className="button">Save private draft</button><small>You will review the queue before your Vault changes.</small></div>
+        </form>
+      </div>
+    </section>}
+
+    {stage === "saved" && readyForAnother && <section className="intakeCompletion" aria-labelledby="saved-stage-title"><div className="eyebrow">Step 3 of 3 · Saved</div><h3 id="saved-stage-title">Your draft is safe.</h3><p>It is waiting in the review queue below. Choose the next action that fits your visit.</p><div><button type="button" className="button" onClick={nextAsset}>Document another cigar</button><a className="button secondary" href="/inventory#inventory-records">Return to Vault</a></div><small>Your saved draft stays in the review queue.</small></section>}
+    {message && <output className="intakeMessage" aria-live="polite">{message}</output>}
+    {photoFailures.length > 0 && <div className="photoRetryList" aria-label="Photo attachment follow-up">{photoFailures.map((failure) => <article key={failure.inventoryId}><strong>{failure.inventoryId} was saved</strong><small>{failure.reason}</small><a href={`/inventory/${encodeURIComponent(failure.inventoryId)}#record-tools`}>Open saved record and attach photo →</a></article>)}</div>}
+
+    {queue.length > 0 && <section className="intakeQueue"><div className="intakeQueueHead"><div><div className="eyebrow">Saved review queue</div><h3>{queue.length} draft{queue.length === 1 ? "" : "s"}</h3><small>{pending} selected · saved locally until approval</small></div>{stage !== "saved" && <button type="button" className="button secondary" onClick={nextAsset}>Document another cigar</button>}</div>
+      <div className="intakeQueueList">{queue.map((entry, index) => <article className={entry.duplicateCount && !entry.acknowledged ? "attention" : "ready"} key={entry.draft.inventoryId}><input type="checkbox" aria-label={`Select draft ${index + 1}`} checked={entry.selected} onChange={(event) => setQueue((current) => current.map((item) => item.draft.inventoryId === entry.draft.inventoryId ? { ...item, selected: event.target.checked } : item))}/><div><span>Draft {index + 1}</span><strong>{entry.draft.brand} · {entry.draft.line}</strong><small>{entry.draft.vitola} · {entry.photoNames.length} photo(s) · {entry.confidence}</small></div><b>{entry.duplicateCount ? `${entry.duplicateCount} possible duplicate(s)` : entry.uncertaintyCount ? `${entry.uncertaintyCount} detail check(s)` : "Ready"}</b><div><button type="button" onClick={() => onDraft(entry.draft)}>Edit</button>{entry.duplicateCount > 0 && <label className="acknowledge"><input type="checkbox" checked={entry.acknowledged} onChange={(event) => setQueue((current) => current.map((item) => item.draft.inventoryId === entry.draft.inventoryId ? { ...item, acknowledged: event.target.checked } : item))}/>Reviewed</label>}<button type="button" className="danger" onClick={() => setQueue((current) => current.filter((item) => item.draft.inventoryId !== entry.draft.inventoryId))}>Remove</button></div></article>)}</div>
+      <form className="intakeApproval" onSubmit={approve} aria-busy={approving}>{mode === "smartsheet" && <fieldset className="founderMasterControls"><legend>Founder master controls</legend><label><input name="syncMaster" type="checkbox"/> Also synchronize selected drafts to the Smartsheet master</label><label><span>Founder write key *</span><input name="writeKey" type="password" required/></label></fieldset>}<button className="button" disabled={!pending||approving}>{approving ? "Approving…" : `Approve ${pending} selected draft${pending === 1 ? "" : "s"}`}</button></form>
+    </section>}
+  </section>;
 }
