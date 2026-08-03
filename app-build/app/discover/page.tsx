@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { loadCatalog } from "@/lib/catalog";
 import { loadInventory } from "@/lib/inventory";
-import { cigarProductKey } from "@/lib/cigar-identity";
 import { GuidedCigarExplorer } from "@/components/guided-cigar-explorer";
 import { brand } from "@/lib/brand";
 import type { CatalogCigar, InventoryItem } from "@/lib/types";
+import { discoverViewData } from "@/lib/discover-view-data";
 import "./guided-explorer.css";
 export const dynamic = "force-dynamic";
 export const metadata:Metadata={title:"Discover",description:"Discover premium cigars through stories, trusted knowledge, collector goals, and the people and places behind the craft."};
@@ -22,21 +22,20 @@ const trustLevels=[
 ] as const;
 export default async function DiscoverPage(){
   let inventory: InventoryItem[] = [];
-  try { inventory = await loadInventory(); } catch { /* A provider interruption must not imply inventory loss. */ }
+  try {
+    const loadedInventory = await loadInventory();
+    inventory = Array.isArray(loadedInventory) ? loadedInventory : [];
+  } catch { /* A provider interruption must not imply inventory loss. */ }
   let catalog: CatalogCigar[] = [];
-  try { catalog = await loadCatalog(inventory); } catch { /* Discover remains available while the optional catalog provider is unavailable. */ }
-  const safeInventory=inventory.filter(item=>item&&typeof item.brand==="string"&&typeof item.line==="string"&&typeof item.vitola==="string");
-  const safeCatalog=catalog.filter(item=>item&&typeof item.brand==="string"&&typeof item.line==="string"&&typeof item.vitola==="string");
-  const ownedProducts=new Set(safeInventory.map(cigarProductKey));
-  const ownedBrands=new Set(safeInventory.map(item=>item.brand.trim().toLowerCase()));
-  const candidates=safeCatalog
-    .filter(item=>!ownedProducts.has(cigarProductKey(item)))
-    .sort((a,b)=>Number(ownedBrands.has(a.brand.toLowerCase()))-Number(ownedBrands.has(b.brand.toLowerCase()))||Number(Boolean(b.sourceUrl))-Number(Boolean(a.sourceUrl))||a.brand.localeCompare(b.brand))
-    .filter((item,index,all)=>all.findIndex(candidate=>candidate.catalogId===item.catalogId)===index);
+  try {
+    const loadedCatalog = await loadCatalog(inventory);
+    catalog = Array.isArray(loadedCatalog) ? loadedCatalog : [];
+  } catch { /* Discover remains available while the optional catalog provider is unavailable. */ }
+  const { candidates, ownedBrands } = discoverViewData(inventory, catalog);
   return <main className="shell discoverPage">
   <section className="discoverHero"><div><div className="eyebrow">{brand.name} Discover</div><h1>Find the next meaningful cigar.</h1><p className="lede">Start with who you are, what you want to experience, or what you hope to learn. {brand.name} connects every recommendation to story, context, and visible sources—not an advertising feed.</p><div className="ctaRow"><a className="button" href="#guided-explorer">Begin guided exploration</a><a className="button secondary" href="/learn">Learn before choosing</a></div></div><div className="discoverImagePair"><figure><img src="/editorial/tobacco-field.jpg" width="1800" height="1013" decoding="async" alt="Broadleaf tobacco growing around a traditional curing shed"/><figcaption>From the field</figcaption></figure><figure><img src={"/editorial/cigar-roller-hojavia.jpg"} width="1540" height="1021" decoding="async" alt="A cigar artisan working with tobacco leaves at a rolling table"/><figcaption>Through skilled hands</figcaption></figure></div></section>
   <section className="section"><div className="sectionHead"><div><div className="eyebrow">Begin with intention</div><h2>What are you hoping to accomplish?</h2></div></div><div className="discoverIntentions">{intentions.map(([title,body,href,action],index)=><a href={href} id={index===0?"new-collector":index===1?"explore-new":undefined} key={title}><span>0{index+1}</span><h3>{title}</h3><p>{body}</p><b>{action} →</b></a>)}</div></section>
-  <GuidedCigarExplorer catalog={candidates} ownedBrands={[...ownedBrands]}/>
+  <GuidedCigarExplorer catalog={candidates} ownedBrands={ownedBrands}/>
   <section className="cultureEditorial"><div className="cultureEditorialImage"><img src="/editorial/tobacco-field.jpg" width="1800" height="1013" loading="lazy" decoding="async" alt="A broadleaf tobacco field and curing shed in Connecticut"/></div><div><div className="eyebrow">Every cigar tells a story</div><h2>The collection is only the beginning.</h2><p>A complete cigar record should honor the seed and soil, the farmers who cultivate the leaf, the people who ferment and sort it, the blender’s intent, the roller’s skill, and the collectors who carry its story forward.</p><div className="cultureStoryLinks"><a href="/catalog"><span>Origin</span><strong>Regions, factories, and tobacco</strong></a><a href="/learn"><span>Craft</span><strong>Blending, construction, aging, and ritual</strong></a><a href="/community"><span>People</span><strong>Learn from collectors and industry voices</strong></a></div></div></section>
   <section className="trustFramework"><div><div className="eyebrow">The {brand.name} Trust Framework</div><h2>Always know what you’re reading.</h2><p>Every meaningful claim should identify its source, date, confidence, and relationship to the collector.</p></div><div className="trustLevelList">{trustLevels.map(([level,name,body])=><article key={level}><span>{level}</span><div><strong>{name}</strong><small>{body}</small></div></article>)}</div></section>
   <section className="imageCredits"><span>Documentary photography</span><a href="https://unsplash.com/photos/23v1D4j8vO4">Tobacco field by Rusty Watson ↗</a><a href="https://unsplash.com/photos/vHCkVUogO-w">Cigar artisan by Austin ↗</a></section>
