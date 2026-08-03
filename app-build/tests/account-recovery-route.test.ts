@@ -15,3 +15,10 @@ test("vault recovery writes restored records and its audit atomically", () => {
   assert.match(route, /kind:"integrity" as const/);
   assert.doesNotMatch(route, /index\+=500/);
 });
+
+test("vault recovery requires explicit intent and flags different-account files", () => {
+  assert.match(route, /recoveryConfirmationPhrase\(value\.mode\)/);
+  assert.match(route, /ownerMatch==="different"&&!input\.acknowledgeDifferentOwner/);
+  assert.match(route, /sourceOwnerMatch:ownerMatch/);
+  assert.match(previewRoute, /ownerMatch:recoveryOwnerMatch/);
+});

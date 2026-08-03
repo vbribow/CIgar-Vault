@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { InventoryItem, ProfessionalRating } from "./types";
 import { RatingResearchSchema } from "./cigar-ratings";
 
-export const RatingDraftRecordSchema=z.object({inventoryId:z.string().min(1),researchedAt:z.string().datetime(),ratings:RatingResearchSchema.shape.ratings,notes:z.string(),acknowledgedNotificationIds:z.array(z.string()).optional()});
+export const RatingDraftRecordSchema=z.object({inventoryId:z.string().min(1),researchedAt:z.string().datetime(),ratings:RatingResearchSchema.shape.ratings,notes:z.string(),identityVerifiedAtResearch:z.boolean().optional(),acknowledgedNotificationIds:z.array(z.string()).optional()});
 export type RatingDraftRecord=z.infer<typeof RatingDraftRecordSchema>;
 
 export function ratingNeedsMonitoring(item:InventoryItem,ratings:ProfessionalRating[],draft:RatingDraftRecord|undefined,now=new Date()){

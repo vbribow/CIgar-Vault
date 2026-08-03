@@ -65,6 +65,7 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
   }
   const mode = modeResult.value;
   const inventory = cigarInventoryRecords(inventoryResult.value, collectionsResult.value);
+  const requestedInventory=filters.inventoryId?inventory.find(item=>item.inventoryId===filters.inventoryId):undefined;
   const valuations = valuationsResult.value;
   const activeInventory=inventory.filter(item=>(item.currentQty??0)>0);
   const scopedInventory=filters.collectionId?activeInventory.filter(item=>item.collectionId===filters.collectionId):activeInventory;
@@ -151,6 +152,8 @@ export default async function ValuationsPage({ searchParams }: { searchParams: P
           <small>{deferredCount} evidence gap{deferredCount===1?"":"s"} deferred · {totals.dueSoon + totals.stale} aging</small>
         </article>
       </section>
+      {requestedInventory&&<section className="collectionValuationScope"><div><div className="eyebrow">Selected Vault record · {requestedInventory.inventoryId}</div><h2>{requestedInventory.brand} {requestedInventory.line}</h2><p>{requestedInventory.vitola}{requestedInventory.vintage?` · ${requestedInventory.vintage}`:" · year unspecified"}. All pricing and evidence controls below retain this exact lot.</p></div><a className="button secondary" href={`/inventory/${encodeURIComponent(requestedInventory.inventoryId)}`}>Return to cigar record</a></section>}
+      {filters.inventoryId&&!requestedInventory&&<section className="card inventoryDataNotice" role="alert"><strong>The requested Vault record is unavailable.</strong><p>No different cigar was selected for pricing or valuation research.</p></section>}
       <aside className="marketTrust"><div><TrustMark kind="Expert" compact/><span>Linked retailer, publication, or auction evidence</span></div><div><TrustMark kind="AI" compact/><span>AI-assisted source finding and normalization</span></div><a href="/trust">Understand the evidence labels →</a></aside>
       <section className="valueEvidenceStandard" aria-labelledby="value-evidence-standard">
         <header><div className="eyebrow">Market-specific evidence standards</div><h2 id="value-evidence-standard">Precision must be earned.</h2><p>New World cigars can establish retail consensus from multiple exact listings. Habanos retain the stricter completed-sale standard. A listing is never called a sale.</p></header>

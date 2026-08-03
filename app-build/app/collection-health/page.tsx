@@ -37,6 +37,7 @@ export default async function CollectionHealth() {
   const membership = auditCollectionMembership(activeItems, collections);
   const library = auditCollectionTemplateLibrary(collectionTemplates);
   const reviews = membership.rows.filter((row) => row.classification === "Review");
+  const hasActiveInventory = activeItems.length > 0;
   const checks = [
     {
       key: "quantity",
@@ -69,7 +70,9 @@ export default async function CollectionHealth() {
       missing: activeItems.filter((item) => !item.provenanceNotes),
     },
   ];
-  const average = Math.round(activeItems.reduce((sum, item) => sum + inventoryCompleteness(item), 0) / Math.max(activeItems.length, 1));
+  const average = hasActiveInventory
+    ? Math.round(activeItems.reduce((sum, item) => sum + inventoryCompleteness(item), 0) / activeItems.length)
+    : undefined;
   const ready = activeItems.filter((item) => inventoryCompleteness(item) === 100).length;
 
   return <main className="shell">
@@ -93,21 +96,40 @@ export default async function CollectionHealth() {
           <a className="button secondary" href="/inventory-count">Reconcile physical count</a>
         </div>
       </div>
-      <div className="healthScore">
+      {hasActiveInventory ? <div
+        className="healthScore"
+        role="progressbar"
+        aria-label="Active inventory completeness"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={average}
+      >
         <strong>{average}%</strong>
         <span>active inventory completeness</span>
         <small>{ready} of {activeItems.length} active lots fully documented</small>
-      </div>
+      </div> : <div className="healthScore healthScoreEmpty">
+        <strong>Ready</strong>
+        <span>Add your first active lot to begin an inventory audit.</span>
+        <small>No completeness score is calculated until an active cigar is documented.</small>
+      </div>}
     </section>
 
-    <section className="healthGrid" aria-label="Inventory audit categories">
+    {hasActiveInventory ? <section className="healthGrid" aria-label="Inventory audit categories">
       {checks.map((check) => <a className="healthCard" href={`/inventory?missing=${check.key}&active=1#inventory-records`} key={check.key}>
         <div><span>{check.label}</span><strong>{check.missing.length}</strong></div>
         <p>{check.missing.length ? `${check.missing.length} active lots need attention` : "Complete across active inventory"}</p>
         <small>{check.detail}</small>
         <b>{check.missing.length ? "Review these records →" : "Complete ✓"}</b>
       </a>)}
-    </section>
+    </section> : <section className="card healthUnavailable" aria-labelledby="empty-audit-title">
+      <div className="eyebrow">Your audit begins with a record</div>
+      <h2 id="empty-audit-title">There is no active inventory to review yet.</h2>
+      <p>Add a cigar, box, or collection lot first. Hojavía will then guide you through quantity, value, production year, storage, and provenance without treating undocumented information as complete.</p>
+      <div className="heroActions">
+        <a className="button" href="/inventory#mobile-intake">Add inventory</a>
+        <a className="button secondary" href="/collections">Browse collections</a>
+      </div>
+    </section>}
 
     <section className="section">
       <div className="sectionHead">
@@ -136,7 +158,7 @@ export default async function CollectionHealth() {
           <p>Collection links require evidence. The same cigar may remain available as both a standalone lot and a collection component without combining quantities or provenance.</p>
         </div>
         <span className={`statusBadge ${membership.ready ? "statusOwned" : "statusMissing"}`}>
-          {membership.ready ? "Audit clear" : `${reviews.length + membership.collectionIssues.length} need review`}
+          {!hasActiveInventory ? "No active lots" : membership.ready ? "Audit clear" : `${reviews.length + membership.collectionIssues.length} need review`}
         </span>
       </div>
       <div className="healthGrid">
@@ -157,7 +179,7 @@ export default async function CollectionHealth() {
       </div>}
     </section>
 
-    <section className="section">
+    {hasActiveInventory && <section className="section">
       <div className="sectionHead">
         <div><div className="eyebrow">Highest impact</div><h2>Complete these next</h2></div>
         <a className="button secondary" href="/inventory?missing=quantity&active=1#inventory-records">Start with quantities</a>
@@ -165,9 +187,16 @@ export default async function CollectionHealth() {
       <div className="cleanupList">
         {[...activeItems].sort((a, b) => inventoryCompleteness(a) - inventoryCompleteness(b)).slice(0, 8).map((item) => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}>
           <span><strong>{item.brand} {item.line}</strong><small>{item.inventoryId} · {item.vitola}</small></span>
-          <span className="completionMeter"><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{inventoryCompleteness(item)}%</b></span>
+          <span
+            className="completionMeter"
+            role="progressbar"
+            aria-label={`${item.brand} ${item.line} documentation completeness`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={inventoryCompleteness(item)}
+          ><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{inventoryCompleteness(item)}%</b></span>
         </a>)}
       </div>
-    </section>
+    </section>}
   </main>;
 }

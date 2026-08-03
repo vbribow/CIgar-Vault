@@ -10,7 +10,7 @@ import { EvidenceLabel } from "@/components/evidence-label";
 import { canonicalCigarIdentity } from "@/lib/cigar-identity";
 import { cigarAdvisorActions, cigarAdvisorHref } from "@/lib/cigar-advisor-links";
 import { cigarStoryHref } from "@/lib/cigar-story";
-import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType, marketRangeText } from "@/lib/valuation-evidence";
+import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType, marketRangeText, strongestEvidenceUrl } from "@/lib/valuation-evidence";
 import { climateIntelligence } from "@/lib/climate-intelligence";
 import { collectionContentsSummary, inventoryCollectionRelationships, isPresentationInventoryRecord } from "@/lib/collection-presentation";
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
@@ -80,7 +80,8 @@ export default async function CigarPage({
   const history = smokes.filter((s) => s.inventoryId === inventoryId);
   const smokingScorecards = buildSmokingExperienceScorecards(item, items, smokes);
   const values = valuations.filter((v) => v.inventoryId === inventoryId);
-  const latestValue = [...values].sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];
+  const rawLatestValue = [...values].sort((a,b)=>b.valuationDate.localeCompare(a.valuationDate))[0];
+  const latestValue = rawLatestValue ? { ...rawLatestValue, sourceUrl: strongestEvidenceUrl(rawLatestValue.sourceUrl) } : undefined;
   const latestSale = values
     .filter(isVerifiedCompletedSale)
     .sort((a, b) => (b.lastSaleDate || b.valuationDate).localeCompare(a.lastSaleDate || a.valuationDate))[0];

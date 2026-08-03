@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import type { DataMode } from "@/lib/config";
-import { existingRetailPriceForBasis, normalizeManualRetailPrice } from "@/lib/retail-pricing";
+import { existingRetailPriceForBasis, normalizeManualRetailPrice, requestedRetailInventory } from "@/lib/retail-pricing";
 import type { InventoryItem } from "@/lib/types";
 import { createClientUuid } from "@/lib/client-uuid";
 
@@ -13,7 +13,8 @@ const inputValue = (value: number | undefined) => value === undefined ? "" : Str
 
 export function RetailPricingControls({ items, mode, initialInventoryId }: { items: InventoryItem[]; mode: DataMode; initialInventoryId?: string }) {
   const router = useRouter();
-  const initialItem = items.find(item => item.inventoryId === initialInventoryId) ?? items[0];
+  // A requested lot must never fall through to the first unrelated cigar.
+  const initialItem = requestedRetailInventory(items,initialInventoryId);
   const [inventoryId, setInventoryId] = useState(initialItem?.inventoryId ?? "");
   const [basis, setBasis] = useState<"Per cigar" | "Full box">("Per cigar");
   const [price, setPrice] = useState(inputValue(existingRetailPriceForBasis(initialItem, "Per cigar")));

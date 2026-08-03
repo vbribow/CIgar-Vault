@@ -42,13 +42,22 @@ The following completed work must be included in the larger release batch:
 - Place the guided checklist before the profile form on mobile screens.
 - Keep backup restoration available while placing its advanced controls inside “Restore from an existing backup.”
 - Add automated coverage for the mobile first-session experience.
+- Present an empty vault as ready to begin—not as 0% complete—and avoid falsely marking empty audit categories complete.
+- Expose collection-completeness progress to screen readers.
+- Make Vault recovery show exact record impact, distinguish same-account and different-account exports, and require intention-specific confirmation before replacing conflicts.
+- Explain which account data is recoverable, which settings remain reference-only, and which unfinished work stays on the original device.
+- Keep password-reset and import controls recoverable after network or response failures, with accessible status messaging.
 
 ## Validation already completed
 
 - Focused quality checks: 10 of 10 passed.
+- Collection-health quality checks: 4 of 4 passed.
+- Recovery-safety focused checks: 20 of 20 passed.
+- Complete application test suite: 810 of 810 passed.
 - Type checking: passed.
 - Production build: passed.
-- Full regression suite: still required immediately before release because the prior run was blocked by the workspace credit limit.
+- Internal navigation audit: 165 routes passed.
+- A fresh complete regression run remains required immediately before the eventual combined release if relevant application files change again.
 
 ## Larger-batch release checklist
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType, marketRangeText } from "../lib/valuation-evidence";
+import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType, marketRangeText, strongestEvidenceUrl } from "../lib/valuation-evidence";
 
 const base = { valuationId:"V", inventoryId:"I", valuationDate:"2026-07-24" };
 
@@ -60,4 +60,9 @@ test("an unsold listing has one plain universal market-asking label",()=>{
   assert.equal(marketAskingPriceLabel,"Market asking price — no confirmed sale");
   assert.notEqual(marketAskingPriceLabel,"Market value");
   assert.notEqual(marketAskingPriceLabel,"Verified completed sale");
+});
+
+test("legacy concatenated evidence text produces one navigable strongest-source URL",()=>{
+  assert.equal(strongestEvidenceUrl("https://www.onlinecigarauctions.com/%20(sold-lots%20pages\\)%20and%20https://www.havahavana.com/products/juan-lopez-seleccion-no-2"),"https://www.havahavana.com/products/juan-lopez-seleccion-no-2");
+  assert.equal(strongestEvidenceUrl("https://example.com/direct"),"https://example.com/direct");
 });

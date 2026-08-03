@@ -4,6 +4,7 @@ import { loadInventory } from "@/lib/inventory";
 import { loadCatalog } from "@/lib/catalog";
 import { buildCanonicalCigarRecord, canonicalCatalogHref } from "@/lib/canonical-cigar-record";
 import type { IndustryPackagingPayload, IndustryProductPayload, IndustryReleasePayload } from "@/lib/industry-registry";
+import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import { TrustMark } from "@/components/trust-mark";
 import { publicPageMetadata } from "@/lib/seo";
 import { brand } from "@/lib/brand";
@@ -13,8 +14,11 @@ export const dynamic="force-dynamic";
 export const metadata:Metadata=publicPageMetadata("Official Product & Release Registry","Official products, releases, packaging revisions, and evidence-aware canonical cigar records.","/industry/registry");
 
 export default async function IndustryRegistryPage(){
-  const[inventory,industry]=await Promise.all([loadInventory(),loadPublicIndustry()]);
-  const catalog=await loadCatalog(inventory);
+  const [inventoryResult, industryResult] = await Promise.allSettled([loadInventory(), loadPublicIndustry()]);
+  const inventory: InventoryItem[] = inventoryResult.status === "fulfilled" ? inventoryResult.value : [];
+  const industry = industryResult.status === "fulfilled" ? industryResult.value : { profiles: [], publications: [], revisions: [], registryRecords: [] };
+  let catalog: CatalogCigar[] = [];
+  try { catalog = await loadCatalog(inventory); } catch { /* Public registry remains available when the optional catalog provider is unavailable. */ }
   const products=industry.registryRecords.filter(item=>item.recordType==="product");
   const releases=industry.registryRecords.filter(item=>item.recordType==="release");
   const packaging=industry.registryRecords.filter(item=>item.recordType==="packaging");

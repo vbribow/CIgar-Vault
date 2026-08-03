@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AccountExportSchema, buildRecoveryPreview, recordsForRecovery } from "../lib/account-recovery";
+import { AccountExportSchema, buildRecoveryPreview, recordsForRecovery, recoveryConfirmationPhrase, recoveryOwnerMatch } from "../lib/account-recovery";
 
 const existing=[{kind:"inventory",record_id:"I1",payload:{brand:"Cohiba",qty:10}},{kind:"humidors",record_id:"H1",payload:{name:"Main"}}];
 const incoming=[{kind:"inventory",record_id:"I1",payload:{qty:20,brand:"Cohiba"}},{kind:"humidors",record_id:"H1",payload:{name:"Main"}},{kind:"sensors",record_id:"S1",payload:{provider:"Tempi"}}];
@@ -13,4 +13,14 @@ test("recovery accepts legacy exports and current Hojavía exports",()=>{
   assert.equal(AccountExportSchema.safeParse({...base,format:"cigar-vault-account-export",version:1}).success,true);
   assert.equal(AccountExportSchema.safeParse({...base,format:"hojavia-account-export",version:2}).success,true);
   assert.equal(AccountExportSchema.safeParse({...base,format:"hojavia-account-export",version:1}).success,false);
+});
+test("recovery identifies exact, same-email, and different-account exports",()=>{
+  assert.equal(recoveryOwnerMatch({userId:"U1",email:"owner@example.com"},{userId:"U1",email:"new@example.com"}),"account");
+  assert.equal(recoveryOwnerMatch({userId:"OLD",email:"Owner@Example.com"},{userId:"NEW",email:"owner@example.com"}),"email");
+  assert.equal(recoveryOwnerMatch({userId:"U1",email:"owner@example.com"},{userId:"U2",email:"other@example.com"}),"different");
+});
+test("each recovery behavior requires an intention-specific phrase",()=>{
+  assert.equal(recoveryConfirmationPhrase("missing"),"RESTORE");
+  assert.equal(recoveryConfirmationPhrase("replace"),"REPLACE");
+  assert.equal(recoveryConfirmationPhrase("skip"),"AUDIT");
 });

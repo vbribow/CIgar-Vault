@@ -35,6 +35,23 @@ export type RecoveryPreview = {
   byKind: Array<{kind:string;total:number;missing:number;conflicts:number;identical:number}>;
 };
 
+export type RecoveryOwnerMatch = "account" | "email" | "different";
+
+export function recoveryOwnerMatch(
+  owner: { userId: string; email?: string },
+  current: { userId: string; email?: string },
+): RecoveryOwnerMatch {
+  if (owner.userId === current.userId) return "account";
+  if (owner.email && current.email && owner.email.trim().toLowerCase() === current.email.trim().toLowerCase()) return "email";
+  return "different";
+}
+
+export function recoveryConfirmationPhrase(mode: RecoveryModeValue) {
+  if (mode === "replace") return "REPLACE";
+  if (mode === "skip") return "AUDIT";
+  return "RESTORE";
+}
+
 function stable(value: unknown): string {
   if(Array.isArray(value))return `[${value.map(stable).join(",")}]`;
   if(value&&typeof value==="object")return `{${Object.entries(value as Record<string,unknown>).sort(([a],[b])=>a.localeCompare(b)).map(([key,item])=>`${JSON.stringify(key)}:${stable(item)}`).join(",")}}`;
