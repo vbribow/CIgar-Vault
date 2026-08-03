@@ -2,6 +2,7 @@
 import { FormEvent, useRef, useState } from "react";
 import type { WishlistItem } from "@/lib/types";
 import { OFAC_CUBAN_GOODS_URL } from "@/lib/habanos-protection";
+import { recentYearOptions } from "@/lib/year-options";
 
 const today=()=>new Date().toISOString().slice(0,10);
 
@@ -20,7 +21,7 @@ export function WishlistPurchaseIntake({items}:{items:WishlistItem[]}){
     {message&&<output className="wishlistMessage">{message}</output>}<div className="purchaseForms">{pending.map(item=><form onSubmit={event=>convert(event,item)} key={item.wishlistId}><header><div><small>{item.brand} · {item.line}</small><h3>{item.vitola}</h3></div><span>Purchased</span></header><div className="purchaseFields">
       <label><span>Quantity *</span><input name="quantity" type="number" min="1" required/></label>
       <label><span>Packaging</span><input name="packaging" placeholder="Box, presentation, loose sticks"/></label>
-      <label><span>Vintage / release year</span><input name="vintage"/></label>
+      <label><span>Vintage / release year</span><select name="vintage"><option value="">Choose the documented year</option>{recentYearOptions().map(year=><option key={year} value={year}>{year}</option>)}</select></label>
       <label><span>Total purchase cost</span><input name="totalCost" type="number" min="0" step=".01"/></label>
       <label><span>Purchase date *</span><input name="purchaseDate" type="date" required defaultValue={today()}/></label>
       <label><span>Seller</span><input name="acquisitionSeller" placeholder="Legal name or marketplace identity"/></label>

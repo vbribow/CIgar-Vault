@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { brand } from "@/lib/brand";
 import { recordRevision } from "@/lib/record-revision";
+import { recentYearOptions } from "@/lib/year-options";
 import type { InventoryItem } from "@/lib/types";
 
 type RequiredInventoryFact = "vintage" | "actualCost" | "provenanceNotes" | "storageLocationId";
@@ -109,13 +110,17 @@ export function RecommendationFactEditor({
                 <option value="">Choose a documented location</option>
                 {choices.map(choice => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
               </select>
+            ) : copy.kind === "year" ? (
+              <select name={fact} defaultValue={String(item[fact] ?? "")} autoFocus required>
+                <option value="">Choose the documented year</option>
+                {recentYearOptions(item[fact] as string | number | undefined).map(year => <option value={year} key={year}>{year}</option>)}
+              </select>
             ) : (
               <input
                 name={fact}
                 type="number"
-                inputMode={copy.kind === "year" ? "numeric" : "decimal"}
-                min={copy.kind === "year" ? "1800" : "0"}
-                max={copy.kind === "year" ? new Date().getFullYear() : undefined}
+                inputMode="decimal"
+                min="0"
                 step={copy.kind === "money" ? "0.01" : "1"}
                 defaultValue={String(item[fact] ?? "")}
                 autoFocus

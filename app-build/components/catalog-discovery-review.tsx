@@ -3,6 +3,7 @@ import { useMemo,useState } from "react";
 import type { CatalogCigar } from "@/lib/types";
 import { classifyDiscovery } from "@/lib/brand-research";
 import { groupCatalogDiscoveries,type CatalogDiscoveryRelease } from "@/lib/catalog-discovery";
+import { recentYearOptions } from "@/lib/year-options";
 
 type Decision="Approved"|"Rejected";
 
@@ -132,7 +133,7 @@ export function CatalogDiscoveryReview({initialItems,existingCatalog}:{initialIt
                 <label><span>Dimensions</span><input value={item.dimensions||""} onChange={event=>update(item.catalogId,"dimensions",event.target.value)}/></label>
                 <label><span>Stated strength</span><input value={item.strength||""} onChange={event=>update(item.catalogId,"strength",event.target.value)}/></label>
                 <label><span>Packaging</span><input value={item.packaging||""} onChange={event=>update(item.catalogId,"packaging",event.target.value)}/></label>
-                <label><span>Release year</span><input value={item.releaseYear||""} onChange={event=>update(item.catalogId,"releaseYear",event.target.value)}/></label>
+                <label><span>Release year</span><select value={item.releaseYear||""} onChange={event=>update(item.catalogId,"releaseYear",event.target.value)}><option value="">Choose the documented year</option>{recentYearOptions(item.releaseYear).map(year=><option key={year} value={year}>{year}</option>)}</select></label>
                 <label><span>Edition</span><input value={item.edition||""} onChange={event=>update(item.catalogId,"edition",event.target.value)}/></label>
                 <label className="discoveryNotes"><span>Ownership, blender, classification, and evidence notes</span><textarea value={item.masterNotes||""} onChange={event=>update(item.catalogId,"masterNotes",event.target.value)} rows={3}/></label>
                 {item.sourceUrl&&<a href={item.sourceUrl} target="_blank" rel="noreferrer">Review exact source ↗</a>}

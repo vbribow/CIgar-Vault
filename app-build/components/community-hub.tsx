@@ -7,6 +7,7 @@ import type { CommunityRatingInventoryOption } from "@/lib/community-rating-opti
 import { TrustMark } from "@/components/trust-mark";
 import { brand } from "@/lib/brand";
 import { useMutationGuard } from "@/components/use-mutation-guard";
+import { recentYearOptions } from "@/lib/year-options";
 
 type CommunityData = { posts: CommunityPost[]; top25: CommunityRanking[]; myTop10:CommunityRanking[]; ratingCount: number; myContributions:{posts:CommunityPost[];ratings:CommunityRating[]} };
 const empty: CommunityData = { posts: [], top25: [], myTop10:[], ratingCount: 0, myContributions:{posts:[],ratings:[]} };
@@ -109,7 +110,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </label>
     <label>Vitola<input value={rating.vitola} onChange={event => setRating({ ...rating, vitola: event.target.value })} required />
 </label>
-    <label>Vintage or release year<input value={rating.vintage} onChange={event => setRating({ ...rating, vintage: event.target.value })} />
+    <label>Vintage or release year<select value={rating.vintage} onChange={event => setRating({ ...rating, vintage: event.target.value })}><option value="">Choose the documented year</option>{recentYearOptions(rating.vintage).map(year=><option key={year} value={year}>{year}</option>)}</select>
 </label>
   </>;
 
