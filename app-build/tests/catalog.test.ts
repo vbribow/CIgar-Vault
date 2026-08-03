@@ -22,3 +22,16 @@ test("production catalog supplements master choices with owned cigar vitolas", (
     vitola: "Double Corona",
   });
 });
+
+test("one malformed catalog row cannot empty every valid Discover choice", () => {
+  const master = [
+    { catalogId: "CAT-BROKEN", brand: 2026, line: "Bad row", vitola: "Toro" },
+    { catalogId: "CAT-DR", brand: "Arturo Fuente", line: "Don Carlos", vitola: "Robusto", country: "Dominican Republic" },
+    { catalogId: "CAT-NI", brand: "Padrón", line: "1964 Anniversary", vitola: "Diplomatico", country: "Nicaragua" },
+  ] as unknown as CatalogCigar[];
+
+  const catalog = mergeCatalogRecords(master, []);
+
+  assert.deepEqual(catalog.map(item => item.catalogId), ["CAT-DR", "CAT-NI"]);
+  assert.deepEqual(catalog.map(item => item.country), ["Dominican Republic", "Nicaragua"]);
+});
