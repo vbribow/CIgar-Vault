@@ -14,3 +14,9 @@ test("every product domain has a collector promise and reachable destinations",(
     assert.ok(domain.links.every(link=>link.href.startsWith("/")&&link.description.length>10));
   }
 });
+
+test("Reserve accurately describes its subscription-level destination",()=>{
+  const reserve=productDomains.find(domain=>domain.id==="reserve");
+  assert.equal(reserve?.href,"/pricing");
+  assert.equal(reserve?.actionLabel,"View membership options →");
+});

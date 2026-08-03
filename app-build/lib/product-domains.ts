@@ -2,7 +2,7 @@ import { brand } from "@/lib/brand";
 
 export type ProductDomainId = "discover"|"vault"|"review"|"market"|"verify"|"community"|"learn"|"ai"|"reserve";
 export type ProductDomainLink = { href:string; label:string; description:string };
-export type ProductDomain = { id:ProductDomainId; label:string; promise:string; href:string; links:ProductDomainLink[] };
+export type ProductDomain = { id:ProductDomainId; label:string; promise:string; href:string; actionLabel?:string; links:ProductDomainLink[] };
 
 export const productDomains:ProductDomain[]=[
   {id:"discover",label:"Discover",promise:"Find the next meaningful cigar and understand why it matters.",href:"/discover",links:[
@@ -55,7 +55,7 @@ export const productDomains:ProductDomain[]=[
     {href:"/intelligence",label:"Collection intelligence",description:"Understand patterns, priorities, and evidence gaps"},
     {href:"/acquisitions",label:"Collection goals",description:"See documented pieces that would complete a set"},
   ]},
-  {id:"reserve",label:"Reserve",promise:"The deepest level of intelligence, service, and stewardship.",href:"/pricing",links:[
+  {id:"reserve",label:"Reserve",promise:"The deepest level of intelligence, service, and stewardship.",href:"/pricing",actionLabel:"View membership options →",links:[
     {href:"/pricing",label:`${brand.name} plans`,description:"Choose the depth of service that fits your collection"},
     {href:"/account",label:"Account and privacy",description:"Control your plan, preferences, exports, and data"},
   ]},
