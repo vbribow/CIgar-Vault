@@ -29,3 +29,19 @@ test("Discover de-duplicates exact products even when a catalog id is unavailabl
 
   assert.equal(result.candidates.length, 1);
 });
+
+test("an extensive vault can still explore documented origins from owned catalog records", () => {
+  const inventory = [
+    { inventoryId: "INV-DR", brand: "Arturo Fuente", line: "Don Carlos", vitola: "Robusto" },
+    { inventoryId: "INV-NI", brand: "Padrón", line: "1964 Anniversary", vitola: "Diplomatico" },
+  ];
+  const catalog = [
+    { catalogId: "CAT-DR", brand: "Arturo Fuente", line: "Don Carlos", vitola: "Robusto", country: "Dominican Republic" },
+    { catalogId: "CAT-NI", brand: "Padrón", line: "1964 Anniversary", vitola: "Diplomatico", country: "Nicaragua" },
+    { catalogId: "CAT-NEW", brand: "Tatuaje", line: "Havana VI", vitola: "Series B", country: "Unresolved" },
+  ];
+
+  const result = discoverViewData(inventory, catalog);
+
+  assert.deepEqual(result.candidates.map(item => item.catalogId), ["CAT-NEW", "CAT-DR", "CAT-NI"]);
+});

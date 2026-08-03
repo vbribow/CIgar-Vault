@@ -13,13 +13,15 @@ const goals: { value: DiscoveryGoal; title: string; body: string }[] = [
   { value: "Find a collectible", title: "Find significance", body: "Look for documented editions, release years, packaging, and discontinued cigars." },
 ];
 const strengths: StrengthPreference[] = ["Any strength", "Mild", "Medium", "Full"];
+const unresolvedOrigin = /^(unknown|unresolved|pending|not documented)$/i;
+const isDocumentedOrigin = (value: string | undefined): value is string => Boolean(value && !unresolvedOrigin.test(value));
 const sommHref = (cigar: CatalogCigar) => `/cigar-somm?${new URLSearchParams({ cigarName: `${cigar.brand} ${cigar.line} ${cigar.vitola}`, question: "Help me explore this cigar. Explain what is documented, what makes it distinct, likely strength and profile, the people and place behind it, and thoughtful coffee, spirit, cocktail, and nonalcoholic pairings. State uncertainty clearly." })}`;
 
 export function GuidedCigarExplorer({ catalog, ownedBrands }: { catalog: CatalogCigar[]; ownedBrands: string[] }) {
   const [goal, setGoal] = useState<DiscoveryGoal>();
   const [strength, setStrength] = useState<StrengthPreference>("Any strength");
   const [origin, setOrigin] = useState("Any origin");
-  const origins = useMemo(() => ["Any origin", ...new Set(catalog.map((cigar) => cigar.country).filter((value): value is string => Boolean(value)))].sort((a, b) => a === "Any origin" ? -1 : b === "Any origin" ? 1 : a.localeCompare(b)), [catalog]);
+  const origins = useMemo(() => ["Any origin", ...new Set(catalog.map((cigar) => cigar.country?.trim()).filter(isDocumentedOrigin))].sort((a, b) => a === "Any origin" ? -1 : b === "Any origin" ? 1 : a.localeCompare(b)), [catalog]);
   const matches = useMemo(() => goal ? discoveryMatches(catalog, ownedBrands, { goal, strength, origin }) : [], [catalog, goal, origin, ownedBrands, strength]);
 
   return <section className="guidedExplorer section" id="guided-explorer">

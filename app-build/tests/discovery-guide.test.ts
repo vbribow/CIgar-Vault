@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { discoveryMatches } from "../lib/discovery-guide";
+import { readFileSync } from "node:fs";
 import type { CatalogCigar } from "../lib/types";
 
 const catalog: CatalogCigar[] = [
@@ -19,4 +20,10 @@ test("guided discovery honors explicit origin and strength preferences", () => {
   const [match] = discoveryMatches(catalog, [], { goal: "Expand my palate", strength: "Full", origin: "Nicaragua" });
   assert.equal(match.cigar.catalogId, "CRAFT");
   assert.ok(match.reasons.some((reason) => reason.includes("Nicaragua")));
+});
+
+test("the origin selector never offers unresolved catalog placeholders", () => {
+  const explorer = readFileSync(new URL("../components/guided-cigar-explorer.tsx", import.meta.url), "utf8");
+  assert.match(explorer, /unresolvedOrigin/);
+  assert.match(explorer, /isDocumentedOrigin/);
 });

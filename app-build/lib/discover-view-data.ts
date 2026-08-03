@@ -23,10 +23,18 @@ export function discoverViewData(inventoryInput: unknown, catalogInput: unknown)
   const ownedProducts = new Set(inventory.map(cigarProductKey));
   const ownedBrands = new Set(inventory.map(item => item.brand.trim().toLowerCase()));
   const seen = new Set<string>();
-  const candidates = catalog
-    .filter(item => !ownedProducts.has(cigarProductKey(item)))
+  const documentedOrigin = (item: CatalogCigar) => {
+    const country = typeof item.country === "string" ? item.country.trim() : "";
+    return country && !/^(unknown|unresolved|pending|not documented)$/i.test(country) ? country : undefined;
+  };
+  const unowned = catalog.filter(item => !ownedProducts.has(cigarProductKey(item)));
+  const allOrigins = new Set(catalog.map(documentedOrigin).filter(Boolean));
+  const unownedOrigins = new Set(unowned.map(documentedOrigin).filter(Boolean));
+  const explorationPool = unownedOrigins.size < 2 && allOrigins.size > unownedOrigins.size ? catalog : unowned;
+  const candidates = [...explorationPool]
     .sort((left, right) =>
-      Number(ownedBrands.has(left.brand.toLowerCase())) - Number(ownedBrands.has(right.brand.toLowerCase()))
+      Number(ownedProducts.has(cigarProductKey(left))) - Number(ownedProducts.has(cigarProductKey(right)))
+      || Number(ownedBrands.has(left.brand.toLowerCase())) - Number(ownedBrands.has(right.brand.toLowerCase()))
       || Number(Boolean(right.sourceUrl)) - Number(Boolean(left.sourceUrl))
       || left.brand.localeCompare(right.brand))
     .filter(item => {
