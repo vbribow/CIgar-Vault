@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyRetailValuationToInventory, existingRetailPriceForBasis, knownRetailPriceSuggestions, normalizeManualRetailPrice, retailBoxValue } from "../lib/retail-pricing";
+import { applyRetailValuationToInventory, existingRetailPriceForBasis, knownRetailPriceSuggestions, normalizeManualRetailPrice, requestedRetailInventory, retailBoxValue } from "../lib/retail-pricing";
 import type { InventoryItem, Valuation } from "../lib/types";
 
 const priced: InventoryItem = { inventoryId: "I-1", brand: "Padrón", line: "1964 Anniversary", vitola: "Exclusivo", vintage: 2024, currentQty: 5, sticksPerBox: 10 };
@@ -17,6 +17,12 @@ test("saved retail price repopulates the manual editor in either basis", () => {
   assert.equal(existingRetailPriceForBasis(item, "Per cigar"), 350);
   assert.equal(existingRetailPriceForBasis(item, "Full box"), 700);
   assert.equal(existingRetailPriceForBasis({ retailValue: 350 }, "Full box"), undefined);
+});
+
+test("a missing requested lot never falls through to an unrelated pricing record",()=>{
+  assert.equal(requestedRetailInventory([priced,matching],"MISSING"),undefined);
+  assert.equal(requestedRetailInventory([priced,matching],"I-2")?.inventoryId,"I-2");
+  assert.equal(requestedRetailInventory([priced,matching])?.inventoryId,"I-1");
 });
 
 test("manual box pricing normalizes to a reusable per-cigar value", () => {

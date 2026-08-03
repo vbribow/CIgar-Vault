@@ -10,6 +10,22 @@ export const marketEvidenceTypes = [
 export type MarketEvidenceType = typeof marketEvidenceTypes[number];
 export const marketAskingPriceLabel = "Market asking price — no confirmed sale";
 
+/** Return one navigable source URL from legacy or concatenated evidence text. */
+export function strongestEvidenceUrl(value?: string): string | undefined {
+  if (!value) return undefined;
+  const candidates = value.split(/\s+and\s+|%20and%20|\\\)|\)/i).map(item => item.trim()).filter(Boolean);
+  for (const candidate of candidates) {
+    const match = candidate.match(/https?:\/\/[^\s]+/i);
+    if (!match) continue;
+    try {
+      const url = new URL(match[0].replace(/[.,;]+$/, ""));
+      if (!/%20|\\/.test(url.pathname)) return url.toString();
+    } catch { /* retain the next source candidate */ }
+  }
+  const host = value.match(/https?:\/\/[^\s/]+/i)?.[0];
+  try { return host ? new URL(host).toString() : undefined; } catch { return undefined; }
+}
+
 export function latestValuationWith(
   values: Valuation[],
   predicate: (value: Valuation) => boolean,

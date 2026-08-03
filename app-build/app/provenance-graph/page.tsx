@@ -4,13 +4,18 @@ import { loadCatalog } from "@/lib/catalog";
 import { loadPublicIndustry } from "@/lib/industry-public";
 import { buildProvenanceGraph, provenanceModel } from "@/lib/provenance-graph";
 import { brand } from "@/lib/brand";
+import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import "./provenance.css";
 
 export const dynamic="force-dynamic";
 export const metadata:Metadata={title:"Canonical Provenance Graph",description:`How ${brand.name} connects cigar identity, manufacturing, release history, artifacts, evidence, and private collector lots.`};
 
 export default async function ProvenanceGraphPage(){
-  const[inventory,industry]=await Promise.all([loadInventory(),loadPublicIndustry()]);const catalog=await loadCatalog(inventory);
+  const [inventoryResult, industryResult] = await Promise.allSettled([loadInventory(), loadPublicIndustry()]);
+  const inventory: InventoryItem[] = inventoryResult.status === "fulfilled" ? inventoryResult.value : [];
+  const industry = industryResult.status === "fulfilled" ? industryResult.value : { profiles: [], publications: [], revisions: [], registryRecords: [] };
+  let catalog: CatalogCigar[] = [];
+  try { catalog = await loadCatalog(inventory); } catch { /* The graph remains explorable while the optional catalog provider is unavailable. */ }
   const graphs=catalog.slice(0,12).map(item=>({item,graph:buildProvenanceGraph(item,inventory,industry.registryRecords)}));
   const model=provenanceModel();
   return <main className="shell wideShell provenancePage"><section className="provenanceHero"><div><div className="eyebrow">Canonical provenance graph</div><h1>Every cigar connects to people, place, time, and evidence.</h1><p className="lede">The platform does not flatten a cigar into one inventory row. The graph preserves the product, the work behind it, the artifacts that identify it, and the private story of each collector lot.</p></div><aside><strong>9</strong><span>connected record types</span><p>Shared knowledge stays separate from private ownership, while evidence travels with every claim.</p></aside></section>

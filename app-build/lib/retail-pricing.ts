@@ -14,6 +14,10 @@ export type KnownRetailPriceSuggestion = {
   boxPrice?: number;
 };
 
+export function requestedRetailInventory(items:InventoryItem[],inventoryId?:string){
+  return inventoryId ? items.find(item=>item.inventoryId===inventoryId) : items[0];
+}
+
 export function retailBoxValue(item: Pick<InventoryItem, "retailValue" | "sticksPerBox">) {
   if (item.retailValue === undefined || item.sticksPerBox === undefined) return undefined;
   return item.retailValue * item.sticksPerBox;

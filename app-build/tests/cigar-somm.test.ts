@@ -26,6 +26,10 @@ test("Cigar Somm presents verbose markdown research as a concise clean lead",()=
  assert.equal(cleanSommText("**First Third:** Cedar [review](https://example.com)"),"First Third: Cedar review");
  assert.deepEqual(uniqueSommItems(["Intensity match","Intensity match","Flavor bridge"]),["Intensity match","Flavor bridge"]);
 });
+test("Cigar Somm bounds an overlong model summary before schema validation",()=>{
+  const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
+  assert.match(service,/parsed\.answer\.slice\(0,597\)/);
+});
 
 test("Cigar Somm shows research progress and releases stalled requests",()=>{
   const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");

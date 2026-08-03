@@ -102,4 +102,6 @@ const payload=await response.json();
 if(!response.ok)throw new Error((payload as{error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);
 const text=responseOutputText(payload);
 if(!text)throw new Error("Cigar Somm returned no answer");
-return requireCompletePairings(CigarSommAnswerSchema.parse(JSON.parse(text)),input.includeAlcohol)}
+const parsed=JSON.parse(text) as Record<string,unknown>;
+if(typeof parsed.answer==="string"&&parsed.answer.length>600) parsed.answer=parsed.answer.slice(0,597).trimEnd()+"…";
+return requireCompletePairings(CigarSommAnswerSchema.parse(parsed),input.includeAlcohol)}

@@ -162,7 +162,7 @@ export function CigarSomm({inventory,smokes=[],initialInventoryId="",initialColl
 </div>
 <div className="sommSources">
 <div className="eyebrow">Research sources</div>{result.sources.length?result.sources.map(source=>
-<a href={source.url} target="_blank" rel="noreferrer" key={source.url}>
+<a href={source.url} key={source.url}>
 <strong>{source.title}</strong>
 <span>{source.publisher} · {source.supports}</span>
 </a>):<p>No external source was needed for this answer; recommendations use disclosed general pairing principles.</p>}</div>
@@ -178,4 +178,4 @@ function Pairings({title,symbol,items}:{title:string;symbol:string;items:CigarSo
 <strong>{cleanSommText(item.name)}</strong>
 <small>{cleanSommText(item.style)}</small>
 <p>{cleanSommText(item.why)}</p>
-<em>{cleanSommText(item.service)}</em>{"verificationUrl" in item&&<a href={item.verificationUrl} target="_blank" rel="noreferrer">Verify this label ↗</a>}</div>)}{!items.length&&<p className="small">Not included for this recommendation.</p>}</article>}
+<em>{cleanSommText(item.service)}</em>{"verificationUrl" in item&&<a href={item.verificationUrl}>Verify this label ↗</a>}</div>)}{!items.length&&<p className="small">Not included for this recommendation.</p>}</article>}

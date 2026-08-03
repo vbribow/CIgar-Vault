@@ -20,24 +20,31 @@ export function ResetPasswordForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
+    if (!ready || busy) return;
     setError("");
     const form = new FormData(event.currentTarget);
     const password = String(form.get("password") || "");
     const confirmation = String(form.get("confirmation") || "");
-    if (password.length < 8) { setError("Password must be at least 8 characters."); setBusy(false); return; }
-    if (password !== confirmation) { setError("Passwords do not match."); setBusy(false); return; }
-    const supabase = createRecoveryClient();
-    const { error: updateError } = await supabase.auth.updateUser({ password });
-    if (updateError) { setError(updateError.message); setBusy(false); return; }
-    await supabase.auth.signOut();
-    window.location.replace("/login?notice=Password%20updated.%20You%20can%20sign%20in%20now.");
+    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (password !== confirmation) { setError("Passwords do not match."); return; }
+    setBusy(true);
+    try {
+      const supabase = createRecoveryClient();
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) { setError(updateError.message); return; }
+      try { await supabase.auth.signOut(); } catch { /* The confirmed password update remains authoritative. */ }
+      window.location.replace("/login?notice=Password%20updated.%20You%20can%20sign%20in%20now.");
+    } catch {
+      setError("The platform could not confirm the password update. Request one new recovery link before trying again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return <form onSubmit={submit}>
     <label><span>New password</span><input name="password" type="password" autoComplete="new-password" minLength={8} required disabled={!ready} /></label>
     <label><span>Confirm new password</span><input name="confirmation" type="password" autoComplete="new-password" minLength={8} required disabled={!ready} /></label>
     <button className="button" disabled={!ready || busy}>{busy ? "Updating…" : ready ? "Update password" : "Verifying recovery link…"}</button>
-    {error && <div className="loginMessage error">{error}</div>}
+    {error && <div className="loginMessage error" aria-live="polite">{error}</div>}
   </form>;
 }

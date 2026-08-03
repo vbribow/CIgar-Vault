@@ -30,7 +30,8 @@ test("Log a Smoke hides Smoke ID and preserves INV-0053 preselection",()=>{
   const page=readFileSync(new URL("../app/records/page.tsx",import.meta.url),"utf8");
   assert.doesNotMatch(manager,/name="smokeId"/);
   assert.match(manager,/useState\(selectedInventoryId \|\| ""\)/);
-  assert.match(page,/selectedInventoryId=\{inventoryId\}/);
+  assert.match(page,/selectedInventoryId=\{selectedItem\?\.inventoryId\}/);
+  assert.match(page,/No different cigar was selected/);
 });
 
 test("save route generates IDs server-side and uses insert-only reservation",()=>{

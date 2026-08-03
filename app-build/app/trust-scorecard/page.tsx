@@ -3,13 +3,19 @@ import { loadInventory } from "@/lib/inventory";
 import { loadCatalog } from "@/lib/catalog";
 import { loadPublicIndustry } from "@/lib/industry-public";
 import { buildTrustCoverage } from "@/lib/trust-coverage";
+import type { CatalogCigar } from "@/lib/types";
 import "./scorecard.css";
 
 export const dynamic="force-dynamic";
 export const metadata:Metadata={title:"Trust & Coverage Scorecard",description:"Transparent measurement of catalog evidence, official participation, provenance, and research gaps."};
 
 export default async function TrustScorecardPage(){
-  const[inventory,industry]=await Promise.all([loadInventory(),loadPublicIndustry()]);const catalog=await loadCatalog(inventory);const scorecard=buildTrustCoverage({catalog,inventory,profiles:industry.profiles,registry:industry.registryRecords});
+  const [inventoryResult, industryResult] = await Promise.allSettled([loadInventory(), loadPublicIndustry()]);
+  const inventory = inventoryResult.status === "fulfilled" ? inventoryResult.value : [];
+  const industry = industryResult.status === "fulfilled" ? industryResult.value : { profiles: [], registryRecords: [] };
+  let catalog: CatalogCigar[] = [];
+  try { catalog = await loadCatalog(inventory); } catch { /* The scorecard remains useful while an optional catalog provider is unavailable. */ }
+  const scorecard=buildTrustCoverage({catalog,inventory,profiles:industry.profiles,registry:industry.registryRecords});
   return <main className="shell wideShell scorecardPage"><section className="scorecardHero"><div><div className="eyebrow">Trust &amp; Coverage Scorecard</div><h1>Measure what is known. Expose what is missing.</h1><p className="lede">This is a stewardship score—not a claim of completeness. Every metric should rise because the evidence improved, never because the standard was lowered.</p></div><div className="trustScore"><strong>{scorecard.overall}</strong><span>evidence coverage</span><small>Eight transparent dimensions</small></div></section>
     <section className="canonicalSummary"><article><strong>{scorecard.canonical.total}</strong><span>canonical records</span></article><article><strong>{scorecard.canonical.verified}</strong><span>verified foundations</span></article><article><strong>{scorecard.canonical.developing}</strong><span>developing records</span></article><article><strong>{scorecard.canonical.research}</strong><span>research required</span></article></section>
     <section className="coverageGrid">{scorecard.metrics.map(item=><a href={item.href} key={item.key}><header><span>{item.label}</span><strong>{item.score}%</strong></header><i><b style={{width:`${item.score}%`}}/></i><p>{item.detail}</p><small>{item.numerator} of {item.denominator} evidence opportunities covered</small></a>)}</section>
