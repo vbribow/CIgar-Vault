@@ -4,6 +4,7 @@ import { loadInventory } from "@/lib/inventory";
 import { cigarProductKey } from "@/lib/cigar-identity";
 import { GuidedCigarExplorer } from "@/components/guided-cigar-explorer";
 import { brand } from "@/lib/brand";
+import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import "./guided-explorer.css";
 export const dynamic = "force-dynamic";
 export const metadata:Metadata={title:"Discover",description:"Discover premium cigars through stories, trusted knowledge, collector goals, and the people and places behind the craft."};
@@ -20,11 +21,15 @@ const trustLevels=[
   ["05","AI-assisted",`Clearly labeled guidance generated from permitted ${brand.name} knowledge, with sources and uncertainty available for review.`],
 ] as const;
 export default async function DiscoverPage(){
-  const inventory=await loadInventory();
-  const catalog=await loadCatalog(inventory);
-  const ownedProducts=new Set(inventory.map(cigarProductKey));
-  const ownedBrands=new Set(inventory.map(item=>item.brand.trim().toLowerCase()));
-  const candidates=catalog
+  let inventory: InventoryItem[] = [];
+  try { inventory = await loadInventory(); } catch { /* A provider interruption must not imply inventory loss. */ }
+  let catalog: CatalogCigar[] = [];
+  try { catalog = await loadCatalog(inventory); } catch { /* Discover remains available while the optional catalog provider is unavailable. */ }
+  const safeInventory=inventory.filter(item=>item&&typeof item.brand==="string"&&typeof item.line==="string"&&typeof item.vitola==="string");
+  const safeCatalog=catalog.filter(item=>item&&typeof item.brand==="string"&&typeof item.line==="string"&&typeof item.vitola==="string");
+  const ownedProducts=new Set(safeInventory.map(cigarProductKey));
+  const ownedBrands=new Set(safeInventory.map(item=>item.brand.trim().toLowerCase()));
+  const candidates=safeCatalog
     .filter(item=>!ownedProducts.has(cigarProductKey(item)))
     .sort((a,b)=>Number(ownedBrands.has(a.brand.toLowerCase()))-Number(ownedBrands.has(b.brand.toLowerCase()))||Number(Boolean(b.sourceUrl))-Number(Boolean(a.sourceUrl))||a.brand.localeCompare(b.brand))
     .filter((item,index,all)=>all.findIndex(candidate=>candidate.catalogId===item.catalogId)===index);
