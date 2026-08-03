@@ -2,7 +2,9 @@ import {z} from "zod";
 import {betaSeatsRemaining} from "./beta-cohort";
 export const BetaStage=z.enum(["Prospect","Invited","Signed up","Imported","Activated"]);export type BetaStage=z.infer<typeof BetaStage>;
 export const BetaCollectorInput=z.object({id:z.string().uuid().optional(),name:z.string().trim().min(1).max(100),email:z.string().email(),stage:BetaStage.default("Prospect"),notes:z.string().trim().max(1000).optional(),invitedAt:z.string().optional(),lastContactAt:z.string().optional()});
-export type BetaCollector=z.infer<typeof BetaCollectorInput>&{id:string;createdAt:string;updatedAt:string};
+export type BetaProgress={accountCreated:boolean;consentRecorded:boolean;inventoryLots:number;backupRecorded:boolean;smokeLogged:boolean;insuranceViewed:boolean};
+export type BetaProgressStep={key:string;label:string;complete:boolean;href:string;detail:string};
+export type BetaCollector=z.infer<typeof BetaCollectorInput>&{id:string;createdAt:string;updatedAt:string;progress?:BetaProgress};
 const stageOrder:BetaStage[]=["Prospect","Invited","Signed up","Imported","Activated"];
 export const betaSignupUrl="https://hojavia.com/login?mode=signup";
 export const betaAppUrl="https://hojavia.com/?source=hojavia-app";
@@ -72,5 +74,25 @@ export function betaReinstallWebmailLinks(collector:Pick<BetaCollector,"name"|"e
   yahoo:`https://compose.mail.yahoo.com/?to=${to}&subject=${encodedSubject}&body=${encodedBody}`,
  };
 }
-export function advancedBetaStage(current:BetaStage,signals:{signedUp:boolean;inventoryLots:number;activated:boolean}){const detected:BetaStage=signals.activated||signals.inventoryLots>=20?"Activated":signals.inventoryLots>0?"Imported":signals.signedUp?"Signed up":current;return stageOrder.indexOf(detected)>stageOrder.indexOf(current)?detected:current}
+export function advancedBetaStage(current:BetaStage,signals:{signedUp:boolean;inventoryLots:number;activated:boolean}){const detected:BetaStage=signals.activated?"Activated":signals.inventoryLots>0?"Imported":signals.signedUp?"Signed up":current;return stageOrder.indexOf(detected)>stageOrder.indexOf(current)?detected:current}
 export function betaSummary(collectors:BetaCollector[]){const count=(stage:BetaStage)=>collectors.filter(item=>item.stage===stage).length;const activated=count("Activated");return{total:collectors.length,prospects:count("Prospect"),invited:count("Invited"),signedUp:count("Signed up"),imported:count("Imported"),activated,founderSeatsRemaining:betaSeatsRemaining(collectors)}}
+export function betaStageLabel(stage:BetaStage){return stage==="Activated"?"Product milestone reached":stage}
+export function betaProgressSteps(progress?:BetaProgress):BetaProgressStep[]{
+ const value=progress||{accountCreated:false,consentRecorded:false,inventoryLots:0,backupRecorded:false,smokeLogged:false,insuranceViewed:false};
+ return[
+  {key:"account",label:"Account created",complete:value.accountCreated,href:betaSignupUrl,detail:value.accountCreated?"Confirmed":"Create and confirm the beta account"},
+  {key:"consent",label:"Beta consent recorded",complete:value.consentRecorded,href:"/account",detail:value.consentRecorded?"Confirmed":"Complete the Account consent form"},
+  {key:"inventory",label:"First cigar saved",complete:value.inventoryLots>0,href:"/inventory#mobile-intake",detail:value.inventoryLots>0?`${value.inventoryLots} inventory lot${value.inventoryLots===1?"":"s"}`:"Add the first inventory lot"},
+  {key:"backup",label:"Inventory backup downloaded",complete:value.backupRecorded,href:"/account",detail:value.backupRecorded?"Recovery point recorded":"Use Download inventory backup"},
+  {key:"inventory-depth",label:"20 inventory lots",complete:value.inventoryLots>=20,href:"/inventory#mobile-intake",detail:`${Math.min(value.inventoryLots,20)} of 20 lots`},
+  {key:"smoke",label:"Smoke logged",complete:value.smokeLogged,href:"/records",detail:value.smokeLogged?"Confirmed":"One engagement option"},
+  {key:"insurance",label:"Insurance report viewed",complete:value.insuranceViewed,href:"/reports",detail:value.insuranceViewed?"Confirmed":"Alternative engagement option"},
+ ];
+}
+export function betaNextAction(progress?:BetaProgress){
+ const steps=betaProgressSteps(progress);
+ const required=steps.find(step=>["account","consent","inventory","backup","inventory-depth"].includes(step.key)&&!step.complete);
+ if(required)return required;
+ const engagement=steps.find(step=>(step.key==="smoke"||step.key==="insurance")&&!step.complete);
+ return engagement||{key:"complete",label:"Product milestone reached",complete:true,href:"/",detail:"Core beta journey complete"};
+}

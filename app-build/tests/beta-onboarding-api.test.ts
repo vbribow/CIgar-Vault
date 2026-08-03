@@ -37,7 +37,22 @@ test("founder onboarding never describes provider acceptance as confirmed delive
 
 test("founder can update a collector stage while readiness evidence remains advisory", () => {
   const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
-  assert.match(component, /method:"PATCH"/);
+  assert.match(component, /method:\s*"PATCH"/);
   assert.match(component, /Saving stage…/);
   assert.doesNotMatch(component, /stage==="Invited"&&!readiness\?\.ready/);
+});
+
+test("founder dashboard exposes private milestone signals without cigar details", () => {
+  const route = readFileSync(new URL("../app/api/founder-onboarding/route.ts", import.meta.url), "utf8");
+  const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
+  assert.match(route, /accountCreated/);
+  assert.match(route, /consentRecorded/);
+  assert.match(route, /inventoryLots/);
+  assert.match(route, /backupRecorded/);
+  assert.match(route, /smokeLogged/);
+  assert.match(route, /insuranceViewed/);
+  assert.match(component, /betaProgressSteps/);
+  assert.match(component, /Progress refreshed automatically/);
+  assert.match(component, /Product milestone/);
+  assert.doesNotMatch(component, />Activated</);
 });

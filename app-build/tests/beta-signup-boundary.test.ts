@@ -25,7 +25,7 @@ test("account and inventory milestones advance the beta pipeline automatically",
   const records = readFileSync(new URL("../lib/user-data.ts", import.meta.url), "utf8");
   assert.match(actions, /advanceBetaCollectorStage\(email,"Signed up"\)/);
   assert.match(records, /advanceInventoryProgress/);
-  assert.match(records, /\(count\|\|0\)>=20\?"Activated":"Imported"/);
+  assert.match(records, /advanceBetaCollectorStage\(context\.user\.email,"Imported"\)/);
   assert.match(records, /records\.some\(record=>record\.kind==="inventory"\)/);
   assert.match(records, /must never turn a successful collector-data save into a failure/);
 });

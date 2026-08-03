@@ -18,7 +18,7 @@ async function advanceInventoryProgress(context:Awaited<ReturnType<typeof accoun
   if(!context?.user.email)return;
   try{
     const{count,error}=await context.supabase.from("vault_records").select("record_id",{count:"exact",head:true}).eq("user_id",context.user.id).eq("kind","inventory");
-    if(!error&&(count||0)>0)await advanceBetaCollectorStage(context.user.email,(count||0)>=20?"Activated":"Imported");
+    if(!error&&(count||0)>0)await advanceBetaCollectorStage(context.user.email,"Imported");
   }catch{/* Pipeline metadata must never turn a successful collector-data save into a failure. */}
 }
 
