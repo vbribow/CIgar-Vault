@@ -35,11 +35,13 @@ function stampInstalledAppRelease() {
   }
   const release = hash.digest("hex").slice(0, 12);
   const workerPath = resolve("dist/client/sw.js");
+  const releasePath = resolve("dist/client/release.json");
   const worker = readFileSync(workerPath, "utf8");
   if (!worker.includes(releaseMarker)) {
     throw new Error("The installed-app worker is missing its release marker.");
   }
   writeFileSync(workerPath, worker.replaceAll(releaseMarker, release));
+  writeFileSync(releasePath, `${JSON.stringify({ release: `hojavia-beta-shell-v4-${release}` }, null, 2)}\n`);
   if (readFileSync(workerPath, "utf8").includes(releaseMarker)) {
     throw new Error("The installed-app release marker was not fully replaced.");
   }

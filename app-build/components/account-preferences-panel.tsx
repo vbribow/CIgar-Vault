@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, type FormEvent } from "react";
 import type { AccountPreferences } from "@/lib/account-preferences";
+import { AppUpdatePanel } from "@/components/app-update-panel";
 
 const options:[keyof AccountPreferences,string,string][]=[
   ["emailNotifications","Email delivery","Allow the platform to send account alerts by email when delivery is configured."],
@@ -28,5 +29,6 @@ export function AccountPreferencesPanel({initial}:{initial:AccountPreferences}){
       <div><div className="eyebrow">Privacy controls</div><h2>Account data requests</h2><p>Request access to, correction of, or deletion of account data through a signed-in, auditable channel. A deletion request starts identity, scope, export, retention, and irreversible-effects review; it does not immediately delete anything.</p></div>
       <div className="dataRequestActions"><a className="button secondary" href="/feedback?request=access">Request access</a><a className="button secondary" href="/feedback?request=correction">Request correction</a><a className="textLink destructiveLink" href="/feedback?request=deletion">Request deletion →</a></div>
     </section>
+    <AppUpdatePanel/>
   </>;
 }
