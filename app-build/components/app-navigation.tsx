@@ -16,6 +16,7 @@ export function AppNavigation() {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const mobileMoreTrigger = useRef<HTMLButtonElement>(null);
   const mobileMoreClose = useRef<HTMLButtonElement>(null);
+  const mobileMoreSheet = useRef<HTMLElement>(null);
 
   useEffect(() => setMobileMoreOpen(false), [pathname]);
 
@@ -25,9 +26,17 @@ export function AppNavigation() {
     document.body.style.overflow = "hidden";
     const focusTimer = window.setTimeout(() => mobileMoreClose.current?.focus(), 0);
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setMobileMoreOpen(false);
-      window.setTimeout(() => mobileMoreTrigger.current?.focus(), 0);
+      if (event.key === "Escape") {
+        setMobileMoreOpen(false);
+        window.setTimeout(() => mobileMoreTrigger.current?.focus(), 0);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const controls = [...(mobileMoreSheet.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])') ?? [])];
+      if (!controls.length) return;
+      const first = controls[0], last = controls.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => {
@@ -101,11 +110,11 @@ export function AppNavigation() {
     <button ref={mobileMoreTrigger} type="button" className={mobileMoreActive?"active":undefined} aria-haspopup="dialog" aria-expanded={mobileMoreOpen} aria-controls="mobile-more-sheet" onClick={()=>setMobileMoreOpen(true)}><span>•••</span><small>More</small></button>
   </nav>
   {mobileMoreOpen&&<div className="mobileMoreOverlay" onMouseDown={(event)=>{if(event.currentTarget===event.target)closeMobileMore(true)}}>
-    <section id="mobile-more-sheet" className="mobileMoreSheet" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
-      <header><div><span>Navigate</span><h2 id="mobile-more-title">More of {brand.name}</h2></div><button ref={mobileMoreClose} type="button" onClick={()=>closeMobileMore(true)} aria-label="Close More menu">×</button></header>
+    <section ref={mobileMoreSheet} id="mobile-more-sheet" className="mobileMoreSheet" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title" aria-describedby="mobile-more-description">
+      <header><div><span>Navigate</span><h2 id="mobile-more-title">More of {brand.name}</h2><small id="mobile-more-description">Search or choose any collector workspace.</small></div><button ref={mobileMoreClose} type="button" onClick={()=>closeMobileMore(true)} aria-label="Close More menu">×</button></header>
       <button type="button" className="mobileMoreSearch" onClick={openMobileSearch}><span aria-hidden="true">⌕</span><strong>Search {brand.name}</strong><small>Find cigars, collections, markets, or tools</small></button>
-      <div className="mobileMoreFeatured" aria-label="Popular destinations">{mobileFeaturedLinks.map(([href,label,description,icon])=><Link href={href} className={matches(pathname,href)?"active":undefined} key={href}><span aria-hidden="true">{icon}</span><div><strong>{label}</strong><small>{description}</small></div><b aria-hidden="true">›</b></Link>)}</div>
-      <div className="mobileMoreDirectory"><h3>All areas</h3>{moreLinks.map(([href,label,description])=><Link href={href} className={matches(pathname,href)?"active":undefined} key={href}><div><strong>{label}</strong><small>{description}</small></div><b aria-hidden="true">›</b></Link>)}</div>
+      <div className="mobileMoreFeatured" aria-label="Popular destinations">{mobileFeaturedLinks.map(([href,label,description,icon])=>{const active=matches(pathname,href);return <Link href={href} className={active?"active":undefined} aria-current={active?"page":undefined} key={href}><span aria-hidden="true">{icon}</span><div><strong>{label}</strong><small>{description}</small></div><b aria-hidden="true">›</b></Link>})}</div>
+      <div className="mobileMoreDirectory"><h3>All areas</h3>{moreLinks.map(([href,label,description])=>{const active=matches(pathname,href);return <Link href={href} className={active?"active":undefined} aria-current={active?"page":undefined} key={href}><div><strong>{label}</strong><small>{description}</small></div><b aria-hidden="true">›</b></Link>})}</div>
     </section>
   </div>}
   </>;

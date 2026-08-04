@@ -16,9 +16,12 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const [originHref, setOriginHref] = useState("/");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const input = useRef<HTMLInputElement>(null);
+  const palette = useRef<HTMLElement>(null);
 
   const closeSearch = () => {
     setOpen(false);
@@ -80,35 +83,60 @@ export function GlobalSearch() {
   }, []);
 
   useEffect(() => {
-    if (open) window.setTimeout(() => input.current?.focus(), 0);
+    if (!open) return;
+    const priorOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusTimer = window.setTimeout(() => input.current?.focus(), 0);
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const controls = [...(palette.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])') ?? [])];
+      if (!controls.length) return;
+      const first = controls[0], last = controls.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", trapFocus);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener("keydown", trapFocus);
+      document.body.style.overflow = priorOverflow;
+    };
   }, [open]);
 
   useEffect(() => {
     if (query.trim().length < 2) {
       setResults([]);
+      setSearchError("");
+      setLoading(false);
       return;
     }
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
+      setSearchError("");
+      setResults([]);
       try {
         const response = await fetch(
           `/api/search?q=${encodeURIComponent(query)}`,
           { signal: controller.signal },
         );
         const value = await response.json();
-        if (response.ok) setResults(value.data ?? []);
+        if (!response.ok) throw new Error(value.error || "Search unavailable");
+        setResults(value.data ?? []);
       } catch (error) {
-        if ((error as Error).name !== "AbortError") setResults([]);
+        if ((error as Error).name !== "AbortError") {
+          setResults([]);
+          setSearchError("Search is temporarily unavailable. Your private Vault is unchanged.");
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 180);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [query, retryKey]);
 
   const openSearch = () => {
     setOriginHref(
@@ -163,16 +191,19 @@ export function GlobalSearch() {
             if (event.currentTarget === event.target) closeSearch();
           }}
         >
-          <section className="commandPalette">
+          <section ref={palette} className="commandPalette" aria-busy={loading}>
             <header>
               <span>⌕</span>
               <input
                 ref={input}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
+                aria-label="Search cigars, collections, markets, or tools"
+                aria-describedby="search-privacy-note"
                 placeholder="Search cigars, collections, markets, or tools…"
               />
-              <button onClick={closeSearch} aria-label="Close search">
+              {query && <button type="button" className="commandClear" onClick={() => { setQuery(""); setResults([]); setSearchError(""); input.current?.focus(); }} aria-label="Clear search">Clear</button>}
+              <button type="button" onClick={closeSearch} aria-label="Close search">
                 ×
               </button>
             </header>
@@ -198,9 +229,10 @@ export function GlobalSearch() {
                   <em>→</em>
                 </a>
               ))}
-              {loading && <p>Searching the vault…</p>}
-              {!loading && query.length >= 2 && !results.length && (
-                <p>No matching records or workspaces.</p>
+              {loading && <p role="status">Searching your private Vault…</p>}
+              {!loading && searchError && <div className="commandError" role="alert"><strong>Search could not finish.</strong><p>{searchError}</p><button type="button" className="button secondary" onClick={() => setRetryKey((value) => value + 1)}>Try search again</button></div>}
+              {!loading && !searchError && query.length >= 2 && !results.length && (
+                <div className="commandEmpty"><strong>No matching records or workspaces.</strong><p>Try a broader name, or choose where you want to continue.</p><div><a className="button secondary" href="/inventory#mobile-intake">Document a cigar</a><a className="button secondary" href="/inventory">Open Vault</a></div></div>
               )}
               {!query.trim() && recentSearches.length > 0 && (
                 <section
@@ -239,7 +271,7 @@ export function GlobalSearch() {
                 )}
             </div>
             <footer>
-              <span>Private account search</span>
+              <span id="search-privacy-note">Private account search</span>
               <span>Esc to close</span>
             </footer>
           </section>
