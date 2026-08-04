@@ -48,7 +48,7 @@ const guidance: Guidance[] = [
       {
         label: "Technical method · CORESTA",
         title: "Moisture equilibrium and cigar conditioning",
-        href: "https://www.coresta.org/sites/default/files/technical_documents/main/CRM_46-June2018.pdf",
+        href: "/learn/resting-and-aging/coresta-method",
         scope: "Explains controlled conditioning for laboratory testing. Its test atmosphere is not presented as a collector storage target.",
       },
     ],
