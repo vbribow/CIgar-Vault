@@ -38,7 +38,7 @@ export default async function RecordsPage({
       <section className="section inventoryHeader">
         <h1>Journal & value</h1>
         <p className="lede">
-          Record every smoke and preserve a dated valuation history.
+          Log any cigar you smoke, even when it is not part of your Vault, and preserve a dated valuation history.
         </p>
         {selectedItem&&<a className="button secondary" href={`/inventory/${encodeURIComponent(selectedItem.inventoryId)}`}>Return to {selectedItem.brand} record</a>}
       </section>

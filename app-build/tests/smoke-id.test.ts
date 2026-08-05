@@ -34,6 +34,19 @@ test("Log a Smoke hides Smoke ID and preserves INV-0053 preselection",()=>{
   assert.match(page,/No different cigar was selected/);
 });
 
+test("Log a Smoke welcomes cigars outside inventory and is globally accessible",()=>{
+  const manager=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
+  const navigation=readFileSync(new URL("../components/app-navigation.tsx",import.meta.url),"utf8");
+  const smokePicker=manager.slice(manager.indexOf('Inventory lot or another cigar *'),manager.indexOf('{smokeSource === "MANUAL" && <label'));
+  const manual=smokePicker.indexOf('<option value="MANUAL">Another smoke — not in my Vault</option>');
+  const inventory=smokePicker.indexOf('{inventory.map(item => <option');
+  assert.ok(manual>=0&&inventory>manual,"manual smoke choice should precede inventory lots");
+  assert.match(manager,/No Vault record is required/);
+  assert.match(navigation,/Log a Smoke/);
+  assert.match(navigation,/href="\/records#log-smoke"/);
+  assert.match(navigation,/<small>Log Smoke<\/small>/);
+});
+
 test("save route generates IDs server-side and uses insert-only reservation",()=>{
   const route=readFileSync(new URL("../app/api/smoking-log/route.ts",import.meta.url),"utf8");
   assert.match(route,/SmokingLogCreateSchema\.parse/);

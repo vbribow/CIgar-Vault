@@ -10,9 +10,9 @@ test("smoking journal offers a complete score scale and common strength choices"
 });
 
 test("smoking journal supports manual cigars without consuming inventory", () => {
-  assert.match(source, /value="MANUAL">Another cigar — enter manually/);
+  assert.match(source, /value="MANUAL">Another smoke — not in my Vault/);
   assert.match(source, /name="cigarName"/);
-  assert.match(source, /without reducing inventory/);
+  assert.match(source, /without changing inventory/);
 });
 
 test("smoking journal records up to three structured flavor notes", () => {

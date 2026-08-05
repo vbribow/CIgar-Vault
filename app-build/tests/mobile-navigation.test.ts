@@ -17,7 +17,7 @@ test("collections remain directly reachable through the mobile Vault and invento
 });
 
 test("mobile navigation exposes a focused five-item bar and complete More sheet",()=>{
-  for(const label of["Home","Discover","Document","Vault","More"])assert.match(navigation,new RegExp(`<small>${label}<\\/small>`));
+  for(const label of["Home","Discover","Log Smoke","Vault","More"])assert.match(navigation,new RegExp(`<small>${label}<\\/small>`));
   assert.match(navigation, /aria-haspopup="dialog"/);
   assert.match(navigation, /id="mobile-more-sheet"/);
   assert.match(navigation, /Search \{brand\.name\}/);
