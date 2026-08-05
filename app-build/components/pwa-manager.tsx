@@ -9,7 +9,7 @@ const installDismissedKey="hojavia:pwa-dismissed:v1";
 export function PwaManager(){
   const[event,setEvent]=useState<InstallEvent>(),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
   useEffect(()=>{
-    const standalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
+    const installStandalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
     if(!isActiveProductHostname(window.location.hostname)&&(!isPrivatePreviewHostname(window.location.hostname)||standalone))setLegacyHost(window.location.host);
     let registration:ServiceWorkerRegistration|undefined;
     let reloadingForUpdate=false;
@@ -28,7 +28,7 @@ export function PwaManager(){
     const standalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
     let installDismissed=false;
     try{installDismissed=localStorage.getItem(installDismissedKey)==="1"}catch{/* Storage may be unavailable in a private or restricted web view. */}
-    if(!standalone&&!installDismissed){setHidden(false);setShowIos(/iphone|ipad|ipod/i.test(navigator.userAgent))}
+    if(!installStandalone&&!installDismissed){setHidden(false);setShowIos(/iphone|ipad|ipod/i.test(navigator.userAgent))}
     const listener=(value:Event)=>{value.preventDefault();setEvent(value as InstallEvent);setInstallError("")};
     const installed=()=>{setEvent(undefined);setHidden(true);setInstalling(false)};
     window.addEventListener("beforeinstallprompt",listener);
