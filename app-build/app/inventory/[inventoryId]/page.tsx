@@ -23,6 +23,7 @@ import { HABANOS_AUTHENTICITY_URL, HABANOS_EVIDENCE_CAUTION, OFAC_CUBAN_GOODS_UR
 import { safeInternalHref } from "@/lib/search-navigation";
 import Link from "next/link";
 import { BuyAgainPanel } from "@/components/buy-again-panel";
+import { RatingLeafMark } from "@/components/rating-leaf-mark";
 import { safeRecordedPurchaseUrl } from "@/lib/buy-again";
 import "./climate.css";
 export const dynamic = "force-dynamic";
@@ -125,9 +126,7 @@ export default async function CigarPage({
           <div className="ctaRow detailHeroActions"><Link className="button" href={storyEditHref}>Edit story</Link><Link className="button secondary" href={allEditHref}>Edit all details</Link></div>
         </div>
         <div className="scoreCard">
-          <small>Personal collection score</small>
-          <strong>{item.score ?? "—"}</strong>
-          <span>{item.priority || "Unrated priority"}</span>
+          <RatingLeafMark value={item.score ?? "—"} label="Personal collection score" detail={item.priority || "Unrated priority"}/>
         </div>
       </section>
       {!isPresentationAsset && <BuyAgainPanel inventoryId={item.inventoryId} identity={`${item.brand} · ${item.line} · ${item.vitola}${item.vintage ? ` · ${item.vintage}` : ""}`} seller={item.acquisitionSeller} purchaseDate={item.acquisitionDate} jurisdiction={item.purchaseJurisdiction} sourceUrl={safeRecordedPurchaseUrl(item.acquisitionSourceUrl)} positiveJournalCount={history.filter((entry) => entry.buyAgain).length} />}

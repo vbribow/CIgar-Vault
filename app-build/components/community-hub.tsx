@@ -8,6 +8,7 @@ import { TrustMark } from "@/components/trust-mark";
 import { brand } from "@/lib/brand";
 import { useMutationGuard } from "@/components/use-mutation-guard";
 import { recentYearOptions } from "@/lib/year-options";
+import { RatingLeafKey, RatingLeafMark } from "@/components/rating-leaf-mark";
 
 type CommunityData = { posts: CommunityPost[]; top25: CommunityRanking[]; myTop10:CommunityRanking[]; ratingCount: number; myContributions:{posts:CommunityPost[];ratings:CommunityRating[]} };
 const empty: CommunityData = { posts: [], top25: [], myTop10:[], ratingCount: 0, myContributions:{posts:[],ratings:[]} };
@@ -136,6 +137,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <span>Posts, reviews, and {brand.labels.communityRanking} scores reflect collector experience—not official product facts.</span>
 <a href="/trust">How {brand.name} labels trust →</a>
 </aside>
+    {tab === "ratings" && <RatingLeafKey/>}
     {(data.myContributions.posts.length>0||data.myContributions.ratings.length>0)&&<section className="contributionTracker">
 <div className="sectionHead">
 <div>
@@ -208,8 +210,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <h3>{item.brand} {item.line}</h3>
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
-<b>{item.averageScore}</b>
-<small>your score</small>
+<RatingLeafMark value={item.averageScore} label="Your score" compact/>
 </article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Publish your first cigar rating, then keep scoring the cigars you experience. Your list will update automatically.</p></div>}</section>
       <div className="communityLayout">
       <section id="top-25">
@@ -228,8 +229,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <h3>{item.brand} {item.line}</h3>
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
-<b>{item.weightedScore}</b>
-<small>{brand.name} score · {item.averageScore} average · {item.ratingCount} rating{item.ratingCount === 1 ? "" : "s"} · {item.confidence}</small>
+<RatingLeafMark value={item.weightedScore} label={`${brand.name} score`} detail={`${item.averageScore} average · ${item.ratingCount} rating${item.ratingCount === 1 ? "" : "s"} · ${item.confidence}`} compact/>
 </article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the {brand.labels.communityRanking} without invented scores or promotional placement.</p></div>}</section>
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating} aria-busy={ratingMutation.pending}>
 <div className="eyebrow">Rate a cigar</div>

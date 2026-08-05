@@ -5,6 +5,7 @@ import { QuickPlaceRating } from "@/components/quick-place-rating";
 import { brand } from "@/lib/brand";
 import { certificationDisplayLabels, certificationLevels, communityPlaceRankingScore, type GooglePlaceResult, type PlaceCertification } from "@/lib/places";
 import { LoungeLeafRating } from "@/components/lounge-leaf-rating";
+import { RatingLeafMark } from "@/components/rating-leaf-mark";
 
 type Result=GooglePlaceResult&{
  cedrivaScore?:number;
@@ -60,7 +61,7 @@ export function PlaceDirectory(){
     <h2>{place.name}</h2><p>{place.address}</p>
     <div className="dualScores">
      <div><span>Google rating</span><strong>{place.googleRating??"—"}</strong><small>{place.googleReviewCount??0} Google reviews</small></div>
-     <div><span>{brand.name} Community</span><strong>{place.cedrivaScore??"—"}</strong><small>{place.cedrivaReviewCount} visit rating{place.cedrivaReviewCount===1?"":"s"} · {place.cedrivaScoreStatus}</small></div>
+     <div><span>{brand.name} Community</span><RatingLeafMark value={place.cedrivaScore??"—"} label="Community score" detail={`${place.cedrivaReviewCount} visit rating${place.cedrivaReviewCount===1?"":"s"} · ${place.cedrivaScoreStatus}`} compact/></div>
      {rankingScore!==undefined&&<div><span>Confidence score</span><strong>{rankingScore}</strong><small>Sample-size adjusted</small></div>}
      {place.certification&&<div><span>Independent critic</span><LoungeLeafRating level={place.certification.level} compact/><small>Critic score {place.certification.score} · visited {place.certification.visitMonth}</small></div>}
     </div>
