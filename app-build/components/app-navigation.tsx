@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { GlobalSearch } from "@/components/global-search";
 import { HojaviaMark } from "@/components/hojavia-mark";
+import { signOut } from "@/app/login/actions";
 import { brand } from "@/lib/brand";
 
 function matches(pathname: string, href: string) {
@@ -115,7 +116,7 @@ export function AppNavigation() {
       <header><div><span>Navigate</span><h2 id="mobile-more-title">More of {brand.name}</h2><small id="mobile-more-description">Search or choose any collector workspace.</small></div><button ref={mobileMoreClose} type="button" onClick={()=>closeMobileMore(true)} aria-label="Close More menu">×</button></header>
       <button type="button" className="mobileMoreSearch" onClick={openMobileSearch}><span aria-hidden="true">⌕</span><strong>Search {brand.name}</strong><small>Find cigars, collections, markets, or tools</small></button>
       <div className="mobileMoreFeatured" aria-label="Popular destinations">{mobileFeaturedLinks.map(([href,label,description,icon])=>{const active=matches(pathname,href);return <Link href={href} className={active?"active":undefined} aria-current={active?"page":undefined} key={href}><span aria-hidden="true">{icon}</span><div><strong>{label}</strong><small>{description}</small></div><b aria-hidden="true">›</b></Link>})}</div>
-      <div className="mobileMoreDirectory"><h3>All areas</h3>{moreLinks.map(([href,label,description])=>{const active=matches(pathname,href);return <Link href={href} className={active?"active":undefined} aria-current={active?"page":undefined} key={href}><div><strong>{label}</strong><small>{description}</small></div><b aria-hidden="true">›</b></Link>})}</div>
+      <div className="mobileMoreDirectory"><h3>All areas</h3>{moreLinks.map(([href,label,description])=>{const active=matches(pathname,href);return <Link href={href} className={active?"active":undefined} aria-current={active?"page":undefined} key={href}><div><strong>{label}</strong><small>{description}</small></div><b aria-hidden="true">›</b></Link>})}<form action={signOut} className="mobileSignOut"><button type="submit"><strong>Sign out</strong><small>Securely end this session on this device</small></button></form></div>
     </section>
   </div>}
   </>;
