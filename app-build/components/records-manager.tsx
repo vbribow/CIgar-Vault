@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem, SmokingLog, Valuation } from "@/lib/types";
 import { smokeEntryOrder } from "@/lib/smoke-journal";
@@ -10,6 +10,8 @@ import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedS
 import { burnQualityOptions, constructionQualityOptions } from "@/lib/records-model";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 import type { ValuationResearch } from "@/lib/valuation-research";
+import type { CigarVisionResult } from "@/lib/cigar-vision";
+import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-capture";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
@@ -26,6 +28,11 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [valuations, setValuations] = useState(initialValuations);
   const [message, setMessage] = useState("");
   const [smokeSource, setSmokeSource] = useState(selectedInventoryId || "");
+  const [smokeCigarName, setSmokeCigarName] = useState("");
+  const [smokePhotos, setSmokePhotos] = useState<File[]>([]);
+  const [smokePhotoAnalysis, setSmokePhotoAnalysis] = useState<CigarVisionResult>();
+  const [smokePhotoBusy, setSmokePhotoBusy] = useState(false);
+  const [smokePhotoMessage, setSmokePhotoMessage] = useState("");
   const [smokeSubmissionId, setSmokeSubmissionId] = useState(() => crypto.randomUUID());
   const [valuationSubmissionId, setValuationSubmissionId] = useState(() => crypto.randomUUID());
   const [valuationSource, setValuationSource] = useState(selectedInventoryId || "");
@@ -85,7 +92,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     setMessage(kind === "smoke" && smokeSource === "MANUAL" ? "Smoking experience saved. Inventory was not changed." : "Saved.");
     mutation.succeed();
     event.currentTarget.reset();
-    if (kind === "smoke") setSmokeSource(selectedInventoryId || "");
+    if (kind === "smoke") { setSmokeSource(selectedInventoryId || ""); setSmokeCigarName(""); setSmokePhotos([]); setSmokePhotoAnalysis(undefined); setSmokePhotoMessage(""); }
   }
 
   function startAnotherSmoke() {
@@ -93,7 +100,51 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     setNewSmokeConfirmed(true);
     setSmokeSubmissionId(crypto.randomUUID());
     setSmokeSource(selectedInventoryId || "");
+    setSmokeCigarName("");
+    setSmokePhotos([]);
+    setSmokePhotoAnalysis(undefined);
+    setSmokePhotoMessage("");
     setMessage("");
+  }
+
+  function chooseSmokePhotos(event: ChangeEvent<HTMLInputElement>) {
+    const files = [...(event.target.files ?? [])];
+    event.target.value = "";
+    const error = validatePhotoSelection([], files);
+    if (error) { setSmokePhotoMessage(error); return; }
+    setSmokePhotos(files);
+    setSmokePhotoAnalysis(undefined);
+    setSmokePhotoMessage(`${files.length} photo${files.length === 1 ? " is" : "s are"} ready. Identification will not add anything to your Vault.`);
+  }
+
+  async function prepareSmokePhoto(file: File) {
+    const image = document.createElement("img"), source = URL.createObjectURL(file);
+    try {
+      await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error(photoPreparationError(file.name))); image.src = source; });
+      const scale = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight)), canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d"); if (!context) throw new Error(photoPreparationError(file.name));
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error(photoPreparationError(file.name))), "image/jpeg", .72));
+      return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+    } finally { URL.revokeObjectURL(source); }
+  }
+
+  async function identifySmokePhotos() {
+    if (!smokePhotos.length || smokePhotoBusy) return;
+    setSmokePhotoBusy(true); setSmokePhotoMessage("");
+    try {
+      const form = new FormData();
+      for (const file of smokePhotos) form.append("photos", await prepareSmokePhoto(file));
+      const response = await fetch("/api/photo-identification", { method: "POST", body: form });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Photo identification failed");
+      const analysis = result.data as CigarVisionResult;
+      const identity = [analysis.brand, analysis.line, analysis.vitola, analysis.vintage].filter(Boolean).join(" ");
+      setSmokePhotoAnalysis(analysis); setSmokeCigarName(identity);
+      setSmokePhotoMessage(`Identification ready (${analysis.confidence} confidence). Confirm or correct the cigar before saving your review.`);
+    } catch (error) { setSmokePhotoMessage(error instanceof Error ? error.message : "Photo identification failed"); }
+    finally { setSmokePhotoBusy(false); }
   }
 
   function startAnotherValuation() {
@@ -136,14 +187,24 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       <div className="eyebrow">Private tasting journal</div>
       <h2>Log a smoke</h2>
       <p className="small">Record any cigar you smoke—whether it came from your Vault, a lounge, a friend, or somewhere new. There are no wrong tasting notes.</p>
+      <div className="smokeStartChoices" aria-label="Choose how to log this cigar">
+        <button type="button" className={smokeSource === "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource("MANUAL"); setSmokePhotoMessage(""); }}><strong>Log a review only</strong><small>Identify by photo or type the cigar. Nothing is added to inventory.</small></button>
+        <button type="button" className={smokeSource && smokeSource !== "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource(selectedInventoryId || ""); setSmokePhotoMessage(""); document.querySelector<HTMLSelectElement>('#smoke-inventory-source')?.focus(); }}><strong>Log from my Vault</strong><small>Connect the review to an owned lot and reduce that lot by one.</small></button>
+        <a href="/inventory#photo-intake"><strong>Add to Vault first</strong><small>Create and verify the inventory lot before logging its smoke.</small></a>
+      </div>
       <form className="recordForm" onSubmit={event => send(event, "smoke")} aria-busy={smokeMutation.pending}>
         <fieldset disabled={smokeMutation.pending || smokeMutation.complete}>
-        <label><span>Inventory lot or another cigar *</span><select name="inventoryId" required value={smokeSource} onChange={event => setSmokeSource(event.target.value)}>
+        <label><span>Inventory lot or another cigar *</span><select id="smoke-inventory-source" name="inventoryId" required value={smokeSource} onChange={event => { setSmokeSource(event.target.value); setSmokePhotoMessage(""); }}>
           <option value="">Choose how to identify this cigar</option>
           <option value="MANUAL">Another smoke — not in my Vault</option>
           {inventory.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}</option>)}
         </select></label>
-        {smokeSource === "MANUAL" && <label className="manualSmokeCigar"><span>What did you smoke? *</span><input name="cigarName" required minLength={3} maxLength={300} placeholder="Brand, line, vitola, and year if known" /><small>No Vault record is required. This saves the experience without changing inventory.</small></label>}
+        {smokeSource === "MANUAL" && <div className="manualSmokeIdentity">
+          <div className="smokePhotoIdentify"><div><strong>Identify by photo</strong><small>Photograph the cigar or band. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos}/><span>Take a photo</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos}/><span>Choose photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button></div>
+          {smokePhotoMessage && <output className="smokePhotoMessage" aria-live="polite">{smokePhotoMessage}</output>}
+          {smokePhotoAnalysis && <div className={`visionEvidence confidence-${smokePhotoAnalysis.confidence}`}><strong>{smokePhotoAnalysis.confidence} confidence · review required</strong><p>{smokePhotoAnalysis.evidenceSummary}</p>{smokePhotoAnalysis.uncertainties.length > 0 && <small><b>Confirm:</b> {smokePhotoAnalysis.uncertainties.join(" · ")}</small>}</div>}
+          <label className="manualSmokeCigar"><span>What did you smoke? *</span><input name="cigarName" required minLength={3} maxLength={300} value={smokeCigarName} onChange={event => setSmokeCigarName(event.target.value)} placeholder="Brand, line, exact vitola, and year if known" /><small>Review and correct photo suggestions. Saving creates only a private smoking review—no Vault record and no quantity change.</small></label>
+        </div>}
         <label><span>Date</span><input name="dateSmoked" type="date" required defaultValue={today()} /></label>
         <label><span>Score · 0–100</span><select name="overall" defaultValue=""><option value="">Choose a score</option>{scoreOptions.map(score => <option value={score} key={score}>{score}</option>)}</select></label>
         <label><span>Strength</span><select name="strength" defaultValue=""><option value="">Choose perceived strength</option>{strengthOptions.map(value => <option key={value}>{value}</option>)}</select><small>How the nicotine intensity felt—not the depth of flavor.</small></label>
