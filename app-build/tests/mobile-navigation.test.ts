@@ -24,4 +24,7 @@ test("mobile navigation exposes a focused five-item bar and complete More sheet"
   assert.match(navigation, /mobileFeaturedLinks\.map/);
   assert.match(navigation, /moreLinks\.map/);
   assert.match(navigation, /\["\/cigar-somm","Cigar Somm"/);
+  assert.match(navigation, /action=\{signOut\}/);
+  assert.match(navigation, /<strong>Sign out<\/strong>/);
+  assert.match(navigation, /Securely end this session on this device/);
 });
