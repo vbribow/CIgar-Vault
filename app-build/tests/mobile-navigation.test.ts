@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const navigation = readFileSync(new URL("../components/app-navigation.tsx", import.meta.url), "utf8");
+const deviceAwareSignOut = readFileSync(new URL("../components/device-aware-sign-out.tsx", import.meta.url), "utf8");
 
 test("community navigation uses the Collectors’ Lounge identity", () => {
   assert.match(navigation, />Collectors’ Lounge<\/Link>/);
@@ -24,7 +25,8 @@ test("mobile navigation exposes a focused five-item bar and complete More sheet"
   assert.match(navigation, /mobileFeaturedLinks\.map/);
   assert.match(navigation, /moreLinks\.map/);
   assert.match(navigation, /\["\/cigar-somm","Cigar Somm"/);
-  assert.match(navigation, /action=\{signOut\}/);
-  assert.match(navigation, /<strong>Sign out<\/strong>/);
-  assert.match(navigation, /Securely end this session on this device/);
+  assert.match(navigation, /<DeviceAwareSignOut compact \/>/);
+  assert.match(deviceAwareSignOut, /action=\{signOut\}/);
+  assert.match(deviceAwareSignOut, /<strong>Sign out<\/strong>/);
+  assert.match(deviceAwareSignOut, /saved account records stay unchanged/);
 });
