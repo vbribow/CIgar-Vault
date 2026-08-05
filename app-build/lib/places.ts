@@ -4,11 +4,14 @@ export const placeVibes=["Low-key","Relaxed","Traditional","Professional","Upsca
 export const placeCapabilities=["Cigar lounge","Cigar bar","Brick-and-mortar retailer","Walk-in humidor","On-site smoking","Spirits and cocktails","Food","Membership required","Outdoor smoking only"] as const;
 export const certificationLevels=["Cedriva Certified","Cedriva Distinguished","Cedriva Destination","Not Yet Certified"] as const;
 export const certificationDisplayLabels:Record<(typeof certificationLevels)[number],string>={
- "Cedriva Certified":"Reviewed",
- "Cedriva Distinguished":"Distinguished",
- "Cedriva Destination":"Destination",
- "Not Yet Certified":"Not yet reviewed",
+ "Cedriva Certified":"One Leaf · Recommended",
+ "Cedriva Distinguished":"Two Leaves · Distinguished",
+ "Cedriva Destination":"Three Leaves · Destination",
+ "Not Yet Certified":"Not yet assessed",
 };
+export function loungeLeafCount(level:(typeof certificationLevels)[number]){
+ return level==="Cedriva Destination"?3:level==="Cedriva Distinguished"?2:level==="Cedriva Certified"?1:0;
+}
 
 export const PlaceReviewInput=z.object({
  googlePlaceId:z.string().trim().min(3).max(300),

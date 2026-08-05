@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { QuickPlaceRating } from "@/components/quick-place-rating";
 import { brand } from "@/lib/brand";
 import { certificationDisplayLabels, certificationLevels, communityPlaceRankingScore, type GooglePlaceResult, type PlaceCertification } from "@/lib/places";
+import { LoungeLeafRating } from "@/components/lounge-leaf-rating";
 
 type Result=GooglePlaceResult&{
  cedrivaScore?:number;
@@ -61,7 +62,7 @@ export function PlaceDirectory(){
      <div><span>Google rating</span><strong>{place.googleRating??"—"}</strong><small>{place.googleReviewCount??0} Google reviews</small></div>
      <div><span>{brand.name} Community</span><strong>{place.cedrivaScore??"—"}</strong><small>{place.cedrivaReviewCount} visit rating{place.cedrivaReviewCount===1?"":"s"} · {place.cedrivaScoreStatus}</small></div>
      {rankingScore!==undefined&&<div><span>Confidence score</span><strong>{rankingScore}</strong><small>Sample-size adjusted</small></div>}
-     {place.certification&&<div><span>Independent critic</span><strong>{place.certification.score}</strong><small>{place.certification.visitMonth}</small></div>}
+     {place.certification&&<div><span>Independent critic</span><LoungeLeafRating level={place.certification.level} compact/><small>Critic score {place.certification.score} · visited {place.certification.visitMonth}</small></div>}
     </div>
     {place.vibes.length>0&&<div className="placeVibes">{place.vibes.map(value=><span key={value.vibe}>{value.vibe} · {value.count}</span>)}</div>}
     {place.certification&&<blockquote>{place.certification.summary}</blockquote>}

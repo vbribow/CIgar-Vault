@@ -63,9 +63,9 @@ test("future-facing product surfaces do not recreate retired branded subproducts
 
 test("legacy location status values remain readable but are never the display labels", () => {
   assert.equal(certificationLevels.includes("Cedriva Certified"), true);
-  assert.equal(certificationDisplayLabels["Cedriva Certified"], "Reviewed");
-  assert.equal(certificationDisplayLabels["Cedriva Distinguished"], "Distinguished");
-  assert.equal(certificationDisplayLabels["Cedriva Destination"], "Destination");
+  assert.equal(certificationDisplayLabels["Cedriva Certified"], "One Leaf · Recommended");
+  assert.equal(certificationDisplayLabels["Cedriva Distinguished"], "Two Leaves · Distinguished");
+  assert.equal(certificationDisplayLabels["Cedriva Destination"], "Three Leaves · Destination");
 });
 
 test("priority presentation surfaces contain no hard-coded retired company name", () => {
