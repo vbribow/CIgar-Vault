@@ -8,6 +8,7 @@ import {
   launchIncidentReportTemplate,
   type LaunchIncidentSeverity,
 } from "@/lib/beta-feedback";
+import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 type Feedback = {
   id: string;
@@ -46,14 +47,21 @@ export function BetaFeedbackForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
-    setMessage("");
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const text = (name: string) => String(form.get(name) || "").trim() || undefined;
     const score = (name: string) => {
       const value = text(name);
       return value === undefined ? undefined : Number(value);
     };
+    const summary = text("summary");
+    if (!summary || summary.length < 5) {
+      setMessage("Add a short summary of at least five characters. Every other response is optional.");
+      (formElement.elements.namedItem("summary") as HTMLInputElement | null)?.focus();
+      return;
+    }
+    setBusy(true);
+    setMessage("Sending your private feedback…");
     try{const response = await fetch("/api/beta-feedback", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -62,7 +70,7 @@ export function BetaFeedbackForm({
         category: form.get("category"),
         severity: form.get("severity"),
         pageUrl: text("pageUrl"),
-        summary: text("summary"),
+        summary,
         details: text("details"),
         device: text("device"),
         taskOutcome: text("taskOutcome"),
@@ -88,15 +96,15 @@ export function BetaFeedbackForm({
     }
     void captureOperationalSuccess("feedback-submit",response.status);
     setItems(current => [result.data, ...current]);
-    event.currentTarget.reset();
+    formElement.reset();
     setMode("Issue report");
     setMessage("Feedback received. Thank you for helping the platform earn trust.");
     }catch{void captureOperationalFailure("feedback-submit");setMessage("Unable to send feedback. Check your connection and try again.")}finally{setBusy(false)}
   }
 
   return <div className="feedbackLayout">
-    <form className="card feedbackForm" onSubmit={submit}>
-      <div><div className="eyebrow">Private beta channel</div><h2>Share evidence, not just impressions.</h2><p>Choose the kind of review you are completing. Collection details remain private unless you intentionally include them here.</p></div>
+    <form className="card feedbackForm" onSubmit={submit} noValidate aria-busy={busy}>
+      <div><div className="eyebrow">Private beta channel</div><h2>Share evidence, not just impressions.</h2><p>Only the short summary is required. Add any other detail that feels useful; collection details remain private unless you intentionally include them here.</p></div>
       {accountTemplate && <div className="dataRequestNotice"><strong>Account data request</strong><span>This creates a private, auditable request for review. It does not immediately change or delete any account data.</span></div>}
       {incidentTemplate && <div className="dataRequestNotice incident"><strong>Launch incident record</strong><span>The form is prefilled for consistent triage. Review every field before submitting; opening this page does not send a report or change launch state.</span></div>}
       <fieldset className="feedbackMode">
@@ -107,35 +115,35 @@ export function BetaFeedbackForm({
       </fieldset>
       <label><span>What kind of feedback?</span><select name="category" defaultValue={requestTemplate?.category || "Bug"}><option>Bug</option><option>Confusing</option><option>Suggestion</option><option>Trust or data</option><option>Other</option></select></label>
       <label><span>Impact</span><select name="severity" defaultValue={requestTemplate?.severity || "Low"}><option>Low</option><option>Medium</option><option>High</option><option>Blocking</option></select></label>
-      <label><span>Device</span><select name="device" defaultValue=""><option value="">Choose when relevant</option><option>Desktop</option><option>Mobile</option><option>Tablet</option><option>Other</option></select></label>
-      <label><span>Page or workflow</span><input name="pageUrl" defaultValue={requestTemplate?.pageUrl} placeholder="/inventory, valuation save, mobile onboarding…"/></label>
+      <label><span>Device · optional</span><select name="device" defaultValue=""><option value="">Choose when relevant</option><option>Desktop</option><option>Mobile</option><option>Tablet</option><option>Other</option></select></label>
+      <label><span>Page or workflow · optional</span><input name="pageUrl" defaultValue={requestTemplate?.pageUrl} placeholder="/inventory, valuation save, mobile onboarding…"/></label>
       {mode === "Issue report" && <>
-        <label><span>What did you expect?</span><textarea name="expectedResult" maxLength={2000} rows={3}/></label>
-        <label><span>What actually happened?</span><textarea name="observedResult" maxLength={2000} rows={3}/></label>
+        <label><span>What did you expect? · optional</span><textarea name="expectedResult" maxLength={2000} rows={3}/></label>
+        <label><span>What actually happened? · optional</span><textarea name="observedResult" maxLength={2000} rows={3}/></label>
       </>}
       {mode === "Session review" && <section className="feedbackStructured">
-        <div><strong>Session evidence</strong><small>Score the experience you just completed—not the idea of the product.</small></div>
-        <label><span>Task outcome</span><select name="taskOutcome" required><option>Completed independently</option><option>Completed with help</option><option>Could not complete</option><option>Not applicable</option></select></label>
+        <div><strong>Session evidence · optional</strong><small>Share only the signals that feel useful. Score the experience you just completed—not the idea of the product.</small></div>
+        <label><span>Task outcome</span><select name="taskOutcome" defaultValue=""><option value="">Choose when relevant</option><option>Completed independently</option><option>Completed with help</option><option>Could not complete</option><option>Not applicable</option></select></label>
         <div className="feedbackScores">
-          <label><span>Ease and confidence</span><select name="experienceScore" required defaultValue=""><option value="" disabled>Choose</option>{[1,2,3,4,5].map(value => <option key={value} value={value}>{value} / 5</option>)}</select></label>
-          <label><span>Trust</span><select name="trustScore" required defaultValue=""><option value="" disabled>Choose</option>{[1,2,3,4,5].map(value => <option key={value} value={value}>{value} / 5</option>)}</select></label>
-          <label><span>Learning depth</span><select name="learningDepthScore" required defaultValue=""><option value="" disabled>Choose</option>{[1,2,3,4,5].map(value => <option key={value} value={value}>{value} / 5</option>)}</select></label>
-          <label><span>Would recommend</span><select name="recommendationScore" required defaultValue=""><option value="" disabled>Choose</option>{[0,1,2,3,4,5,6,7,8,9,10].map(value => <option key={value} value={value}>{value} / 10</option>)}</select></label>
+          <label><span>Ease and confidence</span><select name="experienceScore" defaultValue=""><option value="">Choose when relevant</option>{[1,2,3,4,5].map(value => <option key={value} value={value}>{value} / 5</option>)}</select></label>
+          <label><span>Trust</span><select name="trustScore" defaultValue=""><option value="">Choose when relevant</option>{[1,2,3,4,5].map(value => <option key={value} value={value}>{value} / 5</option>)}</select></label>
+          <label><span>Learning depth</span><select name="learningDepthScore" defaultValue=""><option value="">Choose when relevant</option>{[1,2,3,4,5].map(value => <option key={value} value={value}>{value} / 5</option>)}</select></label>
+          <label><span>Would recommend</span><select name="recommendationScore" defaultValue=""><option value="">Choose when relevant</option>{[0,1,2,3,4,5,6,7,8,9,10].map(value => <option key={value} value={value}>{value} / 10</option>)}</select></label>
         </div>
       </section>}
       {mode === "Name and culture" && <section className="feedbackStructured confidential">
-        <div><strong>Confidential name and cultural response</strong><small>Complete this only when Brian personally asks. Do not repeat or share the confidential candidate outside the approved beta.</small></div>
-        <label><span>Languages you use comfortably</span><input name="languageContext" maxLength={200} required placeholder="Spanish and English"/></label>
-        <label><span>Regional or cultural perspective</span><input name="regionalPerspective" maxLength={200} required placeholder="Dominican Republic, Nicaragua, U.S. bilingual…"/></label>
+        <div><strong>Confidential name and cultural response · optional</strong><small>Complete the fields that feel relevant only when Brian personally asks. Do not repeat or share the confidential candidate outside the approved beta.</small></div>
+        <label><span>Languages you use comfortably</span><input name="languageContext" maxLength={200} placeholder="Spanish and English"/></label>
+        <label><span>Regional or cultural perspective</span><input name="regionalPerspective" maxLength={200} placeholder="Dominican Republic, Nicaragua, U.S. bilingual…"/></label>
         <label><span>What pronunciation did you hear or use?</span><input name="heardPronunciation" maxLength={200}/></label>
-        <label><span>Spell what you heard without looking at the written form</span><input name="spellingFromAudio" maxLength={200} required/></label>
-        <label><span>What words, places, cultures, products, or feelings did it bring to mind?</span><textarea name="nameAssociations" maxLength={2000} rows={4} required/></label>
-        <label><span>Cultural credibility</span><select name="culturalFit" required><option>Credible</option><option>Mostly credible</option><option>Uncertain</option><option>Forced</option><option>Concerning</option></select></label>
+        <label><span>Spell what you heard without looking at the written form</span><input name="spellingFromAudio" maxLength={200}/></label>
+        <label><span>What words, places, cultures, products, or feelings did it bring to mind?</span><textarea name="nameAssociations" maxLength={2000} rows={4}/></label>
+        <label><span>Cultural credibility</span><select name="culturalFit" defaultValue=""><option value="">Choose when relevant</option><option>Credible</option><option>Mostly credible</option><option>Uncertain</option><option>Forced</option><option>Concerning</option></select></label>
       </section>}
       <label><span>Short summary</span><input name="summary" defaultValue={requestTemplate?.summary} minLength={5} maxLength={160} required/></label>
-      <label><span>{mode === "Issue report" ? "Anything else we should know?" : "Explain your response in your own words"}</span><textarea name="details" defaultValue={requestTemplate?.details} minLength={10} maxLength={4000} rows={7} required/></label>
-      <button className="button" disabled={busy}>{busy ? "Sending…" : "Send private feedback"}</button>
-      {message && <output>{message}</output>}
+      <label><span>{mode === "Issue report" ? "Anything else we should know? · optional" : "Explain your response in your own words · optional"}</span><textarea name="details" defaultValue={requestTemplate?.details} maxLength={4000} rows={7}/></label>
+      <button type="submit" className="button" disabled={busy}>{busy ? "Sending…" : "Send private feedback"}</button>
+      {message && <output aria-live="polite">{message}</output>}
     </form>
     <section className="feedbackHistory">
       <div><div className="eyebrow">Your reports</div><h2>Nothing disappears.</h2><p>Track what you reported and whether the team has responded.</p></div>

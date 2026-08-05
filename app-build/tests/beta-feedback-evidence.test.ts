@@ -20,18 +20,27 @@ const session = (overrides: Partial<BetaEvidenceRecord> = {}): BetaEvidenceRecor
   ...overrides,
 });
 
-test("session reviews require outcome and launch-quality scores", () => {
+test("a short summary is enough to submit session feedback", () => {
   const result = BetaFeedbackInput.safeParse({
     mode: "Session review",
     category: "Other",
     severity: "Low",
     summary: "Completed inventory review",
-    details: "The workflow was clear and the saved quantities remained accurate.",
   });
-  assert.equal(result.success, false);
+  assert.equal(result.success, true);
+  if (result.success) assert.equal(result.data.details, "");
 });
 
-test("name and cultural feedback requires regional evidence without exposing a candidate field", () => {
+test("the feedback form marks supporting evidence optional and reports submission progress", () => {
+  const form = readFileSync(new URL("../components/beta-feedback-form.tsx", import.meta.url), "utf8");
+  assert.match(form, /Only the short summary is required/);
+  assert.match(form, /noValidate/);
+  assert.match(form, /Sending your private feedback/);
+  assert.match(form, /Every other response is optional/);
+  assert.doesNotMatch(form, /name="(?:taskOutcome|experienceScore|trustScore|learningDepthScore|recommendationScore|languageContext|regionalPerspective|spellingFromAudio|nameAssociations|culturalFit|details)"[^>]*required/);
+});
+
+test("name and cultural feedback accepts useful optional context without exposing a candidate field", () => {
   const result = BetaFeedbackInput.safeParse({
     mode: "Name and culture",
     category: "Other",

@@ -15,7 +15,7 @@ export const BetaFeedbackInput = z.object({
   severity: z.enum(["Low", "Medium", "High", "Blocking"]),
   pageUrl: z.string().trim().max(500).optional(),
   summary: z.string().trim().min(5).max(160),
-  details: z.string().trim().min(10).max(4000),
+  details: z.string().trim().max(4000).optional().default(""),
   device: z.enum(["Desktop", "Mobile", "Tablet", "Other"]).optional(),
   taskOutcome: z.enum(["Completed independently", "Completed with help", "Could not complete", "Not applicable"]).optional(),
   experienceScore: z.number().int().min(1).max(5).optional(),
@@ -30,29 +30,6 @@ export const BetaFeedbackInput = z.object({
   spellingFromAudio: z.string().trim().max(200).optional(),
   nameAssociations: z.string().trim().max(2000).optional(),
   culturalFit: z.enum(["Credible", "Mostly credible", "Uncertain", "Forced", "Concerning"]).optional(),
-}).superRefine((input, context) => {
-  if (input.mode === "Session review") {
-    for (const [field, value] of [
-      ["taskOutcome", input.taskOutcome],
-      ["experienceScore", input.experienceScore],
-      ["trustScore", input.trustScore],
-      ["learningDepthScore", input.learningDepthScore],
-      ["recommendationScore", input.recommendationScore],
-    ] as const) {
-      if (value === undefined) context.addIssue({ code: "custom", path: [field], message: "Required for a session review" });
-    }
-  }
-  if (input.mode === "Name and culture") {
-    for (const [field, value] of [
-      ["languageContext", input.languageContext],
-      ["regionalPerspective", input.regionalPerspective],
-      ["spellingFromAudio", input.spellingFromAudio],
-      ["nameAssociations", input.nameAssociations],
-      ["culturalFit", input.culturalFit],
-    ] as const) {
-      if (!value) context.addIssue({ code: "custom", path: [field], message: "Required for confidential name feedback" });
-    }
-  }
 });
 
 export type BetaFeedbackInput = z.infer<typeof BetaFeedbackInput>;
