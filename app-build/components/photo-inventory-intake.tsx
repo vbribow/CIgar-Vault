@@ -9,6 +9,7 @@ import type { DataMode } from "@/lib/config";
 import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import { VitolaField } from "@/components/vitola-field";
 import { recentYearOptions } from "@/lib/year-options";
+import searchStyles from "./photo-identification-progress.module.css";
 
 const evidenceTypes = ["Typed description", "Cigar band", "Single cigar", "Sealed box", "Open box", "Box code", "Habanos seal", "Receipt / provenance"];
 const queueKey = "cigar-vault:intake-drafts:v1";
@@ -43,6 +44,8 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
   const [workingReady, setWorkingReady] = useState(false);
   const [message, setMessage] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisKind, setAnalysisKind] = useState<"photos" | "text" | null>(null);
+  const [searchPhotoIndex, setSearchPhotoIndex] = useState(0);
   const [analysis, setAnalysis] = useState<CigarVisionResult | null>(null);
   const [queue, setQueue] = useState<QueuedDraft[]>([]);
   const [captureSession, setCaptureSession] = useState(0);
@@ -89,6 +92,11 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
   }, [brand, evidenceType, fullBoxQty, line, looseStickQty, packaging, query, stage, sticksPerBox, vintage, vitola, workingReady]);
   useEffect(() => { photosRef.current = photos; }, [photos]);
   useEffect(() => () => { photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.url)); }, []);
+  useEffect(() => {
+    if (!analyzing || analysisKind !== "photos" || photos.length < 2) { setSearchPhotoIndex(0); return; }
+    const timer = window.setInterval(() => setSearchPhotoIndex((current) => (current + 1) % photos.length), 1200);
+    return () => window.clearInterval(timer);
+  }, [analysisKind, analyzing, photos.length]);
 
   function applyIdentification(value: CigarVisionResult) {
     setAnalysis(value); setBrand(value.brand); setLine(value.line); setVitola(value.vitola); setVintage(value.vintage || ""); setPackaging(value.packaging || "");
@@ -111,13 +119,13 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
     } catch { throw new Error(photoPreparationError(file.name)); } finally { URL.revokeObjectURL(source); }
   }
   async function identify(kind: "photos" | "text") {
-    setAnalyzing(true); setMessage("");
+    setAnalysisKind(kind); setAnalyzing(true); setMessage("");
     try {
       let response: Response;
       if (kind === "text") response = await fetch("/api/photo-identification", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query }) });
       else { const form = new FormData(); for (const photo of photos) form.append("photos", await preparedPhoto(photo.file)); response = await fetch("/api/photo-identification", { method: "POST", body: form }); }
       const result = await response.json(); if (!response.ok) throw new Error(result.error || "Identification failed"); applyIdentification(result.data);
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Identification failed"); } finally { setAnalyzing(false); }
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Identification failed"); } finally { setAnalyzing(false); setAnalysisKind(null); }
   }
   function createDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -165,10 +173,14 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
       {(["identify", "review", "saved"] as IntakeStage[]).map((value, index) => <li key={value} className={stage === value ? "active" : (["review", "saved"].includes(stage) && index === 0) || (stage === "saved" && index === 1) ? "complete" : ""}><span>{index + 1}</span><strong>{value === "identify" ? "Identify" : value === "review" ? "Review" : "Saved"}</strong></li>)}
     </ol>
 
-    {stage === "identify" && <section className="intakeStage" aria-labelledby="identify-stage-title">
+    {stage === "identify" && <section className="intakeStage" aria-labelledby="identify-stage-title" aria-busy={analyzing && analysisKind === "photos"}>
       <div><div className="eyebrow">Step 1 of 3</div><h3 id="identify-stage-title">Start with what you know.</h3><p>Type a description or photograph one physical asset. You can always enter details manually.</p></div>
       <div className="textIdentification"><input ref={identificationInput} aria-label="Describe the cigar or collection to identify" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Type a cigar, e.g. Fuente La Gran Fumada"/><button type="button" className="button secondary" disabled={query.trim().length < 3 || analyzing} onClick={() => identify("text")}>{analyzing ? "Researching…" : "Identify from text"}</button></div>
       <div className="photoIdentifyGrid"><div><label className="cameraCapture"><input key={`camera-${captureSession}`} type="file" accept="image/*" capture="environment" onChange={chooseFile}/><span>Open rear camera</span><small>Best for a single band, box, seal, or code</small></label><label className="photoDrop"><input key={captureSession} type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseFile}/>{photos.length ? <div className="photoPreviewGrid">{photos.map((photo) => <img key={photo.url} src={photo.url} alt={photo.name}/>)}</div> : <span><b>Choose existing photos</b><small>Up to 8 images of one physical asset</small></span>}</label><button type="button" className="button analyzePhotos" disabled={!photos.length||analyzing} onClick={() => identify("photos")}>{analyzing ? "Analyzing…" : "Identify from photos"}</button></div></div>
+      {analyzing && analysisKind === "photos" && photos.length > 0 && <section className={searchStyles.searchStage} aria-live="polite" aria-label="AI photo identification in progress">
+        <div className={searchStyles.activePhoto}><img src={photos[Math.min(searchPhotoIndex, photos.length - 1)].url} alt={`Selected cigar evidence ${searchPhotoIndex + 1} of ${photos.length}: ${photos[Math.min(searchPhotoIndex, photos.length - 1)].name}`}/><span aria-hidden="true" /></div>
+        <div className={searchStyles.searchDetail}><div className="eyebrow">AI-assisted identification</div><h4>Reviewing your selected photos</h4><p>All {photos.length} view{photos.length === 1 ? " is" : "s are"} staying visible while Hojavía looks for brand, line, vitola, packaging, and date clues.</p><div className={searchStyles.photoStrip} aria-label={`${photos.length} photos being reviewed`}>{photos.map((photo, index) => <img className={index === searchPhotoIndex ? searchStyles.current : undefined} key={photo.url} src={photo.url} alt={photo.name}/>)}</div><div className={searchStyles.searchStatus}><i aria-hidden="true" /><strong>Comparing visible details…</strong></div><small>AI suggestions are not authentication. You will review and correct every proposed field before anything can be saved.</small></div>
+      </section>}
       <div className="intakeStageActions"><button type="button" className="button secondary" onClick={() => { setAnalysis(null); setStage("review"); setMessage("Enter the details you know. Uncertain fields can stay blank."); }}>Enter details manually</button></div>
     </section>}
 
