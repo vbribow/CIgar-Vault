@@ -9,7 +9,8 @@ const installDismissedKey="hojavia:pwa-dismissed:v1";
 export function PwaManager(){
   const[event,setEvent]=useState<InstallEvent>(),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
   useEffect(()=>{
-    if(!isActiveProductHostname(window.location.hostname)&&!isPrivatePreviewHostname(window.location.hostname))setLegacyHost(window.location.host);
+    const standalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
+    if(!isActiveProductHostname(window.location.hostname)&&(!isPrivatePreviewHostname(window.location.hostname)||standalone))setLegacyHost(window.location.host);
     let registration:ServiceWorkerRegistration|undefined;
     let reloadingForUpdate=false;
     const controllerChange=()=>{

@@ -3,6 +3,7 @@ import { authorizeSensorSync } from "@/lib/config";
 import { responseOutputText } from "@/lib/cigar-vision";
 import { getCatalog, addCatalogDiscoveries } from "@/lib/smartsheet";
 import { CatalogDiscoverySchema, catalogDiscoveryJsonSchema, discoveryId, discoveryNotes, newCatalogDiscoveries } from "@/lib/catalog-discovery";
+import { knowledgeProposalFromDiscovery, queueCigarKnowledgeProposals } from "@/lib/catalog-knowledge";
 
 export const maxDuration=120;
 export async function GET(request:Request){

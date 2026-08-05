@@ -100,12 +100,36 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     valuationMutation.reset();
     setValuationSubmissionId(createClientUuid());
     setMessage("");
+    setValuationDraft(undefined);
+    setManualValuation(false);
   }
 
-  const valuationPicker = <select name="inventoryId" required defaultValue={selectedInventoryId || ""}>
+  async function researchValuation() {
+    if (!valuationSource || valuationResearching) return;
+    setValuationResearching(true);
+    setValuationResearchMessage("");
+    try {
+      const response = await fetch("/api/valuation-research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ inventoryId: valuationSource }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Valuation research could not be completed");
+      setValuationDraft(result.data);
+      setManualValuation(false);
+      setValuationResearchMessage("Research complete. Review every proposed field before saving.");
+    } catch (error) {
+      setValuationResearchMessage(error instanceof Error ? error.message : "Valuation research could not be completed");
+    } finally {
+      setValuationResearching(false);
+    }
+  }
+
+  const valuationPicker = <select name="inventoryId" required value={valuationSource} onChange={event => { setValuationSource(event.target.value); setValuationDraft(undefined); setManualValuation(false); setValuationResearchMessage(""); }}>
     <option value="">Select inventory lot</option>
     {inventory.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}</option>)}
   </select>;
+  const existingValuation = valuations.find(value => value.inventoryId === valuationSource);
+  const proposed = valuationDraft;
+  const showValuationForm = Boolean(proposed || manualValuation || existingValuation);
+  const value = <T,>(researched: T | null | undefined, existing: T | undefined) => researched ?? existing ?? "";
 
   return <div className="recordsGrid" onChange={recordSafety.markDirty}>
     <section className="card smokeJournal" id="log-smoke">

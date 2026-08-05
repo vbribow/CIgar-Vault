@@ -3,13 +3,13 @@ import { useRef, useState, type FormEvent } from "react";
 import type { AccountPreferences } from "@/lib/account-preferences";
 import { AppUpdatePanel } from "@/components/app-update-panel";
 
-const options:[keyof AccountPreferences,string,string][]=[
-  ["emailNotifications","Email delivery","Allow the platform to send account alerts by email when delivery is configured."],
-  ["wishlistAlerts","Wishlist price alerts","Email me when monitored listings meet a target price."],
-  ["valuationResearch","Valuation research","Periodically research stale or missing replacement values."],
-  ["ratingResearch","Professional rating research","Periodically look for sourced published ratings."],
-  ["productAnalytics","Private product analytics","Share privacy-safe feature events without inventory details or identity."],
-  ["upgradeRecommendations","Membership recommendations","Show discreet plan suggestions based on features I use."],
+const options: [keyof AccountPreferences, string, string][] = [
+  ["emailNotifications", "Email delivery", "Allow the platform to send account alerts by email when delivery is configured."],
+  ["wishlistAlerts", "Wishlist price alerts", "Email me when monitored listings meet a target price."],
+  ["valuationResearch", "Valuation research", "Periodically research stale or missing replacement values."],
+  ["ratingResearch", "Professional rating research", "Periodically look for sourced published ratings."],
+  ["productAnalytics", "Private product analytics", "Share privacy-safe feature events without inventory details or identity."],
+  ["upgradeRecommendations", "Membership recommendations", "Show discreet plan suggestions based on features I use."],
 ];
 export function AccountPreferencesPanel({initial}:{initial:AccountPreferences}){
   const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState("");const saveInFlight=useRef(false);

@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { authorizeWrite } from "@/lib/config";
 import { buildBetaReadiness } from "@/lib/beta-readiness";
 import { privateBetaEnabled } from "@/lib/beta-access";
+import { isFounderAcceptanceTestRecord } from "@/lib/beta-feedback";
 
 export async function GET(request: Request) {
   if (!authorizeWrite(request)) return NextResponse.json({ error: "Founder authorization required" }, { status: 401 });
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     admin.from("beta_collectors").select("email,stage"),
     admin.from("account_consents").select("user_id"),
-    admin.from("beta_feedback").select("status,severity"),
+    admin.from("beta_feedback").select("status,severity,summary,page_url"),
     admin.from("vault_records").select("user_id,payload").eq("kind", "integrity").limit(10000),
   ]);
   const serviceCredentials = !auth.error && !collectors.error && !audits.error;
@@ -41,7 +42,8 @@ export async function GET(request: Request) {
     const payload = row.payload as { action?: string } | null;
     return signedUpIds.has(row.user_id) && payload?.action === "inventory-backup";
   }).map(row => row.user_id)).size;
-  const openRows = (feedback.data || []).filter(row => row.status === "Open" || row.status === "Reviewing");
+  const readinessFeedback = (feedback.data || []).filter(row => !isFounderAcceptanceTestRecord(row));
+  const openRows = readinessFeedback.filter(row => row.status === "Open" || row.status === "Reviewing");
   return NextResponse.json({ data: buildBetaReadiness({
     inviteOnly: privateBetaEnabled(),
     serviceCredentials,

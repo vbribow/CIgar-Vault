@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { applyTotalQuantityCorrection, hasDocumentedCurrentQuantity, inventoryCompleteness } from "@/lib/inventory-model";
 import type { DataMode } from "@/lib/config";
-import type { CigarCollection, InventoryItem, ProfessionalRating } from "@/lib/types";
+import type { CigarCollection, Humidor, InventoryItem, ProfessionalRating } from "@/lib/types";
 import { lotRetailValue, retailBoxValue } from "@/lib/valuation";
 import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
 import { findBoxFormat } from "@/lib/box-formats";
@@ -14,7 +14,7 @@ import { PhotoInventoryIntake } from "@/components/photo-inventory-intake";
 import { ratingResearchHref, ratingSummary } from "@/lib/cigar-ratings";
 import { PhotoManager } from "@/components/photo-manager";
 import { InventoryCorrectionAssistant } from "@/components/inventory-correction-assistant";
-import { collectionContentsSummary, inventoryCollectionRelationships } from "@/lib/collection-presentation";
+import { cigarInventoryRecords, collectionContentsSummary, inventoryCollectionRelationships } from "@/lib/collection-presentation";
 import { CollectionRelationshipTag } from "@/components/collection-relationship-tag";
 import { brand } from "@/lib/brand";
 import { recordRevision } from "@/lib/record-revision";
@@ -60,13 +60,13 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   useEffect(()=>{
     if(editing||draft||saving||bulkSaving)return;
     let active=true;
-    async function refresh(){try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)return;const result=await response.json();if(active&&Array.isArray(result.data)){setItems(result.data);setLastSynced(new Date())}}catch{/* retain the last known inventory during a network interruption */}}
+    async function refresh(){try{const response=await fetch("/api/inventory",{cache:"no-store"});if(!response.ok)return;const result=await response.json();if(active&&Array.isArray(result.data)){setItems(cigarInventoryRecords(result.data,collections));setLastSynced(new Date())}}catch{/* retain the last known inventory during a network interruption */}}
     const onFocus=()=>void refresh();
     const onVisibility=()=>{if(document.visibilityState==="visible")void refresh()};
     window.addEventListener("focus",onFocus);document.addEventListener("visibilitychange",onVisibility);void refresh();
     const timer=window.setInterval(()=>{if(document.visibilityState==="visible")void refresh()},30_000);
     return()=>{active=false;window.removeEventListener("focus",onFocus);document.removeEventListener("visibilitychange",onVisibility);window.clearInterval(timer)};
-  },[editing,draft,saving,bulkSaving]);
+  },[editing,draft,saving,bulkSaving,collections]);
 
   useEffect(() => {
     if (!recentlySaved || editing) return;
@@ -100,14 +100,13 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const locations = useMemo(() => [...new Set(items.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [items]);
   const collectionRelationships = useMemo(() => inventoryCollectionRelationships(items,collections), [items,collections]);
   const collectionContents = useMemo(() => new Map(collections.map(collection => [collection.collectionId,collectionContentsSummary(collection,items)])), [collections,items]);
-  const filtered = useMemo(() => items.filter((item) => {
+  const filtered = useMemo(() => scopedItems.filter((item) => {
     const haystack = `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola}`.toLowerCase();
     const missingMatch = missing === "all" || (missing === "quantity" && !hasDocumentedCurrentQuantity(item)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
     const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
-    const activityMatch = !initialActiveOnly || (item.currentQty ?? 0) > 0;
-    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && activityMatch;
-  }), [items, query, status, missing, storage, initialCollectionId, initialActiveOnly]);
+    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch;
+  }), [scopedItems, query, status, missing, storage, initialCollectionId]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
@@ -130,12 +129,15 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     payload.brand = canonicalBrand(String(payload.brand || ""));
     const id = String(payload.inventoryId);
     const isEdit = Boolean(editing);
+    let failureStatus=0;
     try {
       const response = await fetch(isEdit ? `/api/inventory/${encodeURIComponent(editing!.inventoryId)}` : "/api/inventory", {
         method: isEdit ? "PUT" : "POST", headers: { "Content-Type": "application/json", "x-founder-key": String(form.get("writeKey") || ""), ...(editing ? { "If-Match": recordRevision(editing) } : {}) }, body: JSON.stringify(payload),
       });
+      failureStatus=response.status;
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Save failed");
+      void captureOperationalSuccess("inventory-save",response.status);
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
       const savedId=String(result.data.inventoryId||id);
       const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";
@@ -265,8 +267,9 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>
       <label><span>Storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All locations</option><option value="unassigned">Unassigned</option>{locations.map((value)=><option key={value}>{value}</option>)}</select></label>
-      <div className="filterCount">{filtered.length} of {items.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
+      <div className="filterCount">{filtered.length} of {scopedItems.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
     </section>
+    {message&&missing!=="all"&&<div className="inventoryQueueNotice" role="status" aria-live="polite">{message}<small>{filtered.length} record{filtered.length===1?"":"s"} currently remain in this audit view.</small></div>}
     {initialCollectionId&&<section className="card inventoryDataNotice"><div><strong>{collections.find(collection=>collection.collectionId===initialCollectionId)?.name||"Selected collection"} · focused component queue</strong><p>Showing only linked lots that match the selected data-quality filter.</p></div><a className="button secondary" href={`/inventory?missing=${encodeURIComponent(missing)}#inventory-records`}>Show all matching lots</a></section>}
 
     {selected.size>0&&<form className="bulkInventoryBar" onSubmit={applyBulkUpdate}><div><strong>{selected.size} selected</strong><button type="button" onClick={()=>setSelected(new Set())}>Clear</button></div><label><span>Status</span><select name="bulkStatus" defaultValue=""><option value="">No change</option><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label><label><span>Storage</span><input name="bulkStorage" list="bulk-storage-options" placeholder="No change"/><datalist id="bulk-storage-options">{locations.map((value)=><option key={value}>{value}</option>)}</datalist></label><label><span>Priority</span><select name="bulkPriority" defaultValue=""><option value="">No change</option><option>Low</option><option>Medium</option><option>High</option></select></label>{mode==="smartsheet"&&<label><span>Founder write key</span><input name="writeKey" type="password" required/></label>}<button className="button" disabled={bulkSaving}>{bulkSaving?"Updating…":"Apply changes"}</button></form>}
@@ -310,7 +313,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
         <label className="wide"><span>Recommended action</span><input name="action" defaultValue={formItem.action} /></label>
         <label className="wide"><span>Notes</span><textarea name="notes" defaultValue={formItem.notes} rows={3} /></label></>}
         {mode === "smartsheet" && <label className="wide"><span>Founder write key *</span><input name="writeKey" type="password" required autoComplete="current-password" /></label>}
-        <div className="formActions wide"><button className="button" disabled={saving || (mode === "mock" && !editing)}>{saving ? "Saving…" : editing ? "Save changes" : "Add lot"}</button>{message && <output className="inventorySaveToast">{message}</output>}</div>
+        <div className="formActions wide"><button className="button" disabled={saving || (mode === "mock" && !editing)}>{saving?"Saving…":editing&&editMode==="quantity"?"Save quantity":editing&&editMode==="year"?"Save production year":editing&&editMode==="price"?"Save retail price":editing&&editMode==="storage"?"Save storage location":editing&&editMode==="provenance"?"Save provenance":editing?"Save changes":"Add lot"}</button>{message&&missing==="all"&&<output className="inventorySaveToast">{message}</output>}</div>
       </form>
       {editing&&<InventoryCorrectionAssistant item={editing} inventory={items} mode={mode} onApplied={(updated)=>{setEditing(updated);setItems(current=>current.map(item=>item.inventoryId===updated.inventoryId?updated:item));setMessage(`${updated.inventoryId} corrected.`)}}/>}
       {editing&&<PhotoManager item={editing} onAttached={(updated)=>{setEditing(updated);setItems(current=>current.map(item=>item.inventoryId===updated.inventoryId?updated:item));}}/>}

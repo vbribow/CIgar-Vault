@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { authorizeWrite, dataMode } from "@/lib/config";
-import { loadValuations } from "@/lib/data";
+import { loadHumidors, loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import {
   InventoryInputSchema,

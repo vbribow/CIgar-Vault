@@ -54,7 +54,7 @@ export function BetaFeedbackForm({
       const value = text(name);
       return value === undefined ? undefined : Number(value);
     };
-    const response = await fetch("/api/beta-feedback", {
+    try{const response = await fetch("/api/beta-feedback", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -81,15 +81,17 @@ export function BetaFeedbackForm({
       }),
     });
     const result = await response.json();
-    setBusy(false);
     if (!response.ok) {
+      void captureOperationalFailure("feedback-submit",response.status);
       setMessage(result.error || "Unable to send feedback.");
       return;
     }
+    void captureOperationalSuccess("feedback-submit",response.status);
     setItems(current => [result.data, ...current]);
     event.currentTarget.reset();
     setMode("Issue report");
     setMessage("Feedback received. Thank you for helping the platform earn trust.");
+    }catch{void captureOperationalFailure("feedback-submit");setMessage("Unable to send feedback. Check your connection and try again.")}finally{setBusy(false)}
   }
 
   return <div className="feedbackLayout">

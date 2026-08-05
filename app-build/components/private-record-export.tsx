@@ -21,5 +21,5 @@ export function PrivateRecordExport() {
     }catch(error){setMessage(error instanceof Error?error.message:"The platform could not prepare your private record.")}
     finally{setBusy(false)}
   }
-  return <div className="privateRecordExport"><button type="button" className="button secondary" disabled={busy} onClick={download}>{busy?"Preparing secure file…":"Export my private record"}</button>{message&&<output aria-live="polite">{message}</output>}</div>;
+  return <div className="privateRecordExport" aria-busy={busy}><button type="button" className="button secondary" disabled={busy} onClick={download}>{busy?"Preparing secure file…":"Export my private record"}</button>{message&&<output aria-live="polite" aria-atomic="true">{message}</output>}</div>;
 }

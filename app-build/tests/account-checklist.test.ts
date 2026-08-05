@@ -12,9 +12,9 @@ test("account checklist reflects records already owned by the collector", () => 
   assert.equal(checklist.every(item => item.complete), true);
 });
 
-test("a registered but disconnected sensor remains an incomplete step", () => {
+test("beta checklist remains honest before first-session evidence exists", () => {
   const checklist = buildAccountChecklist(false, [
-    { kind: "sensors", payload: { connectionStatus: "Setup required" } },
+    { kind: "inventory", payload: {} },
   ]);
   assert.deepEqual(checklist.map(item => item.complete), [false, false, false, false, false]);
 });

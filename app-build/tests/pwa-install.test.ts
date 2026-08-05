@@ -11,6 +11,8 @@ test("PWA installation never leaves a reusable dead install button",()=>{
   assert.match(source,/disabled=\{installing\}/);
   assert.match(source,/Add to Home Screen/);
   assert.match(source,/aria-live="polite"/);
+  assert.match(source,/Installation help/);
+  assert.match(source,/\/install/);
 });
 
 test("PWA launch support fails open when phone storage or service-worker updates are unavailable",()=>{

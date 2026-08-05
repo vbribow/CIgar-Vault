@@ -50,6 +50,7 @@ test("offline, install, and social-preview assets bypass protected-route middlew
   assert.match(proxy, /pathname === "\/offline"/);
   assert.match(proxy, /assets\/\|favicon\.ico\|api\/\|icons\/\|sw\.js\|manifest\.webmanifest/);
   assert.match(proxy, /hojavia-mark\.svg/);
+  assert.match(proxy, /pathname === "\/install"/);
 });
 
 test("private phone previews keep install metadata on their reachable HTTP origin",()=>{
@@ -70,6 +71,8 @@ test("mobile install guidance remains actionable across supported platforms",()=
   assert.match(manager,/Private collection pages are not stored for offline viewing/);
   assert.match(manager,/const productionHost="hojavia\.com"/);
   assert.match(manager,/isActiveProductHostname\(window\.location\.hostname\)/);
+  assert.match(manager,/standalone\)\)setLegacyHost/);
+  assert.match(manager,/Reinstall safely/);
 });
 
 test("mobile first-session checklist leads directly to the collector intake and moves before profile on phones",()=>{

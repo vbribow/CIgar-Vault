@@ -2,6 +2,7 @@
 
 import { FormEvent, useRef, useState } from "react";
 import type { InventoryItem } from "@/lib/types";
+import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 const kinds = [
   ["cigar", "Cigar"], ["box", "Box"], ["habanos-seal", "Habanos seal"], ["box-code", "Box code"], ["provenance", "Receipt / provenance"],
@@ -37,6 +38,7 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
       const url = updated?.[fields[kind]];
       if (response.ok && updated && typeof url === "string" && url && url !== previousUrl) {
         attach(updated, kind, url);
+        void captureOperationalSuccess("photo-upload");
         setMessage("Photo attached and inventory synced ✓");
         return true;
       }
@@ -57,6 +59,7 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
     setUploading(true);
     setPhase("Uploading securely…");
     setMessage("");
+    let failureStatus=0;
 
     try {
       const request = fetch(`/api/inventory/${encodeURIComponent(item.inventoryId)}/photos`, {
@@ -73,10 +76,12 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
           }, 60_000);
         }),
       ]);
+      failureStatus=response.status;
       setPhase("Confirming inventory sync…");
       const result = await response.json().catch(() => ({ error: `Upload service returned ${response.status}` }));
       if (!response.ok) throw new Error(result.error || "Upload failed");
 
+      void captureOperationalSuccess("photo-upload",response.status);
       attach(result.data, result.kind, result.url);
       setMessage("Photo attached and inventory synced ✓");
       formElement.reset();
@@ -85,8 +90,10 @@ export function PhotoManager({ item, onAttached }: { item: InventoryItem; onAtta
       if (timedOut && await reconcile(kind, previousUrl)) {
         formElement.reset();
       } else if (timedOut) {
+        void captureOperationalFailure("photo-upload");
         setMessage("The upload did not finish within one minute. Nothing new is attached; you can safely try again.");
       } else {
+        void captureOperationalFailure("photo-upload",failureStatus);
         setMessage(error instanceof Error ? error.message : "Upload failed. Please try again.");
       }
     } finally {

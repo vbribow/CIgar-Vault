@@ -7,8 +7,8 @@ const route = fs.readFileSync("app/api/auth/recovery/route.ts", "utf8");
 const form = fs.readFileSync("components/password-recovery-form.tsx", "utf8");
 const resetForm = fs.readFileSync("components/reset-password-form.tsx", "utf8");
 
-test("authorization-code recovery links always open password reset", () => {
-  assert.match(confirm, /type === "recovery" \? "\/reset-password" : next/);
+test("authorization-code recovery links always use the shared safe destination", () => {
+  assert.match(confirm, /emailLinkDestination\(type, next\)/);
 });
 
 test("only actual provider throttling returns a rate-limit status", () => {

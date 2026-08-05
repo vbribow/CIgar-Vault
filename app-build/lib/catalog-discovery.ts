@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { CatalogCigar } from "@/lib/types";
-import { canonicalCigarIdentity, cigarProductKey } from "./cigar-identity";
+import { canonicalCigarIdentity } from "./cigar-identity";
 
 export const CatalogDiscoverySchema = z.object({
   discoveries: z.array(z.object({
@@ -18,9 +18,9 @@ export type CatalogDiscoveryResult = z.infer<typeof CatalogDiscoverySchema>;
 const discoveryStringFields=["brand","line","vitola","country","factory","brandOwner","blender","wrapper","wrapperOrigin","binder","binderOrigin","filler","fillerOrigins","dimensions","strength","packaging","releaseYear","edition","sourceUrl","sourceTitle","evidenceDate","notes"] as const;
 export const catalogDiscoveryJsonSchema = {type:"object",additionalProperties:false,properties:{discoveries:{type:"array",maxItems:40,items:{type:"object",additionalProperties:false,properties:{...Object.fromEntries(discoveryStringFields.map(field=>[field,{type:"string"}])),entityType:{type:"string",enum:["Brand owner","Factory brand","Private label","Sub-brand","Unresolved"]},confidence:{type:"string",enum:["High","Medium","Low"]}},required:[...discoveryStringFields,"entityType","confidence"]}}},required:["discoveries"]} as const;
 
-const key=(item:Pick<CatalogCigar,"brand"|"line"|"vitola">)=>cigarProductKey(item);
+const key=(item:Pick<CatalogCigar,"brand"|"line"|"vitola"|"releaseYear">)=>canonicalCigarIdentity({...item,vintage:item.releaseYear}).identityKey;
 export function newCatalogDiscoveries(discoveries:CatalogDiscoveryResult["discoveries"],existing:CatalogCigar[]){const known=new Set(existing.map(key));return discoveries.filter(item=>!known.has(key(item))).filter((item,index,all)=>all.findIndex(candidate=>key(candidate)===key(item))===index)}
-export function discoveryId(item:Pick<CatalogCigar,"brand"|"line"|"vitola">){return canonicalCigarIdentity(item).identityId.replace("CIG-","DISC-")}
+export function discoveryId(item:Pick<CatalogCigar,"brand"|"line"|"vitola"|"releaseYear">){return canonicalCigarIdentity({...item,vintage:item.releaseYear}).identityId.replace("CIG-","DISC-")}
 
 function releasePart(value:string){return value.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
 export function catalogDiscoveryReleaseKey(item:Pick<CatalogCigar,"brand"|"line">){return `${releasePart(item.brand)}|${releasePart(item.line)}`}

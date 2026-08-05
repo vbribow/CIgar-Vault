@@ -2,11 +2,12 @@ export type AccountChecklistRecord = { kind: string; payload?: unknown };
 
 export type AccountChecklistItem = {
   label: string;
+  description: string;
   href: string;
   complete: boolean;
 };
 
-export function buildAccountChecklist(profileComplete: boolean, records: AccountChecklistRecord[]): AccountChecklistItem[] {
+export function buildAccountChecklist(profileComplete: boolean, records: AccountChecklistRecord[], hasFeedback = false): AccountChecklistItem[] {
   const has = (kind: string) => records.some(record => record.kind === kind);
   const inventoryBackup = records.some(record => {
     if (record.kind !== "integrity" || !record.payload || typeof record.payload !== "object") return false;

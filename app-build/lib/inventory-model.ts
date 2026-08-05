@@ -98,8 +98,22 @@ export function manualInventoryId(now=Date.now(),random=Math.random()){
 }
 
 export function inventoryCompleteness(item: InventoryItem): number {
-  const fields = [item.originalQty, item.currentQty, item.retailValue, item.vintage, item.storageLocationId];
-  return Math.round((fields.filter((value) => value !== undefined && value !== "").length / fields.length) * 100);
+  const checks = [
+    hasPhysicalQuantityBreakdown(item),
+    item.retailValue !== undefined,
+    item.vintage !== undefined && String(item.vintage).trim() !== "",
+    Boolean(item.storageLocationId?.trim()),
+    hasInventoryProvenance(item),
+  ];
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
+export function hasPhysicalQuantityBreakdown(item: InventoryItem): boolean {
+  return item.fullBoxQty !== undefined && item.looseStickQty !== undefined;
+}
+
+export function hasInventoryProvenance(item: InventoryItem): boolean {
+  return Boolean(item.provenanceNotes?.trim() || item.provenanceDocumentLink?.trim());
 }
 
 export function hasDocumentedCurrentQuantity(item: InventoryItem): boolean {

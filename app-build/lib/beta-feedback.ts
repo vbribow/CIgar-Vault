@@ -117,6 +117,8 @@ export type BetaEvidenceRecord = {
   mode: BetaFeedbackMode;
   status: "Open" | "Reviewing" | "Resolved" | "Closed";
   severity: "Low" | "Medium" | "High" | "Blocking";
+  summary?: string | null;
+  page_url?: string | null;
   task_outcome?: string | null;
   trust_score?: number | null;
   learning_depth_score?: number | null;
@@ -124,15 +126,22 @@ export type BetaEvidenceRecord = {
   cultural_fit?: string | null;
 };
 
+export function isFounderAcceptanceTestRecord(record: Pick<BetaEvidenceRecord, "summary" | "page_url">) {
+  return record.summary?.startsWith("[Founder test]") === true
+    && record.page_url?.includes("founder") === true
+    && record.page_url?.includes("acceptance") === true;
+}
+
 function average(values: Array<number | null | undefined>) {
   const present = values.filter((value): value is number => typeof value === "number");
   return present.length ? present.reduce((sum, value) => sum + value, 0) / present.length : undefined;
 }
 
 export function buildBetaEvidenceSummary(records: BetaEvidenceRecord[]) {
-  const active = records.filter(record => record.status === "Open" || record.status === "Reviewing");
-  const sessions = records.filter(record => record.mode === "Session review");
-  const cultural = records.filter(record => record.mode === "Name and culture");
+  const evidenceRecords = records.filter(record => !isFounderAcceptanceTestRecord(record));
+  const active = evidenceRecords.filter(record => record.status === "Open" || record.status === "Reviewing");
+  const sessions = evidenceRecords.filter(record => record.mode === "Session review");
+  const cultural = evidenceRecords.filter(record => record.mode === "Name and culture");
   const independentCompletions = sessions.filter(record => record.task_outcome === "Completed independently").length;
   const trustAverage = average(sessions.map(record => record.trust_score));
   const learningAverage = average(sessions.map(record => record.learning_depth_score));
@@ -150,7 +159,7 @@ export function buildBetaEvidenceSummary(records: BetaEvidenceRecord[]) {
   ];
 
   return {
-    totalReports: records.length,
+    totalReports: evidenceRecords.length,
     openReports: active.length,
     sessionReviews: sessions.length,
     culturalReviews: cultural.length,

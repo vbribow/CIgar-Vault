@@ -10,6 +10,11 @@ test("Vault presents separate workspaces and preserves the global-search return 
  const globalSearch=readFileSync(new URL("../components/global-search.tsx",import.meta.url),"utf8");
  const story=readFileSync(new URL("../app/cigars/[identityId]/page.tsx",import.meta.url),"utf8");
  assert.match(page,/Browse Vault/);
+ assert.match(page,/initialItems=\{cigarItems\}/);
+ assert.match(page,/presentationAssetCount/);
+ assert.match(page,/tracked separately/);
+ assert.match(page,/Open Valuable Collections/);
+ assert.match(manager,/setItems\(cigarInventoryRecords\(result\.data,collections\)\)/);
  assert.match(page,/href="#inventory-records"/);
  assert.match(page,/Audit My Inventory/);
  assert.match(page,/href="\/collection-health"/);
@@ -25,6 +30,8 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(audit,/Provenance/);
  assert.match(audit,/Membership truth/);
  assert.match(audit,/missing=\$\{check\.key\}&active=1#inventory-records/);
+ assert.match(audit,/missing=\$\{gap\.key\}&active=1&inventoryId=\$\{encodeURIComponent\(item\.inventoryId\)\}#inventory-records/);
+ assert.match(audit,/Active inventory audit complete/);
  assert.match(page,/initialActiveOnly=\{filters\.active === "1"\}/);
  assert.match(page,/initialQuery=\{filters\.vaultSearch\}/);
  assert.match(page,/initialEditId=\{filters\.edit\}/);

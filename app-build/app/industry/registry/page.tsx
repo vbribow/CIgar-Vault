@@ -7,8 +7,8 @@ import type { IndustryPackagingPayload, IndustryProductPayload, IndustryReleaseP
 import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import { TrustMark } from "@/components/trust-mark";
 import { publicPageMetadata } from "@/lib/seo";
-import { brand } from "@/lib/brand";
 import "./registry.css";
+import "./registry-opening.css";
 
 export const dynamic="force-dynamic";
 export const metadata:Metadata=publicPageMetadata("Official Product & Release Registry","Official products, releases, packaging revisions, and evidence-aware canonical cigar records.","/industry/registry");

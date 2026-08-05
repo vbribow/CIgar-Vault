@@ -106,3 +106,26 @@ test("evidence summary passes only with complete cohort signals and no blocking 
   assert.equal(blocked.ready, false);
   assert.equal(blocked.blocking, 1);
 });
+
+test("clearly marked founder acceptance records never count as beta evidence", () => {
+  const testRecords: BetaEvidenceRecord[] = [
+    session({
+      summary: "[Founder test] Session-review acceptance",
+      page_url: "/feedback — founder session acceptance",
+    }),
+    {
+      mode: "Name and culture",
+      status: "Closed",
+      severity: "Low",
+      summary: "[Founder test] Cultural-review acceptance",
+      page_url: "/feedback — founder cultural acceptance",
+      cultural_fit: "Credible",
+    },
+  ];
+
+  const summary = buildBetaEvidenceSummary(testRecords);
+  assert.equal(summary.totalReports, 0);
+  assert.equal(summary.sessionReviews, 0);
+  assert.equal(summary.culturalReviews, 0);
+  assert.equal(summary.readyCount, 1);
+});

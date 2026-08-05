@@ -2,7 +2,7 @@ import { InventoryManager } from "@/components/inventory-manager";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
 import { loadCatalog, mergeCatalogRecords } from "@/lib/catalog";
-import { loadCollections, loadRatings } from "@/lib/data";
+import { loadCollections, loadHumidors, loadRatings } from "@/lib/data";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
@@ -35,15 +35,18 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   }
   const mode = modeResult.value;
   const items = inventoryResult.value;
-  const [catalogResult, ratingsResult, collectionsResult] = await Promise.allSettled([
+  const [catalogResult, ratingsResult, collectionsResult, humidorsResult] = await Promise.allSettled([
     loadCatalog(items),
     mode === "mock" ? Promise.resolve([]) : loadRatings(),
     loadCollections(),
+    mode === "mock" ? Promise.resolve([]) : loadHumidors(),
   ]);
   const catalog = catalogResult.status === "fulfilled" ? catalogResult.value : mergeCatalogRecords([], items);
   const ratings = ratingsResult.status === "fulfilled" ? ratingsResult.value : [];
   const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+  const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
   const cigarItems = cigarInventoryRecords(items, collections);
+  const presentationAssetCount = items.length - cigarItems.length;
   const collectionLinksReady = collectionsResult.status === "fulfilled";
   const relatedReady = ratingsResult.status === "fulfilled" && collectionLinksReady;
   const plan = planResult.ok ? planResult.value : undefined;
@@ -53,7 +56,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   return <main className="shell">
     <section className="section inventoryHeader"><div><div className="eyebrow">{brand.name} Vault · Your private record</div><h1>My collection</h1><p className="lede">Document every box and individual cigar, preserve provenance, understand what you own, and care for the story it carries.</p></div></section>
     <nav className="vaultPaths" aria-label="Vault workspaces">
-      <Link href="#inventory-records"><span>Individual inventory</span><strong>Browse Vault</strong><small>View, add, and edit every box and loose cigar.</small><b>{items.length} lots →</b></Link>
+      <Link href="#inventory-records"><span>Individual inventory</span><strong>Browse Vault</strong><small>View, add, and edit every box and loose cigar.</small><b>{cigarItems.length} cigar lot{cigarItems.length===1?"":"s"} →</b></Link>
       <Link href="/collection-health"><span>Record integrity</span><strong>Audit My Inventory</strong><small>Review quantities, years, values, storage, provenance, and collection links.</small><b>Start audit →</b></Link>
       <Link href="/collections" prefetch><span>Named collectible sets</span><strong>Valuable Collections</strong><small>Manage exact contents, collection premiums, and humidor value.</small><b>{collectionLinksReady?`${collections.length} collection${collections.length===1?"":"s"} →`:"Records unavailable →"}</b></Link>
     </nav>
