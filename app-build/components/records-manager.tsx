@@ -135,15 +135,15 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     <section className="card smokeJournal" id="log-smoke">
       <div className="eyebrow">Private tasting journal</div>
       <h2>Log a smoke</h2>
-      <p className="small">Record what you experienced in your own words. There are no wrong tasting notes.</p>
+      <p className="small">Record any cigar you smoke—whether it came from your Vault, a lounge, a friend, or somewhere new. There are no wrong tasting notes.</p>
       <form className="recordForm" onSubmit={event => send(event, "smoke")} aria-busy={smokeMutation.pending}>
         <fieldset disabled={smokeMutation.pending || smokeMutation.complete}>
         <label><span>Inventory lot or another cigar *</span><select name="inventoryId" required value={smokeSource} onChange={event => setSmokeSource(event.target.value)}>
-          <option value="">Select from your inventory</option>
+          <option value="">Choose how to identify this cigar</option>
+          <option value="MANUAL">Another smoke — not in my Vault</option>
           {inventory.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}</option>)}
-          <option value="MANUAL">Another cigar — enter manually</option>
         </select></label>
-        {smokeSource === "MANUAL" && <label className="manualSmokeCigar"><span>Cigar name *</span><input name="cigarName" required minLength={3} maxLength={300} placeholder="Brand, line, vitola, and year if known" /><small>This records the experience without reducing inventory.</small></label>}
+        {smokeSource === "MANUAL" && <label className="manualSmokeCigar"><span>What did you smoke? *</span><input name="cigarName" required minLength={3} maxLength={300} placeholder="Brand, line, vitola, and year if known" /><small>No Vault record is required. This saves the experience without changing inventory.</small></label>}
         <label><span>Date</span><input name="dateSmoked" type="date" required defaultValue={today()} /></label>
         <label><span>Score · 0–100</span><select name="overall" defaultValue=""><option value="">Choose a score</option>{scoreOptions.map(score => <option value={score} key={score}>{score}</option>)}</select></label>
         <label><span>Strength</span><select name="strength" defaultValue=""><option value="">Choose perceived strength</option>{strengthOptions.map(value => <option key={value}>{value}</option>)}</select><small>How the nicotine intensity felt—not the depth of flavor.</small></label>
