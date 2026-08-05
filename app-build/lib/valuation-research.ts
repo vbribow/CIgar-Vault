@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { InventoryItem } from "./types";
+import type { AvailabilityListing, InventoryItem } from "./types";
 import { responseOutputText } from "./cigar-vision";
 import { FOX_CIGAR_VERIFICATION_POLICY } from "./verification-sources";
 import { assertValuationIntegrity } from "./valuation-integrity";
@@ -40,6 +40,17 @@ export const ValuationResearchSchema = z.object({
   }
 });
 export type ValuationResearch = z.infer<typeof ValuationResearchSchema>;
+
+export function valuationRetailLead(research:ValuationResearch):AvailabilityListing|undefined{
+  const comparable=research.comparables.find(item=>item.kind==="Retail replacement"&&item.url&&item.unitPrice!==null);
+  if(!comparable)return undefined;
+  try{
+    const url=new URL(comparable.url);
+    if(!["http:","https:"].includes(url.protocol))return undefined;
+    const seller=url.hostname.replace(/^www\./,"");
+    return{seller,sellerType:"Specialty dealer",title:comparable.title,url:url.toString(),availability:"Unknown",askingPrice:comparable.unitPrice??undefined,unitPrice:comparable.unitPrice??undefined,notes:"Exact-cigar retail evidence from valuation research. Confirm current price, stock, shipping, and release details with the seller."};
+  }catch{return undefined}
+}
 export const valuationResearchJsonSchema = { type:"object", additionalProperties:false, properties:{
   replacementValue:{type:["number","null"],minimum:0},marketValue:{type:["number","null"],minimum:0},
   marketEvidenceType:{type:"string",enum:["Verified completed sale","Estimated market range","Observed asking price","Insufficient evidence"]},
@@ -77,6 +88,8 @@ Keep these evidence levels separate:
 - Insufficient evidence: no defensible secondary value.
 
 Match brand, line, vitola, release, packaging, and condition. Never substitute another vitola/year, MSRP, ordinary retail, or a closeout for aftermarket evidence. For New World cigars, use traceable specialty listings and sold archives without inventing a market. For Habanos, prioritize completed-result archives from established European auction houses. Confirm whether buyer's premium is included. Classify every comparable. An asking price is not proof—never treat it as a sale. One listing remains an asking price. An estimated range requires at least two independent exact-identity secondary-market signals. Retail evidence never supports an aftermarket range. For a humidor collection, research cigars individually; calculate residual humidor value separately. If evidence is opaque, say so.
+
+For every retailer comparable, use the direct product page—not a search page or retailer homepage—and make its title include the retailer plus the exact brand, line, vitola, and release when known. This allows the collector to verify availability and purchase the exact cigar without weakening identity matching.
 
 Use the strongest used source in source/sourceUrl. evidenceDate is today (YYYY-MM-DD). Notes under 350 characters; comparable notes under 120. This is evidence, not an appraisal.`;
   let lastError:unknown;

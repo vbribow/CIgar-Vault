@@ -9,7 +9,7 @@ import { useMutationGuard } from "@/components/use-mutation-guard";
 import { claimsUnverifiedCompletedSale, completedSaleLabel, isVerifiedCompletedSale, marketAskingPriceLabel, marketEvidenceType } from "@/lib/valuation-evidence";
 import { burnQualityOptions, constructionQualityOptions } from "@/lib/records-model";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
-import type { ValuationResearch } from "@/lib/valuation-research";
+import { valuationRetailLead,type ValuationResearch } from "@/lib/valuation-research";
 import type { CigarVisionResult } from "@/lib/cigar-vision";
 import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-capture";
 
@@ -39,6 +39,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [valuationDraft, setValuationDraft] = useState<ValuationResearch>();
   const [valuationResearching, setValuationResearching] = useState(false);
   const [valuationResearchMessage, setValuationResearchMessage] = useState("");
+  const [valuationRetailOpening,setValuationRetailOpening]=useState(false);
   const [manualValuation, setManualValuation] = useState(false);
   const [newSmokeConfirmed, setNewSmokeConfirmed] = useState(false);
   const smokeMutation = useMutationGuard();
@@ -173,6 +174,20 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     }
   }
 
+  async function openValuationRetailer(){
+    if(!valuationDraft||valuationRetailOpening)return;
+    const listing=valuationRetailLead(valuationDraft);if(!listing)return;
+    setValuationRetailOpening(true);setValuationResearchMessage("");
+    try{
+      const response=await fetch("/api/retailer-market/click",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({inventoryId:valuationSource,listing})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(result.error||"Retailer link is unavailable");
+      window.open(result.data.outboundUrl,"_blank","noopener,noreferrer");
+      setValuationResearchMessage(result.message||"Retailer opened. Price and availability are not confirmed until the seller verifies them.");
+    }catch(error){setValuationResearchMessage(error instanceof Error?error.message:"Retailer link is unavailable")}
+    finally{setValuationRetailOpening(false)}
+  }
+
   const valuationPicker = <select name="inventoryId" required value={valuationSource} onChange={event => { setValuationSource(event.target.value); setValuationDraft(undefined); setManualValuation(false); setValuationResearchMessage(""); }}>
     <option value="">Select inventory lot</option>
     {inventory.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}</option>)}
@@ -231,7 +246,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       </div>}
       {existingValuation && !proposed && !manualValuation && <div className="valuationExisting" role="status"><strong>Existing evidence found</strong><span>{existingValuation.valuationDate} · {marketEvidenceType(existingValuation)} · {existingValuation.confidence || "Unrated confidence"}</span><button type="button" className="textLink" onClick={() => setManualValuation(true)}>Review or update these fields →</button></div>}
       {valuationResearchMessage && <output className="valuationResearchMessage" aria-live="polite">{valuationResearchMessage}</output>}
-      {proposed && <div className="valuationProposal" role="status"><div><strong>Research proposal ready</strong><span>{proposed.marketEvidenceType} · {proposed.confidence} confidence · {proposed.comparables.length} comparable{proposed.comparables.length === 1 ? "" : "s"}</span></div><p>{proposed.notes}</p><small>Review and correct the populated fields below. A source description alone never proves a completed sale.</small></div>}
+      {proposed && <div className="valuationProposal" role="status"><div><strong>Research proposal ready</strong><span>{proposed.marketEvidenceType} · {proposed.confidence} confidence · {proposed.comparables.length} comparable{proposed.comparables.length === 1 ? "" : "s"}</span></div><p>{proposed.notes}</p><small>Review and correct the populated fields below. A source description alone never proves a completed sale.</small>{valuationRetailLead(proposed)&&<div><button type="button" className="button secondary" disabled={valuationRetailOpening} onClick={openValuationRetailer}>{valuationRetailOpening?"Opening retailer…":"Buy this cigar ↗"}</button><small>Direct retailer listing from this research · asking price and availability are not a confirmed sale.</small></div>}</div>}
       {showValuationForm && <form key={`${valuationSource}-${proposed?.evidenceDate || existingValuation?.valuationDate || "manual"}`} className="recordForm" onSubmit={event => send(event, "valuation")} aria-busy={valuationMutation.pending}>
         <input type="hidden" name="inventoryId" value={valuationSource} />
         <label><span>Evidence date</span><input name="valuationDate" type="date" required defaultValue={value(proposed?.evidenceDate, existingValuation?.valuationDate) || today()} /></label>
