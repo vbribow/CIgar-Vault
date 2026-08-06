@@ -43,6 +43,7 @@ const brandIndependentPresentationSurfaces = [
   "components/password-recovery-form.tsx",
   "components/private-record-export.tsx",
   "components/vault-recovery-panel.tsx",
+  "components/lounge-leaf-rating.tsx",
 ];
 
 test("future-facing product surfaces do not recreate retired branded subproducts", () => {

@@ -33,3 +33,8 @@ test("primary save action stays reachable on a phone", () => {
   assert.match(styles, /\.intakePrimaryAction\{[^}]*grid-column:1\/-1/);
   assert.match(styles, /bottom:calc\(75px \+ env\(safe-area-inset-bottom\)\)/);
 });
+
+test("intake progress and completion feedback is announced without interrupting entry", () => {
+  assert.match(intake, /className="intakeMessage" role="status"/);
+  assert.match(intake, /aria-atomic="true"/);
+});

@@ -205,7 +205,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
     </section>}
 
     {stage === "saved" && readyForAnother && <section className="intakeCompletion" aria-labelledby="saved-stage-title"><div className="eyebrow">Step 3 of 3 · Saved</div><h3 id="saved-stage-title">Your draft is safe.</h3><p>It is waiting in the review queue below. Choose the next action that fits your visit.</p><div><button type="button" className="button" onClick={nextAsset}>Document another cigar</button><a className="button secondary" href="/inventory#inventory-records">Return to Vault</a></div><small>Your saved draft stays in the review queue.</small></section>}
-    {message && <output className="intakeMessage" aria-live="polite">{message}</output>}
+    {message && <output className="intakeMessage" role="status" aria-live="polite" aria-atomic="true">{message}</output>}
     {photoFailures.length > 0 && <div className="photoRetryList" aria-label="Photo attachment follow-up">{photoFailures.map((failure) => <article key={failure.inventoryId}><strong>{failure.inventoryId} was saved</strong><small>{failure.reason}</small><a href={`/inventory/${encodeURIComponent(failure.inventoryId)}#record-tools`}>Open saved record and attach photo →</a></article>)}</div>}
 
     {queue.length > 0 && <section className="intakeQueue"><div className="intakeQueueHead"><div><div className="eyebrow">Saved review queue</div><h3>{queue.length} draft{queue.length === 1 ? "" : "s"}</h3><small>{pending} selected · saved locally until approval</small></div>{stage !== "saved" && <button type="button" className="button secondary" onClick={nextAsset}>Document another cigar</button>}</div>

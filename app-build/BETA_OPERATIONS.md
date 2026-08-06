@@ -15,6 +15,7 @@ Operate a controlled cohort of four to five trusted collectors without treating 
 ## Launch controls
 
 - Set `BETA_INVITE_ONLY=true` in the production environment.
+- Complete `MIGRATION_RECONCILIATION_RUNBOOK.md` before any schema release. The duplicate local version `202607240001` remains a release hold until remote history identifies the applied migration.
 - Apply `202607240008_beta_readiness.sql` before inviting anyone.
 - Add a collector in `/founder-onboarding` as a Prospect.
 - Move the collector to Invited only after Brian approves that person.

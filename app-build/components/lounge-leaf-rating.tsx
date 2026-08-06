@@ -1,5 +1,5 @@
 import { HojaviaMark } from "@/components/hojavia-mark";
-import { certificationDisplayLabels, loungeLeafCount, type PlaceCertification } from "@/lib/places";
+import { certificationDisplayLabels, certificationLevels, loungeLeafCount, type PlaceCertification } from "@/lib/places";
 import styles from "./lounge-leaf-rating.module.css";
 
 export function LoungeLeafRating({ level, compact = false }: { level: PlaceCertification["level"]; compact?: boolean }) {
@@ -13,9 +13,9 @@ export function LoungeLeafRating({ level, compact = false }: { level: PlaceCerti
 }
 
 const distinctions = [
-  { level: "Cedriva Certified" as const, summary: "A lounge worth seeking out", detail: "A strong, reliable cigar experience with thoughtful hospitality and sound humidor stewardship." },
-  { level: "Cedriva Distinguished" as const, summary: "A distinguished lounge experience", detail: "Exceptional care, service, knowledge, comfort, and cultural contribution sustained beyond one strong visit." },
-  { level: "Cedriva Destination" as const, summary: "A destination for cigar culture", detail: "An extraordinary, consistent room whose stewardship, hospitality, and collector experience justify a dedicated journey." },
+  { level: certificationLevels[0], summary: "A lounge worth seeking out", detail: "A strong, reliable cigar experience with thoughtful hospitality and sound humidor stewardship." },
+  { level: certificationLevels[1], summary: "A distinguished lounge experience", detail: "Exceptional care, service, knowledge, comfort, and cultural contribution sustained beyond one strong visit." },
+  { level: certificationLevels[2], summary: "A destination for cigar culture", detail: "An extraordinary, consistent room whose stewardship, hospitality, and collector experience justify a dedicated journey." },
 ];
 
 export function LoungeLeafStandard() {

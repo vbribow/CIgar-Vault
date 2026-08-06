@@ -16,6 +16,7 @@ export function CreateRecoveryPoint() {
   const [failed, setFailed] = useState(false);
 
   async function create() {
+    if (busy) return;
     setBusy(true);
     setMessage("");
     setFailed(false);
@@ -46,9 +47,9 @@ export function CreateRecoveryPoint() {
     }
   }
 
-  return <div className="recoveryPointAction" id="recovery-point">
+  return <div className="recoveryPointAction" id="recovery-point" aria-busy={busy}>
     <div><strong>Create a recovery point</strong><small>Downloads a complete private JSON backup and records the safeguard in your account. Importing a collection does not create a recovery point.</small></div>
     <button className="button" type="button" onClick={create} disabled={busy}>{busy ? "Creating and verifying…" : "Create recovery point"}</button>
-    {message && <output className={failed ? "error" : "success"} role="status">{message}</output>}
+    {message && <output className={failed ? "error" : "success"} role={failed ? "alert" : "status"} aria-atomic="true">{message}</output>}
   </div>;
 }
