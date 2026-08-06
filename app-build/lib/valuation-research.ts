@@ -99,6 +99,8 @@ Match brand, line, vitola, release, packaging, and condition. Never substitute a
 
 For every retailer comparable, use the direct product page—not a search page or retailer homepage—and make its title include the retailer plus the exact brand, line, vitola, and release when known. This allows the collector to verify availability and purchase the exact cigar without weakening identity matching.
 
+For every retailer comparable, use the direct product page—not a search page or retailer homepage—and make its title include the retailer plus the exact brand, line, vitola, and release when known. This allows the collector to verify availability and purchase the exact cigar without weakening identity matching.
+
 Use the strongest used source in source/sourceUrl. evidenceDate is today (YYYY-MM-DD). Notes under 350 characters; comparable notes under 120. This is evidence, not an appraisal.`;
   let lastError:unknown;
   for(let attempt=0;attempt<2;attempt++){

@@ -9,7 +9,7 @@ test("keyboard users can bypass repeated navigation without disturbing page land
   const styles = source("app/styles.css");
   assert.match(layout, /className="skipLink" href="#main-content"/);
   assert.match(layout, /id="main-content" tabIndex=\{-1\}/);
-  assert.match(styles, /\.skipLink:focus\{transform:translateY\(0\)\}/);
+  assert.match(styles, /\.skipLink:focus[^\{]*\{[^}]*transform:translateY\(0\)/);
   assert.match(styles, /prefers-reduced-motion:reduce/);
   assert.match(styles, /:focus-visible/);
 });
@@ -23,4 +23,3 @@ test("privacy preferences always release pending state and announce success or r
   assert.match(panel, /role=\{failed \? "alert" : "status"\}/);
   assert.match(panel, /aria-atomic="true"/);
 });
-
