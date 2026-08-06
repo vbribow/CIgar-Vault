@@ -19,6 +19,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState<"post" | "rating" | "">("");
   const [message, setMessage] = useState("");
+  const [ratingFeedback,setRatingFeedback]=useState<{state:"pending"|"success"|"error";text:string}>();
   const [confirmDeleteId, setConfirmDeleteId] = useState("");
   const [deletingId, setDeletingId] = useState("");
   const [tab, setTab] = useState<"board" | "ratings">(initialTab);
@@ -57,17 +58,18 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   async function submit(type: "post" | "rating", value: unknown) {
     setMessage("");
     const response = await fetch("/api/community", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type, data: value }) });
-    const result = await response.json();
+    const result = await response.json().catch(()=>({})) as{error?:string;message?:string};
     if (!response.ok) throw new Error(result.error || "Submission failed");
-    setMessage(result.message);
     await load();
+    return result.message||"Submission confirmed.";
   }
   async function submitPost(event: FormEvent) {
     event.preventDefault();
     if (submitting || !postMutation.begin()) return;
     setSubmitting("post");
     try {
-      await submit("post", post);
+      const confirmation=await submit("post", post);
+      setMessage(confirmation);
       setPost(current => ({ ...current, title: "", body: "" }));
       postMutation.succeed();
     } catch (error) {
@@ -81,12 +83,14 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
     event.preventDefault();
     if (submitting || !ratingMutation.begin()) return;
     setSubmitting("rating");
+    setRatingFeedback({state:"pending",text:"Submitting your rating…"});
     try {
-      await submit("rating", { ...rating, score: Number(rating.score), vintage: rating.vintage || undefined, review: rating.review || undefined });
+      const confirmation=await submit("rating", { ...rating, score: Number(rating.score), vintage: rating.vintage || undefined, review: rating.review || undefined });
       setRating(current => ({ ...blankRating, displayName: current.displayName }));
       ratingMutation.succeed();
+      setRatingFeedback({state:"success",text:`${confirmation} The saved fields have been cleared.`});
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Submission failed");
+      setRatingFeedback({state:"error",text:error instanceof Error?error.message:"Rating was not submitted. Review the fields and try again."});
       ratingMutation.fail();
     } finally {
       setSubmitting("");
@@ -263,7 +267,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <label>Short review<textarea rows={4} value={rating.review} onChange={event => setRating({ ...rating, review: event.target.value })} />
 </label>
 <button className="button" disabled={Boolean(submitting)||ratingMutation.complete}>{submitting==="rating"?"Publishing…":ratingMutation.complete?"Rating submitted":"Submit rating"}</button>
-{ratingMutation.complete&&<button type="button" className="button secondary" onClick={()=>{ratingMutation.reset();setMessage("")}}>Rate another cigar</button>}
+{ratingFeedback&&<output className="ratingSubmissionFeedback" data-state={ratingFeedback.state} role={ratingFeedback.state==="error"?"alert":"status"} aria-live="polite" aria-atomic="true">{ratingFeedback.text}</output>}
+{ratingMutation.complete&&<button type="button" className="button secondary" onClick={()=>{ratingMutation.reset();setRatingFeedback(undefined)}}>Rate another cigar</button>}
 <small>{entryMode === "vault" ? "Cigar identity comes directly from your private Vault. A manual submission replaces your current score for this exact cigar." : "Use manual entry for a cigar that is not in your Vault. Exact identity is required."}</small>
 </form>
       </div>

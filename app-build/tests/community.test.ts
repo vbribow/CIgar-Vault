@@ -119,3 +119,12 @@ test("collectors can delete only their own message-board posts with confirmation
  assert.match(route,/\.eq\("id",id\)\.eq\("user_id",user\.id\)/);
  assert.match(route,/belongs to another collector/);
 });
+test("rating submission keeps plain confirmation or recovery feedback beside the form",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.match(component,/Submitting your rating…/);
+ assert.match(component,/The saved fields have been cleared/);
+ assert.match(component,/ratingSubmissionFeedback/);
+ assert.match(component,/role=\{ratingFeedback\.state==="error"\?"alert":"status"\}/);
+ assert.match(component,/await response\.json\(\)\.catch/);
+ assert.match(component,/setRatingFeedback\(\{state:"error"/);
+});
