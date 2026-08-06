@@ -41,7 +41,7 @@ test("Log a Smoke welcomes cigars outside inventory and is globally accessible",
   const manual=smokePicker.indexOf('<option value="MANUAL">Another smoke — not in my Vault</option>');
   const inventory=smokePicker.indexOf('{inventory.map(item => <option');
   assert.ok(manual>=0&&inventory>manual,"manual smoke choice should precede inventory lots");
-  assert.match(manager,/No Vault record is required/);
+  assert.match(manager,/no Vault record and no quantity change/);
   assert.match(navigation,/Log a Smoke/);
   assert.match(navigation,/href="\/records#log-smoke"/);
   assert.match(navigation,/<small>Log Smoke<\/small>/);

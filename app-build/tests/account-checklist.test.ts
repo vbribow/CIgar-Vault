@@ -24,6 +24,7 @@ test("account checklist makes the required inventory backup a direct visible act
   const backup = pending.find(item => item.label === "Download inventory backup");
   assert.deepEqual(backup, {
     label: "Download inventory backup",
+    description: "Create a recoverable copy of your private inventory.",
     complete: false,
     href: "/api/inventory-integrity/backup?scope=account",
   });

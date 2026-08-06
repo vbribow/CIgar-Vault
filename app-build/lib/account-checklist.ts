@@ -20,10 +20,10 @@ export function buildAccountChecklist(profileComplete: boolean, records: Account
   });
 
   return [
-    { label: "Account profile", complete: profileComplete, href: "/account" },
-    { label: "Add first cigar", complete: has("inventory"), href: "/inventory#mobile-intake" },
-    { label: "Create a humidor", complete: has("humidors"), href: "/humidors" },
-    { label: "Connect a sensor", complete: connectedSensor, href: "/sensors" },
-    { label: "Download inventory backup", complete: inventoryBackup, href: "/api/inventory-integrity/backup?scope=account" },
+    { label: "Account profile", description: "Confirm your collector profile and collection name.", complete: profileComplete, href: "/account" },
+    { label: "Add first cigar", description: "Document one exact cigar to begin your private Vault.", complete: profileComplete && has("inventory"), href: "/inventory#mobile-intake" },
+    { label: "Create a humidor", description: "Add the storage environment protecting your collection.", complete: profileComplete && has("humidors"), href: "/humidors" },
+    { label: "Connect a sensor", description: "Connect or prepare a climate sensor for monitoring.", complete: profileComplete && connectedSensor, href: "/sensors" },
+    { label: "Download inventory backup", description: "Create a recoverable copy of your private inventory.", complete: profileComplete && inventoryBackup, href: "/api/inventory-integrity/backup?scope=account" },
   ];
 }

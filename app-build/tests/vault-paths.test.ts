@@ -33,7 +33,7 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(audit,/missing=\$\{gap\.key\}&active=1&inventoryId=\$\{encodeURIComponent\(item\.inventoryId\)\}#inventory-records/);
  assert.match(audit,/Active inventory audit complete/);
  assert.match(page,/initialActiveOnly=\{filters\.active === "1"\}/);
- assert.match(page,/initialQuery=\{filters\.vaultSearch\}/);
+ assert.match(page,/initialQuery=\{filters\.vaultSearch\|\|filters\.inventoryId\}/);
  assert.match(page,/initialEditId=\{filters\.edit\}/);
  assert.match(manager,/!initialActiveOnly \|\| \(item\.currentQty \?\? 0\) > 0/);
  assert.match(manager,/missing==="storage".*Add storage location/);

@@ -4,9 +4,20 @@
 .purchaseEvidence textarea{resize:vertical}
 .purchaseEvidence button{min-height:44px}
 .retailerTrust small{line-height:1.5}
+.retailerTrust{display:grid;gap:12px;padding:16px;border:1px solid rgba(201,164,87,.3);border-radius:16px;background:linear-gradient(145deg,rgba(201,164,87,.09),rgba(255,255,255,.015))}
+.retailerTrustHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.retailerTrustHead>span{padding:5px 9px;border:1px solid var(--line);border-radius:999px;color:var(--gold2);font-size:.75rem;white-space:nowrap}
+.retailerEvidenceLevel{font-size:.86rem;color:var(--cream)}
+.retailerRatingBreakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.retailerRatingBreakdown span{display:grid;gap:3px;padding:10px;border-radius:10px;background:rgba(0,0,0,.18)}
+.retailerRatingBreakdown small{color:var(--muted)}
+.retailerRatingBreakdown b{font-size:.82rem;line-height:1.35}
+.retailerTrustEmpty>div{display:grid;gap:4px}.retailerTrustEmpty strong{color:var(--gold2)}
 @media(max-width:700px){
   .retailerListingGrid{grid-template-columns:1fr}
   .retailerListingGrid article{min-width:0}
   .purchaseEvidence .button{width:100%}
   .marketDisclosure{line-height:1.6}
+  .retailerTrustHead{align-items:stretch;flex-direction:column}.retailerTrustHead>span{width:max-content}
+  .retailerRatingBreakdown{grid-template-columns:1fr}
 }

@@ -10,7 +10,7 @@ export function PwaManager(){
   const[event,setEvent]=useState<InstallEvent>(),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
   useEffect(()=>{
     const installStandalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
-    if(!isActiveProductHostname(window.location.hostname)&&(!isPrivatePreviewHostname(window.location.hostname)||standalone))setLegacyHost(window.location.host);
+    if(!isActiveProductHostname(window.location.hostname)&&(!isPrivatePreviewHostname(window.location.hostname)||installStandalone))setLegacyHost(window.location.host);
     let registration:ServiceWorkerRegistration|undefined;
     let reloadingForUpdate=false;
     const controllerChange=()=>{
@@ -25,7 +25,6 @@ export function PwaManager(){
       if(value.waiting)setWaiting(value.waiting);
       value.addEventListener("updatefound",()=>{const worker=value.installing;worker?.addEventListener("statechange",()=>{if(worker.state==="installed"&&navigator.serviceWorker.controller)setWaiting(worker)})});
     }).catch(()=>{/* Service-worker support must never prevent the app from opening. */});
-    const standalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
     let installDismissed=false;
     try{installDismissed=localStorage.getItem(installDismissedKey)==="1"}catch{/* Storage may be unavailable in a private or restricted web view. */}
     if(!installStandalone&&!installDismissed){setHidden(false);setShowIos(/iphone|ipad|ipod/i.test(navigator.userAgent))}
@@ -54,8 +53,8 @@ export function PwaManager(){
       setInstalling(false);
     }
   }
-  if(legacyHost)return <aside className="installPrompt updatePrompt" aria-live="polite"><span className="appBrandMark">!</span><div><strong>Older {brand.name} address</strong><small>{legacyHost} is separate from the current app and may not show current records.</small></div><a href={`https://${productionHost}/`}>Open the current app</a></aside>;
+  if(legacyHost)return <aside className="installPrompt updatePrompt" aria-live="polite"><span className="appBrandMark">!</span><div><strong>Older {brand.name} address</strong><small>{legacyHost} is separate from the current app and may not show current records.</small></div><a href={`https://${productionHost}/`}>Reinstall safely</a></aside>;
   if(waiting)return <aside className="installPrompt updatePrompt" aria-live="polite">{!brand.isPreview&&<HojaviaMark/>}<div><strong>{brand.name} update ready</strong><small>Your private records remain intact. Updating reloads the app shell and applies the latest experience.</small></div><button onClick={()=>waiting.postMessage({type:"SKIP_WAITING"})}>Install update</button></aside>;
   if(hidden||(!event&&!showIos))return null;
-  return <aside className="installPrompt" aria-live="polite">{!brand.isPreview&&<HojaviaMark/>}<div><strong>Keep {brand.name} on your phone</strong><small>{installError||(showIos?"Use your browser’s Share menu, then choose Add to Home Screen.":"Install the app shell for faster return access. Private collection pages are not stored for offline viewing.")}</small></div>{event&&<button onClick={install} disabled={installing}>{installing?"Opening…":"Install"}</button>}<button className="installDismiss" onClick={dismiss} aria-label="Dismiss install suggestion">×</button></aside>;
+  return <aside className="installPrompt" aria-live="polite">{!brand.isPreview&&<HojaviaMark/>}<div><strong>Keep {brand.name} on your phone</strong><small>{installError||(showIos?"Use your browser’s Share menu, then choose Add to Home Screen.":"Install the app shell for faster return access. Private collection pages are not stored for offline viewing.")}</small></div>{event&&<button onClick={install} disabled={installing}>{installing?"Opening…":"Install"}</button>}<a href="/install">Installation help</a><button className="installDismiss" onClick={dismiss} aria-label="Dismiss install suggestion">×</button></aside>;
 }

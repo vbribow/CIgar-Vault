@@ -1,6 +1,6 @@
 import { loadInventory as loadAllInventory } from "@/lib/inventory";
 import { loadCollections } from "@/lib/data";
-import { hasDocumentedCurrentQuantity, inventoryCompleteness } from "@/lib/inventory-model";
+import { hasDocumentedCurrentQuantity, hasInventoryProvenance, hasPhysicalQuantityBreakdown, inventoryCompleteness } from "@/lib/inventory-model";
 import { auditCollectionMembership } from "@/lib/collection-membership-audit";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
@@ -199,7 +199,7 @@ export default async function CollectionHealth() {
         <a className="button secondary" href="/inventory?missing=quantity&active=1#inventory-records">Start with quantities</a>
       </div>
       <div className="cleanupList">
-        {[...activeItems].sort((a, b) => inventoryCompleteness(a) - inventoryCompleteness(b)).slice(0, 8).map((item) => <a href={`/inventory/${item.inventoryId}`} key={item.inventoryId}>
+        {prioritized.map(({item,gap}) => <a href={`/inventory?missing=${gap.key}&active=1&inventoryId=${encodeURIComponent(item.inventoryId)}#inventory-records`} key={item.inventoryId}>
           <span><strong>{item.brand} {item.line}</strong><small>{item.inventoryId} · {item.vitola}</small></span>
           <span
             className="completionMeter"
@@ -208,7 +208,7 @@ export default async function CollectionHealth() {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={inventoryCompleteness(item)}
-          ><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{inventoryCompleteness(item)}%</b></span>
+          ><i style={{ width: `${inventoryCompleteness(item)}%` }} /><b>{inventoryCompleteness(item)}%</b></span><b>{gap.action} →</b>
         </a>)}
         {prioritized.length === 0 && <div className="healthCard"><strong>Active inventory audit complete</strong><p>No active cigar lot is waiting for these five record corrections.</p></div>}
       </div>

@@ -19,6 +19,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState<"post" | "rating" | "">("");
   const [message, setMessage] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
   const [tab, setTab] = useState<"board" | "ratings">(initialTab);
   const [entryMode, setEntryMode] = useState<"vault" | "manual">(inventoryOptions.length ? "vault" : "manual");
   const [post, setPost] = useState({ displayName: "", category: "General", title: "", body: "" });
@@ -90,6 +92,21 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
       setSubmitting("");
     }
   }
+  async function deletePost(id:string){
+    if(deletingId)return;
+    setDeletingId(id);
+    setMessage("");
+    try{
+      const response=await fetch("/api/community",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({id})});
+      const result=await response.json();
+      if(!response.ok)throw new Error(result.error||"Discussion could not be deleted");
+      setConfirmDeleteId("");
+      setMessage(result.message||"Discussion deleted.");
+      await load();
+    }catch(error){setMessage(error instanceof Error?error.message:"Discussion could not be deleted")}
+    finally{setDeletingId("")}
+  }
+  function postDeleteControls(id:string){return <div className="communityPostActions">{confirmDeleteId===id?<><span>This permanently removes your discussion.</span><button type="button" className="button danger" disabled={Boolean(deletingId)} onClick={()=>void deletePost(id)}>{deletingId===id?"Deleting…":"Confirm delete"}</button><button type="button" className="button secondary" disabled={Boolean(deletingId)} onClick={()=>setConfirmDeleteId("")}>Cancel</button></>:<button type="button" className="button secondary" onClick={()=>setConfirmDeleteId(id)}>Delete my post</button>}</div>}
 
   const identityFields = entryMode === "vault" ? <>
     <label>Brand<select value={rating.brand} onChange={event => setRating({ ...rating, brand: event.target.value, line: "", vitola: "", vintage: "" })} required>
@@ -154,7 +171,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <strong>{item.label}</strong>
 <small>{new Date(item.createdAt).toLocaleString()}</small>
 </div>
-<b data-status={item.status}>{communityStatusLabel(item.status)}</b>{item.status==="changes"&&item.reason&&<p>{item.reason}</p>}</article>)}</div>
+<b data-status={item.status}>{communityStatusLabel(item.status)}</b>{item.status==="changes"&&item.reason&&<p>{item.reason}</p>}{item.kind==="Discussion"&&postDeleteControls(item.id)}</article>)}</div>
 </section>}
     {tab === "board" ? <div className="communityLayout">
       <section id="recent-discussions">
@@ -170,6 +187,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <h3>{item.title}</h3>
 <p>{item.body}</p>
 <small>{item.displayName} · {new Date(item.createdAt).toLocaleDateString()}</small>
+{data.myContributions.posts.some(owned=>owned.id===item.id)&&postDeleteControls(item.id)}
 </article>)}{!loading && !data.posts.length && <div className="emptyState">
 <strong>The table is ready for its first conversation.</strong>
 <p>Ask a thoughtful question about a cigar, collection care, history, craftsmanship, or a memorable experience.</p>
@@ -234,7 +252,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating} aria-busy={ratingMutation.pending}>
 <div className="eyebrow">Rate a cigar</div>
 <h2>Document your experience</h2>
-<p>Choose the exact cigar from your Vault or identify it manually. Your score enters the ranking only after publication.</p>
+<p>Scores from exact Vault cigars can update automatically when anonymous sharing is enabled in <a href="/account#collector-25-preference">Account preferences</a>. No re-entry is needed. Use this form for a cigar outside your Vault or to deliberately replace your current score.</p>
 <div className="ratingEntryMode" role="group" aria-label="Choose cigar entry method">
 <button type="button" className={entryMode === "vault" ? "active" : ""} disabled={!inventoryOptions.length} onClick={() => chooseMode("vault")}>Choose from my Vault</button>
 <button type="button" className={entryMode === "manual" ? "active" : ""} onClick={() => chooseMode("manual")}>Enter manually</button>
@@ -246,7 +264,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </label>
 <button className="button" disabled={Boolean(submitting)||ratingMutation.complete}>{submitting==="rating"?"Publishing…":ratingMutation.complete?"Rating submitted":"Submit rating"}</button>
 {ratingMutation.complete&&<button type="button" className="button secondary" onClick={()=>{ratingMutation.reset();setMessage("")}}>Rate another cigar</button>}
-<small>{entryMode === "vault" ? "Cigar identity comes directly from your private Vault. Only the rating is shared." : "Use manual entry for a cigar that is not in your Vault."}</small>
+<small>{entryMode === "vault" ? "Cigar identity comes directly from your private Vault. A manual submission replaces your current score for this exact cigar." : "Use manual entry for a cigar that is not in your Vault. Exact identity is required."}</small>
 </form>
       </div>
     </div>}

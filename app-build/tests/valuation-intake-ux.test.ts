@@ -18,6 +18,12 @@ test("valuation research is explicit about credit use and never saves automatica
   assert.match(manager, /Save reviewed evidence/);
 });
 
+test("valuation research offers a transaction-tracked retailer link when exact retail evidence exists", () => {
+  assert.match(manager, /Buy this cigar ↗/);
+  assert.match(manager, /\/api\/retailer-market\/click/);
+  assert.match(manager, /asking price and availability are not a confirmed sale/);
+});
+
 test("research proposals populate every evidence class without weakening sale proof", () => {
   for (const field of ["replacementValue", "marketEvidenceType", "askingPrice", "marketRangeLow", "marketRangeHigh", "marketValue", "lastSaleValue", "lastSaleDate", "lastSaleSourceUrl", "sourceUrl", "confidence"]) {
     assert.match(manager, new RegExp(`proposed\\?\\.${field}`));

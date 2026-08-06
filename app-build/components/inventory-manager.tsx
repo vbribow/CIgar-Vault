@@ -22,6 +22,7 @@ import { createClientUuid } from "@/lib/client-uuid";
 import { buildSearchResultHref } from "@/lib/search-navigation";
 import { useUnsavedChanges } from "@/components/use-unsaved-changes";
 import { recentYearOptions } from "@/lib/year-options";
+import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","provenanceNotes","score","action","habanosSealPhotoLink","acquisitionSeller","acquisitionDate","acquisitionSourceUrl","acquisitionReceiptLink","purchaseJurisdiction","habanosVerificationDate","habanosVerificationResult","habanosVerificationEvidenceLink","habanosVerificationNotes","notes"]);
 const packagingOptions=["Box","Tin","Jar","Presentation humidor / case","Sampler","Bundle","Individual cigar","Other"] as const;
@@ -96,8 +97,9 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     return()=>window.cancelAnimationFrame(frame);
   },[initialEditId,initialEditMode,editing]);
 
-  const statuses = useMemo(() => [...new Set(items.map((item) => item.status).filter(Boolean))].sort(), [items]);
-  const locations = useMemo(() => [...new Set(items.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [items]);
+  const scopedItems = useMemo(() => cigarInventoryRecords(items, collections), [items, collections]);
+  const statuses = useMemo(() => [...new Set(scopedItems.map((item) => item.status).filter(Boolean))].sort(), [scopedItems]);
+  const locations = useMemo(() => [...new Set(scopedItems.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [scopedItems]);
   const collectionRelationships = useMemo(() => inventoryCollectionRelationships(items,collections), [items,collections]);
   const collectionContents = useMemo(() => new Map(collections.map(collection => [collection.collectionId,collectionContentsSummary(collection,items)])), [collections,items]);
   const filtered = useMemo(() => scopedItems.filter((item) => {
@@ -105,8 +107,8 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     const missingMatch = missing === "all" || (missing === "quantity" && !hasDocumentedCurrentQuantity(item)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes);
     const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
-    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch;
-  }), [scopedItems, query, status, missing, storage, initialCollectionId]);
+    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && (!initialActiveOnly || (item.currentQty ?? 0) > 0);
+  }), [scopedItems, query, status, missing, storage, initialCollectionId, initialActiveOnly]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
@@ -148,7 +150,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       setRecentlySaved({inventoryId:savedId,token:Date.now()});
       if(!isEdit)setLastCreated(savedItem);
       formElement.reset();
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Save failed"); }
+    } catch (error) { void captureOperationalFailure("inventory-save",failureStatus);setMessage(error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
 

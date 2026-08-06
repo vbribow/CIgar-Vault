@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   betaInvitationEmail,
   betaInvitationWebmailLinks,
@@ -12,6 +12,7 @@ import {
   type BetaStage,
 } from "@/lib/beta-onboarding";
 import { FounderBetaFeedback } from "@/components/founder-beta-feedback";
+import { forgetFounderSessionKey, readFounderSessionKey, rememberFounderSessionKey } from "@/lib/founder-session";
 
 const stages: BetaStage[] = ["Prospect", "Invited", "Signed up", "Imported", "Activated"];
 type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; backedUp:number; openFeedback:number; blockingFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
@@ -49,16 +50,36 @@ export function FounderOnboarding() {
     return result.data as { matched:number; advanced:number };
   }
 
+  async function openSession(next: string) {
+    const result = await synchronize(next);
+    await Promise.all([fetchItems(next), fetchReadiness(next)]);
+    setKey(next);
+    rememberFounderSessionKey(next);
+    return result;
+  }
+
+  useEffect(() => {
+    const saved = readFounderSessionKey();
+    if (!saved) return;
+    setBusy(true);
+    void openSession(saved)
+      .then(result => setMessage(`Progress refreshed automatically · ${result.matched} accounts matched · ${result.advanced} stages advanced.`))
+      .catch(error => {
+        forgetFounderSessionKey();
+        setMessage(error instanceof Error ? error.message : "Unable to open queue");
+      })
+      .finally(() => setBusy(false));
+  }, []);
+
   async function unlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     const next = String(new FormData(event.currentTarget).get("writeKey") || "");
     try {
-      const result = await synchronize(next);
-      await Promise.all([fetchItems(next), fetchReadiness(next)]);
-      setKey(next);
+      const result = await openSession(next);
       setMessage(`Progress refreshed automatically · ${result.matched} accounts matched · ${result.advanced} stages advanced.`);
     } catch (error) {
+      forgetFounderSessionKey();
       setMessage(error instanceof Error ? error.message : "Unable to open queue");
     } finally {
       setBusy(false);

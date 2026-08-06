@@ -1,16 +1,23 @@
 # Document 015 — Cedriva Launch Schedule
 
-**Version:** 1.0  
+**Version:** 1.4
 **Status:** Active operating plan  
 **Owner:** Brian Bowers  
 **Engineering owner:** Codex  
 **Baseline date:** July 24, 2026  
+**Last Updated:** July 30, 2026
 **Founder Beta target:** September 21, 2026  
 **Public Launch target:** October 26, 2026  
 
+> **Brand transition:** Cedriva is a retired legacy placeholder in this
+> document’s title and historical references. Hojavía (pronounced oh-ha-VEE-ah) is a clearance candidate,
+> not an adopted brand. This operating schedule governs the platform regardless
+> of the replacement name and does not authorize a public rename.
+
 ## Launch principle
 
-Cedriva will launch when it is trustworthy, not merely when it is feature-rich.
+The platform will launch when it is trustworthy, not merely when it is
+feature-rich.
 
 The launch path must answer the four constitutional questions:
 
@@ -20,6 +27,10 @@ The launch path must answer the four constitutional questions:
 - Does this preserve the culture?
 
 The public-launch date is conditional. A failed launch gate moves the date; it does not lower the standard.
+
+**Current launch decision:** **HOLD.** A clean build and zero critical defects
+do not make the platform launch-ready while product acceptance or replacement-
+brand clearance gates remain incomplete.
 
 ## Product boundary
 
@@ -34,7 +45,8 @@ The public-launch date is conditional. A failed launch gate moves the date; it d
 - Working Cigar Somm analysis for an exact cigar, with transparent uncertainty and useful pairings
 - Working smoking log, reports, CSV/PDF export, and private-record export
 - Founder moderation and operational health controls
-- Cedriva-aligned navigation, copy, typography, imagery, and mobile behavior
+- Navigation, copy, typography, imagery, and mobile behavior aligned with the
+  replacement identity after its explicit adoption
 
 ### Required for Public Launch
 
@@ -184,6 +196,31 @@ The public-launch date is conditional. A failed launch gate moves the date; it d
 
 Launch publicly only if every hard gate below is green.
 
+### Post-launch growth pilot — Cedriva Founding Lounge Program
+
+After the canonical production app and lounge launch gates pass, Brian may authorize the controlled Founding Lounge Program described in Document 401.
+
+- Begin with 8–12 lounges in one or two markets.
+- Recruit through warm industry introductions and founder-led outreach before using paid acquisition.
+- Give each lounge a venue-specific QR kit, a free 90-day pilot, public discovery visibility, and a private monthly insight report.
+- Keep the guest rating flow under 30 seconds and limited to a small number of focused questions.
+- Measure verified ratings per lounge, completion rate, returning Cedriva users, owner report engagement, renewals, and referrals.
+- Keep basic listing and fair ranking free; never sell ranking position, review removal, or access to private collector data.
+- Keep Cedriva ratings, Google ratings, certification, and commercial-partner status visibly separate.
+
+Do not build a scaled owner dashboard or fund national promotion until the pilot proves sustained guest participation and owner value.
+
+#### Required Founding Lounge decision checkpoint
+
+This checkpoint is mandatory and moves with the public-launch date:
+
+1. After Cedriva completes 14 consecutive stable public-launch days, place the Founding Lounge Program on the next Friday founder review.
+2. Review the Document 401 launch gates, production stability, rating integrity, support load, and owner-material readiness.
+3. Within 30 days of public launch, record one explicit decision: **authorize pilot**, **defer with a new review trigger**, or **do not proceed**.
+4. If authorized, assign the pilot owner, first-market target, first 10 lounge prospects, and installation start date.
+
+The checkpoint creates a required decision; it does not automatically authorize owner outreach or launch.
+
 ## Hard launch gates
 
 | Gate | Founder Beta | Public Launch |
@@ -191,6 +228,8 @@ Launch publicly only if every hard gate below is green.
 | Build, typecheck, and automated tests pass | Required | Required |
 | Severity-1 defects open | 0 | 0 |
 | Severity-2 defects open on critical path | 0 | 0 |
+| Private candidate containment and participant-disclosure approval | Required before any candidate-visible cohort | Required until dated adoption |
+| Replacement-brand linguistic, trademark, common-law, registry, digital, residual-risk, and dated adoption gates | May remain pending only if the beta presentation is brand-neutral or separately authorized as confidential candidate disclosure | Pass |
 | Cross-device inventory synchronization | Pass | Pass |
 | Photo intake and edit completion | Pass | Pass |
 | Authentication and recovery | Pass | Pass |
@@ -240,5 +279,9 @@ Launch publicly only if every hard gate below is green.
 
 | Version | Date | Author | Change |
 |---:|---|---|---|
-| 0.1 | July 23, 2026 | Brian Bowers | Established the initial 30-day founder sequence. |
+| 1.4 | July 30, 2026 | Brian Bowers / Codex | Added the controlling replacement-brand clearance and confidential-disclosure gates and recorded the current launch decision as HOLD until every active product and brand gate passes. |
+| 1.3 | July 26, 2026 | Brian Bowers / Codex | Recorded the retired Cedriva terminology and made the launch gates independent of an unapproved replacement name. |
+| 1.2 | July 26, 2026 | Brian Bowers / Codex | Added a mandatory, event-based Founding Lounge decision checkpoint after two stable public-launch weeks and within 30 days of launch. |
+| 1.1 | July 26, 2026 | Brian Bowers / Codex | Added the gated post-launch Founding Lounge Program and linked its pilot, trust, and commercial boundaries to Document 401. |
 | 1.0 | July 24, 2026 | Brian Bowers / Codex | Replaced the MVP outline with a gated Founder Beta and conditional public-launch operating schedule. |
+| 0.1 | July 23, 2026 | Brian Bowers | Established the initial 30-day founder sequence. |

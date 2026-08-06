@@ -81,7 +81,7 @@ test("community destinations lead to substantive, distinct content",()=>{
  assert.match(component,/id="recent-discussions"/);
  assert.match(component,/Questions, experience, stewardship, and cultural knowledge/);
  assert.match(component,/id="rate-a-cigar"/);
- assert.match(component,/Your score enters the ranking only after publication/);
+ assert.match(component,/No re-entry is needed/);
  assert.match(component,/id="top-25"/);
  assert.match(component,/Rated by smokers\. Updated by experience\./);
  assert.match(component,/living ranking shaped by what/);
@@ -106,4 +106,16 @@ test("age and marketplace notice appears with message-board participation",()=>{
  assert.match(component,/communityAgeNotice/);
  assert.match(component,/21\+ collector community/);
  assert.match(component,/Marketplace transactions are not permitted/);
+});
+test("collectors can delete only their own message-board posts with confirmation",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ const route=readFileSync(new URL("../app/api/community/route.ts",import.meta.url),"utf8");
+ assert.match(component,/Delete my post/);
+ assert.match(component,/This permanently removes your discussion/);
+ assert.match(component,/method:"DELETE"/);
+ assert.match(component,/myContributions\.posts\.some\(owned=>owned\.id===item\.id\)/);
+ assert.match(component,/item\.kind==="Discussion"&&postDeleteControls\(item\.id\)/);
+ assert.match(route,/export async function DELETE/);
+ assert.match(route,/\.eq\("id",id\)\.eq\("user_id",user\.id\)/);
+ assert.match(route,/belongs to another collector/);
 });

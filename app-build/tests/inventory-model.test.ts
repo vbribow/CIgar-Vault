@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyTotalQuantityCorrection, consumeOneInventory, hasDocumentedCurrentQuantity, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate } from "../lib/inventory-model";
+import { applyTotalQuantityCorrection, consumeOneInventory, hasDocumentedCurrentQuantity, hasInventoryProvenance, hasPhysicalQuantityBreakdown, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate } from "../lib/inventory-model";
 
 test("remaining quantity is derived from original and smoked quantities", () => {
   const item = normalizeInventory({ inventoryId: "INV-1", brand: "Test", line: "Line", vitola: "Toro", originalQty: 10, smokedQty: 3 });

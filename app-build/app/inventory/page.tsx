@@ -15,7 +15,7 @@ import "./vault-paths.css";
 export const dynamic = "force-dynamic";
 export const metadata:Metadata={title:"My Collection",description:"Document, care for, understand, and preserve every box, collection, and individual cigar."};
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; status?: string; collectionId?: string; active?: string; vaultSearch?: string; edit?: string; focus?: string }> }) {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; status?: string; collectionId?: string; active?: string; vaultSearch?: string; inventoryId?:string; edit?: string; focus?: string }> }) {
   const [modeResult, inventoryResult, filters, planResult] = await Promise.all([
     accountDataMode().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
     loadInventory().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
@@ -64,6 +64,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     <WorkspaceGuide items={[{label:"Capture",title:"Add by camera or form",detail:"Identify a cigar, review the fields, then approve it into inventory.",href:"#mobile-intake"},{label:"Count",title:"Reconcile boxes and loose sticks",detail:"Record what is physically present without disturbing the rest of the lot.",href:"/inventory-count"},{label:"Protect",title:"Complete value and provenance",detail:"Close evidence gaps for reporting, verification, and climate exposure.",href:"/collection-health"}]}/>
     {!relatedReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Supporting evidence temporarily unavailable</div><p>Your inventory is intact and available. Collection links or published ratings are temporarily hidden rather than shown as absent.</p></section>}
     <UpgradeNudge plan={plan} context="inventory" usage={cigarItems.length} signals={{lotCount:cigarItems.length,portfolioValue:cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}}/>
-    <div><InventoryManager initialItems={items} catalog={catalog} ratings={ratings} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch} initialEditId={filters.edit} initialEditMode={editFocus} /></div>
+    {presentationAssetCount>0&&<section className="card inventoryDataNotice"><div><strong>{presentationAssetCount} presentation asset{presentationAssetCount===1?" is":"s are"} tracked separately</strong><p>Presentation humidors and cases remain connected to their collectible sets without appearing as individual cigars.</p></div><Link className="button secondary" href="/collections">Open Valuable Collections</Link></section>}
+    <div><InventoryManager initialItems={cigarItems} catalog={catalog} ratings={ratings} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch||filters.inventoryId} initialEditId={filters.edit} initialEditMode={editFocus} /></div>
   </main>;
 }

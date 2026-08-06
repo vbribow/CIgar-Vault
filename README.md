@@ -1,4 +1,4 @@
-# Hojavía
+# Hojavía (pronounced oh-ha-VEE-ah)
 
 This folder is the main repository for the Hojavía premium-cigar collector platform.
 

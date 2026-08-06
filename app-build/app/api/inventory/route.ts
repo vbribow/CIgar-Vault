@@ -52,6 +52,12 @@ export async function POST(request: Request) {
       getCatalog().catch(()=>[]),
     ]);
     const draft=canonicalizeInventoryNaming(parsed,catalog);
+    if (draft.storageLocationId) {
+      const humidors = await loadHumidors();
+      if (!humidors.some(humidor => humidor.humidorId === draft.storageLocationId)) {
+        return NextResponse.json({ error:"Choose one of your registered humidors or storage locations before saving." }, { status:422 });
+      }
+    }
     const duplicate=[...inventory,...sharedInventory].find(item=>item.inventoryId===draft.inventoryId);
     if(duplicate){
       const unchanged=Object.keys(fields).every(key=>JSON.stringify(duplicate[key as keyof typeof duplicate])===JSON.stringify(draft[key as keyof typeof draft]));

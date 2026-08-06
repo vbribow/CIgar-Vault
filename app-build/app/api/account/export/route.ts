@@ -11,7 +11,7 @@ export async function GET() {
   try {
     const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }, { data: records, error: recordsError }] = await Promise.all([
       supabase.from("profiles").select("display_name,collection_name,experience_level,billing_plan,billing_status,created_at,updated_at").eq("user_id", user.id).maybeSingle(),
-      supabase.from("account_preferences").select("email_notifications,wishlist_alerts,valuation_research,rating_research,product_analytics,upgrade_recommendations,updated_at").eq("user_id", user.id).maybeSingle(),
+      supabase.from("account_preferences").select("email_notifications,wishlist_alerts,valuation_research,rating_research,collector_25_contributions,product_analytics,upgrade_recommendations,updated_at").eq("user_id", user.id).maybeSingle(),
       supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",user.id).order("kind").order("record_id"),
     ]);
     if (profileError || preferencesError || recordsError) throw profileError || preferencesError || recordsError;

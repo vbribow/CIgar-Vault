@@ -19,7 +19,7 @@ test("Collector 25, personal, lounge-community, and verified-retailer ratings us
   assert.match(community, /RatingLeafMark value=\{item\.weightedScore\}/);
   assert.match(source("../components/quick-place-rating.tsx"), /RatingLeafMark value=\{choice\.score\}/);
   assert.match(source("../components/place-directory.tsx"), /label="Community score"/);
-  assert.match(source("../components/retailer-market.tsx"), /label="Hojavía retailer rating"/);
+  assert.match(source("../components/retailer-market.tsx"), /label="Hojavía certified-retailer rating"/);
   assert.match(source("../components/smoking-experience-scorecard.tsx"), /label="Your private score"/);
   assert.match(source("../app/inventory/\[inventoryId\]/page.tsx"), /label="Personal collection score"/);
 });

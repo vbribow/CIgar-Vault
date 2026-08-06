@@ -7,6 +7,7 @@ import type { IndustryPackagingPayload, IndustryProductPayload, IndustryReleaseP
 import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import { TrustMark } from "@/components/trust-mark";
 import { publicPageMetadata } from "@/lib/seo";
+import { brand } from "@/lib/brand";
 import "./registry.css";
 import "./registry-opening.css";
 

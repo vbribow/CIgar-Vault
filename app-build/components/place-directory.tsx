@@ -16,7 +16,7 @@ type Result=GooglePlaceResult&{
 };
 
 export function PlaceDirectory(){
- const[zip,setZip]=useState("");
+ const[location,setLocation]=useState("");
  const[results,setResults]=useState<Result[]>([]);
  const[selected,setSelected]=useState<Result>();
  const[busy,setBusy]=useState(false);
@@ -26,11 +26,11 @@ export function PlaceDirectory(){
  async function search(event:FormEvent){
   event.preventDefault();setBusy(true);setMessage("");
   try{
-   const response=await fetch(`/api/places/search?zip=${encodeURIComponent(zip)}`,{cache:"no-store"});
+   const response=await fetch(`/api/places/search?location=${encodeURIComponent(location)}`,{cache:"no-store"});
    const body=await response.json();
    if(!response.ok)throw new Error(body.error||"Search failed");
    setResults(body.data);setMeta(body.meta);
-   if(!body.data.length)setMessage("No verified matches found. Try a nearby ZIP code.");
+   if(!body.data.length)setMessage("No verified matches found. Try a nearby ZIP code or another city and state.");
   }catch(error){setMessage(error instanceof Error?error.message:"Search failed")}finally{setBusy(false)}
  }
  async function certify(event:FormEvent<HTMLFormElement>){
@@ -49,7 +49,7 @@ export function PlaceDirectory(){
  return <>
   <section className="placeSearch card">
    <div><div className="eyebrow">Top lounges near you</div><h2>Find a room worth visiting.</h2><p>Search nearby cigar lounges and retailers. {brand.name} community ratings stay separate from Google reviews.</p></div>
-   <form onSubmit={search}><label><span>U.S. ZIP code</span><input value={zip} onChange={event=>setZip(event.target.value)} inputMode="numeric" pattern="\d{5}(-\d{4})?" placeholder="90210" required/></label><button className="button" disabled={busy}>{busy?"Searching…":"Find lounges"}</button></form>
+   <form onSubmit={search}><label><span>U.S. ZIP code or city and state</span><input value={location} onChange={event=>setLocation(event.target.value)} inputMode="search" autoComplete="postal-code" maxLength={120} placeholder="90210 or Anchorage, AK" aria-describedby="place-search-hint" required/><small id="place-search-hint">Use a ZIP code or include both city and state.</small></label><button className="button" disabled={busy}>{busy?"Searching…":"Find lounges"}</button></form>
   </section>
   {message&&<output className="placeMessage">{message}</output>}
   {meta&&<aside className="placeMethod"><strong>Community-first ranking</strong><span>{meta.methodology}</span><small>Google data retrieved {new Date(meta.retrievedAt).toLocaleString()} · Google ratings are never converted into {brand.name} ratings.</small></aside>}

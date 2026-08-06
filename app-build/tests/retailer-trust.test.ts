@@ -26,6 +26,17 @@ test("one frequent buyer cannot dominate a retailer score",()=>{
   assert.equal(repeated.reviewerCount,1);
   assert.equal(repeated.confidence,"Early evidence");
 });
+test("certified retailer evidence exposes weighted service dimensions and authenticity signals",()=>{
+  const summary=trustedRetailerScore([
+    {...review("u1",5),fulfillment:4,packaging:3,authenticityConfidence:"High"},
+    {...review("u2",3),fulfillment:2,packaging:4,authenticityConfidence:"Concern"},
+  ]);
+  assert.equal(summary.dimensions.overall,4);
+  assert.equal(summary.dimensions.fulfillment,3.8);
+  assert.equal(summary.dimensions.packaging,3.9);
+  assert.deepEqual(summary.dimensions.authenticity,{High:1,Medium:0,Concern:1});
+  assert.equal(trustedRetailerScore([]).confidence,"Not yet established");
+});
 test("retailer results pass an exact HTTPS identity gate",()=>{
   const item={brand:"Arturo Fuente",line:"Don Carlos",vitola:"Double Robusto"};
   assert.equal(listingMatchesExactIdentity(item,{title:"Arturo Fuente Don Carlos Double Robusto",url:"https://example.com/cigar"}),true);
@@ -62,7 +73,7 @@ test("availability outranks a launch relationship",()=>{
 test("retailer market migration and UI preserve transaction-only scoring",()=>{
   const migration=fs.readFileSync("supabase/migrations/202607300002_trusted_retailer_market.sql","utf8");
   const ui=fs.readFileSync("components/retailer-market.tsx","utf8");
-  const inventory=fs.readFileSync("app/inventory/[inventoryId]/page.tsx","utf8");
+  const inventory=fs.readFileSync("app/inventory/[inventoryId]/availability/page.tsx","utf8");
   const clickRoute=fs.readFileSync("app/api/retailer-market/click/route.ts","utf8");
   const purchaseRoute=fs.readFileSync("app/api/retailer-market/purchases/route.ts","utf8");
   const availability=fs.readFileSync("lib/retailer-availability.ts","utf8");
@@ -70,10 +81,12 @@ test("retailer market migration and UI preserve transaction-only scoring",()=>{
   assert.match(migration,/purchase_session_id uuid not null unique/);
   assert.match(migration,/order_reference_hash/);
   assert.match(migration,/status in \('verified','review','hidden'\)/);
-  assert.match(ui,/Only verified transactions can affect this score/);
-  assert.match(ui,/Seller payment never changes ranking/);
+  assert.match(ui,/Verified purchases only/);
+  assert.match(ui,/Affiliate compensation never changes this score or search ranking/);
+  assert.match(ui,/Not yet established/);
+  assert.match(ui,/Fulfillment/);
   assert.match(ui,/temporary launch placement/);
-  assert.match(inventory,/Find this cigar/);
+  assert.match(inventory,/<RetailerMarket item=\{item\}/);
   assert.match(clickRoute,/listingMatchesExactIdentity\(item,listing\)/);
   assert.match(clickRoute,/does not match the exact cigar record/);
   assert.match(clickRoute,/trackingStatus:"unavailable"/);

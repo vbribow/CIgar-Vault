@@ -53,6 +53,7 @@ export function AppNavigation() {
     <nav aria-label="Public navigation"><Link href="/industry" className={matches(pathname,"/industry")?"active":undefined}>Industry Hub</Link><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><Link href="/login" className="button secondary">Sign in</Link></nav>
   </div></header>;
   const moreLinks=[
+    ["/smoke-journal","My Smoke Journal","Search and revisit every smoke you have logged"],
     ["/records","Tasting Journal","Log any smoke and learn from your own experience"],
     ["/valuations","Market","Understand value through dated evidence"],
     ["/verification","Verify","Protect authenticity and provenance"],

@@ -8,6 +8,7 @@ import { addSmokingLog, getSmokingLogs, recordSmokingLog } from "@/lib/smartshee
 import { loadSmokingLogs } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { consumeOneInventory } from "@/lib/inventory-model";
+import { syncCollector25Contribution } from "@/lib/collector-25-contribution";
 import { createOwnedRecord, deleteOwnedRecord, loadOwnedRecord, saveOwnedRecord } from "@/lib/user-data";
 export async function GET() {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     const owned = await createOwnedRecord("smokes",item.smokeId,item);
     if(owned === "exists"){
       const existing = await loadOwnedRecord<SmokingLog>("smokes",item.smokeId);
-      if(existing && JSON.stringify(existing) === JSON.stringify(item)) return NextResponse.json({ data: existing, retry: true }, { status: 200 });
+      if(existing && JSON.stringify(existing) === JSON.stringify(item)) return NextResponse.json({ data: existing, retry: true, collector25: await syncCollector25Contribution(existing, inventory) }, { status: 200 });
       throw new Error("This submission was already used for a different smoking record");
     }
     if(owned === "created"){
@@ -48,12 +49,12 @@ export async function POST(request: Request) {
           throw error;
         }
       }
-      return NextResponse.json({ data: item }, { status: 201 });
+      return NextResponse.json({ data: item, collector25: await syncCollector25Contribution(item, inventory) }, { status: 201 });
     }
     if (!authorizeWrite(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (dataMode() === "mock") return NextResponse.json({ error: "Writes are disabled in mock mode" }, { status: 409 });
     if(manual)await addSmokingLog(item);else await recordSmokingLog(item);
-    return NextResponse.json({ data: item }, { status: 201 });
+    return NextResponse.json({ data: item, collector25: { status: "ineligible" } }, { status: 201 });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Invalid request" },

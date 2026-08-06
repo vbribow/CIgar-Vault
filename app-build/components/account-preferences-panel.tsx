@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import type { AccountPreferences } from "@/lib/account-preferences";
 import { AppUpdatePanel } from "@/components/app-update-panel";
 
@@ -8,22 +8,39 @@ const options: [keyof AccountPreferences, string, string][] = [
   ["wishlistAlerts", "Wishlist price alerts", "Email me when monitored listings meet a target price."],
   ["valuationResearch", "Valuation research", "Periodically research stale or missing replacement values."],
   ["ratingResearch", "Professional rating research", "Periodically look for sourced published ratings."],
+  ["collector25Contributions", "Anonymous Collector 25 contribution", "When you score an exact cigar from your Vault, share only its identity and your current numeric score. Your name, tasting notes, inventory, and purchase details remain private."],
   ["productAnalytics", "Private product analytics", "Share privacy-safe feature events without inventory details or identity."],
   ["upgradeRecommendations", "Membership recommendations", "Show discreet plan suggestions based on features I use."],
 ];
 export function AccountPreferencesPanel({initial}:{initial:AccountPreferences}){
-  const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState("");const saveInFlight=useRef(false);
+  const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[failed,setFailed]=useState(false);
   async function submit(event:FormEvent){
     event.preventDefault();
-    if(saveInFlight.current)return;saveInFlight.current=true;setBusy(true);
+    if (busy) return;
+    setBusy(true);
     setMessage("");
-    try{const response=await fetch("/api/account/preferences",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});const result=await response.json().catch(()=>({}));setMessage(response.ok?"Preferences saved across your devices.":result.error||"Unable to save preferences.")}catch(error){setMessage(error instanceof Error?error.message:"Unable to save preferences. Check your connection and try again.")}finally{saveInFlight.current=false;setBusy(false)}
+    setFailed(false);
+    try {
+      const response=await fetch("/api/account/preferences",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
+      const result=await response.json().catch(()=>({}));
+      if (!response.ok) {
+        setFailed(true);
+        setMessage(result.error||"Unable to save preferences. Please check your connection and try again.");
+        return;
+      }
+      setMessage("Preferences saved across your devices.");
+    } catch {
+      setFailed(true);
+      setMessage("Unable to save preferences. Please check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
   }
   return <>
-    <form className="card preferencesCard" onSubmit={submit}>
+    <form id="collector-25-preference" className="card preferencesCard" onSubmit={submit} aria-busy={busy}>
       <div><div className="eyebrow">Control center</div><h2>Privacy & notifications</h2><p>Choose how the platform works for you. Inventory records remain private regardless of these settings.</p></div>
       <div className="preferenceList">{options.map(([key,title,detail])=><label className="preferenceRow" key={key}><span><strong>{title}</strong><small>{detail}</small></span><input type="checkbox" checked={values[key]} onChange={event=>setValues(current=>({...current,[key]:event.target.checked}))}/></label>)}</div>
-      <div className="preferenceFooter"><button className="button" disabled={busy}>{busy?"Saving…":"Save preferences"}</button>{message&&<output>{message}</output>}</div>
+      <div className="preferenceFooter"><button className="button" disabled={busy}>{busy?"Saving…":"Save preferences"}</button>{message&&<output role={failed ? "alert" : "status"} aria-atomic="true">{message}</output>}</div>
     </form>
     <section className="card dataRequestCard">
       <div><div className="eyebrow">Privacy controls</div><h2>Account data requests</h2><p>Request access to, correction of, or deletion of account data through a signed-in, auditable channel. A deletion request starts identity, scope, export, retention, and irreversible-effects review; it does not immediately delete anything.</p></div>

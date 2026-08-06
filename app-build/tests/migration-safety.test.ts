@@ -23,7 +23,7 @@ test("current migrations remain on hold until the duplicate version is reconcile
     filename,
     sql: await readFile(new URL(filename, root), "utf8"),
   }))));
-  assert.equal(audit.migrationCount, 27);
+  assert.equal(audit.migrationCount, 32);
   assert.deepEqual(audit.duplicateVersions, [{
     version: "202607240001",
     files: ["202607240001_community_contribution_status.sql", "202607240001_partner_platform.sql"],
@@ -33,6 +33,9 @@ test("current migrations remain on hold until the duplicate version is reconcile
     "202607240008_beta_readiness.sql",
     "202607270001_repair_duplicate_smoke.sql",
     "202607290003_hojavia_signup_consent.sql",
+    "202607300002_trusted_retailer_market.sql",
+    "202607300004_retailer_verification_atomicity.sql",
+    "202608050001_collector_25_smoke_contributions.sql",
   ]);
   assert.equal(audit.releaseDecision, "review_required");
   assert.equal(audit.manifestSha256.length, 64);

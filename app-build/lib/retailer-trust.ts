@@ -49,20 +49,26 @@ export function privateOrderReference(reference: string, secret: string, ownerSc
 
 export function trustedRetailerScore(reviews: RetailerReviewEvidence[]) {
   const verified = reviews.filter(review => review.status === "verified");
-  if (!verified.length) return { score: undefined, count: 0, reviewerCount: 0, confidence: "Not yet rated" as const };
-  const byReviewer = new Map<string, number[]>();
-  for (const review of verified) byReviewer.set(review.userId, [...(byReviewer.get(review.userId) || []), review.overall]);
-  const reviewerMeans = [...byReviewer.values()].map(values => values.reduce((sum, value) => sum + value, 0) / values.length);
-  const reviewers = reviewerMeans.length;
-  const raw = reviewerMeans.reduce((sum, value) => sum + value, 0);
-  const priorScore = 4;
-  const priorWeight = 8;
-  const score = (priorScore * priorWeight + raw) / (priorWeight + reviewers);
+  const authenticity = { High: 0, Medium: 0, Concern: 0 };
+  for (const review of verified) authenticity[review.authenticityConfidence] += 1;
+  const weightedDimension = (field: "overall" | "fulfillment" | "packaging") => {
+    if (!verified.length) return undefined;
+    const byReviewer = new Map<string, number[]>();
+    for (const review of verified) byReviewer.set(review.userId, [...(byReviewer.get(review.userId) || []), review[field]]);
+    const reviewerMeans = [...byReviewer.values()].map(values => values.reduce((sum, value) => sum + value, 0) / values.length);
+    const raw = reviewerMeans.reduce((sum, value) => sum + value, 0);
+    return Number(((4 * 8 + raw) / (8 + reviewerMeans.length)).toFixed(1));
+  };
+  const dimensions = { overall: weightedDimension("overall"), fulfillment: weightedDimension("fulfillment"), packaging: weightedDimension("packaging"), authenticity };
+  if (!verified.length) return { score: undefined, count: 0, reviewerCount: 0, confidence: "Not yet established" as const, dimensions };
+  const reviewers = new Set(verified.map(review => review.userId)).size;
+  const score = dimensions.overall ?? 4;
   return {
-    score: Number(score.toFixed(1)),
+    score,
     count: verified.length,
     reviewerCount: reviewers,
     confidence: reviewers >= 25 ? "Established" as const : reviewers >= 8 ? "Developing" as const : "Early evidence" as const,
+    dimensions,
   };
 }
 
