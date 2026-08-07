@@ -7,6 +7,7 @@ export type BetaProgressStep={key:string;label:string;complete:boolean;href:stri
 export type BetaCollector=z.infer<typeof BetaCollectorInput>&{id:string;createdAt:string;updatedAt:string;progress?:BetaProgress};
 const stageOrder:BetaStage[]=["Prospect","Invited","Signed up","Imported","Activated"];
 export const betaSignupUrl="https://hojavia.com/login?mode=signup";
+export const betaConfirmationRecoveryUrl="https://hojavia.com/login?mode=signin&link=invalid";
 export const betaAppUrl="https://hojavia.com/?source=hojavia-app";
 export const legacyBetaAppOrigin="http://192.168.1.104:3102";
 export function betaInvitationEmail(collector:Pick<BetaCollector,"name"|"email">){
@@ -19,6 +20,7 @@ export function betaInvitationEmail(collector:Pick<BetaCollector,"name"|"email">
   `Create your account: ${betaSignupUrl}`,
   `Use this exact invited email address: ${collector.email}`,
   "After creating your account, open the confirmation email and follow its link before signing in.",
+  "If the confirmation link reports an error, return to Hojavía, try signing in once, then use “Didn’t receive the confirmation email?” to request a fresh link. Only the newest link should be used.",
   "",
   "Before beginning, please review:",
   "Beta Agreement: https://hojavia.com/beta-agreement",
@@ -33,6 +35,15 @@ export function betaInvitationMailto(collector:Pick<BetaCollector,"name"|"email"
  const{recipient,subject,body}=betaInvitationEmail(collector);
  return `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+export const betaDeviceAcceptanceSteps=[
+ {key:"open",label:"Open the permanent address",detail:"Open hojavia.com directly in Safari on iPhone or Chrome on Android; do not reuse an older beta host."},
+ {key:"confirm",label:"Confirm the account",detail:"Use the newest confirmation email. If it has expired, request a fresh link from the sign-in page and discard older links."},
+ {key:"signin",label:"Sign in and reopen",detail:"Sign in, close the browser or installed app, reopen it, and confirm the session returns safely."},
+ {key:"install",label:"Install the phone app",detail:"Use Add to Home Screen on iPhone or Install app on Android, then confirm the Hojavía icon opens the permanent address."},
+ {key:"navigate",label:"Check essential navigation",detail:"Open Vault, Log a Smoke, Cigar Somm, Collections, Lounge, Account, and Sign out without hidden or covered controls."},
+ {key:"save",label:"Complete one controlled save",detail:"Add or edit one agreed test record, confirm one success message and no duplicate, then verify it on a second page."},
+ {key:"recover",label:"Verify recovery",detail:"Download a private backup and confirm the recovery preview can read it. Do not replace live data during this check."},
+] as const;
 export function betaInvitationWebmailLinks(collector:Pick<BetaCollector,"name"|"email">){
  const{recipient,subject,body}=betaInvitationEmail(collector);
  const to=encodeURIComponent(recipient);const encodedSubject=encodeURIComponent(subject);const encodedBody=encodeURIComponent(body);

@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   betaInvitationEmail,
   betaInvitationWebmailLinks,
+  betaConfirmationRecoveryUrl,
+  betaDeviceAcceptanceSteps,
   betaNextAction,
   betaProgressSteps,
   betaStageLabel,
@@ -192,6 +194,10 @@ export function FounderOnboarding() {
     <section className="betaMetrics"><article><span>Pipeline</span><strong>{summary.total}</strong><small>tracked collectors</small></article><article><span>Invited</span><strong>{summary.invited}</strong><small>awaiting signup</small></article><article><span>Imported</span><strong>{summary.imported}</strong><small>vault data loaded</small></article><article><span>Product milestone</span><strong>{summary.activated}</strong><small>20+ lots plus key action</small></article><article><span>Founder seats</span><strong>{summary.founderSeatsRemaining}</strong><small>remaining of 25</small></article></section>
     {readiness && <section className={`betaReadiness card ${readiness.ready ? "ready" : "attention"}`}><header><div><div className="eyebrow">Invitation gate</div><h2>{readiness.ready ? "Ready for the controlled cohort" : "Hold invitations until every gate passes"}</h2><p>{readiness.readyCount} of {readiness.totalGates} minimum safeguards pass · {readiness.openFeedback} open feedback item(s)</p></div><strong>{readiness.readyCount}/{readiness.totalGates}</strong></header><div>{readiness.gates.map(gate => <article key={gate.key}><span className={gate.ready ? "pass" : "hold"}>{gate.ready ? "✓" : "!"}</span><div><b>{gate.label}</b><small>{gate.detail}</small></div></article>)}</div></section>}
     {message && <output className="betaMessage" aria-live="polite">{message}</output>}
+    <section className="betaSupportGrid">
+      <article className="card"><div className="eyebrow">Invitation recovery</div><h2>When an email link fails</h2><ol><li>Ask the tester to return to Hojavía and sign in once; a previously confirmed account does not need another confirmation.</li><li>If sign-in says the email is unconfirmed, open <a href={betaConfirmationRecoveryUrl} target="_blank" rel="noreferrer">the Hojavía sign-in recovery panel</a> and request one new confirmation email.</li><li>Use only the newest email and check spam. Older and already-used links should be discarded.</li></ol><p className="small">Do not create a second queue entry, change the invited email, or bypass account confirmation.</p></article>
+      <article className="card"><div className="eyebrow">Phone acceptance</div><h2>One checklist for iPhone and Android</h2><ol>{betaDeviceAcceptanceSteps.map(step=><li key={step.key}><strong>{step.label}</strong><span>{step.detail}</span></li>)}</ol><p className="small">Record actual tester outcomes in Feedback. This checklist does not claim a device passed until a tester completes it.</p></article>
+    </section>
     <section className="betaLayout"><div className="betaList">
       {items.map(item => {
         const next = betaNextAction(item.progress);
