@@ -1,4 +1,5 @@
 import { canonicalBrand } from "./brand-directory";
+import { canonicalVitolaName } from "./physical-lot-identity";
 
 export type CigarIdentityInput = {
   brand: string;
@@ -43,7 +44,7 @@ function stableId(value: string) {
 export function canonicalCigarIdentity(value: CigarIdentityInput): CanonicalCigarIdentity {
   const brand = canonicalBrand(value.brand);
   const line = value.line.trim();
-  const vitola = value.vitola.trim();
+  const vitola = canonicalVitolaName(value.vitola);
   const release = value.vintage === undefined || value.vintage === null ? undefined : String(value.vintage).trim() || undefined;
   const productKey = [brand, line, vitola].map(normalizeIdentityPart).join("|");
   const identityKey = [...productKey.split("|"), normalizeIdentityPart(release)].join("|");

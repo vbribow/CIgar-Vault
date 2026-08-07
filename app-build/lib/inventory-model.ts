@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { InventoryInput, InventoryItem } from "./types";
+import { physicalLotDesignation } from "./physical-lot-identity";
 
 const optionalText = z.string().trim().max(2000).optional();
 const optionalNumber = z.coerce.number().finite().nonnegative().optional();
@@ -47,6 +48,14 @@ export const InventoryInputSchema = z.object({
   provenanceNotes: optionalText,
   notes: optionalText,
 }).strict().superRefine((item, context) => {
+  const lotDesignation = physicalLotDesignation(item.vitola);
+  if (lotDesignation) {
+    context.addIssue({
+      code: "custom",
+      path: ["vitola"],
+      message: `${lotDesignation.label} is a physical-lot note. Use exact vitola “${lotDesignation.canonicalVitola}” and preserve the box or lot number in provenance notes.`,
+    });
+  }
   if (item.originalQty !== undefined && (item.smokedQty ?? 0) > item.originalQty) {
     context.addIssue({ code: "custom", path: ["smokedQty"], message: "Smoked quantity cannot exceed original quantity" });
   }
