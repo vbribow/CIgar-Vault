@@ -1,0 +1,15 @@
+.launchAcceptanceGrid{margin-top:34px;display:grid;gap:18px}
+.launchAcceptanceGrid>header{display:flex;justify-content:space-between;gap:24px;align-items:end}
+.launchAcceptanceGrid>header h2{margin:4px 0}
+.launchAcceptanceGrid>header p{max-width:620px;color:var(--muted)}
+.deviceMatrix{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.deviceMatrix article{display:grid;gap:7px}
+.deviceMatrix article>span{color:var(--gold2);font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.08em}
+.deviceMatrix h3,.deviceMatrix p{margin:0}
+.deviceMatrix p,.goNoGoList p{color:var(--muted)}
+.goNoGoList{display:grid;gap:8px}
+.goNoGoList article{border:1px solid var(--line);padding:14px 16px;display:grid;grid-template-columns:minmax(220px,.55fr) 1fr;gap:18px;align-items:start}
+.goNoGoList article>div{display:flex;justify-content:space-between;gap:12px}
+.goNoGoList article span{color:var(--gold2);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.goNoGoList p{margin:0}
+@media(max-width:750px){.launchAcceptanceGrid>header,.deviceMatrix{display:grid;grid-template-columns:1fr}.goNoGoList article{grid-template-columns:1fr}}

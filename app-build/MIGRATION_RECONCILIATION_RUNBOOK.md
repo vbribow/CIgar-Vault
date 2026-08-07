@@ -6,6 +6,8 @@ Scope: private Hojavía collector application
 
 Current hold: two local files share version `202607240001`
 
+Latest read-only audit: August 6, 2026. The local manifest contains 32 migrations, no direct destructive DDL, duplicate version `202607240001`, and manifest SHA-256 `d1c7232860d3059dfd19258523dc5b46f88822e1ed58bcc47847c3d73fe729ff`. The audit did not connect to a database. No production project reference, remote ledger, or safe CLI connection was available in the workspace, so Phase 1 remains blocked at step 1 and no filename or database history was changed.
+
 This procedure protects existing collector data. It does not authorize a database change, deployment, or public release.
 
 ## Files in collision

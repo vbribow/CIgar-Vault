@@ -1,8 +1,9 @@
-import { launchBaseline, launchGates, launchReadinessSummary } from "@/lib/launch-readiness";
+import { founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary } from "@/lib/launch-readiness";
 import { immediateIncidentActions, incidentSeverityStandard } from "@/lib/incident-response";
 import { currentStabilityCandidate, launchStabilityObservations } from "@/data/launch-stability";
 import { assessStabilityWindow } from "@/lib/stability-window";
 import "./launch-readiness.css";
+import "./launch-batch.css";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +113,12 @@ export default function LaunchReadinessPage() {
       </div>
       <ol>{immediateIncidentActions.map(action => <li key={action}>{action}</li>)}</ol>
       <footer><strong>Reopen only with complete evidence.</strong><span>Containment · root cause · verified correction · regression coverage · recovery proof · reconciled records · resolved incident · reassessed gates · accountable-owner approval</span></footer>
+    </section>
+
+    <section className="launchAcceptanceGrid" aria-labelledby="launch-acceptance-grid-title">
+      <header><div><div className="eyebrow">Go-live acceptance</div><h2 id="launch-acceptance-grid-title">Close evidence, not checkboxes.</h2></div><p>Unknown, unavailable, or human-dependent evidence remains a hold. No device, credential, legal decision, or external service is inferred.</p></header>
+      <div className="deviceMatrix">{launchDeviceMatrix.map(item=><article className="card" key={item.platform}><span>{item.status}</span><h3>{item.platform} · {item.browser}</h3><strong>{item.installedApp}</strong><p>{item.next}</p></article>)}</div>
+      <div className="goNoGoList">{founderGoNoGoChecklist.map(item=><article key={item.gate}><div><strong>{item.gate}</strong><span>{item.status}</span></div><p>{item.detail}</p></article>)}</div>
     </section>
 
     <section className="launchGateBoard">

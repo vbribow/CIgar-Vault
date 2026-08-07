@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { launchBaseline, launchGates, launchReadinessSummary } from "../lib/launch-readiness";
+import { founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary } from "../lib/launch-readiness";
 
 test("launch baseline records the verified build and full-suite result", () => {
   assert.equal(launchBaseline.build, "Passed");
   assert.equal(launchBaseline.typecheck, "Passed");
-  assert.deepEqual(launchBaseline.automatedTests, { passed: 730, failed: 0 });
+  assert.deepEqual(launchBaseline.automatedTests, { passed: 928, failed: 0 });
   assert.equal(launchReadinessSummary().blockingDefects, 0);
   assert.equal(launchReadinessSummary().blockingGates, 10);
   assert.equal(launchReadinessSummary().decision, "HOLD");
@@ -24,10 +24,10 @@ test("a clean automated baseline never claims real-device gates are complete", (
 test("local artifact rollback evidence never claims production-provider rollback passed", () => {
   const gate = launchGates.find(item => item.id === "stability-device-acceptance");
   assert.ok(gate);
-  assert.match(gate.evidence, /guarded local rehearsal verified 215 release files/i);
-  assert.match(gate.evidence, /without changing production or user data/i);
-  assert.match(gate.evidence, /production-provider and database recovery/i);
-  assert.match(gate.evidence, /migration-history reconciliation/i);
+  assert.match(gate.evidence, /local rollback rehearsal verified 278 files/i);
+  assert.match(gate.evidence, /without production or collector-data changes/i);
+  assert.match(gate.evidence, /candidate remains unfrozen/i);
+  assert.match(gate.evidence, /remote migration ledger is unavailable/i);
   assert.equal(gate.status, "In progress");
 });
 
@@ -77,4 +77,22 @@ test("the launch workspace exposes the three remaining founder acceptance sessio
   assert.match(page,/verified days/);
   assert.match(page,/stability clock has not started/);
   assert.match(page,/feedback\?incident=severity-/);
+  assert.match(page,/Close evidence, not checkboxes/);
+  assert.match(page,/launchDeviceMatrix/);
+  assert.match(page,/founderGoNoGoChecklist/);
+});
+
+test("device and founder gates remain explicit instead of being inferred", () => {
+  assert.deepEqual(launchDeviceMatrix.map(item => item.status), ["Partial", "Not run"]);
+  assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Database migrations" && item.status === "Hold"));
+  assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Sensors" && item.status === "Deferred"));
+  assert.equal(founderGoNoGoChecklist.some(item => String(item.status) === "Passed"), false);
+});
+
+test("live collection evidence keeps the stability clock on hold", () => {
+  const gate = launchGates.find(item => item.id === "collection-truth");
+  assert.ok(gate);
+  assert.match(gate.evidence, /El Tributo — Box 2/);
+  assert.match(gate.evidence, /did not mutate account-backed Vault data/);
+  assert.equal(gate.status, "In progress");
 });

@@ -10,11 +10,11 @@ export type LaunchGate = {
 };
 
 export const launchBaseline = {
-  recordedAt: "2026-07-30",
+  recordedAt: "2026-08-06",
   build: "Passed",
   typecheck: "Passed",
   automatedTests: {
-    passed: 730,
+    passed: 928,
     failed: 0,
   },
   severityOneOpen: 0,
@@ -44,7 +44,7 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Cross-device inventory synchronization",
     status: "In progress",
     detail: "Verify quantity, price, story, and collection edits from one signed-in device on another.",
-    evidence: "Every inventory editor, story correction, collection save, membership correction, and photo update rejects stale device state. On July 30, the repaired physical-phone Vault loaded successfully, synchronized quantity 3 to the desktop, rejected a stale desktop overwrite, and restored INV-0007 to its original quantity 1. The runtime defect is closed; story, collection-component, and storage observations remain in Session A.",
+    evidence: "Every inventory editor, story correction, collection save, membership correction, and photo update rejects stale device state. On July 30, the repaired physical-phone Vault loaded successfully, synchronized quantity 3 to the desktop, rejected a stale desktop overwrite, and restored INV-0007 to its original quantity 1. An August 6 read-only production check reached the authenticated Vault, Log a Smoke, photo intake, Cigar Somm, Collections, Reports, and Account routes without a server error. Story, collection-component, storage, and second-device observations remain incomplete.",
     priority: "Now",
   },
   {
@@ -84,7 +84,7 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Collection and catalog truth",
     status: "In progress",
     detail: "Complete the source-backed audit of every known collection and presentation asset.",
-    evidence: "All 21 researched templates pass one exact-lot, attributable-source, quantity-reconciliation protocol; the founder’s highest-value source pages were rechecked July 29. The July 30 live account audit found two legacy Father & Son presentation rows linked to a missing collection ID; they remain review-only until the two physical boxes can be reconciled without double counting.",
+    evidence: "All 21 researched templates pass one exact-lot, attributable-source, quantity-reconciliation protocol. Release-specific physical-lot safeguards are deployed, but an August 6 read-only production check still rendered INV-0015 as ‘El Tributo — Box 2’ with no release year; INV-0014 also lacked its documented year. The code release did not mutate account-backed Vault data. Both physical boxes must remain separate while their exact vitola, release years, and provenance are reconciled through the protected record workflow.",
     priority: "Next",
   },
   {
@@ -116,7 +116,7 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Device coverage and stability window",
     status: "In progress",
     detail: "Complete the required browser/device matrix and sustain seven production-like days without a Severity 1 or critical-path Severity 2 defect.",
-    evidence: "One physical-phone quantity synchronization path has passed and automated mobile safeguards are green. A July 30 semantic browser baseline across ten critical routes passed landmark, heading, naming, image-alt, duplicate-ID, language, and overflow checks after two missing control names were corrected. A follow-up at 320 by 640 CSS pixels passed all ten routes without page-level horizontal overflow; five critical routes also passed rendered focus-order structure, skip-destination, native tabindex, control-naming, and labeled checkbox-target checks. Shared focus-visible and reduced-motion behavior is regression-covered. All 79 static page templates now pass rendered deterministic-background contrast checks, and current photographic captions retain at least 10.39:1 even under a worst-case white-image composite. A guarded local rehearsal verified 215 release files, rejected an invalid candidate before activation, detected simulated damage, and restored the prior artifact by SHA-256 without changing production or user data. The static database review found no direct destructive DDL but did find two local migrations sharing version 202607240001; Supabase’s timestamp-based remote ledger must be compared before either file is renamed or any schema release occurs. A fail-closed stability ledger now requires seven distinct consecutive production-like days for one frozen artifact and resets for candidate drift, missing or duplicate days, incomplete evidence, or a blocking incident; no candidate is frozen, so the clock remains honestly at 0/7. Screen-reader, physical keyboard-only journeys, browser/text-only zoom, future dynamic-image review, full iPhone/Android/Safari/Chrome, production-provider and database recovery, migration-history reconciliation, and seven-day stability acceptance remain incomplete.",
+    evidence: "Automated mobile safeguards are green and one physical-phone quantity synchronization path has passed. On August 6, 928 tests, type checking, the 181-route navigation audit, and the production build passed. A local rollback rehearsal verified 278 files (13,002,204 bytes) under artifact SHA-256 419849e374a0c756d3d5f1f06a7c8f9271e56a859ec77a541f7963b2543bb587, rejected damage, and restored the prior artifact without production or collector-data changes. Eight authenticated production routes loaded read-only without a server error. The candidate remains unfrozen and the clock stays at 0/7 because live account-backed El Tributo records are not reconciled, the remote migration ledger is unavailable, and physical iPhone/Android plus recovery acceptance remain incomplete.",
     priority: "Next",
   },
   {
@@ -135,6 +135,21 @@ export const launchGates: readonly LaunchGate[] = [
     evidence: "Founder deferred this work on July 29; all tracking remains disabled.",
     priority: "Later",
   },
+] as const;
+
+export const launchDeviceMatrix = [
+  { platform: "iPhone", browser: "Safari", installedApp: "Add to Home Screen", status: "Partial", next: "Complete photo, navigation, sign-out, reopen, and second-device synchronization with a beta tester." },
+  { platform: "Android", browser: "Chrome", installedApp: "Install app", status: "Not run", next: "Complete the same journey on a physical Android phone; emulator evidence cannot replace it." },
+] as const;
+
+export const founderGoNoGoChecklist = [
+  { gate: "Release candidate", status: "Hold", detail: "Reconcile live El Tributo records, then freeze the verified artifact and start day one." },
+  { gate: "Database migrations", status: "Hold", detail: "Capture the correct production Supabase migration ledger and resolve duplicate version 202607240001 without guessing." },
+  { gate: "Beta evidence", status: "Hold", detail: "Complete physical-device, recovery, and second-device sessions with approved identities." },
+  { gate: "Brand and legal", status: "Founder decision", detail: "Record clearance advice, legal owner/state, support owner, incident owner, and dated adoption decision." },
+  { gate: "Google Places", status: "Deferred external", detail: "Configure restricted production credentials immediately before public lounge launch." },
+  { gate: "Billing", status: "Founder decision", detail: "Choose free beta or authorize a Stripe test-mode acceptance pass before any paid cohort." },
+  { gate: "Sensors", status: "Deferred", detail: "Resume only when Brian is home and available to link the physical sensors." },
 ] as const;
 
 export function launchReadinessSummary() {
