@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyTotalQuantityCorrection, consumeOneInventory, hasDocumentedCurrentQuantity, hasInventoryProvenance, hasPhysicalQuantityBreakdown, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate } from "../lib/inventory-model";
+import { applyTotalQuantityCorrection, consumeOneInventory, hasDocumentedCurrentQuantity, hasInventoryProvenance, hasPhysicalQuantityBreakdown, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate, reconcileSmokedQuantityEdit } from "../lib/inventory-model";
 
 test("remaining quantity is derived from original and smoked quantities", () => {
   const item = normalizeInventory({ inventoryId: "INV-1", brand: "Test", line: "Line", vitola: "Toro", originalQty: 10, smokedQty: 3 });
@@ -45,6 +45,23 @@ test("smoking opens a full box when no loose sticks remain", () => {
   assert.equal(after.fullBoxQty, 0);
   assert.equal(after.looseStickQty, 24);
   assert.equal(after.currentQty, 24);
+});
+
+test("increasing smoked history opens a previously sealed 12-count box",()=>{
+  const existing=normalizeInventory({inventoryId:"INV-0057",brand:"Trinidad",line:"Vigía",vitola:"Vigía",fullBoxQty:1,sticksPerBox:12,looseStickQty:0,smokedQty:0});
+  const corrected=normalizeInventory(reconcileSmokedQuantityEdit({...existing,smokedQty:1},existing));
+  assert.equal(corrected.originalQty,12);
+  assert.equal(corrected.smokedQty,1);
+  assert.equal(corrected.currentQty,11);
+  assert.equal(corrected.fullBoxQty,0);
+  assert.equal(corrected.looseStickQty,11);
+});
+
+test("an explicit physical count correction is never overwritten by smoke-history inference",()=>{
+  const existing=normalizeInventory({inventoryId:"INV-BOX",brand:"Test",line:"Line",vitola:"Toro",fullBoxQty:1,sticksPerBox:12,looseStickQty:0,smokedQty:0});
+  const corrected=normalizeInventory(reconcileSmokedQuantityEdit({...existing,smokedQty:1,fullBoxQty:0,looseStickQty:10},existing));
+  assert.equal(corrected.currentQty,10);
+  assert.equal(corrected.looseStickQty,10);
 });
 
 test("validation rejects smoked quantities above the original quantity", () => {

@@ -26,7 +26,7 @@ import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/oper
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","provenanceNotes","score","action","habanosSealPhotoLink","acquisitionSeller","acquisitionDate","acquisitionSourceUrl","acquisitionReceiptLink","purchaseJurisdiction","habanosVerificationDate","habanosVerificationResult","habanosVerificationEvidenceLink","habanosVerificationNotes","notes"]);
 const packagingOptions=["Box","Tin","Jar","Presentation humidor / case","Sampler","Bundle","Individual cigar","Other"] as const;
-type EditMode="quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"all";
+type EditMode="quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"rating"|"all";
 
 export function InventoryManager({ initialItems, catalog, ratings, collections, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all" }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode }) {
   const [items, setItems] = useState(initialItems);
@@ -93,6 +93,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       document.getElementById("inventory-editor")?.scrollIntoView({behavior:"auto",block:"start"});
       if(initialEditMode==="provenance")(document.querySelector('#inventory-editor textarea[name="provenanceNotes"]') as HTMLTextAreaElement|null)?.focus({preventScroll:true});
       if(initialEditMode==="packaging")(document.querySelector('#inventory-editor select[name="packaging"]') as HTMLSelectElement|null)?.focus({preventScroll:true});
+      if(initialEditMode==="rating")(document.querySelector('#inventory-editor input[name="score"]') as HTMLInputElement|null)?.focus({preventScroll:true});
     });
     return()=>window.cancelAnimationFrame(frame);
   },[initialEditId,initialEditMode,editing]);
@@ -259,6 +260,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const focusedPrice = Boolean(editing && editMode === "price");
   const focusedStorage = Boolean(editing && editMode === "storage");
   const focusedProvenance = Boolean(editing && editMode === "provenance");
+  const focusedRating = Boolean(editing && editMode === "rating");
   const showAll = !editing || editMode === "all";
   const suggestedFormat = findBoxFormat(formItem);
   return <>
@@ -283,7 +285,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     </tr>})}</tbody></table>{filtered.length === 0 && <div className="emptyState">No inventory matches these filters.</div>}</div>
 
     <section id="inventory-editor" className={`section editor ${editing?"editingEditor":""}`}><div className="sectionHead"><div><div className="eyebrow">{editing&&editMode==="quantity"?"Quantity correction":editing&&editMode==="year"?"Production information":editing&&editMode==="packaging"?"Packaging information":editing&&editMode==="price"?"Retail price correction":editing&&editMode==="provenance"?"Story and provenance":"Inventory editor"}</div><h2>{editing ? `${editMode==="quantity"?"Correct quantity":editMode==="year"?"Add production / release year":editMode==="packaging"?"Document packaging":editMode==="price"?"Set retail price":editMode==="provenance"?"Edit story":"Edit all details"} · ${editing.brand} ${editing.line}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{editing&&editMode==="quantity"?"Enter full boxes, cigars per box, and loose sticks. Total owned recalculates automatically when saved.":editing&&editMode==="year"?"Enter the exact cigar’s four-digit production or release year. Leave it blank when the year is not verified.":editing&&editMode==="packaging"?"Choose how this exact physical lot is packaged. Other record fields remain unchanged.":editing&&editMode==="price"?"Enter the current replacement price for one cigar. Saving returns you to this inventory record; market research remains a separate workflow.":editing&&editMode==="provenance"?"Update the known story for this exact lot, then save. Other record fields remain unchanged.":mode === "mock" ? "Private preview: existing-record edits save on this computer. New lots require a connected private vault." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && <button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>}</div>
-      <form key={formItem.inventoryId || "new"} className={`inventoryForm ${focusedQuantity||focusedYear||focusedPackaging||focusedPrice||focusedStorage||focusedProvenance?"focusedInventoryForm":""}`} onSubmit={submit} onChange={editSafety.markDirty}>
+      <form key={formItem.inventoryId || "new"} className={`inventoryForm ${focusedQuantity||focusedYear||focusedPackaging||focusedPrice||focusedStorage||focusedProvenance||focusedRating?"focusedInventoryForm":""}`} onSubmit={submit} onChange={editSafety.markDirty}>
         {showAll&&<>
 {editing&&<input name="inventoryId" type="hidden" value={formItem.inventoryId}/>}
 <CatalogFields item={formItem} catalog={catalog} /></>}
@@ -295,8 +297,8 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
         {(showAll||focusedPrice)&&<label className={focusedPrice?"priceField":undefined}><span>Retail price per cigar</span><input name="retailValue" type="number" min="0" step="0.01" defaultValue={formItem.retailValue} autoFocus={focusedPrice}/><small>Use current replacement cost for one cigar. Add source-linked market evidence separately when available.</small></label>}
         {(showAll||focusedStorage)&&<label><span>Storage location</span><input name="storageLocationId" defaultValue={formItem.storageLocationId} autoFocus={focusedStorage}/><small>Enter the humidor, cabinet, or other location where this exact lot is stored.</small></label>}
         {(showAll||focusedProvenance)&&<label className="wide"><span>Provenance notes</span><textarea name="provenanceNotes" defaultValue={formItem.provenanceNotes} rows={3} autoFocus={focusedProvenance}/><small>Record only known purchase, custody, receipt, or ownership details. Leave uncertain facts out.</small></label>}
+        {(showAll||focusedRating)&&<label><span>Personal Vault score</span><input name="score" type="number" min="0" max="100" defaultValue={formItem.score} autoFocus={focusedRating}/><small>Your score; professional ratings are stored separately.</small></label>}
         {showAll&&<>
-        <label><span>Personal Vault score</span><input name="score" type="number" min="0" max="100" defaultValue={formItem.score} /><small>Your score; professional ratings are stored separately.</small></label>
         <label><span>Status</span><select name="status" defaultValue={formItem.status}><option>Hold</option><option>Smoke</option><option>Preserve</option><option>Consumed</option></select></label>
         <label><span>Priority</span><input name="priority" defaultValue={formItem.priority} /></label>
         <label><span>Collection membership</span><select name="collectionId" defaultValue={formItem.collectionId||""}><option value="">Standalone cigar / not assigned</option>{formItem.collectionId&&!collections.some(collection=>collection.collectionId===formItem.collectionId)&&<option value={formItem.collectionId}>{formItem.collectionId} · Current assignment</option>}{collections.map(collection=><option value={collection.collectionId} key={collection.collectionId}>{collection.name}{collection.releaseYear?` · ${collection.releaseYear}`:""}</option>)}</select><small>Choose only when this physical lot belongs to that presentation or set.</small></label>

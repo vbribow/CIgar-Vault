@@ -7,7 +7,7 @@ import { standardVitolas } from "./vitolas";
 const evidenceOnly = /^(original|numbered|one of).*\b(box|case|book|packaging|humidor)\b/i;
 const vague = /\b(distinct|additional|best-selling|family of brands|rare and limited)\b/i;
 const slug = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 52);
-const requirementQuantity = (requirement:string) => Number(requirement.match(/^(\d+)\s+/)?.[1] ?? 1);
+export const collectionRequirementQuantity = (requirement:string) => Number(requirement.match(/^(\d+)\s+/)?.[1] ?? 1);
 const componentInventoryId = (collectionId:string,index:number) => `INV-${slug(collectionId.replace(/^COL-/i, ""))}-C${String(index + 1).padStart(2, "0")}`;
 const familyPrefixes = [
   "OpusX Oro Oscuro OxO", "OpusX 20 Years Celebration", "OpusX 20 Years", "OpusX Angel’s Share",
@@ -136,15 +136,26 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       && existing.currentQty===existing.originalQty
       && (existing.looseStickQty??existing.currentQty)===existing.currentQty
       && (existing.smokedQty??0)===0;
+    // Early generated collection placeholders were sometimes persisted with
+    // an all-zero baseline even though no cigar had been consumed. That is not
+    // collector evidence of an empty lot. Restore only those Hojavia-generated
+    // rows from the exact sourced requirement; a genuinely consumed lot has a
+    // non-zero original/smoked history and is deliberately preserved.
+    const emptyGeneratedBaseline=(existing.originalQty??0)===0
+      && (existing.currentQty??0)===0
+      && (existing.looseStickQty??0)===0
+      && (existing.fullBoxQty??0)===0
+      && (existing.smokedQty??0)===0;
+    const restoreDocumentedQuantity=untouchedGeneratedQuantity||emptyGeneratedBaseline;
     const repaired = {
       ...existing,
       catalogId: canonical.identityId,
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
-      originalQty: untouchedGeneratedQuantity ? identity.quantity : existing.originalQty ?? identity.quantity,
-      currentQty: untouchedGeneratedQuantity ? identity.quantity : existing.currentQty ?? existing.looseStickQty ?? identity.quantity,
-      looseStickQty: untouchedGeneratedQuantity ? identity.quantity : existing.looseStickQty ?? existing.currentQty ?? identity.quantity,
+      originalQty: restoreDocumentedQuantity ? identity.quantity : existing.originalQty ?? identity.quantity,
+      currentQty: restoreDocumentedQuantity ? identity.quantity : existing.currentQty ?? existing.looseStickQty ?? identity.quantity,
+      looseStickQty: restoreDocumentedQuantity ? identity.quantity : existing.looseStickQty ?? existing.currentQty ?? identity.quantity,
       smokedQty: existing.smokedQty ?? 0,
       vintage: cigarVintage,
       provenanceNotes,
@@ -193,7 +204,7 @@ export function collectionPhysicalLotRepairs(
     if(!evidence)return;
     const key=cigarIdentityKey(evidence);
     const group=groups.get(key)??[];
-    group.push({requirement,index,quantity:requirementQuantity(requirement)});
+    group.push({requirement,index,quantity:collectionRequirementQuantity(requirement)});
     groups.set(key,group);
   });
   return [...groups.values()].flatMap(group=>{

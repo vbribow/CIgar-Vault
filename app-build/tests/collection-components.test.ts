@@ -184,6 +184,31 @@ test("legacy generated component rows are repaired without changing collector qu
   assert.match(repairs[0].catalogId ?? "", /^CIG-/);
 });
 
+test("empty generated collection placeholders recover exact documented quantities", () => {
+  const emptyPlaceholder = {
+    inventoryId: "INV-TEST-C01", collectionId: "COL-TEST", brand: "Arturo Fuente", line: "Preview cigar",
+    vitola: "Size to verify", originalQty: 0, currentQty: 0, looseStickQty: 0, smokedQty: 0,
+    notes: "Expected component: 20 Double Corona cigars",
+  };
+  const repaired = collectionComponentRepairs(collection, template, [emptyPlaceholder])[0];
+  assert.equal(repaired.originalQty, 20);
+  assert.equal(repaired.currentQty, 20);
+  assert.equal(repaired.looseStickQty, 20);
+});
+
+test("a consumed generated collection lot is never restored from its template", () => {
+  const consumed = {
+    inventoryId: "INV-TEST-C01", collectionId: "COL-TEST", brand: "Arturo Fuente", line: "Test Set",
+    vitola: "Double Corona", originalQty: 20, currentQty: 0, looseStickQty: 0, smokedQty: 20,
+    notes: "Expected component: 20 Double Corona cigars",
+  };
+  const repaired = collectionComponentRepairs(collection, template, [consumed]);
+  assert.equal(repaired.length, 1);
+  assert.equal(repaired[0].originalQty, 20);
+  assert.equal(repaired[0].currentQty, 0);
+  assert.equal(repaired[0].smokedQty, 20);
+});
+
 test("legacy generated rows discard an inherited collection year", () => {
   const legacy = {
     inventoryId: "INV-TEST-C02", collectionId: "COL-TEST", brand: "Arturo Fuente", line: "Test Set",

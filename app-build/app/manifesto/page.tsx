@@ -14,6 +14,7 @@ const declarations=[
   ["We believe every collection is alive.","It holds first discoveries and final celebrations. Friends remembered. Journeys taken. Patience rewarded. Its value cannot be reduced to a number."],
   ["We believe knowledge should open doors.","No collector should be made to feel like an outsider. Curiosity is not inexperience to hide—it is the beginning of stewardship."],
   ["We believe expertise should have a greater voice.","Technology must not flatten hard-earned judgment. It should preserve it, connect it, credit it, and help it travel farther."],
+  ["We believe the relationship is part of the experience.","A cigar may pass through many hands before it is enjoyed. The lasting culture is built when growers, makers, retailers, lounges, and collectors remain connected—and when the people and memories surrounding a cigar are treated as meaningful knowledge."],
   ["We believe truth deserves discipline.","A source is stronger than a claim. Visible uncertainty is stronger than false confidence. A correction is stronger than a quiet mistake."],
   ["We believe the industry is one ecosystem.","When growers, blenders, retailers, lounges, writers, educators, and collectors grow stronger together, the culture endures."],
 ] as const;

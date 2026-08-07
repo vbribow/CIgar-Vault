@@ -184,6 +184,22 @@ const profileSources = [
     label2: "Official LFD 30-year record",
   },
   {
+    initials: "JP",
+    name: "Jorge Padrón",
+    house: "Padrón Cigars",
+    manufacturing: "Vertically integrated family production. Padrón grows and ages tobacco and makes its cigars within the family’s Nicaraguan operation. Exact blend, harvest, and release details remain cigar-level facts.",
+    factorySource: "https://padron.com/vertically-integrated/",
+    factoryLabel: "Official Padrón production record",
+    verified: "Padrón’s official record presents Jorge as a steward of the family company founded by José O. Padrón in 1964. Its mission places family honor, patient aging, consistency, and quality before production volume.",
+    study: "His documented work is best studied through continuity: preserving a recognizable house standard across crops and years while maintaining aged tobacco reserves, vertically connected production, and the humility of the family’s beginnings.",
+    project: "Compare the Padrón Series, 1964 Anniversary, and 1926 Serie in exact vitolas. Record construction, texture, balance, and consistency while keeping line, age claims, and your own observations distinct.",
+    themes: ["Family stewardship", "Nicaraguan tobacco reserves", "Consistency before volume"],
+    source: "https://padron.com/the-hammer-story/",
+    label: "Official Padrón family history",
+    source2: "https://padron.com/our-mission/",
+    label2: "Official Padrón mission",
+  },
+  {
     initials: "AJ",
     name: "A.J. Fernandez",
     house: "A.J. Fernandez Cigars",
@@ -397,6 +413,16 @@ const myths = [
   ["“More age fixes the cigar.”", "Rest can integrate a sound blend and soften transitional characteristics. It cannot reliably repair poor combustion, imbalance, or defective tobacco."],
 ] as const;
 
+const episodeSixConversation = [
+  {name: "Carlos “Carlito” Fuente Jr.", profileId: "carlos-carlito-fuente-jr", lesson: "Craft carries responsibility to people: growers, rollers, families, retailers, collectors, and the next generation. Persistence matters most when it remains joined to humility and care."},
+  {name: "Litto Gomez", profileId: "litto-gomez", lesson: "Honesty is a working discipline, not a slogan. His account of his father also frames adaptability, directness, and refusing self-pity as durable forms of leadership."},
+  {name: "Jorge Padrón", profileId: "jorge-padron", lesson: "Gratitude becomes action: remember who helped you, understand the farmer or young maker on the other side of a decision, and protect relationships beyond a single transaction."},
+] as const;
+
+function profileId(name: string) {
+  return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 function profileTrustLabel(label: string) {
   if (label.startsWith("Official")) return "Official";
   if (label.startsWith("Direct")) return "Expert";
@@ -550,9 +576,16 @@ export default function BlendingPage() {
         <div className="manufacturingRule"><strong>The rule</strong><p>Every {brand.name} cigar record should identify the actual factory when reliable evidence exists. If production changes, the record should preserve the manufacturer by release period instead of silently rewriting history. If the factory is undisclosed or unverified, {brand.name} says exactly that.</p></div>
       </section>
 
+      <section className="makerConversation" aria-labelledby="maker-conversation-title">
+        <div className="blendSectionHead"><div><div className="eyebrow">Maker conversation · Editorial interview</div><h2 id="maker-conversation-title">Three makers on memory, responsibility, and gratitude.</h2></div><p>This Hojavía study is a paraphrased reading of the complete Cigar Aficionado Podcast Episode 6. It adds first-person context to existing biographies; it does not turn an editorial interview into an official manufacturer record.</p></div>
+        <div className="makerConversationGrid">{episodeSixConversation.map(item=><article key={item.name}><small>Interview perspective</small><h3>{item.name}</h3><p>{item.lesson}</p><a className="textLink" href={`#${item.profileId}`}>Open existing biography ↓</a></article>)}</div>
+        <div className="conversationThemes"><strong>Shared themes across the full conversation</strong><ul><li>Respect among makers can coexist with commercial competition.</li><li>Premium cigars carry the labor, agricultural knowledge, and cultural memory of many people.</li><li>Educated collectors are better able to recognize differences in tobacco, blending, construction, and consistency.</li><li>Family succession is stewardship, not an automatic guarantee of quality.</li><li>Consumer connection should deepen accountability—not encourage celebrity mythology.</li></ul></div>
+        <footer><div><strong>Source and context</strong><p>Hosted by David Savona and published by Cigar Aficionado. The episode includes a disclosed mid-episode sponsorship from 1916 Tabacalera Eiroa; Hojavía has no stated affiliation with the publisher, guests, sponsor, or their companies.</p></div><a className="button secondary" href="https://www.youtube.com/watch?v=4zkHPTGZWDA">Watch the complete official episode ↗</a></footer>
+      </section>
+
       <section className="blenderProfiles" id="profiles">
-        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 22 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so {brand.name} distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
-        <div className="profileGrid">{profileSources.map((profile)=><article key={profile.name}>
+        <div className="blendSectionHead"><div><div className="eyebrow">The living blender archive · 23 studies</div><h2>Study people through documented work.</h2></div><p>This is not a ranking or a hall of fame. Industry titles vary, so {brand.name} distinguishes master blenders, founders, growers, factory leaders, and collaborative authors while documenting each person’s influence.</p></div>
+        <div className="profileGrid">{profileSources.map((profile)=><article id={profileId(profile.name)} key={profile.name}>
           <header><span>{profile.initials}</span><div><small>{profile.house}</small><h3>{profile.name}</h3></div></header>
           <dl>
             <div><dt>Who makes the cigars?</dt><dd>{profile.manufacturing}</dd></div>

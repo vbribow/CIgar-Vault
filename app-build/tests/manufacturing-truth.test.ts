@@ -9,7 +9,7 @@ const manufacturingPage = readFileSync(new URL("../app/learn/manufacturing-truth
 const manufacturingDirectory = readFileSync(new URL("../components/manufacturing-truth-directory.tsx", import.meta.url), "utf8");
 
 test("manufacturing truth records separate ownership, authorship, factories, and evidence", () => {
-  assert.equal(manufacturingTruthRecords.length, 31);
+  assert.equal(manufacturingTruthRecords.length, 32);
   assert.equal(new Set(manufacturingTruthRecords.map((record) => record.id)).size, manufacturingTruthRecords.length);
   for (const record of manufacturingTruthRecords) {
     assert.ok(record.brand);
@@ -31,7 +31,7 @@ test("the first directory represents major owned, partner, mixed, and contract s
   for (const relationship of ["Vertically integrated", "Company-owned factory", "Partner-owned factory", "Directed contract production", "Mixed production"]) {
     assert.ok(manufacturingTruthRecords.some((record) => record.relationship === relationship));
   }
-  for (const id of ["my-father", "arturo-fuente", "perdomo", "espinosa", "aj-fernandez", "dunbarton", "warped", "manufactura-rivas", "plasencia", "foundation", "tatuaje", "illusione", "ovejanegracigars", "crowned-heads", "adventura", "aging-room", "all-saints", "apostate", "artista", "avowed", "caldwell", "casdagli", "cavalier-geneve", "patina"]) {
+  for (const id of ["my-father", "arturo-fuente", "padron", "perdomo", "espinosa", "aj-fernandez", "dunbarton", "warped", "manufactura-rivas", "plasencia", "foundation", "tatuaje", "illusione", "ovejanegracigars", "crowned-heads", "adventura", "aging-room", "all-saints", "apostate", "artista", "avowed", "caldwell", "casdagli", "cavalier-geneve", "patina"]) {
     assert.ok(manufacturingTruthRecords.some((record) => record.id === id));
   }
 });

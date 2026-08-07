@@ -4,6 +4,7 @@ import { authorizeWrite, dataMode } from "@/lib/config";
 import {
   normalizeInventory,
   parseInventoryUpdate,
+  reconcileSmokedQuantityEdit,
 } from "@/lib/inventory-model";
 import { loadInventory } from "@/lib/inventory";
 import { loadHumidors } from "@/lib/data";
@@ -55,7 +56,8 @@ export async function PUT(request: Request, context: Context) {
         { error: "This record changed on another device. Refresh your Vault, review the newer information, and try again." },
         { status: 409 },
       );
-    const parsed = normalizeInventory(parseInventoryUpdate(await request.json(), existing));
+    const parsedInput=parseInventoryUpdate(await request.json(), existing);
+    const parsed = normalizeInventory(reconcileSmokedQuantityEdit(parsedInput,existing));
     const item = canonicalizeInventoryNaming(parsed, await getCatalog().catch(() => []));
     if (item.inventoryId !== inventoryId)
       return NextResponse.json(
@@ -97,6 +99,11 @@ export async function PUT(request: Request, context: Context) {
 export async function DELETE(request: Request, context: Context) {
   try {
     const { inventoryId } = await context.params;
+    const existing = (await loadInventory()).find(candidate => candidate.inventoryId === inventoryId);
+    if (!existing) return NextResponse.json({ error: `${inventoryId} was not found. Refresh your Vault before trying again.` }, { status: 404 });
+    const expectedRevision=request.headers.get("if-match");
+    if(!expectedRevision)return NextResponse.json({error:"Refresh this record before deleting it so Hojavía can protect newer changes."},{status:428});
+    if(expectedRevision!==recordRevision(existing))return NextResponse.json({error:"This record changed on another device. Refresh and review it before deleting."},{status:409});
     if (await deleteOwnedRecord("inventory", inventoryId)) return new NextResponse(null, { status: 204 });
     const blocked = guard(request); if (blocked) return blocked;
     await deleteInventoryRow(inventoryId);

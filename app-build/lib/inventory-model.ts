@@ -85,6 +85,31 @@ export function consumeOneInventory(item: InventoryItem): InventoryItem {
   return normalizeInventory({ ...item, smokedQty });
 }
 
+/**
+ * Historical edits sometimes increase `smokedQty` directly instead of using
+ * Log a Smoke. When the collector has not also edited the physical count,
+ * apply that increase through the same box-opening logic as a smoking log.
+ * Explicit quantity edits remain authoritative and are never inferred over.
+ */
+export function reconcileSmokedQuantityEdit(input: InventoryInput, existing: InventoryItem): InventoryInput {
+  const increase=(input.smokedQty??0)-(existing.smokedQty??0);
+  const physicalCountUnchanged=input.fullBoxQty===existing.fullBoxQty
+    && input.sticksPerBox===existing.sticksPerBox
+    && input.looseStickQty===existing.looseStickQty;
+  if(increase<=0||!physicalCountUnchanged)return input;
+  let corrected=normalizeInventory({...existing,...input,smokedQty:existing.smokedQty??0});
+  for(let index=0;index<increase;index+=1)corrected=consumeOneInventory(corrected);
+  return{
+    ...input,
+    originalQty:corrected.originalQty,
+    currentQty:corrected.currentQty,
+    smokedQty:corrected.smokedQty,
+    fullBoxQty:corrected.fullBoxQty,
+    sticksPerBox:corrected.sticksPerBox,
+    looseStickQty:corrected.looseStickQty,
+  };
+}
+
 export function applyTotalQuantityCorrection(item: InventoryInput,total:number):InventoryInput{
   if(!Number.isInteger(total)||total<0)throw new Error("Corrected total quantity must be a whole number at or above zero");
   const{fullBoxQty:_,sticksPerBox:__,looseStickQty:___,...rest}=item;

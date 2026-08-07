@@ -24,6 +24,7 @@ import { safeInternalHref } from "@/lib/search-navigation";
 import Link from "next/link";
 import { BuyAgainPanel } from "@/components/buy-again-panel";
 import { RatingLeafMark } from "@/components/rating-leaf-mark";
+import { InventoryRecordActions } from "@/components/inventory-record-actions";
 import { safeRecordedPurchaseUrl } from "@/lib/buy-again";
 import "./climate.css";
 export const dynamic = "force-dynamic";
@@ -41,6 +42,7 @@ export default async function CigarPage({
   const backLabel = searchReturn ? "← Back to search results" : "← Back to Vault";
   const storyEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=provenance#inventory-editor`;
   const allEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=all#inventory-editor`;
+  const ratingEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=rating#inventory-editor`;
   const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
   if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
     return <main className="shell"><nav className="nav"><Link className="brand" href="/">{brand.name}</Link><Link className="backLink" href={backHref}>{backLabel}</Link></nav><Link className="button secondary detailReturnLink" href={backHref}>{backLabel}</Link><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><Link className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</Link></section></main>;
@@ -123,10 +125,11 @@ export default async function CigarPage({
             {item.vintage ? ` · ${item.vintage}` : ""}
           </span>
           <CollectionRelationshipTag relationship={collectionRelationship}/>
-          <div className="ctaRow detailHeroActions"><Link className="button" href={storyEditHref}>Edit story</Link><Link className="button secondary" href={allEditHref}>Edit all details</Link></div>
+          <div className="ctaRow detailHeroActions"><Link className="button secondary" href={storyEditHref}>Edit story</Link><InventoryRecordActions item={item} editHref={allEditHref}/></div>
         </div>
         <div className="scoreCard">
           <RatingLeafMark value={item.score ?? "—"} label="Personal collection score" detail={item.priority || "Unrated priority"}/>
+          {!isPresentationAsset&&<Link className="button secondary" href={ratingEditHref}>{item.score===undefined?"Rate this cigar":"Update rating"}</Link>}
         </div>
       </section>
       {!isPresentationAsset && <BuyAgainPanel inventoryId={item.inventoryId} identity={`${item.brand} · ${item.line} · ${item.vitola}${item.vintage ? ` · ${item.vintage}` : ""}`} seller={item.acquisitionSeller} purchaseDate={item.acquisitionDate} jurisdiction={item.purchaseJurisdiction} sourceUrl={safeRecordedPurchaseUrl(item.acquisitionSourceUrl)} positiveJournalCount={history.filter((entry) => entry.buyAgain).length} />}

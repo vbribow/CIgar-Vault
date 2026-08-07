@@ -50,8 +50,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const collectionLinksReady = collectionsResult.status === "fulfilled";
   const relatedReady = ratingsResult.status === "fulfilled" && collectionLinksReady;
   const plan = planResult.ok ? planResult.value : undefined;
-  const editFocus = ["quantity","year","packaging","price","storage","provenance","all"].includes(filters.focus||"")
-    ? filters.focus as "quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"all"
+  const editFocus = ["quantity","year","packaging","price","storage","provenance","rating","all"].includes(filters.focus||"")
+    ? filters.focus as "quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"rating"|"all"
     : "all";
   return <main className="shell">
     <section className="section inventoryHeader"><div><div className="eyebrow">{brand.name} Vault · Your private record</div><h1>My collection</h1><p className="lede">Document every box and individual cigar, preserve provenance, understand what you own, and care for the story it carries.</p></div></section>

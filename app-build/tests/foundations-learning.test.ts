@@ -49,10 +49,10 @@ test("blending learning teaches the complete discipline and uses sourced blender
   for (const principle of ["Strength, body, and flavor are not synonyms", "Wrapper", "Binder", "Filler", "The recipe is the blend", "Profile standard"]) {
     assert.match(blending, new RegExp(principle));
   }
-  for (const blender of ["José “Pepín” García", "Jaime García", "Carlos “Carlito” Fuente Jr.", "Nicholas Melillo", "Nick Perdomo Jr.", "Néstor Andrés Plasencia", "Erik Espinosa", "Ernesto Perez-Carrillo", "Litto Gomez", "A.J. Fernandez", "Willy Herrera", "José “Jochy” Blanco", "Christian Eiroa"]) {
+  for (const blender of ["José “Pepín” García", "Jaime García", "Carlos “Carlito” Fuente Jr.", "Nicholas Melillo", "Nick Perdomo Jr.", "Néstor Andrés Plasencia", "Erik Espinosa", "Ernesto Perez-Carrillo", "Litto Gomez", "Jorge Padrón", "A.J. Fernandez", "Willy Herrera", "José “Jochy” Blanco", "Christian Eiroa"]) {
     assert.match(blending, new RegExp(blender));
   }
-  assert.match(blending, /living blender archive · 22 studies/);
+  assert.match(blending, /living blender archive · 23 studies/);
   assert.match(blending, /Industry titles vary/);
   assert.match(blending, /This is not a ranking or a hall of fame/);
   assert.match(blending, /Company claims are labeled as company claims/);
@@ -73,8 +73,8 @@ test("blending learning includes a sourced boutique and craft chapter", () => {
 });
 
 test("every blender profile identifies who manufactures the cigars", () => {
-  assert.equal(blending.match(/manufacturing:/g)?.length, 22);
-  assert.equal(blending.match(/factorySource:/g)?.length, 22);
+  assert.equal(blending.match(/manufacturing:/g)?.length, 23);
+  assert.equal(blending.match(/factorySource:/g)?.length, 23);
   assert.match(blending, /The name on the band may not be the name over the factory door/);
   assert.match(blending, /Who makes the cigars\?/);
   assert.match(blending, /manufacturer by release period instead of silently rewriting history/);
@@ -86,6 +86,16 @@ test("every blender profile identifies who manufactures the cigars", () => {
   assert.match(blending, /authorship hidden behind the band/);
   assert.match(blending, /Open manufacturing truth/);
   assert.match(blending, /profileTrustLabel/);
+});
+
+test("episode six insights deepen existing biographies without becoming official claims", () => {
+  assert.match(blending, /Maker conversation · Editorial interview/);
+  assert.match(blending, /complete Cigar Aficionado Podcast Episode 6/);
+  assert.match(blending, /does not turn an editorial interview into an official manufacturer record/);
+  assert.match(blending, /Respect among makers can coexist with commercial competition/);
+  assert.match(blending, /disclosed mid-episode sponsorship from 1916 Tabacalera Eiroa/);
+  assert.match(blending, /href={`#\$\{item\.profileId\}`}/);
+  assert.match(blending, /https:\/\/www\.youtube\.com\/watch\?v=4zkHPTGZWDA/);
 });
 
 test("blending learning explains how leaf identity, cultivation, and processing affect taste", () => {
