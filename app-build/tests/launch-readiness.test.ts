@@ -8,7 +8,7 @@ test("launch baseline records the verified build and full-suite result", () => {
   assert.equal(launchBaseline.typecheck, "Passed");
   assert.deepEqual(launchBaseline.automatedTests, { passed: 928, failed: 0 });
   assert.equal(launchReadinessSummary().blockingDefects, 0);
-  assert.equal(launchReadinessSummary().blockingGates, 10);
+  assert.equal(launchReadinessSummary().blockingGates, 9);
   assert.equal(launchReadinessSummary().decision, "HOLD");
   assert.equal(launchGates.find(gate => gate.id === "brand-clearance-adoption")?.status, "In progress");
   assert.equal(launchGates.find(gate => gate.id === "automation-privacy")?.status, "Passed");
@@ -89,10 +89,11 @@ test("device and founder gates remain explicit instead of being inferred", () =>
   assert.equal(founderGoNoGoChecklist.some(item => String(item.status) === "Passed"), false);
 });
 
-test("live collection evidence keeps the stability clock on hold", () => {
+test("live collection evidence records the protected two-lot reconciliation", () => {
   const gate = launchGates.find(item => item.id === "collection-truth");
   assert.ok(gate);
-  assert.match(gate.evidence, /El Tributo — Box 2/);
-  assert.match(gate.evidence, /did not mutate account-backed Vault data/);
-  assert.equal(gate.status, "In progress");
+  assert.match(gate.evidence, /INV-0014 remains 15\/15/);
+  assert.match(gate.evidence, /INV-0015 remains 15\/15/);
+  assert.match(gate.evidence, /without merging or deleting either lot/);
+  assert.equal(gate.status, "Passed");
 });

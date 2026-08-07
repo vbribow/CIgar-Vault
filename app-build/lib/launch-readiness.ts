@@ -10,7 +10,7 @@ export type LaunchGate = {
 };
 
 export const launchBaseline = {
-  recordedAt: "2026-08-06",
+  recordedAt: "2026-08-07",
   build: "Passed",
   typecheck: "Passed",
   automatedTests: {
@@ -82,9 +82,9 @@ export const launchGates: readonly LaunchGate[] = [
   {
     id: "collection-truth",
     title: "Collection and catalog truth",
-    status: "In progress",
+    status: "Passed",
     detail: "Complete the source-backed audit of every known collection and presentation asset.",
-    evidence: "All 21 researched templates pass one exact-lot, attributable-source, quantity-reconciliation protocol. Release-specific physical-lot safeguards are deployed, but an August 6 read-only production check still rendered INV-0015 as ‘El Tributo — Box 2’ with no release year; INV-0014 also lacked its documented year. The code release did not mutate account-backed Vault data. Both physical boxes must remain separate while their exact vitola, release years, and provenance are reconciled through the protected record workflow.",
+    evidence: "All 21 researched templates pass one exact-lot, attributable-source, quantity-reconciliation protocol. On August 7 the protected live record workflow reconciled the two El Tributo physical boxes without merging or deleting either lot: INV-0014 remains 15/15 with exact vitola El Tributo, collector-supplied 2025 release year, and box 1 provenance; INV-0015 remains 15/15 with exact vitola El Tributo, collector-supplied 2026 release year, and box 2 provenance. Both live detail pages were reloaded and verified after save.",
     priority: "Next",
   },
   {
@@ -116,7 +116,7 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Device coverage and stability window",
     status: "In progress",
     detail: "Complete the required browser/device matrix and sustain seven production-like days without a Severity 1 or critical-path Severity 2 defect.",
-    evidence: "Automated mobile safeguards are green and one physical-phone quantity synchronization path has passed. On August 6, 928 tests, type checking, the 181-route navigation audit, and the production build passed. A local rollback rehearsal verified 278 files (13,002,204 bytes) under artifact SHA-256 419849e374a0c756d3d5f1f06a7c8f9271e56a859ec77a541f7963b2543bb587, rejected damage, and restored the prior artifact without production or collector-data changes. Eight authenticated production routes loaded read-only without a server error. The candidate remains unfrozen and the clock stays at 0/7 because live account-backed El Tributo records are not reconciled, the remote migration ledger is unavailable, and physical iPhone/Android plus recovery acceptance remain incomplete.",
+    evidence: "Automated mobile safeguards are green and one physical-phone quantity synchronization path has passed. On August 6, 928 tests, type checking, the 181-route navigation audit, and the production build passed. A local rollback rehearsal verified 278 files (13,002,204 bytes) under artifact SHA-256 419849e374a0c756d3d5f1f06a7c8f9271e56a859ec77a541f7963b2543bb587, rejected damage, and restored the prior artifact without production or collector-data changes. Eight authenticated production routes loaded read-only without a server error. The August 7 live El Tributo reconciliation closed the collection-data hold. The candidate remains unfrozen and the clock stays at 0/7 because the remote migration ledger is unavailable and physical iPhone/Android plus recovery acceptance remain incomplete.",
     priority: "Next",
   },
   {
@@ -143,7 +143,7 @@ export const launchDeviceMatrix = [
 ] as const;
 
 export const founderGoNoGoChecklist = [
-  { gate: "Release candidate", status: "Hold", detail: "Reconcile live El Tributo records, then freeze the verified artifact and start day one." },
+  { gate: "Release candidate", status: "Hold", detail: "Resolve the production migration ledger and complete physical-device recovery acceptance before freezing the verified artifact and starting day one." },
   { gate: "Database migrations", status: "Hold", detail: "Capture the correct production Supabase migration ledger and resolve duplicate version 202607240001 without guessing." },
   { gate: "Beta evidence", status: "Hold", detail: "Complete physical-device, recovery, and second-device sessions with approved identities." },
   { gate: "Brand and legal", status: "Founder decision", detail: "Record clearance advice, legal owner/state, support owner, incident owner, and dated adoption decision." },
