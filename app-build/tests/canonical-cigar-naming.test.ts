@@ -24,6 +24,13 @@ test("canonical naming uses the exact catalog spelling and attaches its catalog 
   assert.equal(corrected.catalogId, "CAT-1");
 });
 
+test("canonical naming removes a stale catalog ID when the corrected cigar has no exact match", () => {
+  const catalog: CatalogCigar[] = [{ catalogId: "CAT-LANCERO", brand: "Arturo Fuente", line: "Casa Fuente", vitola: "Lancero" }];
+  const corrected = canonicalizeInventoryNaming(item({ catalogId: "CAT-LANCERO", brand: "Arturo Fuente", line: "Casa Fuente", vitola: "Toro" }), catalog);
+  assert.equal(corrected.vitola, "Toro");
+  assert.equal(corrected.catalogId, undefined);
+});
+
 test("a genuinely unknown documented cigar remains available for exact manual entry", () => {
   const original = item({ brand: "Small Batch Maker", line: "Founder's Release", vitola: "Toro Grande" });
   assert.deepEqual(canonicalizeInventoryNaming(original), original);

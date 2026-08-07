@@ -58,5 +58,6 @@ export function canonicalizeInventoryNaming<T extends InventoryItem>(item: T, ca
   const lineReferences = brandReferences.filter(reference => key(reference.line) === key(line));
   const vitola = canonicalValue(item.vitola, lineReferences.map(reference => reference.vitola));
   const exact = catalog.find(reference => canonicalBrand(reference.brand) === brand && key(reference.line) === key(line) && key(reference.vitola) === key(vitola));
-  return { ...item, brand, line, vitola, ...(exact?.catalogId ? { catalogId: exact.catalogId } : {}) };
+  const { catalogId: _previousCatalogId, ...withoutCatalogIdentity } = item;
+  return { ...withoutCatalogIdentity, brand, line, vitola, ...(exact?.catalogId ? { catalogId: exact.catalogId } : {}) } as T;
 }
