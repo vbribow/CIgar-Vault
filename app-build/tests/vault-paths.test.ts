@@ -30,7 +30,8 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(audit,/Provenance/);
  assert.match(audit,/Membership truth/);
  assert.match(audit,/missing=\$\{check\.key\}&active=1#inventory-records/);
- assert.match(audit,/missing=\$\{gap\.key\}&active=1&inventoryId=\$\{encodeURIComponent\(item\.inventoryId\)\}#inventory-records/);
+ assert.match(audit,/missing=\$\{gap\.key\}&active=1&vaultSearch=\$\{encodeURIComponent\(item\.inventoryId\)\}&edit=\$\{encodeURIComponent\(item\.inventoryId\)\}&focus=\$\{editFocusForGap\(gap\.key\)\}#inventory-editor/);
+ assert.match(audit,/key === "value" \? "price" : key === "vintage" \? "year" : key/);
  assert.match(audit,/Active inventory audit complete/);
  assert.match(page,/initialActiveOnly=\{filters\.active === "1"\}/);
  assert.match(page,/initialQuery=\{filters\.vaultSearch\|\|filters\.inventoryId\}/);

@@ -88,6 +88,7 @@ export default async function CollectionHealth() {
               : undefined;
     return gap ? [{ item, gap }] : [];
   }).sort((a, b) => inventoryCompleteness(a.item) - inventoryCompleteness(b.item)).slice(0, 8);
+  const editFocusForGap = (key: string) => key === "value" ? "price" : key === "vintage" ? "year" : key;
 
   return <main className="shell">
     <nav className="nav">
@@ -199,7 +200,7 @@ export default async function CollectionHealth() {
         <a className="button secondary" href="/inventory?missing=quantity&active=1#inventory-records">Start with quantities</a>
       </div>
       <div className="cleanupList">
-        {prioritized.map(({item,gap}) => <a href={`/inventory?missing=${gap.key}&active=1&inventoryId=${encodeURIComponent(item.inventoryId)}#inventory-records`} key={item.inventoryId}>
+        {prioritized.map(({item,gap}) => <a href={`/inventory?missing=${gap.key}&active=1&vaultSearch=${encodeURIComponent(item.inventoryId)}&edit=${encodeURIComponent(item.inventoryId)}&focus=${editFocusForGap(gap.key)}#inventory-editor`} key={item.inventoryId}>
           <span><strong>{item.brand} {item.line}</strong><small>{item.inventoryId} · {item.vitola}</small></span>
           <span
             className="completionMeter"
