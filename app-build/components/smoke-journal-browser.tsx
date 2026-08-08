@@ -3,15 +3,19 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { InventoryItem, SmokingLog } from "@/lib/types";
+import type { DataMode } from "@/lib/config";
 import { buildSmokeJournalEntries, filterSmokeJournalEntries, type SmokeJournalSource } from "@/lib/smoke-journal-view";
+import { SmokeEntryEditor } from "@/components/smoke-entry-editor";
 
 function readableDate(value: string) {
   return new Date(`${value}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-export function SmokeJournalBrowser({ smokes, inventory }: { smokes: SmokingLog[]; inventory: InventoryItem[] }) {
+export function SmokeJournalBrowser({ smokes:initialSmokes, inventory, mode, initialEditSmokeId }: { smokes: SmokingLog[]; inventory: InventoryItem[]; mode:DataMode; initialEditSmokeId?:string }) {
+  const [smokes,setSmokes]=useState(initialSmokes);
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<SmokeJournalSource>("all");
+  const [editingId,setEditingId]=useState(initialEditSmokeId||"");
   const entries = useMemo(() => buildSmokeJournalEntries(smokes, inventory), [smokes, inventory]);
   const shown = useMemo(() => filterSmokeJournalEntries(entries, query, source), [entries, query, source]);
   const vaultCount = entries.filter(entry => entry.source === "vault").length;
@@ -37,11 +41,9 @@ export function SmokeJournalBrowser({ smokes, inventory }: { smokes: SmokingLog[
           <div className="journalEntryLead"><span>{entry.source === "vault" ? "Vault smoke" : "Review only"}</span><h3>{entry.title}</h3><small>{entry.detail}</small></div>
           <div className="journalEntryFacts"><time dateTime={entry.smoke.dateSmoked}>{readableDate(entry.smoke.dateSmoked)}</time><strong>{entry.smoke.overall ?? "—"}<small> / 100</small></strong></div>
           <div className="journalEntryNotes"><p>{entry.smoke.tastingNotes || entry.smoke.flavor || "No tasting note recorded."}</p><div>{entry.smoke.flavor && <span>{entry.smoke.flavor}</span>}{entry.smoke.strength && <span>{entry.smoke.strength}</span>}{entry.smoke.construction && <span>{entry.smoke.construction}</span>}{entry.smoke.burn && <span>{entry.smoke.burn}</span>}{entry.smoke.buyAgain && <span>★ Buy again</span>}</div></div>
-          {entry.item && <b className="journalEntryOpen">Open cigar record →</b>}
+          <div className="journalEntryActions">{entry.item&&<Link className="textLink" href={`/inventory/${encodeURIComponent(entry.item.inventoryId)}`}>Open cigar record →</Link>}<button type="button" className="button secondary" onClick={()=>setEditingId(entry.smoke.smokeId)}>Edit smoke</button></div>
         </>;
-        return entry.item
-          ? <Link className="journalEntry" href={`/inventory/${encodeURIComponent(entry.item.inventoryId)}`} key={entry.smoke.smokeId}>{content}</Link>
-          : <article className="journalEntry" key={entry.smoke.smokeId}>{content}</article>;
+        return <article className="journalEntry" id={`smoke-${entry.smoke.smokeId}`} key={entry.smoke.smokeId}>{content}{editingId===entry.smoke.smokeId&&<SmokeEntryEditor smoke={entry.smoke} mode={mode} onCancel={()=>setEditingId("")} onSaved={updated=>{setSmokes(current=>current.map(smoke=>smoke.smokeId===updated.smokeId?updated:smoke));setEditingId("")}}/>}</article>;
       })}
       {!shown.length && <div className="emptyState"><strong>{entries.length ? "No journal entries match those filters." : "No smokes logged yet."}</strong><p>{entries.length ? "Try another cigar, flavor, date, or entry source." : "Your first note can be simple and entirely your own."}</p>{!entries.length && <Link className="button" href="/records#log-smoke">Log your first smoke</Link>}</div>}
     </section>

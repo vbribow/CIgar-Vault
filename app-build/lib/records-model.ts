@@ -27,6 +27,20 @@ export const SmokingLogCreateSchema = requireManualCigar(z.object({
   newEntryConfirmed: z.boolean().optional(),
 }).strict());
 
+/** Editing a journal entry may correct experience details, but never its identity or Vault deduction. */
+export const SmokingLogEditSchema = z.object({
+  dateSmoked: z.iso.date(),
+  vintage: z.union([z.string(), z.number()]).optional(),
+  overall: z.coerce.number().min(0).max(100).optional(),
+  flavor: z.string().max(500).optional(),
+  strength: z.string().max(100).optional(),
+  sweetness: z.string().max(100).optional(),
+  construction: z.enum(constructionQualityOptions).optional(),
+  burn: z.enum(burnQualityOptions).optional(),
+  tastingNotes: z.string().max(4000).optional(),
+  buyAgain: z.boolean().optional(),
+}).strict();
+
 export const ValuationSchema = z.object({
   valuationId: z.string().trim().min(1).max(100), inventoryId: z.string().trim().min(1).max(100), valuationDate: z.iso.date(),
   invalidatedAt: z.iso.datetime().optional(), invalidationReason: z.string().trim().min(1).max(1000).optional(),

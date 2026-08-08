@@ -169,7 +169,7 @@ export async function deleteInventoryRow(inventoryId: string): Promise<void> {
   await request(`/sheets/${sheetId()}/rows?ids=${row.id}`, { method: "DELETE" });
 }
 
-type RecordValue = string | number | boolean | undefined;
+type RecordValue = string | number | boolean | null | undefined;
 async function recordSheet(envName: string) { return request<SmartsheetSheet>(`/sheets/${requireEnv(envName)}`); }
 function recordValues(row: SmartsheetRow, columns: SmartsheetColumn[]) {
   const titles = new Map(columns.map((column) => [column.id, column.title]));
@@ -196,6 +196,15 @@ export async function addSmokingLog(log: SmokingLog): Promise<void> {
   if (sheet.rows.some((row) => String(recordValues(row, sheet.columns).get("Smoke ID")) === log.smokeId)) throw new Error(`Smoke ID ${log.smokeId} already exists`);
   const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Quantity Smoked",log.quantitySmoked??1],["Cigar Name",log.cigarName],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage],["Overall 1–100",log.overall],["Flavor",log.flavor],["Strength",log.strength],["Sweetness",log.sweetness],["Construction",log.construction],["Burn",log.burn],["Tasting Notes",log.tastingNotes],["Buy Again",log.buyAgain]], sheet.columns);
   await request(`/sheets/${requireEnv("SMARTSHEET_SMOKING_LOG_SHEET_ID")}/rows`, { method:"POST", body:JSON.stringify([{toBottom:true,cells}]) });
+}
+
+export async function updateSmokingLog(smokeId: string, log: SmokingLog): Promise<void> {
+  const sheet = await recordSheet("SMARTSHEET_SMOKING_LOG_SHEET_ID");
+  if (log.burn !== undefined) requireRecordColumns(sheet.columns, ["Burn"]);
+  const row = sheet.rows.find(candidate => String(recordValues(candidate, sheet.columns).get("Smoke ID") || candidate.id) === smokeId);
+  if (!row) throw new Error(`Smoking entry ${smokeId} was not found`);
+  const cells = recordCells([["Smoke ID",log.smokeId],["Inventory ID",log.inventoryId],["Quantity Smoked",log.quantitySmoked??1],["Cigar Name",log.cigarName??null],["Date Smoked",log.dateSmoked],["Production / Vintage Year",log.vintage??null],["Overall 1–100",log.overall??null],["Flavor",log.flavor??null],["Strength",log.strength??null],["Sweetness",log.sweetness??null],["Construction",log.construction??null],["Burn",log.burn??null],["Tasting Notes",log.tastingNotes??null],["Buy Again",log.buyAgain??false]], sheet.columns);
+  await request(`/sheets/${requireEnv("SMARTSHEET_SMOKING_LOG_SHEET_ID")}/rows`, { method:"PUT", body:JSON.stringify([{ id:row.id, cells }]) });
 }
 
 export async function recordSmokingLog(log: SmokingLog): Promise<void> {
