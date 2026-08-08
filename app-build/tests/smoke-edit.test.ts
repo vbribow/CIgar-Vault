@@ -34,3 +34,19 @@ test("journal exposes an Edit smoke action and an explicit No score correction",
   assert.match(editor,/quantity already removed from your Vault stay unchanged/);
   assert.match(editor,/"If-Match":recordRevision\(smoke\)/);
 });
+
+test("journal leads with five newest entries and expands only on request",()=>{
+  const journal=readFileSync(new URL("../components/smoke-journal-browser.tsx",import.meta.url),"utf8");
+  const results=journal.indexOf('<section className="journalResults"');
+  const metrics=journal.indexOf('<section className="journalMetrics"');
+  assert.ok(results>=0&&metrics>results,"recent journal entries must precede summary metrics");
+  assert.match(journal,/shown\.slice\(0,5\)/);
+  assert.match(journal,/More · view all logged smokes/);
+  assert.match(journal,/Most recent smokes/);
+});
+
+test("an unverified journal source is never presented as a truthful zero",()=>{
+  const page=readFileSync(new URL("../app/smoke-journal/page.tsx",import.meta.url),"utf8");
+  assert.match(page,/modeResult\.value === "supabase" \|\| smokesResult\.value\.length > 0/);
+  assert.match(page,/Journal records protected/);
+});
