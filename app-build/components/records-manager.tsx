@@ -97,7 +97,8 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     event.preventDefault();
     const mutation = kind === "smoke" ? smokeMutation : valuationMutation;
     if (!mutation.begin()) return;
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const key = String(form.get("writeKey") || "");
     const numeric = new Set(["overall", "quantitySmoked", "replacementValue", "marketValue", "marketRangeLow", "marketRangeHigh", "askingPrice", "comparableCount", "lastSaleValue"]);
     const boolean = new Set(["buyAgain"]);
@@ -125,18 +126,17 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         void captureOperationalSuccess("smoke-save",response.status);
         setSmokes(values => values.some(value => value.smokeId === result.data.smokeId) ? values : [result.data, ...values]);
         setLastSmokeIdentity({ source: smokeSource, cigarName: smokeCigarName });
-        setSmokeSubmissionId(createClientUuid());
       }
       else {
         setValuations(values => values.some(value => value.valuationId === result.data.valuationId) ? values : [result.data, ...values]);
-        setValuationSubmissionId(createClientUuid());
       }
       setMessage(kind === "smoke" ? smokeSaveMessage(result, smokeSource === "MANUAL", Number(payload.quantitySmoked ?? 1)) : "Valuation evidence saved to your private Vault.");
       mutation.succeed();
-      event.currentTarget.reset();
+      formElement.reset();
       if (kind === "smoke") smokeDraft.clear(); else valuationFormDraft.clear();
       recordSafety.markSaved();
-      if (kind === "smoke") { setSmokeSource(selectedInventoryId || ""); setSmokeCigarName(""); setSmokePhotos([]); setSmokePhotoAnalysis(undefined); setSmokePhotoMessage(""); }
+      if (kind === "smoke") { setSmokeSubmissionId(createClientUuid()); setNewSmokeConfirmed(false); setSmokeSource(selectedInventoryId || ""); setSmokeCigarName(""); setSmokePhotos([]); setSmokePhotoAnalysis(undefined); setSmokePhotoMessage(""); }
+      else setValuationSubmissionId(createClientUuid());
     } catch (error) {
       if(kind==="smoke")void captureOperationalFailure("smoke-save",failureStatus);
       mutation.fail();
