@@ -6,6 +6,7 @@ export function smokeEntryOrder<T extends { smokeId: string; dateSmoked: string 
 
 type ComparableSmoke = {
   smokeId?: string; inventoryId: string; cigarName?: string; dateSmoked: string;
+  quantitySmoked?: number;
   overall?: number; flavor?: string; strength?: string; construction?: string; burn?: string; tastingNotes?: string; buyAgain?: boolean;
 };
 const normalized = (value?: string) => value?.trim().replace(/\s+/g, " ").toLowerCase() || "";
@@ -14,6 +15,7 @@ export function findNearDuplicateSmoke(records: ComparableSmoke[], candidate: Co
     record.inventoryId === candidate.inventoryId &&
     normalized(record.cigarName) === normalized(candidate.cigarName) &&
     record.dateSmoked === candidate.dateSmoked &&
+    (record.quantitySmoked ?? 1) === (candidate.quantitySmoked ?? 1) &&
     record.overall === candidate.overall &&
     normalized(record.flavor) === normalized(candidate.flavor) &&
     normalized(record.strength) === normalized(candidate.strength) &&

@@ -46,7 +46,7 @@ export type InventoryInput = Omit<InventoryItem, "currentQty"> & { currentQty?: 
 
 export type ConstructionQuality = "Excellent" | "Very good" | "Good" | "Fair" | "Poor";
 export type BurnQuality = "Even throughout" | "Minor touch-up" | "Multiple touch-ups" | "Relight required" | "Major burn issue";
-export type SmokingLog = { smokeId: string; inventoryId: string; cigarName?: string; dateSmoked: string; vintage?: string | number; overall?: number; flavor?: string; strength?: string; sweetness?: string; construction?: string; burn?: BurnQuality; tastingNotes?: string; buyAgain?: boolean };
+export type SmokingLog = { smokeId: string; inventoryId: string; cigarName?: string; dateSmoked: string; quantitySmoked?: number; vintage?: string | number; overall?: number; flavor?: string; strength?: string; sweetness?: string; construction?: string; burn?: BurnQuality; tastingNotes?: string; buyAgain?: boolean };
 export type Valuation = {
   valuationId: string;
   inventoryId: string;

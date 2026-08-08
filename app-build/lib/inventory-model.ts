@@ -85,13 +85,26 @@ export function normalizeInventory(item: InventoryInput): InventoryItem {
   return { ...item, originalQty, currentQty };
 }
 
-export function consumeOneInventory(item: InventoryItem): InventoryItem {
+function consumeNextInventory(item: InventoryItem): InventoryItem {
   const smokedQty = (item.smokedQty ?? 0) + 1;
   if (item.looseStickQty !== undefined || item.fullBoxQty !== undefined) {
     if ((item.looseStickQty ?? 0) > 0) return normalizeInventory({ ...item, smokedQty, looseStickQty: (item.looseStickQty ?? 0) - 1 });
     if ((item.fullBoxQty ?? 0) > 0 && item.sticksPerBox) return normalizeInventory({ ...item, smokedQty, fullBoxQty: (item.fullBoxQty ?? 0) - 1, looseStickQty: item.sticksPerBox - 1 });
   }
   return normalizeInventory({ ...item, smokedQty });
+}
+
+export function consumeInventory(item: InventoryItem, quantity: number): InventoryItem {
+  if (!Number.isInteger(quantity) || quantity < 1) throw new Error("Cigars smoked must be a whole number of at least 1");
+  if (item.currentQty === undefined) throw new Error(`Record the remaining quantity for ${item.inventoryId} before logging a smoke`);
+  if (quantity > item.currentQty) throw new Error(`${item.inventoryId} has only ${item.currentQty} cigar${item.currentQty === 1 ? "" : "s"} remaining`);
+  let updated = item;
+  for (let index = 0; index < quantity; index += 1) updated = consumeNextInventory(updated);
+  return updated;
+}
+
+export function consumeOneInventory(item: InventoryItem): InventoryItem {
+  return consumeInventory(item, 1);
 }
 
 /**

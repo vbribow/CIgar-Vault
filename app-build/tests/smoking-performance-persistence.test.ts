@@ -12,6 +12,13 @@ test("Smartsheet reads and writes Construction Quality and Burn without silent l
   assert.match(source, /requireRecordColumns\(smokingSheet\.columns,\["Burn"\]\)/);
 });
 
+test("Smartsheet preserves the quantity removed by a smoking entry", () => {
+  const source = readFileSync(new URL("../lib/smartsheet.ts", import.meta.url), "utf8");
+  assert.match(source, /quantitySmoked:v\.get\("Quantity Smoked"\)===undefined\?1/);
+  assert.match(source, /\["Quantity Smoked",log\.quantitySmoked\?\?1\]/);
+  assert.match(source, /consumeInventory\(before,log\.quantitySmoked\?\?1\)/);
+});
+
 test("duplicate protection distinguishes separate construction or burn experiences", () => {
   const base = {
     smokeId: "SMK-1",

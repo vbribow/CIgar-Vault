@@ -5,7 +5,7 @@ export const burnQualityOptions = ["Even throughout", "Minor touch-up", "Multipl
 
 const SmokingLogFields = {
   inventoryId: z.string().trim().min(1).max(100),
-  cigarName: z.string().trim().min(3).max(300).optional(), dateSmoked: z.iso.date(), vintage: z.union([z.string(), z.number()]).optional(), overall: z.coerce.number().min(0).max(100).optional(),
+  cigarName: z.string().trim().min(3).max(300).optional(), dateSmoked: z.iso.date(), quantitySmoked: z.coerce.number().int().min(1).max(1000).default(1), vintage: z.union([z.string(), z.number()]).optional(), overall: z.coerce.number().min(0).max(100).optional(),
   flavor: z.string().max(500).optional(), strength: z.string().max(100).optional(), sweetness: z.string().max(100).optional(),
   construction: z.string().max(500).optional(), burn: z.enum(burnQualityOptions).optional(), tastingNotes: z.string().max(4000).optional(), buyAgain: z.boolean().optional(),
 };

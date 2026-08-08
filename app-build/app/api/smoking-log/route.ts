@@ -7,7 +7,7 @@ import type { SmokingLog } from "@/lib/types";
 import { addSmokingLog, getSmokingLogs, recordSmokingLog } from "@/lib/smartsheet";
 import { loadSmokingLogs } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
-import { consumeOneInventory } from "@/lib/inventory-model";
+import { consumeInventory } from "@/lib/inventory-model";
 import { syncCollector25Contribution } from "@/lib/collector-25-contribution";
 import { createOwnedRecord, deleteOwnedRecord, loadOwnedRecord, saveOwnedRecord } from "@/lib/user-data";
 export async function GET() {
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     if(owned === "created"){
       if(inventory){
         try {
-          await saveOwnedRecord("inventory",inventory.inventoryId,consumeOneInventory(inventory));
+          await saveOwnedRecord("inventory",inventory.inventoryId,consumeInventory(inventory,item.quantitySmoked ?? 1));
         } catch (error) {
           await deleteOwnedRecord("smokes",item.smokeId).catch(() => undefined);
           throw error;
