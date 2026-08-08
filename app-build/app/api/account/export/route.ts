@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { buildAccountExport } from "@/lib/account-security";
 import { saveOwnedRecord } from "@/lib/user-data";
+import { loadAccountPreferenceRow } from "@/lib/account-preferences-store";
 
 export async function GET() {
   if (!supabaseConfigured()) return NextResponse.json({ error: "Account service is not configured" }, { status: 503 });
@@ -11,7 +12,7 @@ export async function GET() {
   try {
     const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }, { data: records, error: recordsError }] = await Promise.all([
       supabase.from("profiles").select("display_name,collection_name,experience_level,billing_plan,billing_status,created_at,updated_at").eq("user_id", user.id).maybeSingle(),
-      supabase.from("account_preferences").select("email_notifications,wishlist_alerts,valuation_research,rating_research,collector_25_contributions,product_analytics,upgrade_recommendations,updated_at").eq("user_id", user.id).maybeSingle(),
+      loadAccountPreferenceRow(supabase,user.id),
       supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",user.id).order("kind").order("record_id"),
     ]);
     if (profileError || preferencesError || recordsError) throw profileError || preferencesError || recordsError;
