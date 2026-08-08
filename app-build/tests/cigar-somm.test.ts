@@ -83,9 +83,12 @@ test("Cigar Somm keeps its synthesis onsite while retaining optional source veri
 test("Cigar Somm supports pairing from a drink, meal, time, or occasion back to owned cigars",()=>{
  const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
  const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
- assert.match(component,/My moment → a cigar/);
- assert.match(component,/pairingDirection:source==="context"\?"occasion-to-cigar":"cigar-to-beverage"/);
- assert.match(component,/I’m drinking coffee this morning/);
+ assert.match(component,/My spirit or cocktail → a cigar/);
+ assert.match(component,/My meal or moment → a cigar/);
+ assert.match(component,/pairingDirection:reverse\?"occasion-to-cigar":"cigar-to-beverage"/);
+ assert.match(component,/Woodford Reserve Double Oaked/);
+ assert.match(component,/Pair this drink with my cigars/);
+ assert.match(component,/source==="inventory"&&collectionChoiceRequired/);
  assert.match(service,/beverage to cigar, meal to cigar, time of day to cigar, and occasion to cigar/);
  assert.match(service,/Never invent ownership/);
 });
