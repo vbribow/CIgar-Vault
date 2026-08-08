@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyTotalQuantityCorrection, consumeOneInventory, hasDocumentedCurrentQuantity, hasInventoryProvenance, hasPhysicalQuantityBreakdown, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate, reconcileSmokedQuantityEdit } from "../lib/inventory-model";
+import { applyTotalQuantityCorrection, consumeInventory, consumeOneInventory, hasDocumentedCurrentQuantity, hasInventoryProvenance, hasPhysicalQuantityBreakdown, InventoryInputSchema, inventoryCompleteness, manualInventoryId, normalizeInventory, parseInventoryUpdate, reconcileSmokedQuantityEdit } from "../lib/inventory-model";
 
 test("remaining quantity is derived from original and smoked quantities", () => {
   const item = normalizeInventory({ inventoryId: "INV-1", brand: "Test", line: "Line", vitola: "Toro", originalQty: 10, smokedQty: 3 });
@@ -45,6 +45,22 @@ test("smoking opens a full box when no loose sticks remain", () => {
   assert.equal(after.fullBoxQty, 0);
   assert.equal(after.looseStickQty, 24);
   assert.equal(after.currentQty, 24);
+});
+
+test("one smoking entry removes the exact selected quantity without changing the original quantity", () => {
+  const before = normalizeInventory({ inventoryId: "INV-MULTI", brand: "Test", line: "Line", vitola: "Toro", fullBoxQty: 1, sticksPerBox: 12, looseStickQty: 1, smokedQty: 0 });
+  const after = consumeInventory(before, 3);
+  assert.equal(after.originalQty, 13);
+  assert.equal(after.currentQty, 10);
+  assert.equal(after.smokedQty, 3);
+  assert.equal(after.fullBoxQty, 0);
+  assert.equal(after.looseStickQty, 10);
+});
+
+test("a smoke cannot remove more cigars than the selected lot contains", () => {
+  const before = normalizeInventory({ inventoryId: "INV-SMALL", brand: "Test", line: "Line", vitola: "Toro", originalQty: 2, smokedQty: 0 });
+  assert.throws(() => consumeInventory(before, 3), /only 2 cigars remaining/);
+  assert.throws(() => consumeInventory(before, 0), /whole number/);
 });
 
 test("increasing smoked history opens a previously sealed 12-count box",()=>{

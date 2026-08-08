@@ -15,7 +15,7 @@ test("six beta-critical flows show progress and prevent repeat actions", () => {
 
   assert.match(photo, /disabled=\{!pending\|\|approving\}/);
   assert.match(photo, /Approving…/);
-  assert.match(smoke, /disabled=\{mode === "mock" \|\| smokeMutation\.pending \|\| smokeMutation\.complete\}/);
+  assert.match(smoke, /disabled=\{mode === "mock" \|\| smokeQuantityBlocked \|\| smokeMutation\.pending \|\| smokeMutation\.complete\}/);
   assert.match(smoke, />Log another</);
   assert.match(somm, /disabled=\{busy\|\|!ready\}/);
   assert.match(somm, /Researching · \$\{elapsed\}s/);

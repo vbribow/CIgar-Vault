@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem, SmokingLog, Valuation } from "@/lib/types";
 import { smokeEntryOrder } from "@/lib/smoke-journal";
@@ -18,13 +18,31 @@ import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-captu
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
-function smokeSaveMessage(result: { collector25?: { status?: string } }, manual: boolean) {
+function normalizeSmokeSearch(value: string) {
+  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\btaurus\b/g, "tauros").replace(/\bopus x\b/g, "opusx").trim();
+}
+export function matchesSmokeInventory(item: InventoryItem, query: string) {
+  const terms = normalizeSmokeSearch(query).split(" ").filter(Boolean);
+  if (!terms.length) return true;
+  const searchable = normalizeSmokeSearch([item.inventoryId, item.brand, item.line, item.vitola, item.vintage, item.collectionId].filter(Boolean).join(" "));
+  return terms.every(term => searchable.includes(term));
+}
+export function compareSmokeInventory(left: InventoryItem, right: InventoryItem) {
+  const leftFamily = normalizeSmokeSearch(`${left.brand} ${left.line}`);
+  const rightFamily = normalizeSmokeSearch(`${right.brand} ${right.line}`);
+  return leftFamily.localeCompare(rightFamily, undefined, { numeric: true })
+    || normalizeSmokeSearch(left.vitola).localeCompare(normalizeSmokeSearch(right.vitola), undefined, { numeric: true })
+    || String(left.vintage || "").localeCompare(String(right.vintage || ""), undefined, { numeric: true })
+    || left.inventoryId.localeCompare(right.inventoryId, undefined, { numeric: true });
+}
+function smokeSaveMessage(result: { collector25?: { status?: string } }, manual: boolean, quantitySmoked: number) {
   if (manual) return "Smoking experience saved to your private journal. Inventory was not changed, and manual entries are not shared with the Hojavía 25.";
-  if (result.collector25?.status === "contributed") return "Smoking experience saved to your private journal. Your anonymous score updated the Hojavía 25.";
-  if (result.collector25?.status === "disabled") return "Smoking experience saved to your private journal. Anonymous Hojavía 25 sharing is off in Account preferences.";
-  if (result.collector25?.status === "ineligible") return "Smoking experience saved to your private journal. An exact Vault identity and a 1–100 score are required for the Hojavía 25.";
-  if (result.collector25?.status === "unavailable") return "Smoking experience saved safely to your private journal. The Hojavía 25 could not update right now.";
-  return "Smoking experience saved to your private journal.";
+  const deduction = `${quantitySmoked} cigar${quantitySmoked === 1 ? "" : "s"} removed from the selected Vault lot.`;
+  if (result.collector25?.status === "contributed") return `Smoking experience saved. ${deduction} Your anonymous score updated the Hojavía 25.`;
+  if (result.collector25?.status === "disabled") return `Smoking experience saved. ${deduction} Anonymous Hojavía 25 sharing is off in Account preferences.`;
+  if (result.collector25?.status === "ineligible") return `Smoking experience saved. ${deduction} An exact Vault identity and a 1–100 score are required for the Hojavía 25.`;
+  if (result.collector25?.status === "unavailable") return `Smoking experience saved safely. ${deduction} The Hojavía 25 could not update right now.`;
+  return `Smoking experience saved to your private journal. ${deduction}`;
 }
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
 export const flavorOptions = ["Cedar", "Earth", "Leather", "Pepper", "Cream", "Coffee", "Cocoa / chocolate", "Nuts", "Sweetness", "Baking spice", "Fruit", "Floral", "Toast", "Mineral", "Other"] as const;
@@ -40,6 +58,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [valuations, setValuations] = useState(initialValuations);
   const [message, setMessage] = useState("");
   const [smokeSource, setSmokeSource] = useState(selectedInventoryId || "");
+  const [smokeInventoryQuery, setSmokeInventoryQuery] = useState("");
   const [smokeCigarName, setSmokeCigarName] = useState("");
   const [smokePhotos, setSmokePhotos] = useState<File[]>([]);
   const [smokePhotoAnalysis, setSmokePhotoAnalysis] = useState<CigarVisionResult>();
@@ -54,11 +73,18 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [valuationRetailOpening,setValuationRetailOpening]=useState(false);
   const [manualValuation, setManualValuation] = useState(false);
   const [newSmokeConfirmed, setNewSmokeConfirmed] = useState(false);
+  const [lastSmokeIdentity, setLastSmokeIdentity] = useState<{ source: string; cigarName: string }>();
   const smokeMutation = useMutationGuard();
   const valuationMutation = useMutationGuard();
   const recordSafety = useUnsavedChanges();
   const smokeDraft = useDeviceFormDraft("hojavia:form-draft:smoke:v1");
   const valuationFormDraft = useDeviceFormDraft("hojavia:form-draft:valuation:v1");
+  const smokePhotoPreviews = useMemo(() => smokePhotos.map(file => ({ name: file.name, url: URL.createObjectURL(file) })), [smokePhotos]);
+  const smokeInventoryMatches = useMemo(() => inventory.filter(item => matchesSmokeInventory(item, smokeInventoryQuery)).sort(compareSmokeInventory), [inventory, smokeInventoryQuery]);
+  const selectedSmokeInventory = useMemo(() => inventory.find(item => item.inventoryId === smokeSource), [inventory, smokeSource]);
+  const smokeQuantityBlocked = Boolean(selectedSmokeInventory && (!selectedSmokeInventory.currentQty || selectedSmokeInventory.currentQty < 1));
+
+  useEffect(() => () => smokePhotoPreviews.forEach(photo => URL.revokeObjectURL(photo.url)), [smokePhotoPreviews]);
 
   useEffect(() => {
     const restoredSource = smokeDraft.restoredFields?.inventoryId?.[0];
@@ -73,7 +99,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     if (!mutation.begin()) return;
     const form = new FormData(event.currentTarget);
     const key = String(form.get("writeKey") || "");
-    const numeric = new Set(["overall", "replacementValue", "marketValue", "marketRangeLow", "marketRangeHigh", "askingPrice", "comparableCount", "lastSaleValue"]);
+    const numeric = new Set(["overall", "quantitySmoked", "replacementValue", "marketValue", "marketRangeLow", "marketRangeHigh", "askingPrice", "comparableCount", "lastSaleValue"]);
     const boolean = new Set(["buyAgain"]);
     const excluded = new Set(["writeKey", "flavor1", "flavor2", "flavor3"]);
     const payload: Record<string, unknown> = Object.fromEntries([...form.entries()].flatMap(([name, value]) =>
@@ -98,13 +124,14 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       if (kind === "smoke") {
         void captureOperationalSuccess("smoke-save",response.status);
         setSmokes(values => values.some(value => value.smokeId === result.data.smokeId) ? values : [result.data, ...values]);
+        setLastSmokeIdentity({ source: smokeSource, cigarName: smokeCigarName });
         setSmokeSubmissionId(createClientUuid());
       }
       else {
         setValuations(values => values.some(value => value.valuationId === result.data.valuationId) ? values : [result.data, ...values]);
         setValuationSubmissionId(createClientUuid());
       }
-      setMessage(kind === "smoke" ? smokeSaveMessage(result, smokeSource === "MANUAL") : "Valuation evidence saved to your private Vault.");
+      setMessage(kind === "smoke" ? smokeSaveMessage(result, smokeSource === "MANUAL", Number(payload.quantitySmoked ?? 1)) : "Valuation evidence saved to your private Vault.");
       mutation.succeed();
       event.currentTarget.reset();
       if (kind === "smoke") smokeDraft.clear(); else valuationFormDraft.clear();
@@ -117,16 +144,17 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     }
   }
 
-  function startAnotherSmoke() {
+  function startAnotherSmoke(reuseIdentity = false) {
     smokeMutation.reset();
     setNewSmokeConfirmed(true);
     setSmokeSubmissionId(createClientUuid());
-    setSmokeSource(selectedInventoryId || "");
-    setSmokeCigarName("");
+    setSmokeSource(reuseIdentity ? lastSmokeIdentity?.source || selectedInventoryId || "" : selectedInventoryId || "");
+    setSmokeCigarName(reuseIdentity ? lastSmokeIdentity?.cigarName || "" : "");
     setSmokePhotos([]);
     setSmokePhotoAnalysis(undefined);
     setSmokePhotoMessage("");
     setMessage("");
+    window.setTimeout(() => document.querySelector<HTMLSelectElement>('#smoke-inventory-source')?.focus(), 0);
   }
 
   function chooseSmokePhotos(event: ChangeEvent<HTMLInputElement>) {
@@ -223,21 +251,32 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       <div className="eyebrow">Private tasting journal</div>
       <h2>Log a smoke</h2>
       <p className="small">Record any cigar you smoke—whether it came from your Vault, a lounge, a friend, or somewhere new. There are no wrong tasting notes.</p>
-      <div className="smokeStartChoices" aria-label="Choose how to log this cigar">
-        <button type="button" className={smokeSource === "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource("MANUAL"); setSmokePhotoMessage(""); }}><strong>Log a review only</strong><small>Identify by photo or type the cigar. Nothing is added to inventory.</small></button>
-        <button type="button" className={smokeSource && smokeSource !== "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource(selectedInventoryId || ""); setSmokePhotoMessage(""); document.querySelector<HTMLSelectElement>('#smoke-inventory-source')?.focus(); }}><strong>Log from my Vault</strong><small>Connect the review to an owned lot and reduce that lot by one.</small></button>
+      <div className="smokeStartChoices" aria-label="Should this smoke reduce your Vault inventory?">
+        <button type="button" className={smokeSource === "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource("MANUAL"); setSmokeInventoryQuery(""); setSmokePhotoMessage(""); }}><strong>Do not remove from my Vault</strong><small>For a gift, lounge cigar, or separate purchase. Identify it by photo or type its name; Vault quantities stay unchanged.</small></button>
+        <button type="button" className={smokeSource && smokeSource !== "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource(selectedInventoryId || ""); setSmokePhotoMessage(""); document.querySelector<HTMLInputElement>('#smoke-inventory-search')?.focus(); }}><strong>Remove from my Vault</strong><small>Select the exact owned lot and choose how many cigars to remove.</small></button>
         <a href="/inventory#mobile-intake"><strong>Add to Vault first</strong><small>Create and verify the inventory lot before logging its smoke.</small></a>
       </div>
       {smokeDraft.restoredFields && <p className="deviceDraftNotice" role="status">Unfinished tasting details were restored from this browser profile. Review them before saving.</p>}
       <form ref={smokeDraft.formRef} className="recordForm" onSubmit={event => send(event, "smoke")} onChange={smokeDraft.capture} aria-busy={smokeMutation.pending}>
         <fieldset disabled={smokeMutation.pending || smokeMutation.complete}>
-        <label><span>Inventory lot or another cigar *</span><select id="smoke-inventory-source" name="inventoryId" required value={smokeSource} onChange={event => { setSmokeSource(event.target.value); setSmokePhotoMessage(""); }}>
-          <option value="">Choose how to identify this cigar</option>
-          <option value="MANUAL">Another smoke — not in my Vault</option>
-          {inventory.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}</option>)}
-        </select></label>
+        {smokeSource !== "MANUAL" && <div className="smokeInventoryFinder">
+          <label htmlFor="smoke-inventory-search"><span>Search my Vault</span><input id="smoke-inventory-search" type="search" value={smokeInventoryQuery} onChange={event => setSmokeInventoryQuery(event.target.value)} placeholder="Type brand, line, vitola, or inventory ID" autoComplete="off" /></label>
+          <small role="status" aria-live="polite">{smokeInventoryQuery ? `${smokeInventoryMatches.length} matching lot${smokeInventoryMatches.length === 1 ? "" : "s"}` : `${inventory.length} owned lots available`}</small>
+        </div>}
+        {smokeSource !== "MANUAL" && <label><span>{smokeInventoryQuery ? "Choose the matching Vault lot *" : "Choose the Vault lot *"}</span><select id="smoke-inventory-source" name="inventoryId" required value={smokeSource} onChange={event => { setSmokeSource(event.target.value); setSmokePhotoMessage(""); }}>
+          <option value="">Select the exact inventory lot</option>
+          {smokeInventoryMatches.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}{item.currentQty !== undefined ? ` · ${item.currentQty} remaining` : " · quantity required"}</option>)}
+        </select></label>}
+        {smokeInventoryQuery && smokeInventoryMatches.length === 0 && <p className="deviceDraftNotice" role="status">No Vault match found. Check the spelling, clear the search to browse every lot, or choose “Do not remove from my Vault” above.</p>}
+        {selectedSmokeInventory && selectedSmokeInventory.currentQty !== undefined && selectedSmokeInventory.currentQty > 0 && <label><span>Cigars smoked from this lot *</span><input name="quantitySmoked" type="number" min="1" max={selectedSmokeInventory.currentQty} step="1" defaultValue="1" required /><small>{selectedSmokeInventory.currentQty} remaining before this entry. Saving removes exactly the number entered; original quantity stays unchanged.</small></label>}
+        {selectedSmokeInventory && smokeQuantityBlocked && <p className="deviceDraftNotice" role="alert">{selectedSmokeInventory.currentQty === 0 ? "This lot has no cigars remaining." : "Record this lot’s remaining quantity before logging a smoke."} <a href={`/inventory?edit=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&vaultSearch=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&focus=quantity#inventory-editor`}>Correct this exact record →</a></p>}
         {smokeSource === "MANUAL" && <div className="manualSmokeIdentity">
+          <input type="hidden" name="inventoryId" value="MANUAL" />
           <div className="smokePhotoIdentify"><div><strong>Identify by photo</strong><small>Photograph the cigar or band. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos}/><span>Take a photo</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos}/><span>Choose photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button></div>
+          {smokePhotoPreviews.length > 0 && <section className="smokePhotoProgress" aria-label={`${smokePhotoPreviews.length} selected cigar photo${smokePhotoPreviews.length === 1 ? "" : "s"}`} aria-busy={smokePhotoBusy}>
+            <div>{smokePhotoPreviews.map(photo => <img key={photo.url} src={photo.url} alt={`Selected cigar evidence: ${photo.name}`} />)}</div>
+            <p role="status" aria-live="polite"><strong>{smokePhotoBusy ? "Comparing visible details…" : "Photos ready for review"}</strong><span>{smokePhotoBusy ? "Hojavía is looking for brand, line, vitola, packaging, and date clues." : "You can identify these photos now or replace them before continuing."}</span></p>
+          </section>}
           {smokePhotoMessage && <output className="smokePhotoMessage" aria-live="polite">{smokePhotoMessage}</output>}
           {smokePhotoAnalysis && <div className={`visionEvidence confidence-${smokePhotoAnalysis.confidence}`}><strong>{smokePhotoAnalysis.confidence} confidence · review required</strong><p>{smokePhotoAnalysis.evidenceSummary}</p>{smokePhotoAnalysis.uncertainties.length > 0 && <small><b>Confirm:</b> {smokePhotoAnalysis.uncertainties.join(" · ")}</small>}</div>}
           <label className="manualSmokeCigar"><span>What did you smoke? *</span><input name="cigarName" required minLength={3} maxLength={300} value={smokeCigarName} onChange={event => setSmokeCigarName(event.target.value)} placeholder="Brand, line, exact vitola, and year if known" /><small>Review and correct photo suggestions. Saving creates only a private smoking review—no Vault record and no quantity change.</small></label>
@@ -251,11 +290,11 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <label><span>Tasting notes</span><textarea name="tastingNotes" rows={4} placeholder="How did it begin, develop, and finish? What stood out?" /></label>
         <label className="check"><input name="buyAgain" type="checkbox" /> Buy again</label>
         {mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}
-        <button className="button" disabled={mode === "mock" || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Retry save"})}</button>
+        <button className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Retry save"})}</button>
         </fieldset>
       </form>
-      {smokeMutation.complete && <button type="button" className="button secondary" onClick={startAnotherSmoke}>Log another</button>}
-      <div className="recordList" id="smoking-history"><div className="recordListHeader"><h3>Recent smokes</h3><a className="textLink" href="/smoke-journal">View and search every smoke →</a></div>{smokes.slice(0, 8).map(smoke => <div id={`smoke-${smoke.smokeId}`} key={smoke.smokeId}><strong>{smoke.cigarName || smoke.inventoryId}</strong><span>Entry #{smokeEntryOrder(smokes, smoke.smokeId)} · {smoke.dateSmoked} · {smoke.overall ?? "—"}</span></div>)}</div>
+      {smokeMutation.complete && <section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="smoke-saved-title"><strong id="smoke-saved-title">Smoke saved.</strong><p>Continue without refreshing or searching for this journal again.</p><div><button type="button" className="button" onClick={() => startAnotherSmoke(true)}>Log this cigar again</button><button type="button" className="button secondary" onClick={() => startAnotherSmoke(false)}>Log another</button></div></section>}
+      <div className="recordList" id="smoking-history"><div className="recordListHeader"><h3>Recent smokes</h3><a className="textLink" href="/smoke-journal">View and search every smoke →</a></div>{smokes.slice(0, 8).map(smoke => <div id={`smoke-${smoke.smokeId}`} key={smoke.smokeId}><strong>{smoke.cigarName || smoke.inventoryId}</strong><span>Entry #{smokeEntryOrder(smokes, smoke.smokeId)} · {smoke.dateSmoked} · {smoke.quantitySmoked ?? 1} cigar{(smoke.quantitySmoked ?? 1) === 1 ? "" : "s"} · {smoke.overall ?? "—"}</span></div>)}</div>
     </section>
 
     <section className="card valuationIntake">
