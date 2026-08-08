@@ -101,6 +101,18 @@ test("completed smoke form requires Log another before a second creation",()=>{
   assert.match(manager,/aria-live="polite"/);
 });
 
+test("a successful async save resets the captured form without falling into Retry save",()=>{
+  const manager=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
+  assert.match(manager,/const formElement = event\.currentTarget;/);
+  assert.match(manager,/const form = new FormData\(formElement\);/);
+  assert.match(manager,/formElement\.reset\(\);/);
+  assert.doesNotMatch(manager,/event\.currentTarget\.reset\(\)/);
+  const reset=manager.indexOf("formElement.reset();");
+  const rotate=manager.indexOf("setSmokeSubmissionId(createClientUuid());",reset);
+  assert.ok(reset>=0&&rotate>reset,"submission identity must rotate only after the successful form reset");
+  assert.match(manager,/setNewSmokeConfirmed\(false\)/);
+});
+
 test("inventory decrement runs only after the insert-only smoke reservation wins",()=>{
   const route=readFileSync(new URL("../app/api/smoking-log/route.ts",import.meta.url),"utf8");
   const reserve=route.indexOf('createOwnedRecord("smokes"');
