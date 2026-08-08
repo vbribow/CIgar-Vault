@@ -14,7 +14,7 @@ export default async function SmokeJournalPage({ searchParams }: { searchParams:
     loadInventory().then(value=>({ok:true as const,value})).catch(()=>({ok:false as const})),
     accountDataMode().then(value=>({ok:true as const,value})).catch(()=>({ok:false as const})),
   ]);
-  const ready = smokesResult.ok && inventoryResult.ok && modeResult.ok;
+  const ready = smokesResult.ok && inventoryResult.ok && modeResult.ok && (modeResult.value === "supabase" || smokesResult.value.length > 0);
   return <main className="shell smokeJournalPage">
     <section className="journalHero">
       <div><div className="eyebrow">Your private experience record</div><h1>My Smoke Journal</h1><p className="lede">Revisit every cigar you logged, search your own tasting language, and return to the exact Vault record when one is connected.</p></div>
