@@ -135,6 +135,9 @@ export function CatalogDiscoveryReview({initialItems,existingCatalog}:{initialIt
                 <label><span>Packaging</span><input value={item.packaging||""} onChange={event=>update(item.catalogId,"packaging",event.target.value)}/></label>
                 <label><span>Release year</span><select value={item.releaseYear||""} onChange={event=>update(item.catalogId,"releaseYear",event.target.value)}><option value="">Choose the documented year</option>{recentYearOptions(item.releaseYear).map(year=><option key={year} value={year}>{year}</option>)}</select></label>
                 <label><span>Edition</span><input value={item.edition||""} onChange={event=>update(item.catalogId,"edition",event.target.value)}/></label>
+                <label><span>Exact reference image URL</span><input type="url" value={item.referenceImageUrl||""} onChange={event=>update(item.catalogId,"referenceImageUrl",event.target.value)} placeholder="Direct HTTPS image URL"/></label>
+                <label><span>Image source page</span><input type="url" value={item.referenceImageSourceUrl||""} onChange={event=>update(item.catalogId,"referenceImageSourceUrl",event.target.value)} placeholder="Attributable product or release page"/></label>
+                <label><span>Image source name</span><input value={item.referenceImageSourceName||""} onChange={event=>update(item.catalogId,"referenceImageSourceName",event.target.value)} placeholder="Manufacturer or publication"/></label>
                 <label className="discoveryNotes"><span>Ownership, blender, classification, and evidence notes</span><textarea value={item.masterNotes||""} onChange={event=>update(item.catalogId,"masterNotes",event.target.value)} rows={3}/></label>
                 {item.sourceUrl&&<a href={item.sourceUrl} target="_blank" rel="noreferrer">Review exact source ↗</a>}
               </div>

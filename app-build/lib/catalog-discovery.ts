@@ -9,14 +9,15 @@ export const CatalogDiscoverySchema = z.object({
     wrapper:z.string(), wrapperOrigin:z.string(), binder:z.string(), binderOrigin:z.string(),
     filler:z.string(), fillerOrigins:z.string(), dimensions:z.string(), strength:z.string(),
     packaging:z.string(), releaseYear:z.string(), edition:z.string(),
+    referenceImageUrl:z.string(), referenceImageSourceUrl:z.string(), referenceImageSourceName:z.string(),
     entityType:z.enum(["Brand owner","Factory brand","Private label","Sub-brand","Unresolved"]),
     sourceUrl:z.string().url(), sourceTitle:z.string(), evidenceDate:z.string(), notes:z.string(),
     confidence:z.enum(["High","Medium","Low"]),
   })).max(40),
 });
 export type CatalogDiscoveryResult = z.infer<typeof CatalogDiscoverySchema>;
-const discoveryStringFields=["brand","line","vitola","country","factory","brandOwner","blender","wrapper","wrapperOrigin","binder","binderOrigin","filler","fillerOrigins","dimensions","strength","packaging","releaseYear","edition","sourceUrl","sourceTitle","evidenceDate","notes"] as const;
-export const catalogDiscoveryJsonSchema = {type:"object",additionalProperties:false,properties:{discoveries:{type:"array",maxItems:40,items:{type:"object",additionalProperties:false,properties:{...Object.fromEntries(discoveryStringFields.map(field=>[field,{type:"string"}])),entityType:{type:"string",enum:["Brand owner","Factory brand","Private label","Sub-brand","Unresolved"]},confidence:{type:"string",enum:["High","Medium","Low"]}},required:[...discoveryStringFields,"entityType","confidence"]}}},required:["discoveries"]} as const;
+const discoveryStringFields=["brand","line","vitola","country","factory","brandOwner","blender","wrapper","wrapperOrigin","binder","binderOrigin","filler","fillerOrigins","dimensions","strength","packaging","releaseYear","edition","referenceImageUrl","referenceImageSourceUrl","referenceImageSourceName","sourceUrl","sourceTitle","evidenceDate","notes"] as const;
+export const catalogDiscoveryJsonSchema = {type:"object",additionalProperties:false,properties:{discoveries:{type:"array",maxItems:40,items:{type:"object",additionalProperties:false,properties:{...Object.fromEntries(discoveryStringFields.map(field=>[field,{type:"string"}])),referenceImageUrl:{type:"string",description:"Direct HTTPS image visibly depicting this exact brand, line, physical vitola, and release; empty when unresolved."},referenceImageSourceUrl:{type:"string",description:"HTTPS source page attributing the exact reference image; empty when unresolved."},referenceImageSourceName:{type:"string",description:"Manufacturer or publication credited for the exact image; empty when unresolved."},entityType:{type:"string",enum:["Brand owner","Factory brand","Private label","Sub-brand","Unresolved"]},confidence:{type:"string",enum:["High","Medium","Low"]}},required:[...discoveryStringFields,"entityType","confidence"]}}},required:["discoveries"]} as const;
 
 const key=(item:Pick<CatalogCigar,"brand"|"line"|"vitola"|"releaseYear">)=>canonicalCigarIdentity({...item,vintage:item.releaseYear}).identityKey;
 export function newCatalogDiscoveries(discoveries:CatalogDiscoveryResult["discoveries"],existing:CatalogCigar[]){const known=new Set(existing.map(key));return discoveries.filter(item=>!known.has(key(item))).filter((item,index,all)=>all.findIndex(candidate=>key(candidate)===key(item))===index)}
@@ -39,12 +40,16 @@ export function groupCatalogDiscoveries(items:CatalogCigar[]):CatalogDiscoveryRe
 }
 
 export function discoveryNotes(item: CatalogDiscoveryResult["discoveries"][number]) {
+  const referenceImage = item.referenceImageUrl && item.referenceImageSourceUrl && item.referenceImageSourceName
+    ? `Reference image evidence: ${JSON.stringify({ imageUrl: item.referenceImageUrl, sourceUrl: item.referenceImageSourceUrl, sourceName: item.referenceImageSourceName })}`
+    : undefined;
   return [
     `Entity: ${item.entityType}`,
     `Owner: ${item.brandOwner || "Unresolved"}`,
     `Blender: ${item.blender || "Unresolved"}`,
     `Evidence: ${item.sourceTitle} (${item.evidenceDate})`,
     `Confidence: ${item.confidence}`,
+    referenceImage,
     item.notes,
-  ].join(" · ");
+  ].filter(Boolean).join(" · ");
 }

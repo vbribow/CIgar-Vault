@@ -112,14 +112,26 @@ const catalogFieldColumns: Array<[keyof CatalogCigar, string]> = [
   ["bandHistory","Band History"],["discontinued","Discontinued"],["sourceUrl","Source URL"],["sourceName","Source Name"],
   ["sourceType","Source Type"],["confidence","Confidence"],["verifiedAt","Verified At"],["correctionNotes","Correction Notes"],
   ["masterNotes","Master Notes"],["researchStatus","Research Status"],
+  ["referenceImageUrl","Reference Image URL"],["referenceImageSourceUrl","Reference Image Source URL"],["referenceImageSourceName","Reference Image Source Name"],
 ];
 function catalogFromRow(row:SmartsheetRow,columns:SmartsheetColumn[]):CatalogCigar{
   const values=recordValues(row,columns);const result:Record<string,unknown>={};
   for(const[field,title]of catalogFieldColumns){const value=values.get(title);if(value===undefined||value==="")continue;result[field]=field==="msrp"?Number(value):field==="discontinued"?(value===true||String(value).toLowerCase()==="true"):value}
+  if(!result.referenceImageUrl&&typeof result.masterNotes==="string"){
+    const evidence=result.masterNotes.match(/Reference image evidence:\s*(\{.*?\})(?:\s*·|$)/)?.[1];
+    if(evidence){try{const parsed=JSON.parse(evidence) as{imageUrl?:string;sourceUrl?:string;sourceName?:string};result.referenceImageUrl=parsed.imageUrl;result.referenceImageSourceUrl=parsed.sourceUrl;result.referenceImageSourceName=parsed.sourceName}catch{/* retain the unattributed fallback state */}}
+  }
   result.catalogId||=String(row.id);result.brand||="";result.line||="";result.vitola||="";
   return result as CatalogCigar;
 }
-function catalogCells(item:CatalogCigar,columns:SmartsheetColumn[],status?:string){return recordCells(catalogFieldColumns.map(([field,title])=>[title,field==="researchStatus"&&status?status:item[field] as RecordValue]),columns)}
+function catalogNotesWithReference(item:CatalogCigar){
+  const notes=(item.masterNotes||"").replace(/\s*·?\s*Reference image evidence:\s*\{.*?\}(?=\s*·|$)/g,"").trim();
+  const evidence=item.referenceImageUrl&&item.referenceImageSourceUrl&&item.referenceImageSourceName
+    ?`Reference image evidence: ${JSON.stringify({imageUrl:item.referenceImageUrl,sourceUrl:item.referenceImageSourceUrl,sourceName:item.referenceImageSourceName})}`
+    :"";
+  return[notes,evidence].filter(Boolean).join(" · ");
+}
+function catalogCells(item:CatalogCigar,columns:SmartsheetColumn[],status?:string){return recordCells(catalogFieldColumns.map(([field,title])=>[title,field==="researchStatus"&&status?status:field==="masterNotes"?catalogNotesWithReference(item):item[field] as RecordValue]),columns)}
 export async function getCatalogDiscoveries(){const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");return sheet.rows.map(row=>catalogFromRow(row,sheet.columns)).filter(item=>item.brand&&item.researchStatus==="Pending review")}
 export async function addCatalogDiscoveries(items:CatalogCigar[]){if(!items.length)return 0;const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const existing=new Set(sheet.rows.map(row=>catalogFromRow(row,sheet.columns).catalogId));const pending=items.filter(item=>!existing.has(item.catalogId));if(!pending.length)return 0;const rows=pending.map(item=>({toBottom:true,cells:catalogCells(item,sheet.columns,"Pending review")}));await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"POST",body:JSON.stringify(rows)});return pending.length}
 export async function reviewCatalogDiscoveries(items:CatalogCigar[],status:"Approved"|"Rejected"){if(!items.length)return 0;const sheet=await recordSheet("SMARTSHEET_CATALOG_SHEET_ID");const byId=new Map(sheet.rows.map(row=>[catalogFromRow(row,sheet.columns).catalogId,row]));const updates=items.map(item=>{const row=byId.get(item.catalogId);if(!row)throw new Error(`Catalog discovery ${item.catalogId} was not found`);return{id:row.id,cells:catalogCells(item,sheet.columns,status)}});await request(`/sheets/${requireEnv("SMARTSHEET_CATALOG_SHEET_ID")}/rows`,{method:"PUT",body:JSON.stringify(updates)});return updates.length}

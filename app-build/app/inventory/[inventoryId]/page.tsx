@@ -26,6 +26,9 @@ import { BuyAgainPanel } from "@/components/buy-again-panel";
 import { RatingLeafMark } from "@/components/rating-leaf-mark";
 import { InventoryRecordActions } from "@/components/inventory-record-actions";
 import { safeRecordedPurchaseUrl } from "@/lib/buy-again";
+import { loadCatalog } from "@/lib/catalog";
+import { cigarReferencePhoto } from "@/lib/cigar-reference-photo";
+import { CigarReferencePhoto } from "@/components/cigar-reference-photo";
 import "./climate.css";
 export const dynamic = "force-dynamic";
 export default async function CigarPage({
@@ -51,7 +54,7 @@ export default async function CigarPage({
   const item = items.find((i) => i.inventoryId === inventoryId);
   if (!item) notFound();
   const mode = modeResult.value;
-  const [smokesResult, valuationsResult, activitiesResult, ratingsResult, collectionsResult, humidorsResult, climateReadingsResult] =
+  const [smokesResult, valuationsResult, activitiesResult, ratingsResult, collectionsResult, humidorsResult, climateReadingsResult, catalogResult] =
     await Promise.allSettled([
       mode === "mock" ? Promise.resolve([]) : loadSmokingLogs(),
       loadValuations(),
@@ -60,6 +63,7 @@ export default async function CigarPage({
       mode === "mock" ? Promise.resolve([]) : loadCollections(),
       mode === "mock" ? Promise.resolve([]) : loadHumidors(),
       mode === "mock" ? Promise.resolve([]) : loadHumidorReadings(),
+      loadCatalog(items),
     ] as const);
   const smokes = smokesResult.status === "fulfilled" ? smokesResult.value : [];
   const valuations = valuationsResult.status === "fulfilled" ? valuationsResult.value : [];
@@ -68,11 +72,13 @@ export default async function CigarPage({
   const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
   const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
   const climateReadings = climateReadingsResult.status === "fulfilled" ? climateReadingsResult.value : [];
+  const catalog = catalogResult.status === "fulfilled" ? catalogResult.value : [];
   const smokesReady = smokesResult.status === "fulfilled";
   const valuationsReady = valuationsResult.status === "fulfilled";
   const activitiesReady = activitiesResult.status === "fulfilled";
   const ratingsReady = ratingsResult.status === "fulfilled";
   const climateReady = humidorsResult.status === "fulfilled" && climateReadingsResult.status === "fulfilled";
+  const catalogReady = catalogResult.status === "fulfilled";
   const timelineReady = smokesReady && valuationsReady && activitiesReady && ratingsReady;
   const collectionRelationship=inventoryCollectionRelationships(items,collections).get(item.inventoryId)
     ??(isPresentationInventoryRecord(item,collections)?{kind:"presentation" as const}:undefined);
@@ -100,6 +106,7 @@ export default async function CigarPage({
   const timeline=buildCigarTimeline(item,events,history,values,publishedRatings);
   const storageHumidor=humidors.find(humidor=>humidor.humidorId===item.storageLocationId);
   const storageClimate=storageHumidor?climateIntelligence(storageHumidor,climateReadings):undefined;
+  const referencePhoto=catalogReady?cigarReferencePhoto(item,catalog):undefined;
   return (
     <main className="shell">
       <nav className="nav">
@@ -132,6 +139,7 @@ export default async function CigarPage({
           {!isPresentationAsset&&<Link className="button secondary" href={ratingEditHref}>{item.score===undefined?"Rate this cigar":"Update rating"}</Link>}
         </div>
       </section>
+      {!isPresentationAsset&&<CigarReferencePhoto item={item} photo={referencePhoto} catalogReady={catalogReady}/>}
       {!isPresentationAsset && <BuyAgainPanel inventoryId={item.inventoryId} identity={`${item.brand} · ${item.line} · ${item.vitola}${item.vintage ? ` · ${item.vintage}` : ""}`} seller={item.acquisitionSeller} purchaseDate={item.acquisitionDate} jurisdiction={item.purchaseJurisdiction} sourceUrl={safeRecordedPurchaseUrl(item.acquisitionSourceUrl)} positiveJournalCount={history.filter((entry) => entry.buyAgain).length} />}
       <section className="cigarStory">
         <div><div className="eyebrow">The story in your collection</div><h2>{item.line || item.brand}</h2><p>{item.provenanceNotes || item.notes || `This ${item.vitola} is documented as part of your collection${item.vintage?` from ${item.vintage}`:""}. Add the acquisition, people, place, or occasion behind it to preserve why it matters—not only what it is.`}</p>{!item.provenanceNotes&&<RecommendationFactEditor item={item} fact="provenanceNotes"/>}<a className="textLink" href="#record-tools">Continue documenting its story →</a></div>

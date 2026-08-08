@@ -112,6 +112,9 @@ export type CatalogCigar = {
   correctionNotes?: string;
   masterNotes?: string;
   researchStatus?: string;
+  referenceImageUrl?: string;
+  referenceImageSourceUrl?: string;
+  referenceImageSourceName?: string;
 };
 export type AvailabilityListing={seller:string;sellerType:"Authorized retailer"|"Specialty dealer"|"Auction"|"Manufacturer"|"Other";title:string;url:string;availability:"In stock"|"Auction open"|"Waitlist"|"Unknown";askingPrice?:number;quantity?:number;unitPrice?:number;listingDate?:string;condition?:string;notes:string;outboundUrl?:string;commercialRelationship?:"Affiliate — compensated link";commercialDisclosure?:string};
 export type PriceMatch={url:string;seller:string;price:number;targetPrice:number;basis:"Per cigar";availability:"In stock"|"Auction open"};
