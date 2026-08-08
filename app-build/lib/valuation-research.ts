@@ -66,10 +66,23 @@ export const valuationResearchJsonSchema = { type:"object", additionalProperties
 },required:["replacementValue","marketValue","marketEvidenceType","marketRangeLow","marketRangeHigh","askingPrice","askingPriceSource","askingPriceSourceUrl","lastSaleValue","lastSaleDate","lastSaleVenue","lastSaleSourceUrl","source","sourceUrl","confidence","evidenceDate","notes","comparables"]} as const;
 
 export function parseValuationResearch(text:string){
-  try{return ValuationResearchSchema.parse(JSON.parse(text))}
+  try{
+    const raw=JSON.parse(text) as Record<string,unknown>;
+    const first=ValuationResearchSchema.safeParse(raw);
+    if(first.success)return first.data;
+    const replacementMismatch=first.error.issues.some(issue=>issue.message==="Retail replacement requires a normalized per-cigar retail comparable");
+    if(replacementMismatch){
+      const notes=typeof raw.notes==="string"?raw.notes:"";
+      return ValuationResearchSchema.parse({...raw,replacementValue:null,notes:`${notes}${notes?" ":""}Retail replacement omitted because the returned evidence did not verify a normalized per-cigar price.`});
+    }
+    throw first.error;
+  }
   catch(error){
     if(error instanceof SyntaxError){
       throw new Error("Valuation research response was incomplete. Please retry this cigar.");
+    }
+    if(error instanceof z.ZodError){
+      throw new Error("Research found pricing, but the evidence could not be verified at the exact per-cigar level. No value was saved. Retry the research or enter reviewed evidence manually.");
     }
     throw error;
   }
@@ -96,8 +109,6 @@ Keep these evidence levels separate:
 - Insufficient evidence: no defensible secondary value.
 
 Match brand, line, vitola, release, packaging, and condition. Never substitute another vitola/year, MSRP, ordinary retail, or a closeout for secondary-market evidence. For New World cigars, use two or more traceable exact specialty-retailer listings for Retail consensus value; one retail listing supports replacementValue only. For Habanos, never use Retail consensus value: prioritize completed-result archives from established European auction houses. Confirm whether buyer's premium is included. Classify every comparable. An asking price is not proof—never treat it as a sale. One secondary listing remains an asking price. An estimated range requires at least two independent exact-identity secondary-market signals. For a humidor collection, research cigars individually; calculate residual humidor value separately. If evidence is opaque, say so.
-
-For every retailer comparable, use the direct product page—not a search page or retailer homepage—and make its title include the retailer plus the exact brand, line, vitola, and release when known. This allows the collector to verify availability and purchase the exact cigar without weakening identity matching.
 
 For every retailer comparable, use the direct product page—not a search page or retailer homepage—and make its title include the retailer plus the exact brand, line, vitola, and release when known. This allows the collector to verify availability and purchase the exact cigar without weakening identity matching.
 

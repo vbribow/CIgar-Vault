@@ -40,6 +40,17 @@ test("valuation research parsing accepts a complete structured valuation", () =>
   assert.deepEqual(parseValuationResearch(JSON.stringify(completeDraft)), completeDraft);
 });
 
+test("mismatched retail replacement is safely omitted while traceable comparables remain reviewable",()=>{
+  const result=parseValuationResearch(JSON.stringify({...completeDraft,replacementValue:30,comparables:[{...completeDraft.comparables[0],unitPrice:22.7}]}));
+  assert.equal(result.replacementValue,null);
+  assert.equal(result.comparables[0].unitPrice,22.7);
+  assert.match(result.notes,/Retail replacement omitted/);
+});
+
+test("other evidence-integrity failures use collector-facing language instead of raw schema JSON",()=>{
+  assert.throws(()=>parseValuationResearch(JSON.stringify({...completeDraft,marketEvidenceType:"Verified completed sale",lastSaleValue:null,lastSaleDate:null,lastSaleSourceUrl:null})),/No value was saved/);
+});
+
 test("valuation research parsing turns truncated output into a useful retry message", () => {
   assert.throws(
     () => parseValuationResearch('{"replacementValue":22.7,"notes":"cut off'),
@@ -67,6 +78,11 @@ test("research instructions prohibit mixed-set allocation", () => {
   assert.match(source,/Never divide, average, normalize, or allocate the price of a mixed collection/);
   assert.match(source,/every cigar in that box is the same exact cigar/);
   assert.match(source,/Collection components require exact individual-cigar evidence/);
+});
+
+test("retailer direct-page instruction is not redundantly repeated",()=>{
+  const source=readFileSync(new URL("../lib/valuation-research.ts",import.meta.url),"utf8");
+  assert.equal(source.match(/For every retailer comparable, use the direct product page/g)?.length,1);
 });
 
 test("valuation research never treats owned quantity as original packaging", () => {
