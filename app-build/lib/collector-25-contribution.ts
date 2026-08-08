@@ -25,18 +25,28 @@ export function collector25ContributionFromSmoke(smoke: SmokingLog, inventory?: 
 
 export async function syncCollector25Contribution(smoke: SmokingLog, inventory?: InventoryItem): Promise<{ status: Collector25ContributionStatus }> {
   const contribution = collector25ContributionFromSmoke(smoke, inventory);
-  if (!contribution) return { status: "ineligible" };
+  const exactIdentity = inventory && smoke.inventoryId !== "MANUAL" && smoke.inventoryId === inventory.inventoryId
+    ? { brand:inventory.brand.trim(), line:inventory.line.trim(), vitola:inventory.vitola.trim(), vintage:inventory.vintage }
+    : undefined;
+  if (!contribution && !exactIdentity) return { status: "ineligible" };
   if (!supabaseConfigured()) return { status: "unavailable" };
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { status: "unavailable" };
-    const { data: preferences, error: preferenceError } = await supabase.from("account_preferences").select("collector_25_contributions").eq("user_id", user.id).maybeSingle();
-    if (preferenceError) throw preferenceError;
-    if (preferences?.collector_25_contributions !== true) return { status: "disabled" };
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(), key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
     if (!url || !key) throw new Error("Collector 25 database is not configured");
     const admin = createAdmin(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+    if (!contribution && exactIdentity) {
+      const cigarKey = communityCigarKey(exactIdentity);
+      const { error } = await admin.from("community_ratings").delete().eq("user_id",user.id).eq("cigar_key",cigarKey).eq("contribution_source","smoking-journal");
+      if (error) throw error;
+      return { status:"ineligible" };
+    }
+    if (!contribution) return { status:"ineligible" };
+    const { data: preferences, error: preferenceError } = await supabase.from("account_preferences").select("collector_25_contributions").eq("user_id", user.id).maybeSingle();
+    if (preferenceError) throw preferenceError;
+    if (preferences?.collector_25_contributions !== true) return { status: "disabled" };
     const { error } = await admin.from("community_ratings").upsert({
       user_id: user.id, display_name: "Anonymous collector", cigar_key: contribution.cigarKey,
       brand: contribution.brand, line: contribution.line, vitola: contribution.vitola,
