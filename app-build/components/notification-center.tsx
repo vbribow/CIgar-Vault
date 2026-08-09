@@ -1,8 +1,10 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CollectorNotification } from "@/lib/collector-notifications";
 import type { WishlistItem } from "@/lib/types";
 import type { RatingDraftRecord } from "@/lib/rating-monitor";
+import type { FounderApprovalSummary } from "@/lib/founder-approval-inbox";
+import { forgetFounderSessionKey, readFounderSessionKey } from "@/lib/founder-session";
 
 const money = new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:2 });
 
@@ -12,12 +14,24 @@ export function NotificationCenter({ notifications, items, ratingDrafts }:{ noti
   const [showArchived, setShowArchived] = useState(false);
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const [founderApprovals, setFounderApprovals] = useState<FounderApprovalSummary>();
   const active = notifications.filter(item => !acknowledged.has(item.id));
   const archived = notifications.filter(item => acknowledged.has(item.id));
   const visible = showArchived ? archived : active;
   const matches = active.filter(item => item.kind === "Price match");
   const followUps = active.filter(item => item.kind === "Purchase follow-up");
   const highPriority = active.filter(item => item.priority === "High");
+
+  useEffect(() => {
+    const key = readFounderSessionKey();
+    if (!key) return;
+    void fetch("/api/founder-approval-inbox", { cache:"no-store", headers:{"x-founder-key":key} }).then(async response => {
+      if (response.status === 401) forgetFounderSessionKey();
+      if (!response.ok) return;
+      const result = await response.json();
+      setFounderApprovals(result.data);
+    });
+  }, []);
 
   async function update(item:CollectorNotification, value:boolean) {
     setBusy(item.id); setMessage("");
@@ -35,6 +49,10 @@ export function NotificationCenter({ notifications, items, ratingDrafts }:{ noti
 
   return <>
     <section className="notificationHero"><div><div className="eyebrow">Collector intelligence</div><h1>Your vault inbox.</h1><p className="lede">Price opportunities, purchase follow-ups, and monitoring gaps gathered into one prioritized place.</p></div><div className="notificationPulse"><strong>{active.length}</strong><span>items need review</span><small>{highPriority.length} high priority</small></div></section>
+    <section className={`founderApprovalPrompt ${founderApprovals?.submittedPublications ? "needsAttention" : ""}`} aria-label="Founder industry approvals">
+      <div><div className="eyebrow">Founder approval inbox</div><h2>{founderApprovals?.submittedPublications ? `${founderApprovals.submittedPublications} industry article${founderApprovals.submittedPublications === 1 ? "" : "s"} need approval` : founderApprovals ? "Industry article approvals are up to date" : "Check industry article approvals"}</h2><p>{founderApprovals ? `${founderApprovals.totalNeedsApproval} total industry submission${founderApprovals.totalNeedsApproval === 1 ? "" : "s"} need a decision${founderApprovals.publishReady ? ` · ${founderApprovals.publishReady} approved item${founderApprovals.publishReady === 1 ? " is" : "s are"} waiting for a separate publication decision` : ""}.` : "Open the protected founder review desk to see whether an article, profile, or registry record needs your decision."}</p></div>
+      <a className="button" href="/partner-platform#industry-review-desk">Review industry articles</a>
+    </section>
     <section className="notificationMetrics"><article><span>Price matches</span><strong>{matches.length}</strong><small>At or below your target</small></article><article><span>Best current match</span><strong>{matches.length ? money.format(Math.min(...matches.map(item => item.price || Infinity))) : "—"}</strong><small>Per-cigar asking price</small></article><article><span>Purchases to file</span><strong>{followUps.length}</strong><small>Not yet in owned inventory</small></article></section>
     <section className="notificationWorkspace"><div className="sectionHead notificationToolbar"><div><div className="eyebrow">Priority queue</div><h2>{showArchived ? "Acknowledged alerts" : "What needs your attention"}</h2></div><div><button className="button secondary" onClick={() => setShowArchived(value => !value)}>{showArchived ? `Inbox (${active.length})` : `Acknowledged (${archived.length})`}</button>{!showArchived && active.length > 0 && <button className="button secondary" disabled={Boolean(busy)} onClick={clearAll}>Acknowledge all</button>}<a className="textLink" href="/wishlist">Open wishlist →</a></div></div>
       {message && <output className="notificationMessage">{message}</output>}

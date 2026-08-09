@@ -1,0 +1,6 @@
+.founderApprovalPrompt{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:24px 0;padding:20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#251b15,#17120f)}
+.founderApprovalPrompt.needsAttention{border-color:#b87b36;box-shadow:0 0 0 1px #b87b3633}
+.founderApprovalPrompt h2{margin:4px 0 6px}
+.founderApprovalPrompt p{margin:0;color:var(--muted);line-height:1.45}
+.founderApprovalPrompt .button{white-space:nowrap}
+@media(max-width:560px){.founderApprovalPrompt{align-items:stretch;flex-direction:column}.founderApprovalPrompt .button{text-align:center}}

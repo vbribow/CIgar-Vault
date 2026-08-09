@@ -3,6 +3,7 @@ import { buildCollectorNotifications, buildRatingNotifications } from "@/lib/col
 import { loadRatingDrafts, loadWishlist } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import "./notifications.css";
+import "./founder-approval-prompt.css";
 import "./controls.css";
 
 export const dynamic = "force-dynamic";
