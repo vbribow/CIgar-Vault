@@ -5,7 +5,7 @@ import test from "node:test";
 const intake = fs.readFileSync("components/photo-inventory-intake.tsx", "utf8");
 
 test("photo-assisted drafts require a complete cigar identity before review", () => {
-  assert.match(intake, /Brand, cigar line, and exact vitola are required before a draft can enter review/);
+  assert.match(intake, /Add the brand, cigar line, and exact vitola before continuing to final review/);
 });
 
 test("photo-assisted drafts preserve explicit zeroes and reject malformed counts", () => {

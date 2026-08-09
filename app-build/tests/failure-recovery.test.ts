@@ -28,7 +28,7 @@ test("journal and valuation retries retain the form and submission identity", ()
   assert.match(records, /readSaveResponse\(response\)/);
   assert.match(records, /saveRecoveryMessage\(error, kind === "smoke"/);
   assert.match(records, /error:"Retry save"/g);
-  assert.match(records, /mutation\.succeed\(\);\s*event\.currentTarget\.reset\(\)/);
+  assert.match(records, /mutation\.succeed\(\);\s*formElement\.reset\(\)/);
   assert.match(records, /setSmokeSubmissionId\(createClientUuid\(\)\)/);
   assert.match(records, /setValuationSubmissionId\(createClientUuid\(\)\)/);
 });

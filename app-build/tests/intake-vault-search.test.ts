@@ -8,7 +8,8 @@ test("typed intake checks the private Vault before optional research", () => {
   assert.match(intake, />Check my Vault</);
   assert.match(intake, /This check uses no research credits/);
   assert.match(intake, /possible existing Vault record/);
-  assert.match(intake, /Open record →/);
+  assert.match(intake, />Open record</);
+  assert.match(intake, />Edit all details</);
   assert.match(intake, /This is a separate lot — research it/);
 });
 
