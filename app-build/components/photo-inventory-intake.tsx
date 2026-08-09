@@ -20,6 +20,10 @@ type IntakePhotoKind = "cigar" | "box" | "habanos-seal" | "box-code" | "provenan
 type IntakeStage = "identify" | "review" | "saved";
 type WorkingDraft = { query: string; brand: string; line: string; vitola: string; vintage: string; evidenceType: string; packaging: string; fullBoxQty: string; sticksPerBox: string; looseStickQty: string; stage: "identify" | "review" };
 
+function normalizedSearchTerms(value: string) {
+  return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter((term) => term.length > 1);
+}
+
 function intakePhotoKind(evidenceType: string): IntakePhotoKind {
   if (evidenceType === "Sealed box" || evidenceType === "Open box") return "box";
   if (evidenceType === "Box code") return "box-code";
@@ -35,6 +39,8 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
   const [vitola, setVitola] = useState("");
   const [vintage, setVintage] = useState("");
   const [query, setQuery] = useState("");
+  const [vaultMatches, setVaultMatches] = useState<InventoryItem[]>([]);
+  const [vaultChecked, setVaultChecked] = useState(false);
   const [evidenceType, setEvidenceType] = useState(evidenceTypes[0]);
   const [packaging, setPackaging] = useState("");
   const [fullBoxQty, setFullBoxQty] = useState("");
@@ -102,6 +108,18 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
     setAnalysis(value); setBrand(value.brand); setLine(value.line); setVitola(value.vitola); setVintage(value.vintage || ""); setPackaging(value.packaging || "");
     setFullBoxQty(value.fullBoxQty === undefined ? "" : String(value.fullBoxQty)); setSticksPerBox(value.sticksPerBox === undefined ? "" : String(value.sticksPerBox)); setLooseStickQty(value.looseStickQty === undefined ? "" : String(value.looseStickQty));
     setStage("review"); setMessage(`Identification ready (${value.confidence} confidence). Review every field before adding the draft.`);
+  }
+  function checkVault() {
+    const terms = normalizedSearchTerms(query);
+    const matches = inventory.filter((item) => {
+      const searchable = normalizedSearchTerms([item.brand, item.line, item.vitola, item.vintage].filter(Boolean).join(" "));
+      return terms.every((term) => searchable.some((value) => value.includes(term) || term.includes(value)));
+    }).slice(0, 8);
+    setVaultMatches(matches);
+    setVaultChecked(true);
+    setMessage(matches.length
+      ? `${matches.length} possible existing Vault record${matches.length === 1 ? "" : "s"} found. Review before adding a separate lot.`
+      : "No existing Vault record matched this wording. You can research the cigar or enter its details manually.");
   }
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     const files = [...(event.target.files ?? [])]; setMessage(""); const error = validatePhotoSelection(photos.map((photo) => photo.file), files); event.target.value = "";
@@ -175,7 +193,11 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
 
     {stage === "identify" && <section className="intakeStage" aria-labelledby="identify-stage-title" aria-busy={analyzing && analysisKind === "photos"}>
       <div><div className="eyebrow">Step 1 of 3</div><h3 id="identify-stage-title">Start with what you know.</h3><p>Type a description or photograph one physical asset. You can always enter details manually.</p></div>
-      <div className="textIdentification"><input ref={identificationInput} aria-label="Describe the cigar or collection to identify" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Type a cigar, e.g. Fuente La Gran Fumada"/><button type="button" className="button secondary" disabled={query.trim().length < 3 || analyzing} onClick={() => identify("text")}>{analyzing ? "Researching…" : "Identify from text"}</button></div>
+      <div className="textIdentification"><input ref={identificationInput} aria-label="Describe the cigar or collection to identify" value={query} onChange={(event) => { setQuery(event.target.value); setVaultChecked(false); setVaultMatches([]); }} onKeyDown={(event) => { if (event.key === "Enter" && query.trim().length >= 3) { event.preventDefault(); checkVault(); } }} placeholder="Type a cigar, e.g. Fuente La Gran Fumada"/><button type="button" className="button" disabled={query.trim().length < 3 || analyzing} onClick={checkVault}>Check my Vault</button></div>
+      <small className="intakeSearchHelp">Searches your existing cigar records first. This check uses no research credits.</small>
+      {vaultChecked && <section className="intakeSearchResults" aria-live="polite" aria-label="Vault search results">
+        {vaultMatches.length > 0 ? <><strong>Possible matches already in your Vault</strong><p>Open a record to confirm whether this is the same physical lot.</p><div>{vaultMatches.map((item) => <a key={item.inventoryId} href={`/inventory/${encodeURIComponent(item.inventoryId)}`} target="_blank" rel="noreferrer"><span>{item.brand} · {item.line}</span><small>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""} · {item.inventoryId}</small><b>Open record →</b></a>)}</div><button type="button" className="button secondary" disabled={analyzing} onClick={() => identify("text")}>{analyzing ? "Researching…" : "This is a separate lot — research it"}</button></> : <><strong>No matching Vault record found</strong><p>The wording may differ, so you can research the cigar before creating a new lot.</p><button type="button" className="button secondary" disabled={analyzing} onClick={() => identify("text")}>{analyzing ? "Researching…" : "Research this cigar"}</button><small>Research may use AI credits. Nothing is saved until you review and confirm it.</small></>}
+      </section>}
       <div className="photoIdentifyGrid"><div><label className="cameraCapture"><input key={`camera-${captureSession}`} type="file" accept="image/*" capture="environment" onChange={chooseFile}/><span>Open rear camera</span><small>Best for a single band, box, seal, or code</small></label><label className="photoDrop"><input key={captureSession} type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseFile}/>{photos.length ? <div className="photoPreviewGrid">{photos.map((photo) => <img key={photo.url} src={photo.url} alt={photo.name}/>)}</div> : <span><b>Choose existing photos</b><small>Up to 8 images of one physical asset</small></span>}</label><button type="button" className="button analyzePhotos" disabled={!photos.length||analyzing} onClick={() => identify("photos")}>{analyzing ? "Analyzing…" : "Identify from photos"}</button></div></div>
       {analyzing && analysisKind === "photos" && photos.length > 0 && <section className={searchStyles.searchStage} aria-live="polite" aria-label="AI photo identification in progress">
         <div className={searchStyles.activePhoto}><img src={photos[Math.min(searchPhotoIndex, photos.length - 1)].url} alt={`Selected cigar evidence ${searchPhotoIndex + 1} of ${photos.length}: ${photos[Math.min(searchPhotoIndex, photos.length - 1)].name}`}/><span aria-hidden="true" /></div>
