@@ -1,0 +1,37 @@
+.globalBackBar {
+  position: relative;
+  z-index: 35;
+  display: flex;
+  width: min(1500px, calc(100% - 32px));
+  margin: 10px auto 0;
+  pointer-events: none;
+}
+
+.globalBackBar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #17120fee;
+  color: var(--gold2);
+  font: 800 12px/1 inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 8px 24px #0004;
+}
+
+.globalBackBar button:hover { border-color: #8d6739; background: #211811; }
+.globalBackBar button:focus-visible { outline: 2px solid var(--gold2); outline-offset: 3px; }
+
+@media (max-width: 650px) {
+  .globalBackBar {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 66px);
+    width: calc(100% - 24px);
+    margin-top: 7px;
+  }
+  .globalBackBar button { min-height: 44px; padding: 9px 14px; }
+}

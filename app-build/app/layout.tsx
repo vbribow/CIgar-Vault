@@ -4,9 +4,11 @@ import { headers } from "next/headers";
 import { AppNavigation } from "@/components/app-navigation";
 import { PwaManager } from "@/components/pwa-manager";
 import { JourneyArrival } from "@/components/journey-arrival";
+import { NavigationBack } from "@/components/navigation-back";
 import { brand } from "@/lib/brand";
 import { isPrivatePreviewHostname } from "@/lib/preview-host";
 import "./styles.css";
+import "./navigation-back.css";
 
 export async function generateMetadata():Promise<Metadata>{
   const requestHeaders=await headers();
@@ -47,7 +49,7 @@ export const viewport:Viewport={width:"device-width",initialScale:1,viewportFit:
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-brand={brand.key}>
-      <body><a className="skipLink" href="#main-content">Skip to main content</a><AppNavigation /><Suspense fallback={null}><JourneyArrival/></Suspense><div id="main-content" tabIndex={-1}>{children}</div><PwaManager/></body>
+      <body><a className="skipLink" href="#main-content">Skip to main content</a><AppNavigation /><NavigationBack/><Suspense fallback={null}><JourneyArrival/></Suspense><div id="main-content" tabIndex={-1}>{children}</div><PwaManager/></body>
     </html>
   );
 }
