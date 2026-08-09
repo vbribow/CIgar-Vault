@@ -112,6 +112,14 @@ export const launchGates: readonly LaunchGate[] = [
     priority: "Next",
   },
   {
+    id: "openai-research-activation",
+    title: "OpenAI research billing and production activation",
+    status: "Not started",
+    detail: "Keep paid research disabled until a dedicated OpenAI Platform project, approved hard spending limit, alerts, protected production key, research ledger migration, and founder acceptance query pass are complete.",
+    evidence: "The no-billing foundation is implemented locally: the service fails closed by default, exposes readiness, enforces a daily user allowance, deduplicates requests, caches exact research, verifies visited-source provenance, records usage without private prompts, and maps provider failures to recoverable messages. OPENAI_RESEARCH_ENABLED remains unset, no API key was added, no billing was started, and migration 202608090001 has not been applied. Activation requires Brian’s separate approval after the database baseline is reconciled.",
+    priority: "Next",
+  },
+  {
     id: "stability-device-acceptance",
     title: "Device coverage and stability window",
     status: "In progress",
@@ -149,6 +157,7 @@ export const founderGoNoGoChecklist = [
   { gate: "Brand and legal", status: "Founder decision", detail: "Record clearance advice, legal owner/state, support owner, incident owner, and dated adoption decision." },
   { gate: "Google Places", status: "Deferred external", detail: "Configure restricted production credentials immediately before public lounge launch." },
   { gate: "Billing", status: "Founder decision", detail: "Choose free beta or authorize a Stripe test-mode acceptance pass before any paid cohort." },
+  { gate: "Live cigar research", status: "Hold — billing required", detail: "Create a dedicated OpenAI Platform project, approve its hard spending limit and alerts, apply the research-ledger migration after database reconciliation, add the protected production key, set OPENAI_RESEARCH_ENABLED=true, and pass the founder’s controlled research evaluation." },
   { gate: "Sensors", status: "Deferred", detail: "Resume only when Brian is home and available to link the physical sensors." },
 ] as const;
 

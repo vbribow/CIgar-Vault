@@ -48,3 +48,4 @@ The two undefined-variable failures are fixed in the deployed artifact and prote
 3. Complete installed-app update checks on a physical phone and a second-device session.
 4. Enter or import exact founder cigar records only in an explicitly approved data session.
 5. Record the founder's trademark adoption decision before public launch, indexing, or production-domain work.
+6. **Paid research activation reminder:** after the production migration baseline is reconciled, create and fund a dedicated OpenAI Platform project, set founder-approved hard spending limits and alerts, apply `202608090001_cigar_research_service.sql`, add `OPENAI_API_KEY` and `OPENAI_RESEARCH_MODEL` through the protected environment-secret interface, set `OPENAI_RESEARCH_ENABLED=true`, redeploy, and pass the controlled founder research evaluation. Until every step passes, live research must remain visibly unavailable and make no paid request.

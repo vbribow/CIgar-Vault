@@ -10,6 +10,8 @@ test("Discover provides one clear catalog-first cigar research journey",()=>{
   assert.match(component,/Search Hojavía first/);
   assert.match(component,/No live research credits were used/);
   assert.match(component,/Research live sources and retailer evidence · uses credits/);
+  assert.match(component,/Live research awaiting billing activation/);
+  assert.match(component,/submissionId:createClientUuid\(\)/);
 });
 
 test("live research requires exact cigar identity and keeps unknown facts unknown",()=>{
@@ -18,6 +20,11 @@ test("live research requires exact cigar identity and keeps unknown facts unknow
   assert.match(route,/Use empty strings for facts that remain unknown/);
   assert.match(route,/listingMatchesExactIdentity/);
   assert.match(route,/Sign in before researching a cigar/);
+  assert.match(route,/cigarResearchServiceStatus/);
+  assert.match(route,/readCachedCigarResearch/);
+  assert.match(route,/beginCigarResearch/);
+  assert.match(route,/writeCachedCigarResearch/);
+  assert.match(route,/Opus6 and Opus 6/);
 });
 
 test("research results connect to the useful next actions without silently saving inventory",()=>{

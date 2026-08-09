@@ -48,6 +48,24 @@ The following completed work must be included in the larger release batch:
 - Explain which account data is recoverable, which settings remain reference-only, and which unfinished work stays on the original device.
 - Keep password-reset and import controls recoverable after network or response failures, with accessible status messaging.
 
+## Queued live-research foundation
+
+Include the completed no-billing `Research any cigar` foundation in the next
+approved private code-release batch. The batch includes the authenticated API
+route, exact-identity normalization, per-user quotas, request idempotency,
+source-backed cache and provenance controls, usage/error ledgers, provider
+failure handling, disabled-state interface, configuration template, automated
+coverage, launch-readiness gate, and activation runbook.
+
+The release must leave the feature visibly unavailable and fail closed. It must
+not apply `supabase/migrations/202608090001_cigar_research_service.sql`, add an
+API credential, create or fund a provider project, enable
+`OPENAI_RESEARCH_ENABLED`, run a paid query, widen access, or change the public
+website. Those actions remain a later, separately approved activation change
+after database reconciliation and billing controls are complete. The exact
+scope and acceptance checks are recorded in
+`NEXT_PRIVATE_RELEASE_BATCH_2026-08-09.md`.
+
 ## Validation already completed
 
 - Focused quality checks: 10 of 10 passed.

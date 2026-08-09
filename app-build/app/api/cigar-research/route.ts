@@ -1,28 +1,90 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
-import { CigarResearchSchema, cigarResearchJsonSchema } from "@/lib/cigar-research";
-import { responseOutputText } from "@/lib/cigar-vision";
 import { listingMatchesExactIdentity } from "@/lib/retailer-trust";
 import { removeCommercialNavigation } from "@/lib/mobile-commerce-policy";
 import { FOX_CIGAR_VERIFICATION_POLICY } from "@/lib/verification-sources";
-export const maxDuration=120;
+import { CigarResearchSchema } from "@/lib/cigar-research";
+import {
+  beginCigarResearch,
+  CigarResearchServiceError,
+  cigarResearchServiceStatus,
+  finishCigarResearch,
+  readCachedCigarResearch,
+  recordCigarResearchCacheHit,
+  requestCigarResearch,
+  writeCachedCigarResearch,
+} from "@/lib/cigar-research-service";
 
-export async function POST(request:Request){
-  if(!supabaseConfigured())return NextResponse.json({error:"Sign in before researching a cigar"},{status:401});
-  const{data:{user}}=await(await createClient()).auth.getUser();
-  if(!user)return NextResponse.json({error:"Sign in before researching a cigar"},{status:401});
-  const apiKey=process.env.OPENAI_API_KEY?.trim();
-  if(!apiKey)return NextResponse.json({error:"Live cigar research is temporarily unavailable"},{status:503});
-  try{
-    const query=String((await request.json() as{query?:unknown}).query||"").trim();
-    if(query.length<3||query.length>300)return NextResponse.json({error:"Enter a cigar name between 3 and 300 characters"},{status:422});
-    const prompt=`Today is ${new Date().toISOString()}. Research this exact premium cigar: ${JSON.stringify(query)}. First resolve the exact brand, line or release, named vitola, dimensions, and compatible release timing. Do not substitute a nearby vitola, sampler, collection, later edition, or family-name match. Document dimensions, country, actual factory, blender, wrapper, binder, filler, stated strength, packaging, release year, and edition only when a direct product-level source supports each detail. Use empty strings for facts that remain unknown. Prefer official manufacturer/importer pages, then established cigar trade publications. Clearly state uncertainty and conflicts. Also find up to eight current direct retailer or auction listings for this exact cigar. ${FOX_CIGAR_VERIFICATION_POLICY} Mark a listing in stock only when the direct page proves it; distinguish asking prices from completed sales; normalize per-cigar price only when package quantity is known. Exclude search pages, social posts, stale snippets, and nearby products. Return concise collector-friendly language.`;
-    const response=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:process.env.OPENAI_VISION_MODEL?.trim()||"gpt-5.6-terra",reasoning:{effort:"medium"},store:false,max_output_tokens:7000,tools:[{type:"web_search"}],include:["web_search_call.action.sources"],input:prompt,text:{format:{type:"json_schema",name:"cigar_research",strict:true,schema:cigarResearchJsonSchema}}}),signal:AbortSignal.timeout(110_000)});
-    const payload=await response.json();if(!response.ok)throw new Error((payload as{error?:{message?:string}}).error?.message||"Cigar research failed");
-    const output=responseOutputText(payload);if(!output)throw new Error("Cigar research returned no result");
-    const result=CigarResearchSchema.parse(JSON.parse(output));
-    const exact={inventoryId:"RESEARCH",brand:result.profile.brand,line:result.profile.line,vitola:result.profile.vitola,vintage:result.profile.releaseYear||undefined,packaging:result.profile.packaging||undefined};
-    const listings=removeCommercialNavigation(result.availability.listings.filter(listing=>listingMatchesExactIdentity(exact,listing)));
-    return NextResponse.json({data:{...result,availability:{...result.availability,listings}}});
-  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Cigar research failed"},{status:error instanceof Error&&error.name==="TimeoutError"?504:502})}
+export const maxDuration = 120;
+const Input = z.object({ query: z.string().trim().min(3).max(300), submissionId: z.string().uuid() });
+const privateHeaders = { "Cache-Control": "private, no-store, max-age=0, must-revalidate", Pragma: "no-cache" };
+
+export async function GET() {
+  return NextResponse.json({ data: cigarResearchServiceStatus() }, { headers: privateHeaders });
+}
+
+export async function POST(request: Request) {
+  if (!supabaseConfigured()) return NextResponse.json({ error: "Sign in before researching a cigar" }, { status: 401, headers: privateHeaders });
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  if (!user) return NextResponse.json({ error: "Sign in before researching a cigar" }, { status: 401, headers: privateHeaders });
+  let submissionId = "";
+  let started = false;
+  try {
+    const input = Input.parse(await request.json());
+    submissionId = input.submissionId;
+    const service = cigarResearchServiceStatus();
+    if (!service.available) throw new CigarResearchServiceError(service.code, service.message, 503);
+    const cached = await readCachedCigarResearch(input.query);
+    if (cached) {
+      await recordCigarResearchCacheHit(user.id, input.submissionId, input.query);
+      return NextResponse.json({ data: cached, meta: { cached: true } }, { headers: privateHeaders });
+    }
+    const model = process.env.OPENAI_RESEARCH_MODEL?.trim() || "gpt-5.6-terra";
+    await beginCigarResearch(user.id, input.submissionId, input.query, model);
+    started = true;
+    const prompt = `Today is ${new Date().toISOString()}. Research this exact premium cigar or manufacturer presentation: ${JSON.stringify(input.query)}. Resolve common spacing variants such as Opus6 and Opus 6, but do not broaden the identity. First determine whether the query names one cigar, an assortment, a travel humidor, a numbered presentation, or an ambiguous family term. For a presentation, identify the presentation itself and document its exact component cigars when a direct source supports them. Resolve the exact brand, line or release, named vitola, dimensions, compatible release timing, and packaging. Do not substitute a nearby vitola, sampler, collection, later edition, or family-name match. Document dimensions, country, actual factory, blender, wrapper, binder, filler, stated strength, packaging, release year, and edition only when a direct product-level source supports each detail. Use empty strings for facts that remain unknown. Prefer official manufacturer/importer pages, then established cigar trade publications. Clearly state uncertainty and conflicts. Also find up to eight current direct retailer or auction listings for this exact identity. ${FOX_CIGAR_VERIFICATION_POLICY} Mark a listing in stock only when the direct page proves it; distinguish asking prices from completed sales; normalize per-cigar price only when package quantity is known. Exclude search pages, social posts, stale snippets, and nearby products. Every returned source and listing URL must be a direct page actually visited during this research. Return concise collector-friendly language.`;
+    const researched = await requestCigarResearch({ query: input.query, userId: user.id, prompt, model });
+    const exact = {
+      inventoryId: "RESEARCH",
+      brand: researched.result.profile.brand,
+      line: researched.result.profile.line,
+      vitola: researched.result.profile.vitola,
+      vintage: researched.result.profile.releaseYear || undefined,
+      packaging: researched.result.profile.packaging || undefined,
+    };
+    const listings = removeCommercialNavigation(
+      researched.result.availability.listings.filter(listing => listingMatchesExactIdentity(exact, listing)),
+    );
+    const result = CigarResearchSchema.parse({
+      ...researched.result,
+      availability: {
+        ...researched.result.availability,
+        listings: listings.map(listing => ({
+          ...listing,
+          askingPrice: listing.askingPrice ?? null,
+          quantity: listing.quantity ?? null,
+          unitPrice: listing.unitPrice ?? null,
+          listingDate: listing.listingDate ?? null,
+          condition: listing.condition ?? null,
+        })),
+      },
+    });
+    await writeCachedCigarResearch(input.query, result);
+    await finishCigarResearch(input.submissionId, { status: "completed", ...researched.usage });
+    return NextResponse.json({ data: result, meta: { cached: false } }, { headers: privateHeaders });
+  } catch (error) {
+    const serviceError = error instanceof CigarResearchServiceError
+      ? error
+      : error instanceof z.ZodError
+        ? new CigarResearchServiceError("invalid_request", "Enter a valid cigar name and try again.", 422)
+        : new CigarResearchServiceError("research_failed", error instanceof Error ? error.message : "Cigar research failed", 502);
+    if (started && submissionId) {
+      await finishCigarResearch(submissionId, { status: "failed", errorCode: serviceError.code }).catch(() => undefined);
+    }
+    return NextResponse.json(
+      { error: serviceError.message, code: serviceError.code, retryable: serviceError.retryable },
+      { status: serviceError.status, headers: privateHeaders },
+    );
+  }
 }

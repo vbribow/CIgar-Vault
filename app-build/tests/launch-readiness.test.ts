@@ -8,7 +8,7 @@ test("launch baseline records the verified build and full-suite result", () => {
   assert.equal(launchBaseline.typecheck, "Passed");
   assert.deepEqual(launchBaseline.automatedTests, { passed: 928, failed: 0 });
   assert.equal(launchReadinessSummary().blockingDefects, 0);
-  assert.equal(launchReadinessSummary().blockingGates, 9);
+  assert.equal(launchReadinessSummary().blockingGates, 10);
   assert.equal(launchReadinessSummary().decision, "HOLD");
   assert.equal(launchGates.find(gate => gate.id === "brand-clearance-adoption")?.status, "In progress");
   assert.equal(launchGates.find(gate => gate.id === "automation-privacy")?.status, "Passed");
@@ -44,11 +44,13 @@ test("every hard operational launch domain is represented before READY", () => {
     "auth-isolation-recovery",
     "legal-privacy-support",
     "billing-entitlements",
+    "openai-research-activation",
     "stability-device-acceptance",
   ]) {
     assert.ok(launchGates.some(gate => gate.id === id), `${id} must remain visible`);
   }
   assert.equal(launchGates.find(gate => gate.id === "billing-entitlements")?.status, "In progress");
+  assert.equal(launchGates.find(gate => gate.id === "openai-research-activation")?.status, "Not started");
   assert.equal(launchGates.find(gate => gate.id === "stability-device-acceptance")?.status, "In progress");
   assert.equal(launchReadinessSummary().decision, "HOLD");
 });
@@ -86,6 +88,7 @@ test("device and founder gates remain explicit instead of being inferred", () =>
   assert.deepEqual(launchDeviceMatrix.map(item => item.status), ["Partial", "Not run"]);
   assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Database migrations" && item.status === "Hold"));
   assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Sensors" && item.status === "Deferred"));
+  assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Live cigar research" && item.status === "Hold — billing required"));
   assert.equal(founderGoNoGoChecklist.some(item => String(item.status) === "Passed"), false);
 });
 
