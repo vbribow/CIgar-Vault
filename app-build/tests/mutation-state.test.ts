@@ -27,5 +27,5 @@ test("representative import and photo actions already expose pending text and di
   assert.match(photo,/disabled=\{!photos\.length\|\|analyzing\}/);
   assert.match(photo,/Analyzing…/);
   assert.match(photo,/disabled=\{!pending\|\|approving\}/);
-  assert.match(photo,/Approving…/);
+  assert.match(photo,/Adding to Vault…/);
 });

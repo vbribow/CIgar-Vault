@@ -12,8 +12,9 @@ test("inventory page protects ownership truth when core account data cannot load
 
 test("inventory page isolates optional supporting services", () => {
   assert.match(page, /Promise\.allSettled/);
-  assert.match(page, /mergeCatalogRecords\(\[\], items\)/);
-  assert.match(page, /Supporting evidence temporarily unavailable/);
+  assert.doesNotMatch(page, /loadCatalog|loadRatings/);
+  assert.match(page, /catalog=\{\[\]\} ratings=\{\[\]\}/);
+  assert.match(page, /Collection links temporarily unavailable/);
   assert.match(page, /Records unavailable →/);
   assert.doesNotMatch(page, /const items = await loadInventory\(\)/);
 });

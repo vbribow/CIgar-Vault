@@ -1,4 +1,4 @@
-export const FOUNDER_BETA_SEAT_LIMIT = 25;
+export const FOUNDER_BETA_SEAT_LIMIT = 10;
 
 export function betaCohortSize(collectors: Array<{ stage: string }>) {
   return collectors.filter(collector => collector.stage !== "Prospect").length;

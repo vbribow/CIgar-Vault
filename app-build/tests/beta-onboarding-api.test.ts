@@ -10,11 +10,20 @@ test("founder onboarding enforces cohort capacity and duplicate-email feedback o
   assert.match(route, /Founder authorization required/);
 });
 
-test("the database applies a transaction-safe 25-collector cohort limit", () => {
-  const migration = readFileSync(new URL("../supabase/migrations/202607290002_beta_cohort_capacity.sql", import.meta.url), "utf8");
+test("founder can directly send a confirmed invitation while the server records access only after provider acceptance", () => {
+  const route = readFileSync(new URL("../app/api/founder-onboarding/invite/route.ts", import.meta.url), "utf8");
+  assert.match(route, /authorizeWrite/);
+  assert.match(route, /submitAccountEmail/);
+  assert.match(route, /assertBetaSeatAvailable/);
+  assert.match(route, /stage: "Invited"/);
+  assert.match(route, /RESEND_API_KEY/);
+});
+
+test("the database applies a transaction-safe 10-collector cohort limit", () => {
+  const migration = readFileSync(new URL("../supabase/migrations/202608080001_beta_cohort_capacity_10.sql", import.meta.url), "utf8");
   assert.match(migration, /pg_advisory_xact_lock/);
-  assert.match(migration, /occupied >= 25/);
-  assert.match(migration, /before insert or update of stage/);
+  assert.match(migration, /occupied >= 10/);
+  assert.match(migration, /10-collector founder cohort is full/);
 });
 
 test("Hojavía sends reinstall notices only through the protected onboarding route", () => {
@@ -33,6 +42,14 @@ test("founder onboarding never describes provider acceptance as confirmed delive
   const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
   assert.match(component, /delivery is not yet confirmed/);
   assert.doesNotMatch(component, /Hojavía sent the reinstall notice/);
+});
+
+test("founder onboarding offers one add-and-send invitation action with visible progress", () => {
+  const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
+  assert.match(component, /Add & send invitation/);
+  assert.match(component, /Adding and sending…/);
+  assert.match(component, /\/api\/founder-onboarding\/invite/);
+  assert.doesNotMatch(component, /Add to queue/);
 });
 
 test("founder can update a collector stage while readiness evidence remains advisory", () => {

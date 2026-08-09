@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { authorizeWrite } from "@/lib/config";
 import { BetaCollectorInput, type BetaProgress } from "@/lib/beta-onboarding";
-import { assertBetaSeatAvailable } from "@/lib/beta-cohort";
+import { assertBetaSeatAvailable, FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
 
 function admin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       updated_at: now,
     }).select().single();
     if (error?.code === "23505") throw new Error("That email address is already in the onboarding queue.");
-    if (error?.code === "23514") throw new Error("The 25-collector founder cohort is full. Keep this collector as a Prospect until a seat is available.");
+    if (error?.code === "23514") throw new Error(`The ${FOUNDER_BETA_SEAT_LIMIT}-collector founder cohort is full. Keep this collector as a Prospect until a seat is available.`);
     if (error) throw error;
     return NextResponse.json({ data: shape(data) }, { status: 201 });
   } catch (error) {
@@ -104,7 +104,7 @@ export async function PATCH(request: Request) {
       updated_at: now,
     }).eq("id", input.id).select().single();
     if (error?.code === "23505") throw new Error("That email address is already in the onboarding queue.");
-    if (error?.code === "23514") throw new Error("The 25-collector founder cohort is full. Keep this collector as a Prospect until a seat is available.");
+    if (error?.code === "23514") throw new Error(`The ${FOUNDER_BETA_SEAT_LIMIT}-collector founder cohort is full. Keep this collector as a Prospect until a seat is available.`);
     if (error) throw error;
     return NextResponse.json({ data: shape(data) });
   } catch (error) {

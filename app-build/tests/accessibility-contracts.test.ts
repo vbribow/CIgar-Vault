@@ -16,7 +16,7 @@ test("every route receives a keyboard skip link and focusable content target", (
 test("critical Vault and Account file or text controls have explicit accessible names", () => {
   const intake = readFileSync(new URL("../components/photo-inventory-intake.tsx", import.meta.url), "utf8");
   const fileImport = readFileSync(new URL("../components/inventory-file-import.tsx", import.meta.url), "utf8");
-  assert.match(intake, /aria-label="Describe the cigar or collection to identify"/);
+  assert.match(intake, /aria-label="Cigar name to check in my Vault"/);
   assert.match(fileImport, /aria-label="Choose CSV or XLSX inventory file"/);
 });
 

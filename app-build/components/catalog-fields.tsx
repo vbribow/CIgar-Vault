@@ -7,6 +7,7 @@ import { VitolaField } from "@/components/vitola-field";
 
 export function CatalogFields({ item, catalog }: { item: InventoryItem; catalog: CatalogCigar[] }) {
   const [brand, setBrand] = useState(canonicalBrand(item.brand));
+  const [manualBrand, setManualBrand] = useState(false);
   const [line, setLine] = useState(item.line);
   const [vitola, setVitola] = useState(item.vitola);
   const [researched,setResearched]=useState<Array<{value:string;sourceUrl:string}>>([]);
@@ -25,15 +26,18 @@ export function CatalogFields({ item, catalog }: { item: InventoryItem; catalog:
       const result=await response.json();
       if(!response.ok)throw new Error(result.error||"Size research failed");
       setResearched(result.data.options||[]);
-      setResearchMessage(result.data.options?.length?`${result.data.options.length} source-backed size${result.data.options.length===1?"":"s"} found.`:"No defensible sizes found. Use manual entry with a source.");
+      setResearchMessage(result.data.options?.length?`${result.data.options.length} documented size${result.data.options.length===1?"":"s"} found.`:"No confirmed sizes were found. Enter the exact size shown on your cigar or package.");
     }catch(error){setResearchMessage(error instanceof Error?error.message:"Size research failed")}
     finally{setResearching(false)}
   }
 
   return <>
-    <label><span>Brand *</span><input name="brand" required list="cigar-brand-options" value={brand} onChange={(event) => { setBrand(event.target.value); setLine(""); setVitola("");setResearched([]); }} placeholder="Search or enter a brand" /><datalist id="cigar-brand-options">{brands.map((value) => <option key={value} value={value} />)}</datalist><small>{brands.length} standardized brand names. Known spelling variations are corrected when saved.</small></label>
-    <label><span>Line / Series</span><input name="line" list="cigar-line-options" value={line} onChange={(event) => { setLine(event.target.value); setVitola("");setResearched([]); }} placeholder={brand ? "Choose or enter a line" : "Select a brand first"} /><datalist id="cigar-line-options">{lines.map((value) => <option key={value} value={value} />)}</datalist><small>{brand && lines.length ? `${lines.length} documented catalog line${lines.length === 1 ? "" : "s"}` : "Enter the exact documented line name."}</small></label>
-    <VitolaField value={vitola} onChange={setVitola} catalogVitolas={vitolas} constrained={Boolean(brand && line)} help={match ? `Catalog match: ${match.catalogId}` : brand && line && vitolas.length ? `${vitolas.length} researched vitola${vitolas.length === 1 ? "" : "s"} available for this exact cigar.` : brand && line ? "No confirmed vitola list is available yet. Use Other / custom rather than guessing." : "Select a brand and line to see only the vitolas available for that cigar."} />
+    <div className="manufacturerEntryField">
+      <label><span>Brand / manufacturer *</span><input name="brand" required list={manualBrand?undefined:"cigar-brand-options"} value={brand} onChange={(event) => { setBrand(event.target.value); setLine(""); setVitola("");setResearched([]); }} placeholder={manualBrand?"Enter the name exactly as shown on the cigar":"Search known brands and manufacturers"} autoComplete="organization" /><datalist id="cigar-brand-options">{brands.map((value) => <option key={value} value={value} />)}</datalist><small>{manualBrand?"This name will be preserved on your private record. Hojavía will not treat it as verified catalog information until it is researched.":`${brands.length} known names available. If yours is missing, add it manually.`}</small></label>
+      <button type="button" className="textLink" aria-pressed={manualBrand} onClick={()=>{setManualBrand(current=>!current);setBrand("");setLine("");setVitola("");setResearched([])}}>{manualBrand?"Search known manufacturers":"Manufacturer not listed? Enter it manually"}</button>
+    </div>
+    <label><span>Line / Series</span><input name="line" list="cigar-line-options" value={line} onChange={(event) => { setLine(event.target.value); setVitola("");setResearched([]); }} placeholder={brand ? "Choose or enter a line" : "Select a brand first"} /><datalist id="cigar-line-options">{lines.map((value) => <option key={value} value={value} />)}</datalist><small>{brand && lines.length ? `${lines.length} known line${lines.length === 1 ? "" : "s"}` : "Enter the line name exactly as shown."}</small></label>
+    <VitolaField value={vitola} onChange={setVitola} catalogVitolas={vitolas} constrained={Boolean(brand && line)} help={match ? "Matched to the Hojavía cigar reference." : brand && line && vitolas.length ? `${vitolas.length} documented size${vitolas.length === 1 ? "" : "s"} available for this cigar.` : brand && line ? "No confirmed size list is available yet. Choose Other / custom and enter the exact size shown." : "Select a brand and line to see known sizes for that cigar."} />
     <div className="vitolaResearchControl"><button type="button" className="button secondary" disabled={!brand.trim()||!line.trim()||researching} onClick={researchVitolas}>{researching?"Researching sizes…":"Research available sizes"}</button>{researchMessage&&<small>{researchMessage}</small>}{researched.length>0&&<small>{[...new Set(researched.map(item=>item.sourceUrl))].slice(0,3).map((url,index)=><a href={url} target="_blank" rel="noreferrer" key={url}>Source {index+1} ↗</a>)}</small>}</div>
     <input name="catalogId" type="hidden" value={match?.catalogId || ""} />
   </>;

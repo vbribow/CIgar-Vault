@@ -10,7 +10,7 @@ test("mobile documentation follows an explicit identify, review, and save journe
   assert.match(intake, /Documentation progress/);
   assert.match(intake, /Start with what you know/);
   assert.match(intake, /Review before saving/);
-  assert.match(intake, /Your draft is safe/);
+  assert.match(intake, /Your work is saved on this screen/);
 });
 
 test("unfinished typed work is restored locally without overstating photo persistence", () => {

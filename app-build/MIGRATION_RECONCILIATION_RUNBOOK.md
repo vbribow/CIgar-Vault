@@ -4,45 +4,38 @@ Status: required before the next schema release
 
 Scope: private Hojavía collector application
 
-Current hold: two local files share version `202607240001`
+Current hold: production has no Supabase migration ledger. A reviewed baseline is required before any future schema release.
 
-Latest read-only audit: August 6, 2026. The local manifest contains 32 migrations, no direct destructive DDL, duplicate version `202607240001`, and manifest SHA-256 `d1c7232860d3059dfd19258523dc5b46f88822e1ed58bcc47847c3d73fe729ff`. A read-only request reached the configured project, but PostgREST returned `PGRST106` because only `public` and `graphql_public` are exposed; the internal `supabase_migrations` ledger cannot be read through that route. No authenticated Supabase dashboard or CLI ledger session was available, so Phase 1 remains blocked before statement comparison and no filename or database history was changed.
+Latest read-only audit: August 7, 2026. The authenticated production dashboard reported no tracked migrations, and a read-only SQL query confirmed `supabase_migrations.schema_migrations` does not exist. Schema-level queries confirmed both formerly colliding changes are deployed: all eight partner-platform tables exist, and both community status constraints allow `active`, `review`, `changes`, and `hidden`. Git history establishes that the partner migration was created first. The partner file therefore retains `202607240001`; the later community constraint migration is now `202608070001_community_contribution_status.sql`. No production schema, data, or migration history was changed.
 
 This procedure protects existing collector data. It does not authorize a database change, deployment, or public release.
 
-## Files in collision
+## Reconciled local files
 
-- `202607240001_community_contribution_status.sql`
 - `202607240001_partner_platform.sql`
+- `202608070001_community_contribution_status.sql`
 
-Do not rename, repair, or apply either file until the remote migration ledger has been captured and compared with the exact SQL already applied to the production project.
+The local manifest must continue to use unique versions. Do not apply migrations or create migration-history rows until the complete production schema has been compared with all 32 local files and the baseline transaction below is approved.
 
 ## Phase 1 — read-only evidence
 
 1. Confirm the intended Supabase project before opening its SQL editor or CLI connection. Record the project name and project reference; never infer them from a browser tab.
-2. Export the complete remote migration ledger from `supabase_migrations.schema_migrations`, ordered by version. Preserve every available column, including the applied statements when present.
-3. Save the export outside the deploy artifact with the UTC capture time and project reference.
+2. Query `supabase_migrations.schema_migrations`. If the relation does not exist, record that result rather than creating it during evidence collection.
+3. Compare every local migration's resulting tables, columns, constraints, indexes, functions, triggers, and policies with production. Preserve the read-only result outside the deploy artifact with the UTC capture time and project reference.
 4. Run the local audit from `app-build`:
 
    ```sh
    pnpm audit:migrations
    ```
 
-   The expected result remains `review_required` while the collision exists.
-5. Compare remote version `202607240001` with both local files by exact statements and resulting schema objects. A matching timestamp alone is not evidence that a particular file was applied.
+   The local audit must report `pass`, but that result does not prove production has a migration baseline.
+5. Produce a baseline manifest that marks only schema effects proven present. Missing or materially different effects must remain pending migrations; do not mark them applied.
 
 Stop if the remote ledger is unavailable, incomplete, connected to the wrong project, or does not identify the applied statements strongly enough.
 
 ## Phase 2 — written decision
 
-Record one of these outcomes before editing a filename:
-
-- Community migration matches remote: preserve its version; assign the partner migration a new unused version.
-- Partner migration matches remote: preserve its version; assign the community migration a new unused version.
-- Neither migration is present remotely: assign distinct unused versions according to their dependency order.
-- Both effects appear remotely or history is ambiguous: hold the release and perform a schema-level reconciliation. Do not guess and do not rewrite the ledger merely to make tooling green.
-
-Any new version must be later than every version already used locally or remotely at the time of the decision. Update tests and operational records in the same reviewed change.
+The schema-level decision is recorded above: both effects are present, Git history fixes their dependency order, and the local versions are now unique. The remaining decision is the production baseline method. Prefer the supported Supabase CLI migration-repair workflow after the full schema comparison; do not hand-create internal tables or insert guessed statements.
 
 ## Phase 3 — protected change window
 
@@ -51,8 +44,8 @@ Before any ledger repair or migration application:
 1. Create and verify a current database backup or provider recovery point.
 2. Freeze the exact application artifact and migration manifest being reviewed.
 3. Confirm the private beta invitation hold and affected scheduled jobs.
-4. Obtain Brian's explicit approval for the database operation.
-5. Apply only the approved reconciliation and pending migrations—never an inferred repair.
+4. Obtain Brian's explicit approval for the exact baseline versions and database operation.
+5. Apply only the approved baseline repair and genuinely pending migrations—never an inferred repair.
 
 If a migration-history repair command is required, capture its proposed target and direction before execution. Treat the repair as a database mutation even when it changes only the migration ledger.
 

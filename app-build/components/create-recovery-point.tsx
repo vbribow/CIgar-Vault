@@ -48,8 +48,13 @@ export function CreateRecoveryPoint() {
   }
 
   return <div className="recoveryPointAction" id="recovery-point" aria-busy={busy}>
-    <div><strong>Create a recovery point</strong><small>Downloads a complete private JSON backup and records the safeguard in your account. Importing a collection does not create a recovery point.</small></div>
-    <button className="button" type="button" onClick={create} disabled={busy}>{busy ? "Creating and verifying…" : "Create recovery point"}</button>
+    <div><strong>Create a recovery point</strong><small id="recovery-point-help">Downloads a complete private JSON backup and records the safeguard in your account. Importing a collection does not create a recovery point.</small></div>
+    <ol className="recoverySteps" aria-label="Recovery-point process">
+      <li><span>1</span><div><strong>Prepare</strong><small>Hojavía gathers the account-backed Vault records you own.</small></div></li>
+      <li><span>2</span><div><strong>Verify</strong><small>The export is checked before it is offered as a download.</small></div></li>
+      <li><span>3</span><div><strong>Keep safely</strong><small>Store the JSON file somewhere private and separate from this device.</small></div></li>
+    </ol>
+    <button className="button" type="button" onClick={create} disabled={busy} aria-describedby="recovery-point-help">{busy ? "Creating and verifying…" : message && !failed ? "Create a fresh recovery point" : "Create recovery point"}</button>
     {message && <output className={failed ? "error" : "success"} role={failed ? "alert" : "status"} aria-atomic="true">{message}</output>}
   </div>;
 }

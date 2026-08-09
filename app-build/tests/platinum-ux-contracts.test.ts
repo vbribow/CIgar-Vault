@@ -16,11 +16,11 @@ test("collector-facing language explains outcomes without platform jargon", () =
   const storage = read("app/storage/page.tsx");
   const intake = read("components/photo-inventory-intake.tsx");
 
-  assert.match(walkthrough, /Say only what the records support/);
+  assert.match(walkthrough, /Separate confirmed details from open questions/);
   assert.match(walkthrough, /What the records support/);
-  assert.match(walkthroughPage, /Synthetic example · nothing saved · nothing submitted/);
-  assert.match(catalogFields, /standardized brand names/);
-  assert.match(catalogFields, /documented catalog line/);
+  assert.match(walkthroughPage, /No real purchase · nothing saved · nothing submitted/);
+  assert.match(catalogFields, /known names available/);
+  assert.match(catalogFields, /known line/);
   assert.match(sensors, /Your humidor climate, together\./);
   assert.match(catalog, /Consistent names protect history/);
   assert.match(catalog, /one trusted record/);
@@ -28,7 +28,7 @@ test("collector-facing language explains outcomes without platform jargon", () =
   assert.match(discovery, /Return to cigar record/);
   assert.match(reports, /Hojavía could not safely load your complete collection/);
   assert.match(storage, /Hojavía could not safely load your complete collection/);
-  assert.match(intake, /Saved review queue/);
+  assert.match(intake, /Final review/);
 
   for (const source of [walkthrough, walkthroughPage, reports, storage, intake]) {
     assert.doesNotMatch(source, /Evidence state|authoritative inventory|Durable review queue/);

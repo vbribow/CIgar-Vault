@@ -5,12 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 type EvidenceState = "Official result recorded" | "Partially supported" | "Conflicting" | "Tool unavailable" | "Unresolved";
 
 const steps = [
-  ["Identity", "Document what the object claims to be"],
-  ["Acquisition", "Preserve the offer and transaction context"],
-  ["Package", "Connect photographs, codes, and seals"],
-  ["Official check", "Record the dated producer-tool result"],
-  ["Conclusion", "Say only what the records support"],
-  ["Export", "Carry the record forward without exposing private data"],
+  ["Cigar", "Record the name and size shown on the cigar"],
+  ["Purchase", "Record where and when it was acquired"],
+  ["Package", "Keep the useful photos, codes, and seals together"],
+  ["Official check", "Save the dated result from the maker’s official tool"],
+  ["What we know", "Separate confirmed details from open questions"],
+  ["Save a copy", "Download the example without exposing private information"],
 ] as const;
 
 const initialEvidence = {
@@ -98,7 +98,7 @@ export function CollectorWalkthrough() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "hojavia-synthetic-evidence-record.json";
+    anchor.download = "hojavia-sample-collector-record.json";
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -108,8 +108,8 @@ export function CollectorWalkthrough() {
 
   return <div className="walkthroughShell">
     <aside className="walkthroughNotice" role="note">
-      <strong>Synthetic demonstration only</strong>
-      <span>No real collector, seller, payment, location, identifier, photograph, or account record is used or saved.</span>
+      <strong>Practice example only</strong>
+      <span>This example uses no real person, purchase, photograph, or account information. Nothing is saved to your Vault.</span>
     </aside>
 
     <div className="walkthroughProgress" role="progressbar" aria-label="Walkthrough position" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-valuetext={`Stage ${step + 1} of ${steps.length}`}>
@@ -125,10 +125,10 @@ export function CollectorWalkthrough() {
       <header><span>{steps[step][0]}</span><h2 ref={stageHeading} tabIndex={-1}>{steps[step][1]}</h2></header>
 
       {step === 0 && <div className="walkthroughRecordGrid">
-        <article><span>Represented brand</span><strong>Montecristo</strong><small>Seller or package representation—not independently proven.</small></article>
-        <article><span>Represented line</span><strong>No. 2</strong><small>Commercial identity recorded as observed.</small></article>
-        <article><span>Vitola</span><strong>Pirámide</strong><small>Shape and dimensions remain separate evidence.</small></article>
-        <article><span>Packaging</span><strong>Synthetic box of 25</strong><small>No actual box or cigar is involved.</small></article>
+        <article><span>Brand shown</span><strong>Montecristo</strong><small>Copied from the example package; not independently confirmed.</small></article>
+        <article><span>Line shown</span><strong>No. 2</strong><small>The product name is recorded exactly as shown.</small></article>
+        <article><span>Shape and size</span><strong>Pirámide</strong><small>The named shape and measured dimensions should both be recorded.</small></article>
+        <article><span>Packaging</span><strong>Example box of 25</strong><small>No real box or cigar is involved.</small></article>
       </div>}
 
       {step === 1 && <div className="walkthroughAcquisition">
@@ -138,7 +138,7 @@ export function CollectorWalkthrough() {
       </div>}
 
       {step === 2 && <fieldset className="walkthroughEvidence">
-        <legend>Choose the synthetic evidence preserved with this example</legend>
+        <legend>Choose which supporting items are kept with this practice record</legend>
         {([
           ["listing", "Original listing", "Preserves what was offered before the page changes"],
           ["receipt", "Dated receipt", "Connects the represented seller and transaction date"],
@@ -146,27 +146,27 @@ export function CollectorWalkthrough() {
           ["seal", "Warranty-seal photograph", "Records the visible seal and barcode area"],
           ["code", "Box-code photograph", "Connects the recorded code to this package"],
         ] as const).map(([key, title, copy]) => <label key={key}><input type="checkbox" checked={evidence[key]} onChange={(event) => setEvidence({ ...evidence, [key]: event.target.checked })}/><span><strong>{title}</strong><small>{copy}</small></span></label>)}
-        <output>{evidenceCount} of 5 synthetic evidence items preserved</output>
+        <output>{evidenceCount} of 5 supporting items saved</output>
       </fieldset>}
 
       {step === 3 && <div className="walkthroughOfficial">
-        <div><span>Official destination</span><strong>Habanos authenticity tool</strong><small>This walkthrough does not send its synthetic identifier to the producer.</small></div>
-        <label>Choose the recorded tool state<select value={result} onChange={(event) => setResult(event.target.value as EvidenceState)}>{(["Official result recorded", "Partially supported", "Conflicting", "Tool unavailable", "Unresolved"] as EvidenceState[]).map(state => <option key={state}>{state}</option>)}</select></label>
-        <p className="walkthroughCaution">Even “Official result recorded” means only that a dated producer-tool response was preserved. It is not a complete authentication.</p>
+        <div><span>Official website</span><strong>Habanos authenticity tool</strong><small>This practice example does not send a code to the producer.</small></div>
+        <label>What happened when the code was checked?<select value={result} onChange={(event) => setResult(event.target.value as EvidenceState)}>{(["Official result recorded", "Partially supported", "Conflicting", "Tool unavailable", "Unresolved"] as EvidenceState[]).map(state => <option key={state}>{state}</option>)}</select></label>
+        <p className="walkthroughCaution">Saving an official result records one useful check. It does not prove the complete history, contents, or condition by itself.</p>
       </div>}
 
       {step === 4 && <div className="walkthroughConclusion">
         <div><span>What the records support</span><strong>{result}</strong><small>{evidenceCount} of 5 package and acquisition items connected</small></div>
-        <div><span>Authentication claim</span><strong>Not made</strong><small>The conclusion remains narrower than the evidence.</small></div>
-        <div><span>Collector action</span><strong>{result === "Official result recorded" && evidenceCount === 5 ? "Preserve and monitor" : "Keep open for review"}</strong><small>Unresolved or conflicting evidence never becomes an invented answer.</small></div>
+        <div><span>Is authenticity confirmed?</span><strong>Not from this example alone</strong><small>Hojavía will not claim more than the saved information supports.</small></div>
+        <div><span>What should I do?</span><strong>{result === "Official result recorded" && evidenceCount === 5 ? "Keep the record and watch for changes" : "Leave this open for review"}</strong><small>Missing or conflicting information stays visible instead of becoming a guess.</small></div>
       </div>}
 
       {step === 5 && <div className="walkthroughExport">
-        <div><span>Portable sample record</span><strong>JSON · synthetic · no account data</strong><p>The export includes identity, acquisition context, evidence presence, tool state, conclusion boundary, and public/private classifications.</p><button type="button" className="button" onClick={downloadRecord}>Download synthetic record</button>{exported && <output>Sample downloaded. Nothing was added to your account.</output>}</div>
-        <pre aria-label="Synthetic record preview">{JSON.stringify(record.conclusion, null, 2)}</pre>
+        <div><span>Downloadable practice record</span><strong>Example file · no account information</strong><p>The file shows the cigar details, purchase information, supporting items, official-check result, and what remains unknown.</p><button type="button" className="button" onClick={downloadRecord}>Download practice record</button>{exported && <output>Practice record downloaded. Nothing was added to your account.</output>}</div>
+        <ul aria-label="Practice record summary"><li><strong>Official-check result:</strong> {result}</li><li><strong>Supporting items saved:</strong> {evidenceCount} of 5</li><li><strong>Authenticity:</strong> not confirmed by this example alone</li></ul>
       </div>}
 
-      <footer><button type="button" className="button secondary" disabled={step === 0} onClick={() => goToStep(step - 1)}>← Previous</button>{step < steps.length - 1 ? <button type="button" className="button" onClick={() => goToStep(step + 1)}>Continue →</button> : <div className="walkthroughFinishActions"><button type="button" className="button secondary" onClick={restartWalkthrough}>Restart walkthrough</button><a className="button secondary" href="/verification">Return to my evidence ledger</a></div>}</footer>
+      <footer><button type="button" className="button secondary" disabled={step === 0} onClick={() => goToStep(step - 1)}>← Previous</button>{step < steps.length - 1 ? <button type="button" className="button" onClick={() => goToStep(step + 1)}>Continue →</button> : <div className="walkthroughFinishActions"><button type="button" className="button secondary" onClick={restartWalkthrough}>Start over</button><a className="button secondary" href="/verification">Return to my authenticity records</a></div>}</footer>
     </section>
   </div>;
 }

@@ -10,14 +10,14 @@ test("smoking journal offers a complete score scale and common strength choices"
 });
 
 test("smoking journal supports manual cigars without consuming inventory", () => {
-  assert.match(source, /value="MANUAL">Another smoke — not in my Vault/);
+  assert.match(source, /Do not remove from my Vault/);
   assert.match(source, /name="cigarName"/);
   assert.match(source, /no Vault record and no quantity change/);
 });
 
 test("smoking journal clearly separates review-only, owned-lot, and add-to-Vault paths", () => {
-  assert.match(source, /Log a review only/);
-  assert.match(source, /Log from my Vault/);
+  assert.match(source, /Do not remove from my Vault/);
+  assert.match(source, /Remove from my Vault/);
   assert.match(source, /Add to Vault first/);
   assert.match(source, /href="\/inventory#mobile-intake"/);
   assert.match(source, /Saving creates only a private smoking review—no Vault record and no quantity change/);

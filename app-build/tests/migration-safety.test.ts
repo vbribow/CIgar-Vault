@@ -16,18 +16,15 @@ test("migration safety audit detects timestamp collisions and destructive DDL", 
   assert.equal(audit.releaseDecision, "review_required");
 });
 
-test("current migrations remain on hold until the duplicate version is reconciled against remote history", async () => {
+test("current local migrations use unique versions after schema-level reconciliation", async () => {
   const root = new URL("../supabase/migrations/", import.meta.url);
   const filenames = (await readdir(root)).filter(name => name.endsWith(".sql")).sort();
   const audit = auditMigrationSet(await Promise.all(filenames.map(async filename => ({
     filename,
     sql: await readFile(new URL(filename, root), "utf8"),
   }))));
-  assert.equal(audit.migrationCount, 32);
-  assert.deepEqual(audit.duplicateVersions, [{
-    version: "202607240001",
-    files: ["202607240001_community_contribution_status.sql", "202607240001_partner_platform.sql"],
-  }]);
+  assert.equal(audit.migrationCount, 33);
+  assert.deepEqual(audit.duplicateVersions, []);
   assert.deepEqual(audit.destructiveStatements, []);
   assert.deepEqual(audit.runtimeDataMutationFunctions, [
     "202607240008_beta_readiness.sql",
@@ -37,6 +34,6 @@ test("current migrations remain on hold until the duplicate version is reconcile
     "202607300004_retailer_verification_atomicity.sql",
     "202608050001_collector_25_smoke_contributions.sql",
   ]);
-  assert.equal(audit.releaseDecision, "review_required");
+  assert.equal(audit.releaseDecision, "pass");
   assert.equal(audit.manifestSha256.length, 64);
 });

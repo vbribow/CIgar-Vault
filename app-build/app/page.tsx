@@ -9,10 +9,12 @@ import { DataModelStory } from "@/components/data-model-story";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
 import { CulturePromise } from "@/components/culture-promise";
+import Link from "next/link";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+async function PrivateDashboard() {
   const [modeResult, inventoryResult] = await Promise.allSettled([accountDataMode(), loadInventory()]);
   const coreReady = modeResult.status === "fulfilled" && inventoryResult.status === "fulfilled";
   const mode = modeResult.status === "fulfilled" ? modeResult.value : "mock";
@@ -37,9 +39,24 @@ export default async function Home() {
   const integrityAudits = evidenceResults?.[6]?.status === "fulfilled" ? evidenceResults[6].value : [];
   const onboarding = buildOnboardingSteps({ inventory: allItems, collections, humidors, sensors, valuations, integrityAudits });
   const intelligence = buildCollectionIntelligence({ inventory: items, valuations, humidors, readings, smokes, sensors });
-  const dashboard = dashboardReady
+  return dashboardReady
     ? <Dashboard items={items} onboarding={onboarding} intelligence={intelligence} />
     : <section className="section card"><div className="eyebrow">Private dashboard protected</div><h2>Your collection summary is temporarily paused.</h2><p className="small">{brand.name} could not verify every source needed for quantities, values, climate, history, and onboarding. Rather than present partial information as complete, the summary will remain paused until those records can be checked together.</p><a className="button secondary" href="/">Check again</a></section>;
-  const introduction = <><section className="hero productHero"><div><div className="eyebrow">{brand.brandLine}</div><h1>{brand.isPreview ? "Your collection, with context." : "Your collection is a story worth preserving."}</h1><p className="lede">{brand.spokenName} helps every collector learn with confidence, document with purpose, and remain connected to the people and traditions behind every cigar.</p><div className="ctaRow"><a className="button" href="/inventory">Document my collection</a><a className="button secondary" href="/collector-walkthrough">Preview the collector journey</a><a className="button secondary" href="/discover">Discover something meaningful</a></div></div><figure className="cultureHero"><img src={"/editorial/cigar-roller-hojavia.jpg"} width="1540" height="1021" fetchPriority="high" decoding="async" alt="A cigar artisan sorting tobacco leaf at a rolling table while wearing a Hojavía shirt"/><figcaption><span>The craft behind the collection</span><strong>Every cigar begins with people, place, and patience.</strong><a href="https://unsplash.com/photos/vHCkVUogO-w">Original photograph by Austin · Unsplash ↗</a></figcaption></figure></section><CulturePromise/><CollectorJourney/><DataModelStory/></>;
-  return <main className="shell">{dashboardReady ? <>{dashboard}{introduction}</> : <>{introduction}{dashboard}</>}</main>;
+}
+
+function DashboardLoading() {
+  return <section className="section card dashboardStreamLoading" aria-busy="true" aria-label="Preparing private collection summary">
+    <div className="eyebrow">Private collection summary</div>
+    <div className="skeleton cardSkeleton" aria-hidden="true" />
+    <p role="status">Checking quantities, values, climate, history, and onboarding together…</p>
+    <small>Partial evidence is never presented as a complete dashboard.</small>
+  </section>;
+}
+
+function HomeIntroduction() {
+  return <><section className="hero productHero"><div><div className="eyebrow">{brand.brandLine}</div><h1>{brand.isPreview ? "Your collection, with context." : "Your collection is a story worth preserving."}</h1><p className="lede">{brand.spokenName} helps every collector learn with confidence, document with purpose, and remain connected to the people and traditions behind every cigar.</p><div className="ctaRow"><Link className="button" href="/inventory" prefetch>Document my collection</Link><Link className="button secondary" href="/collector-walkthrough" prefetch>Preview the collector journey</Link><Link className="button secondary" href="/discover" prefetch>Discover something meaningful</Link></div></div><figure className="cultureHero"><img src={"/editorial/cigar-roller-hojavia.jpg"} width="1540" height="1021" fetchPriority="high" decoding="async" alt="A cigar artisan sorting tobacco leaf at a rolling table while wearing a Hojavía shirt"/><figcaption><span>The craft behind the collection</span><strong>Every cigar begins with people, place, and patience.</strong><a href="https://unsplash.com/photos/vHCkVUogO-w">Original photograph by Austin · Unsplash ↗</a></figcaption></figure></section><CulturePromise/><CollectorJourney/><DataModelStory/></>;
+}
+
+export default function Home() {
+  return <main className="shell"><HomeIntroduction/><Suspense fallback={<DashboardLoading/>}><PrivateDashboard/></Suspense></main>;
 }

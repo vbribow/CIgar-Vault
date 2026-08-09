@@ -41,7 +41,7 @@ test("collector-facing guidance uses one transparent AI-assisted label", async (
   assert.doesNotMatch(combined, /Powered by .* AI/);
 });
 
-test("practice calls to action stay welcoming while the walkthrough retains its disclosure", async () => {
+test("practice calls to action and disclosures use welcoming collector language", async () => {
   const [dashboard, verification, walkthrough] = await Promise.all([
     readFile(new URL("components/dashboard.tsx", root), "utf8"),
     readFile(new URL("app/verification/page.tsx", root), "utf8"),
@@ -49,7 +49,7 @@ test("practice calls to action stay welcoming while the walkthrough retains its 
   ]);
 
   assert.match(dashboard, /Practice with a safe example/);
-  assert.match(verification, /Preview a safe evidence example/);
-  assert.match(walkthrough, /Synthetic demonstration only/);
-  assert.match(walkthrough, /No actual box or cigar is involved/);
+  assert.match(verification, /Practice with a safe example/);
+  assert.match(walkthrough, /Practice example only/);
+  assert.match(walkthrough, /No real box or cigar is involved/);
 });

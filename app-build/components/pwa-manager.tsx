@@ -3,11 +3,11 @@ import { useEffect,useState } from "react";
 import { HojaviaMark } from "@/components/hojavia-mark";
 import { brand } from "@/lib/brand";
 import { isActiveProductHostname,isPrivatePreviewHostname } from "@/lib/preview-host";
-type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:"accepted"|"dismissed"}>};
+export type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:"accepted"|"dismissed"}>};
 const productionHost="hojavia.com";
 const installDismissedKey="hojavia:pwa-dismissed:v1";
-export function PwaManager(){
-  const[event,setEvent]=useState<InstallEvent>(),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
+export function PwaManager({ initialEvent }: { initialEvent?: InstallEvent }){
+  const[event,setEvent]=useState<InstallEvent|undefined>(initialEvent),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
   useEffect(()=>{
     const installStandalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
     if(!isActiveProductHostname(window.location.hostname)&&(!isPrivatePreviewHostname(window.location.hostname)||installStandalone))setLegacyHost(window.location.host);

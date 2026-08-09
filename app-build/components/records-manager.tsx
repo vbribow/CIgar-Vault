@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem, SmokingLog, Valuation } from "@/lib/types";
 import { smokeEntryOrder } from "@/lib/smoke-journal";
@@ -16,6 +16,7 @@ import { valuationRetailLead,type ValuationResearch } from "@/lib/valuation-rese
 import type { CigarVisionResult } from "@/lib/cigar-vision";
 import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-capture";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
+import { fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 function normalizeSmokeSearch(value: string) {
@@ -47,30 +48,31 @@ function smokeSaveMessage(result: { collector25?: { status?: string } }, manual:
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
 export const flavorOptions = ["Cedar", "Earth", "Leather", "Pepper", "Cream", "Coffee", "Cocoa / chocolate", "Nuts", "Sweetness", "Baking spice", "Fruit", "Floral", "Toast", "Mineral", "Other"] as const;
 
-export function RecordsManager({ inventory, initialSmokes, initialValuations, mode, selectedInventoryId }: {
+export function RecordsManager({ inventory, initialSmokes, initialValuations, mode, selectedInventoryId,initialManualName }: {
   inventory: InventoryItem[];
   initialSmokes: SmokingLog[];
   initialValuations: Valuation[];
   mode: DataMode;
   selectedInventoryId?: string;
+  initialManualName?:string;
 }) {
   const [smokes, setSmokes] = useState(initialSmokes);
   const [valuations, setValuations] = useState(initialValuations);
   const [message, setMessage] = useState("");
-  const [smokeSource, setSmokeSource] = useState(selectedInventoryId || "");
+  const [smokeSource, setSmokeSource] = useState(initialManualName?"MANUAL":selectedInventoryId || "");
   const [smokeInventoryQuery, setSmokeInventoryQuery] = useState("");
-  const [smokeCigarName, setSmokeCigarName] = useState("");
+  const [smokeCigarName, setSmokeCigarName] = useState(initialManualName||"");
   const [smokePhotos, setSmokePhotos] = useState<File[]>([]);
   const [smokePhotoAnalysis, setSmokePhotoAnalysis] = useState<CigarVisionResult>();
   const [smokePhotoBusy, setSmokePhotoBusy] = useState(false);
   const [smokePhotoMessage, setSmokePhotoMessage] = useState("");
+  const smokePhotoRequest = useRef(0);
   const [smokeSubmissionId, setSmokeSubmissionId] = useState(createClientUuid);
   const [valuationSubmissionId, setValuationSubmissionId] = useState(createClientUuid);
   const [valuationSource, setValuationSource] = useState(selectedInventoryId || "");
   const [valuationProposal, setValuationProposal] = useState<ValuationResearch>();
   const [valuationResearching, setValuationResearching] = useState(false);
   const [valuationResearchMessage, setValuationResearchMessage] = useState("");
-  const [valuationRetailOpening,setValuationRetailOpening]=useState(false);
   const [manualValuation, setManualValuation] = useState(false);
   const [newSmokeConfirmed, setNewSmokeConfirmed] = useState(false);
   const [lastSmokeIdentity, setLastSmokeIdentity] = useState<{ source: string; cigarName: string }>();
@@ -114,11 +116,11 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     } else payload.submissionId = valuationSubmissionId;
     let failureStatus=0;
     try {
-      const response = await fetch(kind === "smoke" ? "/api/smoking-log" : "/api/valuations", {
+      const response = await fetchWithTimeout(kind === "smoke" ? "/api/smoking-log" : "/api/valuations", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-founder-key": key },
         body: JSON.stringify(payload),
-      });
+      }, 15_000);
       failureStatus=response.status;
       const result = await readSaveResponse(response);
       if (!response.ok) throw new Error(result.error || "Save failed");
@@ -182,19 +184,21 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
 
   async function identifySmokePhotos() {
     if (!smokePhotos.length || smokePhotoBusy) return;
+    const requestId = ++smokePhotoRequest.current;
     setSmokePhotoBusy(true); setSmokePhotoMessage("");
     try {
       const form = new FormData();
       for (const file of smokePhotos) form.append("photos", await prepareSmokePhoto(file));
-      const response = await fetch("/api/photo-identification", { method: "POST", body: form });
+      const response = await fetchWithTimeout("/api/photo-identification", { method: "POST", body: form }, 25_000);
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Photo identification failed");
       const analysis = result.data as CigarVisionResult;
       const identity = [analysis.brand, analysis.line, analysis.vitola, analysis.vintage].filter(Boolean).join(" ");
+      if (requestId !== smokePhotoRequest.current) return;
       setSmokePhotoAnalysis(analysis); setSmokeCigarName(identity);
       setSmokePhotoMessage(`Identification ready (${analysis.confidence} confidence). Confirm or correct the cigar before saving your review.`);
-    } catch (error) { setSmokePhotoMessage(error instanceof Error ? error.message : "Photo identification failed"); }
-    finally { setSmokePhotoBusy(false); }
+    } catch (error) { if (requestId === smokePhotoRequest.current) setSmokePhotoMessage(error instanceof RequestTimeoutError ? "Identification is taking longer than expected. Your photos are still selected—try again when you’re ready." : error instanceof Error ? error.message : "Photo identification failed"); }
+    finally { if (requestId === smokePhotoRequest.current) setSmokePhotoBusy(false); }
   }
 
   function startAnotherValuation() {
@@ -221,20 +225,6 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     } finally {
       setValuationResearching(false);
     }
-  }
-
-  async function openValuationRetailer(){
-    if(!valuationProposal||valuationRetailOpening)return;
-    const listing=valuationRetailLead(valuationProposal);if(!listing)return;
-    setValuationRetailOpening(true);setValuationResearchMessage("");
-    try{
-      const response=await fetch("/api/retailer-market/click",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({inventoryId:valuationSource,listing})});
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok)throw new Error(result.error||"Retailer link is unavailable");
-      window.open(result.data.outboundUrl,"_blank","noopener,noreferrer");
-      setValuationResearchMessage(result.message||"Retailer opened. Price and availability are not confirmed until the seller verifies them.");
-    }catch(error){setValuationResearchMessage(error instanceof Error?error.message:"Retailer link is unavailable")}
-    finally{setValuationRetailOpening(false)}
   }
 
   const valuationPicker = <select name="inventoryId" required value={valuationSource} onChange={event => { setValuationSource(event.target.value); setValuationProposal(undefined); setManualValuation(false); setValuationResearchMessage(""); }}>
@@ -293,7 +283,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <button className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Retry save"})}</button>
         </fieldset>
       </form>
-      {smokeMutation.complete && <section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="smoke-saved-title"><strong id="smoke-saved-title">Smoke saved.</strong><p>Continue without refreshing or searching for this journal again.</p><div><button type="button" className="button" onClick={() => startAnotherSmoke(true)}>Log this cigar again</button><button type="button" className="button secondary" onClick={() => startAnotherSmoke(false)}>Log another</button></div></section>}
+      {smokeMutation.complete && <section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="smoke-saved-title"><strong id="smoke-saved-title">Smoke saved.</strong><p>Continue without refreshing or searching for this journal again.</p><div><button type="button" className="button" onClick={() => startAnotherSmoke(true)}>Log this cigar again</button><button type="button" className="button secondary" onClick={() => startAnotherSmoke(false)}>Log another</button>{lastSmokeIdentity?.source&&lastSmokeIdentity.source!=="MANUAL"&&<a className="button secondary" href={`/inventory/${encodeURIComponent(lastSmokeIdentity.source)}`}>Open cigar record</a>}<a className="textLink" href="/inventory">Return to Vault</a></div></section>}
       <div className="recordList" id="smoking-history"><div className="recordListHeader"><h3>Recent smokes</h3><a className="textLink" href="/smoke-journal">View and search every smoke →</a></div>{smokes.slice(0, 8).map(smoke => <div id={`smoke-${smoke.smokeId}`} key={smoke.smokeId}><strong>{smoke.cigarName || smoke.inventoryId}</strong><span>Entry #{smokeEntryOrder(smokes, smoke.smokeId)} · {smoke.dateSmoked} · {smoke.quantitySmoked ?? 1} cigar{(smoke.quantitySmoked ?? 1) === 1 ? "" : "s"} · {smoke.overall ?? "—"}</span><a className="textLink" href={`/smoke-journal?editSmoke=${encodeURIComponent(smoke.smokeId)}#smoke-${encodeURIComponent(smoke.smokeId)}`}>Edit smoke →</a></div>)}</div>
     </section>
 
@@ -303,7 +293,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       {valuationSource && <div className="valuationIntakeActions"><button type="button" className="button" onClick={researchValuation} disabled={valuationResearching}>{valuationResearching ? "Researching exact evidence…" : "Research this cigar"}</button><button type="button" className="button secondary" onClick={() => { setManualValuation(true); setValuationProposal(undefined); setValuationResearchMessage(""); }}>Enter manually</button><small>New research may use configured AI research credits. Reviewing existing evidence and entering it manually do not.</small></div>}
       {existingValuation && !proposed && !manualValuation && <div className="valuationExisting" role="status"><strong>Existing evidence found</strong><span>{existingValuation.valuationDate} · {marketEvidenceType(existingValuation)} · {existingValuation.confidence || "Unrated confidence"}</span><button type="button" className="textLink" onClick={() => setManualValuation(true)}>Review or update these fields →</button></div>}
       {valuationResearchMessage && <output className="valuationResearchMessage" aria-live="polite">{valuationResearchMessage}</output>}
-      {proposed && <div className="valuationProposal" role="status"><div><strong>Research proposal ready</strong><span>{proposed.marketEvidenceType} · {proposed.confidence} confidence · {proposed.comparables.length} comparable{proposed.comparables.length === 1 ? "" : "s"}</span></div><p>{proposed.notes}</p><small>Review and correct the populated fields below. A source description alone never proves a completed sale.</small>{valuationRetailLead(proposed)&&<div><button type="button" className="button secondary" disabled={valuationRetailOpening} onClick={openValuationRetailer}>{valuationRetailOpening?"Opening retailer…":"Buy this cigar ↗"}</button><small>Direct retailer listing from this research · asking price and availability are not a confirmed sale.</small></div>}</div>}
+      {proposed && <div className="valuationProposal" role="status"><div><strong>Research proposal ready</strong><span>{proposed.marketEvidenceType} · {proposed.confidence} confidence · {proposed.comparables.length} comparable{proposed.comparables.length === 1 ? "" : "s"}</span></div><p>{proposed.notes}</p><small>Review and correct the populated fields below. A source description alone never proves a completed sale.</small>{valuationRetailLead(proposed)&&<div><strong>Retailer asking-price evidence recorded</strong><small>The mobile app preserves the observation without opening a tobacco purchase page or adding affiliate tracking.</small></div>}</div>}
       {valuationFormDraft.restoredFields && <p className="deviceDraftNotice" role="status">Unfinished valuation evidence was restored from this browser profile. Review it before saving.</p>}
       {showValuationForm && <form ref={valuationFormDraft.formRef} key={`${valuationSource}-${proposed?.evidenceDate || existingValuation?.valuationDate || "manual"}`} className="recordForm" onSubmit={event => send(event, "valuation")} onChange={valuationFormDraft.capture} aria-busy={valuationMutation.pending}>
         <input type="hidden" name="inventoryId" value={valuationSource} />
@@ -328,7 +318,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         {mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}
         <button className="button" disabled={valuationMutation.pending || valuationMutation.complete}>{mutationButtonText(valuationMutation.status,{idle:"Save reviewed evidence",pending:"Saving valuation…",success:"Valuation saved",error:"Retry save"})}</button>
       </form>}
-      {valuationMutation.complete&&<button type="button" className="button secondary" onClick={startAnotherValuation}>Add another valuation</button>}
+      {valuationMutation.complete&&<section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="valuation-saved-title"><strong id="valuation-saved-title">Valuation evidence saved.</strong><p>Choose the next action without reloading this workspace.</p><div><button type="button" className="button" onClick={startAnotherValuation}>Add another valuation</button>{valuationSource&&<a className="button secondary" href={`/inventory/${encodeURIComponent(valuationSource)}`}>Open cigar record</a>}<a className="textLink" href="/valuations">Review valuation history</a></div></section>}
       <div className="recordList"><h3>Recent valuations</h3>{valuations.slice(0, 8).map(value => <div key={value.valuationId}><strong>{value.inventoryId}</strong><span>{value.valuationDate} · {isVerifiedCompletedSale(value) || claimsUnverifiedCompletedSale(value) ? completedSaleLabel(value) : marketEvidenceType(value)==="Observed asking price" ? marketAskingPriceLabel : marketEvidenceType(value)} · aftermarket ${value.marketValue ?? "—"} · {isVerifiedCompletedSale(value) ? `verified sale $${value.lastSaleValue}` : claimsUnverifiedCompletedSale(value) ? `legacy sale claim $${value.lastSaleValue ?? "—"}` : value.askingPrice!==undefined ? `asking $${value.askingPrice} · no confirmed sale` : "no verified sale"}</span></div>)}</div>
     </section>
     {message && <output className="wideMessage" aria-live="polite" aria-atomic="true">{message}</output>}

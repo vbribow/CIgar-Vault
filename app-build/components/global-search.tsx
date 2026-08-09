@@ -8,11 +8,12 @@ import {
   rememberRecentSearch,
   searchQueryParam,
 } from "@/lib/search-navigation";
+import { fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
 
 const recentSearchStorageKey = "hojavia:recent-searches:v1";
 
-export function GlobalSearch() {
-  const [open, setOpen] = useState(false);
+export function GlobalSearch({ initialOpen = false }: { initialOpen?: boolean }) {
+  const [open, setOpen] = useState(initialOpen);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -116,9 +117,10 @@ export function GlobalSearch() {
       setSearchError("");
       setResults([]);
       try {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
           `/api/search?q=${encodeURIComponent(query)}`,
           { signal: controller.signal },
+          8_000,
         );
         const value = await response.json();
         if (!response.ok) throw new Error(value.error || "Search unavailable");
@@ -126,7 +128,7 @@ export function GlobalSearch() {
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setResults([]);
-          setSearchError("Search is temporarily unavailable. Your private Vault is unchanged.");
+          setSearchError(error instanceof RequestTimeoutError ? "Search is taking longer than expected. Try again when you’re ready; your private Vault is unchanged." : "Search is temporarily unavailable. Your private Vault is unchanged.");
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);

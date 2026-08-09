@@ -11,6 +11,7 @@ const releaseInputs = [
   "lib",
   "public",
   "scripts/build-app.mjs",
+  "scripts/audit-performance-budget.mjs",
   "next.config.ts",
   "package.json",
   "pnpm-lock.yaml",
@@ -35,12 +36,15 @@ function stampInstalledAppRelease() {
   }
   const release = hash.digest("hex").slice(0, 12);
   const workerPath = resolve("dist/client/sw.js");
+  const workerTemplatePath = resolve("public/sw.js");
   const releasePath = resolve("dist/client/release.json");
-  const worker = readFileSync(workerPath, "utf8");
-  if (!worker.includes(releaseMarker)) {
+  const workerTemplate = readFileSync(workerTemplatePath, "utf8");
+  if (!workerTemplate.includes(releaseMarker)) {
     throw new Error("The installed-app worker is missing its release marker.");
   }
-  writeFileSync(workerPath, worker.replaceAll(releaseMarker, release));
+  // Rebuilds may retain the previously stamped public asset in dist. Always
+  // stamp from the immutable public template so repeated builds are identical.
+  writeFileSync(workerPath, workerTemplate.replaceAll(releaseMarker, release));
   writeFileSync(releasePath, `${JSON.stringify({ release: `hojavia-beta-shell-v4-${release}` }, null, 2)}\n`);
   if (readFileSync(workerPath, "utf8").includes(releaseMarker)) {
     throw new Error("The installed-app release marker was not fully replaced.");
@@ -51,6 +55,12 @@ function stampInstalledAppRelease() {
 const navigationAudit = spawnSync(process.execPath, ["scripts/audit-internal-links.mjs"], { stdio: "inherit" });
 if (navigationAudit.error || navigationAudit.status !== 0) {
   console.error(`Internal navigation audit failed${navigationAudit.error ? `: ${navigationAudit.error.message}` : "."}`);
+  process.exit(1);
+}
+
+const sourcePerformanceAudit = spawnSync(process.execPath, ["scripts/audit-performance-budget.mjs"], { stdio: "inherit" });
+if (sourcePerformanceAudit.error || sourcePerformanceAudit.status !== 0) {
+  console.error(`Performance budget failed${sourcePerformanceAudit.error ? `: ${sourcePerformanceAudit.error.message}` : "."}`);
   process.exit(1);
 }
 
@@ -69,6 +79,11 @@ if (target === "vinext") {
     stampInstalledAppRelease();
   } catch (error) {
     console.error(`Unable to stamp the installed-app release: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+  const builtPerformanceAudit = spawnSync(process.execPath, ["scripts/audit-performance-budget.mjs", "--dist"], { stdio: "inherit" });
+  if (builtPerformanceAudit.error || builtPerformanceAudit.status !== 0) {
+    console.error(`Built performance budget failed${builtPerformanceAudit.error ? `: ${builtPerformanceAudit.error.message}` : "."}`);
     process.exit(1);
   }
 }

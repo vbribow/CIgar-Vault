@@ -21,7 +21,9 @@ test("core collector forms warn before abandoning unsaved work", () => {
   assert.match(guard, /beforeunload/);
   assert.match(guard, /popstate/);
   assert.match(guard, /protectInternalNavigation/);
-  assert.match(read("components/inventory-manager.tsx"), /onChange=\{editSafety\.markDirty\}/);
+  const inventory = read("components/inventory-manager.tsx");
+  assert.match(inventory, /editSafety\.markDirty\(\)/);
+  assert.match(inventory, /inventoryDraft\.capture\(event\)/);
   assert.match(read("components/records-manager.tsx"), /onChange=\{recordSafety\.markDirty\}/);
 });
 

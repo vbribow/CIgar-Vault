@@ -70,7 +70,7 @@ test("availability outranks a launch relationship",()=>{
   const ranked=rankRetailerListings([{seller:"Fox Cigar",availability:"Waitlist"},{seller:"Available Retailer",availability:"In stock"}],{});
   assert.equal(ranked.at(0)?.seller,"Available Retailer");
 });
-test("retailer market migration and UI preserve transaction-only scoring",()=>{
+test("retailer market preserves verified scoring while mobile commerce fails closed",()=>{
   const migration=fs.readFileSync("supabase/migrations/202607300002_trusted_retailer_market.sql","utf8");
   const ui=fs.readFileSync("components/retailer-market.tsx","utf8");
   const inventory=fs.readFileSync("app/inventory/[inventoryId]/availability/page.tsx","utf8");
@@ -85,12 +85,11 @@ test("retailer market migration and UI preserve transaction-only scoring",()=>{
   assert.match(ui,/Affiliate compensation never changes this score or search ranking/);
   assert.match(ui,/Not yet established/);
   assert.match(ui,/Fulfillment/);
-  assert.match(ui,/temporary launch placement/);
+  assert.match(ui,/no retailer purchase link or affiliate tracking/i);
   assert.match(inventory,/<RetailerMarket item=\{item\}/);
-  assert.match(clickRoute,/listingMatchesExactIdentity\(item,listing\)/);
-  assert.match(clickRoute,/does not match the exact cigar record/);
-  assert.match(clickRoute,/trackingStatus:"unavailable"/);
-  assert.match(clickRoute,/error\?\.code==="23505"/);
+  assert.match(clickRoute,/status: 410/);
+  assert.match(clickRoute,/Retailer purchase links are web-only/);
+  assert.doesNotMatch(clickRoute,/outboundUrl|listing_fingerprint|trackingStatus/);
   assert.match(purchaseRoute,/reviewed:reviewed\.has/);
   assert.match(availability,/listingMatchesExactIdentity/);
   assert.match(clickMigration,/unique index[\s\S]*user_id, listing_fingerprint[\s\S]*status = 'clicked'/);

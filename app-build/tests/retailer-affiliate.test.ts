@@ -59,12 +59,12 @@ test("incomplete, paused, malformed, and lookalike-domain programs fail closed",
   assert.deepEqual(affiliateConfigurationAudit(JSON.stringify([activeProgram])).programs[0].issues,[]);
 });
 
-test("availability interface keeps paid-link disclosure visible and marks compensated links",async()=>{
+test("mobile availability interface remains non-transactional",async()=>{
   const component=await readFile(new URL("../components/wishlist-availability-board.tsx",import.meta.url),"utf8");
-  assert.match(component,/Compensation does not change|compensation/i);
-  assert.match(component,/noreferrer noopener sponsored/);
+  assert.match(component,/do(?:es)? not open retailer purchase pages/i);
+  assert.match(component,/no purchase link or affiliate tracking/i);
   assert.match(component,/adults 21\+ only/i);
-  assert.match(component,/Direct retailer link · Hojavía receives no configured compensation/);
+  assert.doesNotMatch(component,/href=\{listing\.outboundUrl \|\| listing\.url\}/);
 });
 
 test("commercial standard preserves reporting privacy, rollback, and the Fox prohibition",async()=>{
@@ -75,10 +75,10 @@ test("commercial standard preserves reporting privacy, rollback, and the Fox pro
   assert.match(policy,/no outreach,\s+tracking link, test, trial, campaign, configuration, or activation/i);
 });
 
-test("founder dashboard is read-only and never exposes affiliate parameter values",async()=>{
+test("founder dashboard records the web-only mobile boundary",async()=>{
   const page=await readFile(new URL("../app/affiliate-readiness/page.tsx",import.meta.url),"utf8");
-  assert.match(page,/Technical readiness is not launch authorization/i);
-  assert.match(page,/Affiliate credentials and parameter values are intentionally never displayed/i);
+  assert.match(page,/Affiliate commerce is web-only/i);
+  assert.match(page,/does not open tobacco purchase pages/i);
   assert.match(page,/Fox status/);
   assert.doesNotMatch(page,/queryValue|queryParameter/);
 });

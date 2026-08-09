@@ -27,7 +27,7 @@ test("local artifact rollback evidence never claims production-provider rollback
   assert.match(gate.evidence, /local rollback rehearsal verified 278 files/i);
   assert.match(gate.evidence, /without production or collector-data changes/i);
   assert.match(gate.evidence, /candidate remains unfrozen/i);
-  assert.match(gate.evidence, /remote migration ledger is unavailable/i);
+  assert.match(gate.evidence, /no Supabase migration ledger exists/i);
   assert.equal(gate.status, "In progress");
 });
 

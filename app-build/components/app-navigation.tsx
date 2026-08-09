@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { GlobalSearch } from "@/components/global-search";
+import { DeferredGlobalSearch } from "@/components/deferred-global-search";
 import { HojaviaMark } from "@/components/hojavia-mark";
 import { brand } from "@/lib/brand";
 import { DeviceAwareSignOut } from "@/components/device-aware-sign-out";
+import { rememberInternalNavigation } from "@/components/navigation-back";
 
 function matches(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -20,6 +21,7 @@ export function AppNavigation() {
   const mobileMoreSheet = useRef<HTMLElement>(null);
 
   useEffect(() => setMobileMoreOpen(false), [pathname]);
+  useEffect(()=>{document.addEventListener("click",rememberInternalNavigation,true);return()=>document.removeEventListener("click",rememberInternalNavigation,true)},[]);
 
   useEffect(() => {
     if (!mobileMoreOpen) return;
@@ -66,8 +68,8 @@ export function AppNavigation() {
     ["/briefing","Daily Briefing","Review proactive collection and industry intelligence"],
     ["/places","Cigar Places","Find lounges, cigar bars, and retailers with transparent ratings"],
     ["/partner-platform","Partner Network","Manage attribution, commissions, and industry relationships"],
-    ["/affiliate-readiness","Affiliate Readiness","Review compensation safeguards without activating a program"],
     ["/launch-readiness","Launch Readiness","Track the baseline, active gates, and deferred decisions"],
+    ["/founder-onboarding","Founder Console","Open the private beta queue, invitations, and tester setup"],
     ["/partner-workspace","Partner Workspace","Collaborate inside your organization’s private workspace"],
     ["/feedback","Beta Feedback","Report bugs, confusion, trust concerns, and ideas"],
     ["/pricing","Reserve","Explore deeper intelligence and service"],
@@ -92,7 +94,7 @@ export function AppNavigation() {
   };
   return <><header className="appHeader"><div className="appHeaderInner">
     <Link className="appBrand" href="/" aria-label={`${brand.spokenName} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}<span className="brandPronunciation">({brand.pronunciation})</span></strong><small>{brand.brandLine}</small></span></Link>
-    <GlobalSearch/><nav className="appNav" aria-label="Primary navigation">
+    <DeferredGlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <Link href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</Link>
       <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>
       <Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")||matches(pathname,"/humidors")?"active":undefined}>Vault</Link>

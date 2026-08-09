@@ -14,7 +14,7 @@ test("six beta-critical flows show progress and prevent repeat actions", () => {
   const reports = component("report-actions.tsx");
 
   assert.match(photo, /disabled=\{!pending\|\|approving\}/);
-  assert.match(photo, /Approving…/);
+  assert.match(photo, /Adding to Vault…/);
   assert.match(smoke, /disabled=\{mode === "mock" \|\| smokeQuantityBlocked \|\| smokeMutation\.pending \|\| smokeMutation\.complete\}/);
   assert.match(smoke, />Log another</);
   assert.match(somm, /disabled=\{busy\|\|!ready\}/);

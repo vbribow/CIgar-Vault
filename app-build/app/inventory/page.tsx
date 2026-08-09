@@ -1,8 +1,7 @@
 import { InventoryManager } from "@/components/inventory-manager";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadCatalog, mergeCatalogRecords } from "@/lib/catalog";
-import { loadCollections, loadHumidors, loadRatings } from "@/lib/data";
+import { loadCollections } from "@/lib/data";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
@@ -10,17 +9,22 @@ import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import "./vault-paths.css";
 
 export const dynamic = "force-dynamic";
 export const metadata:Metadata={title:"My Collection",description:"Document, care for, understand, and preserve every box, collection, and individual cigar."};
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; status?: string; collectionId?: string; active?: string; vaultSearch?: string; inventoryId?:string; edit?: string; focus?: string }> }) {
-  const [modeResult, inventoryResult, filters, planResult] = await Promise.all([
+async function InventoryUpgradeNudge({ lotCount, portfolioValue }: { lotCount: number; portfolioValue: number }) {
+  const plan = await loadAccountPlan().catch(() => undefined);
+  return <UpgradeNudge plan={plan} context="inventory" usage={lotCount} signals={{ lotCount, portfolioValue }}/>;
+}
+
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; status?: string; collectionId?: string; active?: string; vaultSearch?: string; inventoryId?:string; edit?: string; focus?: string;cigarName?:string }> }) {
+  const [modeResult, inventoryResult, filters] = await Promise.all([
     accountDataMode().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
     loadInventory().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
     searchParams,
-    loadAccountPlan().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
   ]);
   if (!modeResult.ok || !inventoryResult.ok) {
     return <main className="shell">
@@ -35,21 +39,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   }
   const mode = modeResult.value;
   const items = inventoryResult.value;
-  const [catalogResult, ratingsResult, collectionsResult, humidorsResult] = await Promise.allSettled([
-    loadCatalog(items),
-    mode === "mock" ? Promise.resolve([]) : loadRatings(),
-    loadCollections(),
-    mode === "mock" ? Promise.resolve([]) : loadHumidors(),
-  ]);
-  const catalog = catalogResult.status === "fulfilled" ? catalogResult.value : mergeCatalogRecords([], items);
-  const ratings = ratingsResult.status === "fulfilled" ? ratingsResult.value : [];
+  const [collectionsResult] = await Promise.allSettled([loadCollections()]);
   const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
-  const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
   const cigarItems = cigarInventoryRecords(items, collections);
   const presentationAssetCount = items.length - cigarItems.length;
   const collectionLinksReady = collectionsResult.status === "fulfilled";
-  const relatedReady = ratingsResult.status === "fulfilled" && collectionLinksReady;
-  const plan = planResult.ok ? planResult.value : undefined;
   const editFocus = ["quantity","year","packaging","price","storage","provenance","rating","all"].includes(filters.focus||"")
     ? filters.focus as "quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"rating"|"all"
     : "all";
@@ -62,9 +56,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     </nav>
     {!items.length&&<section className="card firstInventoryGuide" aria-labelledby="first-inventory-title"><div><div className="eyebrow">A focused beginning</div><h2 id="first-inventory-title">Start with one cigar—not the whole collection.</h2><p>Photograph it or enter the details you already know. Review the suggested identity, record the quantity, and save. Everything else can be added later.</p></div><a className="button" href="#mobile-intake">Document my first cigar ↓</a></section>}
     <WorkspaceGuide items={[{label:"Capture",title:"Add by camera or form",detail:"Identify a cigar, review the fields, then approve it into inventory.",href:"#mobile-intake"},{label:"Count",title:"Reconcile boxes and loose sticks",detail:"Record what is physically present without disturbing the rest of the lot.",href:"/inventory-count"},{label:"Protect",title:"Complete value and provenance",detail:"Close evidence gaps for reporting, verification, and climate exposure.",href:"/collection-health"}]}/>
-    {!relatedReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Supporting evidence temporarily unavailable</div><p>Your inventory is intact and available. Collection links or published ratings are temporarily hidden rather than shown as absent.</p></section>}
-    <UpgradeNudge plan={plan} context="inventory" usage={cigarItems.length} signals={{lotCount:cigarItems.length,portfolioValue:cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}}/>
+    {!collectionLinksReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Collection links temporarily unavailable</div><p>Your inventory is intact and available. Collection links are hidden rather than shown as absent.</p></section>}
+    <Suspense fallback={null}><InventoryUpgradeNudge lotCount={cigarItems.length} portfolioValue={cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}/></Suspense>
     {presentationAssetCount>0&&<section className="card inventoryDataNotice"><div><strong>{presentationAssetCount} presentation asset{presentationAssetCount===1?" is":"s are"} tracked separately</strong><p>Presentation humidors and cases remain connected to their collectible sets without appearing as individual cigars.</p></div><Link className="button secondary" href="/collections">Open Valuable Collections</Link></section>}
-    <div><InventoryManager initialItems={cigarItems} catalog={catalog} ratings={ratings} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch||filters.inventoryId} initialEditId={filters.edit} initialEditMode={editFocus} /></div>
+    <div><InventoryManager initialItems={cigarItems} catalog={[]} ratings={[]} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch||filters.inventoryId} initialEditId={filters.edit} initialEditMode={editFocus} initialIntakeQuery={filters.cigarName}/></div>
   </main>;
 }

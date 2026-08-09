@@ -59,7 +59,7 @@ test("contributors can track publication status and founder correction notes",()
 test("founder moderation supports publish, requested changes, and non-publication",()=>{
  const route=readFileSync(new URL("../app/api/ai-administrator/route.ts",import.meta.url),"utf8");
  const component=readFileSync(new URL("../components/ai-administrator.tsx",import.meta.url),"utf8");
- const migration=readFileSync(new URL("../supabase/migrations/202607240001_community_contribution_status.sql",import.meta.url),"utf8");
+ const migration=readFileSync(new URL("../supabase/migrations/202608070001_community_contribution_status.sql",import.meta.url),"utf8");
  assert.match(route,/z\.enum\(\["active","changes","hidden"\]\)/);
  assert.match(route,/Tell the contributor what needs to change/);
  assert.match(component,/Approve & publish/);

@@ -57,12 +57,12 @@ export function WishlistAvailabilityBoard({ items }: { items: WishlistItem[] }) 
       <div>
         <div className="eyebrow">Live market leads</div>
         <h2>Availability and target-price alerts</h2>
-        <p>Results are ranked by exact identity, availability, and normalized price—not compensation. Any compensated link is labeled beside the link. Uncompensated retailer links remain direct and untracked.</p>
+        <p>Results are ranked by exact identity, availability, and normalized price—not compensation. They remain research observations inside the mobile app and do not open retailer purchase pages.</p>
       </div>
     </div>
     <aside className="affiliateIntegrityNotice">
       <strong>Independent research · adults 21+ only</strong>
-      <span>Hojavía does not sell tobacco. Each result is a dated seller observation—not proof that a cigar is current production, discontinued, globally scarce, authentic, or available in another market. Retailers independently control age verification, shipping eligibility, inventory, pricing, and legal compliance. <a href="/learn/availability-status">Learn how to read availability →</a></span>
+      <span>Hojavía does not sell tobacco. Each result is a dated seller observation—not proof that a cigar is current production, discontinued, globally scarce, authentic, or available in another market. The mobile app does not use affiliate tracking or open tobacco purchase pages. <a href="/learn/availability-status">Learn how to read availability →</a></span>
     </aside>
     {error && <output className="wishlistMessage">{error}</output>}
     <div className="availabilityTargets">
@@ -88,12 +88,8 @@ export function WishlistAvailabilityBoard({ items }: { items: WishlistItem[] }) 
             <p className="availabilitySummary">{research.summary}</p>
             <div className="listingGrid">
               {research.listings.map(listing => {
-                const compensated = listing.commercialRelationship === "Affiliate — compensated link";
-                return <a
+                return <article
                   className={matches.has(listing.url) ? "targetMatch" : undefined}
-                  href={listing.outboundUrl || listing.url}
-                  target="_blank"
-                  rel={compensated ? "noreferrer noopener sponsored" : "noreferrer noopener"}
                   key={listing.url}
                 >
                   {matches.has(listing.url) && <span className="targetMatchLabel">At or below target</span>}
@@ -105,10 +101,8 @@ export function WishlistAvailabilityBoard({ items }: { items: WishlistItem[] }) 
                     <em>{listing.quantity ? `${listing.quantity} cigars` : "Quantity unconfirmed"}{listing.unitPrice !== undefined ? ` · ${money.format(listing.unitPrice)} each` : ""}</em>
                   </div>
                   <p>{listing.condition || listing.notes}</p>
-                  {compensated
-                    ? <small className="commercialDisclosure">{listing.commercialDisclosure}</small>
-                    : <small className="commercialDisclosure neutral">Direct retailer link · Hojavía receives no configured compensation.</small>}
-                </a>;
+                  <small className="commercialDisclosure neutral">Research observation only · no purchase link or affiliate tracking in the mobile app.</small>
+                </article>;
               })}
               {!research.listings.length && <div className="emptyState">No reliable direct listings were found.</div>}
             </div>

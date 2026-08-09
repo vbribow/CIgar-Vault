@@ -18,10 +18,10 @@ test("valuation research is explicit about credit use and never saves automatica
   assert.match(manager, /Save reviewed evidence/);
 });
 
-test("valuation research offers a transaction-tracked retailer link when exact retail evidence exists", () => {
-  assert.match(manager, /Buy this cigar ↗/);
-  assert.match(manager, /\/api\/retailer-market\/click/);
-  assert.match(manager, /asking price and availability are not a confirmed sale/);
+test("valuation research preserves retailer evidence without a transaction exit", () => {
+  assert.match(manager, /Retailer asking-price evidence recorded/);
+  assert.match(manager, /without opening a tobacco purchase page or adding affiliate tracking/);
+  assert.doesNotMatch(manager, /\/api\/retailer-market\/click|Buy this cigar ↗|window\.open/);
 });
 
 test("research proposals populate every evidence class without weakening sale proof", () => {

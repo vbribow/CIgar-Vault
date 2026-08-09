@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import { CollectorWalkthrough } from "@/components/collector-walkthrough";
 
 export const metadata: Metadata = {
-  title: "Synthetic Collector Walkthrough",
-  description: "A private synthetic walkthrough of identity, acquisition, provenance, official verification evidence, uncertainty, and portable collection records.",
+  title: "Collector Record Practice Guide",
+  description: "A private practice guide for recording a cigar, its purchase history, package photos, and an official lookup without changing your Vault.",
 };
 
 export default function CollectorWalkthroughPage() {
   return <main className="shell walkthroughPage">
     <section className="walkthroughHero">
-      <div><div className="eyebrow">Private product walkthrough</div><h1>From acquisition to evidence.</h1><p className="lede">Follow one synthetic Habanos record through identity, acquisition, package evidence, an official-check state, a careful conclusion, and a portable export—without touching your collection.</p></div>
-      <aside><strong>Records evidence</strong><span>Does not authenticate cigars</span><small>Synthetic example · nothing saved · nothing submitted</small></aside>
+      <div><div className="eyebrow">Private practice guide</div><h1>Record what you know. Keep questions visible.</h1><p className="lede">Practice with an example Habanos box: record the cigar, purchase, package photos, and official lookup, then see what those details do—and do not—confirm. Your Vault is never changed.</p></div>
+      <aside><strong>Practice example</strong><span>Does not authenticate cigars</span><small>No real purchase · nothing saved · nothing submitted</small></aside>
     </section>
     <CollectorWalkthrough />
-    <section className="section card walkthroughBoundary"><div><div className="eyebrow">Public–private boundary</div><h2>The method can be shared. The collector record stays private.</h2></div><div><p>Public education explains sources, evidence states, and uncertainty. Prices, payment details, addresses, tracking, private correspondence, ownership, and storage locations remain private account data.</p><p>This walkthrough does not certify a product or seller, provide legal advice, or make a partner claim.</p></div></section>
+    <section className="section card walkthroughBoundary"><div><div className="eyebrow">Your privacy</div><h2>The guidance can be shared. Your collection details stay private.</h2></div><div><p>Hojavía can explain how to check a source and record an unanswered question. Your prices, payment details, addresses, messages, ownership, and storage locations remain private.</p><p>This guide does not certify a product or seller and does not provide legal advice.</p></div></section>
   </main>;
 }

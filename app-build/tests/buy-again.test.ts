@@ -22,9 +22,10 @@ test("every cigar record exposes a no-credit buy-again path with transparent sou
   assert.match(page, /<BuyAgainPanel/);
   assert.match(page, /safeRecordedPurchaseUrl/);
   assert.match(panel, /Simple collector utility · no AI credits/);
-  assert.match(panel, /Buy again from/);
+  assert.match(panel, /Remember this cigar/);
   assert.match(panel, /Add to buying list/);
-  assert.match(panel, /No commercial relationship influences this placement/);
+  assert.match(panel, /does not use affiliate tracking or facilitate a tobacco purchase/);
+  assert.doesNotMatch(panel, /href=\{sourceUrl\}/);
   assert.match(route, /loadInventory\(\)/);
   assert.match(route, /loadWishlist\(\)/);
   assert.match(route, /sameBuyAgainTarget/);

@@ -15,6 +15,7 @@ import {
 } from "@/lib/beta-onboarding";
 import { FounderBetaFeedback } from "@/components/founder-beta-feedback";
 import { forgetFounderSessionKey, readFounderSessionKey, rememberFounderSessionKey } from "@/lib/founder-session";
+import { FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
 
 const stages: BetaStage[] = ["Prospect", "Invited", "Signed up", "Imported", "Activated"];
 type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; backedUp:number; openFeedback:number; blockingFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
@@ -102,19 +103,46 @@ export function FounderOnboarding() {
     }
   }
 
+  async function sendInvitation(item: BetaCollector) {
+    if (!window.confirm(`Send the private beta invitation to ${item.email}?`)) return false;
+    const response = await fetch("/api/founder-onboarding/invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-founder-key": key },
+      body: JSON.stringify({ collectorId:item.id }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Unable to send invitation");
+    setItems(current => (current || []).map(value => value.id === item.id ? { ...value, ...result.data.collector, progress:value.progress } : value));
+    return true;
+  }
+
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/founder-onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-founder-key": key },
-      body: JSON.stringify({ name:form.get("name"), email:form.get("email"), stage:form.get("stage"), notes:form.get("notes") }),
-    });
-    const result = await response.json();
-    if (!response.ok) { setMessage(result.error); return; }
-    setItems(current => [result.data, ...(current || [])]);
-    event.currentTarget.reset();
-    setMessage("Collector added to the onboarding queue.");
+    const name = String(form.get("name") || "");
+    const email = String(form.get("email") || "");
+    if (!window.confirm(`Add ${name} and send the private beta invitation to ${email}?`)) return;
+    setBusy(true);
+    setMessage("Adding tester…");
+    try {
+      const response = await fetch("/api/founder-onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-founder-key": key },
+        body: JSON.stringify({ name, email, stage:"Prospect", notes:form.get("notes") }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to add tester");
+      const collector = result.data as BetaCollector;
+      setItems(current => [collector, ...(current || [])]);
+      event.currentTarget.reset();
+      const sent = await sendInvitation(collector);
+      if (!sent) setMessage(`${collector.name} was added without access. Send the invitation from their card when ready.`);
+      else setMessage(`The email provider accepted the invitation for ${collector.email}; delivery is not yet confirmed.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to add tester");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function update(item: BetaCollector, stage: BetaStage) {
@@ -139,11 +167,8 @@ export function FounderOnboarding() {
   }
 
   function prepare(item: BetaCollector) {
-    if (item.stage !== "Invited") { setMessage("Move this collector to Invited before preparing access."); return; }
-    if (!readiness?.ready) { setMessage("Invitation is held until every readiness gate passes."); return; }
-    setPrepared(item);
-    setCopied(false);
-    setMessage(`Invitation prepared for ${item.name}. Copy it below or open your email app.`);
+    if (item.stage !== "Invited") { setMessage("Send the invitation before preparing a copy."); return; }
+    setPrepared(item); setCopied(false); setMessage(`Invitation copy prepared for ${item.name}.`);
   }
 
   async function copyInvitation() {
@@ -187,11 +212,11 @@ export function FounderOnboarding() {
     }
   }
 
-  if (!items) return <section className="card betaGate"><div><div className="eyebrow">Founder access</div><h2>Open the beta onboarding queue</h2><p>Protected by the same Founder key used for private operations. Tester progress refreshes automatically after access is confirmed.</p></div><form onSubmit={unlock}><label><span>Founder write key</span><input name="writeKey" type="password" required/></label><button className="button" disabled={busy}>{busy ? "Refreshing progress…" : "Open queue"}</button></form>{message && <output>{message}</output>}</section>;
+  if (!items) return <section className="card betaGate"><div><div className="eyebrow">Founder access</div><h2>Open beta invitations</h2><p>Protected by the same Founder key used for private operations. Tester progress refreshes automatically after access is confirmed.</p></div><form onSubmit={unlock}><label><span>Founder write key</span><input name="writeKey" type="password" required/></label><button className="button" disabled={busy}>{busy ? "Refreshing progress…" : "Open invitations"}</button></form>{message && <output>{message}</output>}</section>;
 
   return <>
     <div className="betaSync"><div><strong>Account-aware pipeline</strong><span>Milestones refresh automatically when this dashboard opens. Use Sync after a tester completes a step while the page remains open.</span></div><button className="button secondary" onClick={sync} disabled={busy}>{busy ? "Synchronizing…" : "Sync account progress"}</button></div>
-    <section className="betaMetrics"><article><span>Pipeline</span><strong>{summary.total}</strong><small>tracked collectors</small></article><article><span>Invited</span><strong>{summary.invited}</strong><small>awaiting signup</small></article><article><span>Imported</span><strong>{summary.imported}</strong><small>vault data loaded</small></article><article><span>Product milestone</span><strong>{summary.activated}</strong><small>20+ lots plus key action</small></article><article><span>Founder seats</span><strong>{summary.founderSeatsRemaining}</strong><small>remaining of 25</small></article></section>
+    <section className="betaMetrics"><article><span>Pipeline</span><strong>{summary.total}</strong><small>tracked collectors</small></article><article><span>Invited</span><strong>{summary.invited}</strong><small>awaiting signup</small></article><article><span>Imported</span><strong>{summary.imported}</strong><small>vault data loaded</small></article><article><span>Product milestone</span><strong>{summary.activated}</strong><small>20+ lots plus key action</small></article><article><span>Founder seats</span><strong>{summary.founderSeatsRemaining}</strong><small>remaining of {FOUNDER_BETA_SEAT_LIMIT}</small></article></section>
     {readiness && <section className={`betaReadiness card ${readiness.ready ? "ready" : "attention"}`}><header><div><div className="eyebrow">Invitation gate</div><h2>{readiness.ready ? "Ready for the controlled cohort" : "Hold invitations until every gate passes"}</h2><p>{readiness.readyCount} of {readiness.totalGates} minimum safeguards pass · {readiness.openFeedback} open feedback item(s)</p></div><strong>{readiness.readyCount}/{readiness.totalGates}</strong></header><div>{readiness.gates.map(gate => <article key={gate.key}><span className={gate.ready ? "pass" : "hold"}>{gate.ready ? "✓" : "!"}</span><div><b>{gate.label}</b><small>{gate.detail}</small></div></article>)}</div></section>}
     {message && <output className="betaMessage" aria-live="polite">{message}</output>}
     <section className="betaSupportGrid">
@@ -204,7 +229,8 @@ export function FounderOnboarding() {
         return <article key={item.id}>
           <div><small>{item.email}</small><h3>{item.name}</h3><p>{item.notes || "No follow-up notes yet."}</p></div>
           <label><span>Stage</span><select value={item.stage} disabled={busy} onChange={event => update(item, event.target.value as BetaStage)}>{stages.map(stage => <option value={stage} key={stage}>{betaStageLabel(stage)}</option>)}</select></label>
-          <button type="button" className="button secondary" onClick={() => prepare(item)}>Prepare invite</button>
+          <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Sending invitation…");try{const sent=await sendInvitation(item);if(sent)setMessage(`The email provider accepted the invitation for ${item.email}; delivery is not yet confirmed.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to send invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Send invitation" : "Resend invitation"}</button>
+          <button type="button" className="textButton" disabled={busy || item.stage !== "Invited"} onClick={() => prepare(item)}>View invitation</button>
           <button type="button" className="button secondary" disabled={busy || item.stage === "Prospect"} onClick={() => sendReinstall(item)}>Send app update</button>
           <section className="betaCollectorProgress" aria-label={`${item.name} beta progress`}>
             <header><div><span>Next required action</span><strong>{next.label}</strong><small>{next.detail}</small></div><b>{betaProgressSteps(item.progress).filter(step => step.complete).length}/7</b></header>
@@ -214,7 +240,7 @@ export function FounderOnboarding() {
       })}
       {!items.length && <div className="emptyState">No beta collectors tracked yet.</div>}
       {prepared && preparedEmail && webmailLinks && <section className="betaEmailPreview card" aria-label={`Invitation for ${prepared.name}`}><header><div><div className="eyebrow">Invitation ready</div><h2>{prepared.name}</h2><small>{preparedEmail.recipient}</small></div><button type="button" className="button secondary" onClick={() => setPrepared(undefined)}>Close</button></header><label><span>Subject</span><input readOnly value={preparedEmail.subject}/></label><label><span>Message</span><textarea readOnly rows={15} value={preparedEmail.body}/></label><div className="betaEmailActions"><button type="button" className="button" onClick={copyInvitation}>{copied ? "Copied ✓" : "Copy invitation"}</button><a className="button secondary" href={webmailLinks.gmail} target="_blank" rel="noreferrer">Open Gmail</a><a className="button secondary" href={webmailLinks.outlook} target="_blank" rel="noreferrer">Open Outlook</a><a className="button secondary" href={webmailLinks.yahoo} target="_blank" rel="noreferrer">Open Yahoo Mail</a></div></section>}
-    </div><aside className="card"><div className="eyebrow">White-glove onboarding</div><h2>Add a collector</h2><p className="small">Add the collector as a Prospect, then deliberately move them to Invited before sending access. No email is sent automatically.</p><form className="betaForm" onSubmit={create}><label><span>Name</span><input name="name" required/></label><label><span>Email</span><input name="email" type="email" required/></label><label><span>Stage</span><select name="stage">{stages.map(stage => <option value={stage} key={stage}>{betaStageLabel(stage)}</option>)}</select></label><label><span>Notes</span><textarea name="notes" rows={4}/></label><button className="button">Add to queue</button></form></aside></section>
+    </div><aside className="card"><div className="eyebrow">Private beta</div><h2>Add and invite a tester</h2><p className="small">One action adds the tester and sends their invitation after your confirmation. Their access remains disabled if the email provider cannot accept the message.</p><form className="betaForm" onSubmit={create} aria-busy={busy}><label><span>Name</span><input name="name" required/></label><label><span>Email</span><input name="email" type="email" required/></label><label><span>Notes</span><textarea name="notes" rows={4}/></label><button className="button" disabled={busy}>{busy?"Adding and sending…":"Add & send invitation"}</button></form></aside></section>
     <FounderBetaFeedback writeKey={key} onFeedbackUpdated={() => fetchReadiness()}/>
   </>;
 }

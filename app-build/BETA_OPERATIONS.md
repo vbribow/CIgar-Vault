@@ -10,12 +10,12 @@ cleared and explicitly adopted replacement name.
 
 ## Purpose
 
-Operate a controlled cohort of four to five trusted collectors without treating the beta as a public launch.
+Operate a controlled cohort of up to 10 trusted collectors without treating the beta as a public launch. The cap does not authorize invitations: each participant still requires Brian's approval and every invitation gate must pass.
 
 ## Launch controls
 
 - Set `BETA_INVITE_ONLY=true` in the production environment.
-- Complete `MIGRATION_RECONCILIATION_RUNBOOK.md` before any schema release. The duplicate local version `202607240001` remains a release hold until remote history identifies the applied migration.
+- Complete `MIGRATION_RECONCILIATION_RUNBOOK.md` before any schema release. The local filename collision is resolved, but production has no Supabase migration ledger and must receive a reviewed, backed-up baseline before future migrations.
 - Apply `202607240008_beta_readiness.sql` before inviting anyone.
 - Add a collector in `/founder-onboarding` as a Prospect.
 - Move the collector to Invited only after Brian approves that person.

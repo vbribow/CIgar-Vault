@@ -116,7 +116,7 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Device coverage and stability window",
     status: "In progress",
     detail: "Complete the required browser/device matrix and sustain seven production-like days without a Severity 1 or critical-path Severity 2 defect.",
-    evidence: "Automated mobile safeguards are green and one physical-phone quantity synchronization path has passed. On August 6, 928 tests, type checking, the 181-route navigation audit, and the production build passed. A local rollback rehearsal verified 278 files (13,002,204 bytes) under artifact SHA-256 419849e374a0c756d3d5f1f06a7c8f9271e56a859ec77a541f7963b2543bb587, rejected damage, and restored the prior artifact without production or collector-data changes. Eight authenticated production routes loaded read-only without a server error. The August 7 live El Tributo reconciliation closed the collection-data hold. The candidate remains unfrozen and the clock stays at 0/7 because the remote migration ledger is unavailable and physical iPhone/Android plus recovery acceptance remain incomplete.",
+    evidence: "Automated mobile safeguards are green and one physical-phone quantity synchronization path has passed. On August 6, 928 tests, type checking, the 181-route navigation audit, and the production build passed. A local rollback rehearsal verified 278 files (13,002,204 bytes) under artifact SHA-256 419849e374a0c756d3d5f1f06a7c8f9271e56a859ec77a541f7963b2543bb587, rejected damage, and restored the prior artifact without production or collector-data changes. Eight authenticated production routes loaded read-only without a server error. The August 7 live El Tributo reconciliation closed the collection-data hold. The production dashboard confirmed both formerly colliding schema changes are deployed but no Supabase migration ledger exists; the local filename collision is reconciled, while a reviewed production baseline transaction remains required. The candidate remains unfrozen and the clock stays at 0/7 because that baseline and physical iPhone/Android plus recovery acceptance remain incomplete.",
     priority: "Next",
   },
   {
@@ -144,7 +144,7 @@ export const launchDeviceMatrix = [
 
 export const founderGoNoGoChecklist = [
   { gate: "Release candidate", status: "Hold", detail: "Resolve the production migration ledger and complete physical-device recovery acceptance before freezing the verified artifact and starting day one." },
-  { gate: "Database migrations", status: "Hold", detail: "Capture the correct production Supabase migration ledger and resolve duplicate version 202607240001 without guessing." },
+  { gate: "Database migrations", status: "Hold", detail: "The local collision is resolved. Create a reviewed production migration baseline only after backup and explicit approval; the production project currently has no Supabase migration ledger." },
   { gate: "Beta evidence", status: "Hold", detail: "Complete physical-device, recovery, and second-device sessions with approved identities." },
   { gate: "Brand and legal", status: "Founder decision", detail: "Record clearance advice, legal owner/state, support owner, incident owner, and dated adoption decision." },
   { gate: "Google Places", status: "Deferred external", detail: "Configure restricted production credentials immediately before public lounge launch." },
