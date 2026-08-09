@@ -51,6 +51,18 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const [lastCreated, setLastCreated] = useState<InventoryItem | null>(null);
   const editSafety = useUnsavedChanges();
 
+  useEffect(() => {
+    if (!initialEditId) return;
+    const requested = initialItems.find((item) => item.inventoryId === initialEditId);
+    if (!requested) return;
+    setEditing(requested);
+    setDraft(null);
+    setEditMode(initialEditMode);
+    setQuery(requested.inventoryId);
+    setQueryInput(requested.inventoryId);
+    setMessage("");
+  }, [initialEditId, initialEditMode, initialItems]);
+
   function searchInventory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setQuery(queryInput.trim());
