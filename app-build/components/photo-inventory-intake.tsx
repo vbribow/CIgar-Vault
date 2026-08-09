@@ -10,6 +10,7 @@ import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import { VitolaField } from "@/components/vitola-field";
 import { recentYearOptions } from "@/lib/year-options";
 import searchStyles from "./photo-identification-progress.module.css";
+import { matchesInventorySearch } from "@/lib/cigar-search";
 
 const evidenceTypes = ["Typed description", "Cigar band", "Single cigar", "Sealed box", "Open box", "Box code", "Habanos seal", "Receipt / provenance"];
 const queueKey = "cigar-vault:intake-drafts:v1";
@@ -19,10 +20,6 @@ type QueuedDraft = { draft: InventoryItem; photoNames: string[]; confidence: Cig
 type IntakePhotoKind = "cigar" | "box" | "habanos-seal" | "box-code" | "provenance";
 type IntakeStage = "identify" | "review" | "saved";
 type WorkingDraft = { query: string; brand: string; line: string; vitola: string; vintage: string; evidenceType: string; packaging: string; fullBoxQty: string; sticksPerBox: string; looseStickQty: string; stage: "identify" | "review" };
-
-function normalizedSearchTerms(value: string) {
-  return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter((term) => term.length > 1);
-}
 
 function intakePhotoKind(evidenceType: string): IntakePhotoKind {
   if (evidenceType === "Sealed box" || evidenceType === "Open box") return "box";
@@ -112,11 +109,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
     setStage("review"); setMessage(`Identification ready (${value.confidence} confidence). Review every field before adding the draft.`);
   }
   function checkVault() {
-    const terms = normalizedSearchTerms(query);
-    const matches = inventory.filter((item) => {
-      const searchable = normalizedSearchTerms([item.brand, item.line, item.vitola, item.vintage].filter(Boolean).join(" "));
-      return terms.every((term) => searchable.some((value) => value.includes(term) || term.includes(value)));
-    }).slice(0, 8);
+    const matches = inventory.filter((item) => matchesInventorySearch(item,query)).slice(0, 8);
     setVaultMatches(matches);
     setVaultChecked(true);
     setMessage(matches.length
@@ -229,11 +222,11 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
       </div>
     </section>}
 
-    {stage === "saved" && readyForAnother && <section ref={completion} tabIndex={-1} className="intakeCompletion" aria-labelledby="saved-stage-title"><div className="eyebrow">Step 3 of 3 · Final review</div><h3 id="saved-stage-title">Confirm this lot below.</h3><p>The details are ready, but the lot has not been added to your Vault yet.</p><div><button type="button" className="button" onClick={nextAsset}>Document another cigar</button><a className="button secondary" href="/inventory#inventory-records">Return to Vault</a></div></section>}
+    {stage === "saved" && readyForAnother && <section ref={completion} tabIndex={-1} className="intakeCompletion" aria-labelledby="saved-stage-title"><div className="eyebrow">Step 3 of 3 · Final review</div><h3 id="saved-stage-title">Confirm this lot below.</h3><p>The details are ready, but the lot has not been added to your Vault yet.</p><div><button type="button" className="button" onClick={nextAsset}>Enter another cigar</button><a className="button secondary" href="/inventory#inventory-records">Return to Vault</a></div></section>}
     {message && <output ref={messageOutput} tabIndex={-1} className="intakeMessage" role="status" aria-live="polite" aria-atomic="true">{message}</output>}
     {photoFailures.length > 0 && <div className="photoRetryList" aria-label="Photo attachment follow-up">{photoFailures.map((failure) => <article key={failure.inventoryId}><strong>{failure.inventoryId} was saved</strong><small>{failure.reason}</small><a href={`/inventory/${encodeURIComponent(failure.inventoryId)}#record-tools`}>Open saved record and attach photo →</a></article>)}</div>}
 
-    {queue.length > 0 && <section className="intakeQueue"><div className="intakeQueueHead"><div><div className="eyebrow">Saved review queue</div><h3>{queue.length} draft{queue.length === 1 ? "" : "s"}</h3><small>{pending} selected · saved locally until approval</small></div>{stage !== "saved" && <button type="button" className="button secondary" onClick={nextAsset}>Document another cigar</button>}</div>
+    {queue.length > 0 && <section className="intakeQueue"><div className="intakeQueueHead"><div><div className="eyebrow">Saved review queue</div><h3>{queue.length} draft{queue.length === 1 ? "" : "s"}</h3><small>{pending} selected · saved locally until approval</small></div>{stage !== "saved" && <button type="button" className="button secondary" onClick={nextAsset}>Enter another cigar</button>}</div>
       <div className="intakeQueueList">{queue.map((entry, index) => <article className={entry.duplicateCount && !entry.acknowledged ? "attention" : "ready"} key={entry.draft.inventoryId}><input type="checkbox" aria-label={`Select draft ${index + 1}`} checked={entry.selected} onChange={(event) => setQueue((current) => current.map((item) => item.draft.inventoryId === entry.draft.inventoryId ? { ...item, selected: event.target.checked } : item))}/><div><span>Draft {index + 1}</span><strong>{entry.draft.brand} · {entry.draft.line}</strong><small>{entry.draft.vitola} · {entry.photoNames.length} photo(s) · {entry.confidence}</small></div><b>{entry.duplicateCount ? `${entry.duplicateCount} possible duplicate(s)` : entry.uncertaintyCount ? `${entry.uncertaintyCount} detail check(s)` : "Ready"}</b><div><button type="button" onClick={() => onDraft(entry.draft)}>Edit</button>{entry.duplicateCount > 0 && <label className="acknowledge"><input type="checkbox" checked={entry.acknowledged} onChange={(event) => setQueue((current) => current.map((item) => item.draft.inventoryId === entry.draft.inventoryId ? { ...item, acknowledged: event.target.checked } : item))}/>Reviewed</label>}<button type="button" className="danger" onClick={() => setQueue((current) => current.filter((item) => item.draft.inventoryId !== entry.draft.inventoryId))}>Remove</button></div></article>)}</div>
       <form className="intakeApproval" onSubmit={approve} aria-busy={approving}>{mode === "smartsheet" && <fieldset className="founderMasterControls"><legend>Founder master controls</legend><label><input name="syncMaster" type="checkbox"/> Also synchronize selected drafts to the Smartsheet master</label><label><span>Founder write key *</span><input name="writeKey" type="password" required/></label></fieldset>}<button className="button" disabled={!pending||approving}>{approving ? "Adding to Vault…" : `Add ${pending} selected lot${pending === 1 ? "" : "s"} to my Vault`}</button></form>
     </section>}

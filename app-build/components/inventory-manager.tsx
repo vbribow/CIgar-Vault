@@ -24,6 +24,7 @@ import { useUnsavedChanges } from "@/components/use-unsaved-changes";
 import { recentYearOptions } from "@/lib/year-options";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 import { releaseLotIntegrityIssues } from "@/lib/physical-lot-identity";
+import { matchesInventorySearch } from "@/lib/cigar-search";
 
 const empty: InventoryItem = { inventoryId: "", brand: "", line: "", vitola: "", smokedQty: 0, status: "Hold", priority: "Medium" };const numberFields = new Set(["originalQty", "smokedQty", "fullBoxQty", "sticksPerBox", "looseStickQty", "retailValue", "actualCost", "score"]);const clearableFields = new Set(["catalogId","collectionId","vintage","packaging","boxCode","originalQty","smokedQty","fullBoxQty","sticksPerBox","looseStickQty","knownBoxSizes","boxFormatSourceUrl","retailValue","actualCost","storageLocationId","provenanceNotes","score","action","habanosSealPhotoLink","acquisitionSeller","acquisitionDate","acquisitionSourceUrl","acquisitionReceiptLink","purchaseJurisdiction","habanosVerificationDate","habanosVerificationResult","habanosVerificationEvidenceLink","habanosVerificationNotes","notes"]);
 const packagingOptions=["Box","Tin","Jar","Presentation humidor / case","Sampler","Bundle","Individual cigar","Other"] as const;
@@ -33,6 +34,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const [items, setItems] = useState(initialItems);
   const requestedItem=initialEditId?initialItems.find(item=>item.inventoryId===initialEditId):undefined;
   const [query, setQuery] = useState(initialQuery||requestedItem?.inventoryId||"");
+  const [queryInput, setQueryInput] = useState(initialQuery||requestedItem?.inventoryId||"");
   const [status, setStatus] = useState(initialStatus);
   const [missing, setMissing] = useState(initialMissing);
   const [storage, setStorage] = useState(initialStorage);
@@ -48,6 +50,21 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const [recentlySaved, setRecentlySaved] = useState<{ inventoryId: string; token: number }>();
   const [lastCreated, setLastCreated] = useState<InventoryItem | null>(null);
   const editSafety = useUnsavedChanges();
+
+  function searchInventory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setQuery(queryInput.trim());
+  }
+
+  function clearInventorySearch() {
+    setQueryInput("");
+    setQuery("");
+    setStatus("all");
+    setMissing("all");
+    setStorage("all");
+    setSelected(new Set());
+    if (initialCollectionId || initialActiveOnly) window.location.assign("/inventory#inventory-records");
+  }
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -107,11 +124,10 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const releaseLotIssues = useMemo(() => releaseLotIntegrityIssues(scopedItems), [scopedItems]);
   const releaseLotIssueIds = useMemo(() => new Set(releaseLotIssues.map(issue => issue.inventoryId)), [releaseLotIssues]);
   const filtered = useMemo(() => scopedItems.filter((item) => {
-    const haystack = `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola}`.toLowerCase();
     const missingMatch = missing === "all" || (missing === "quantity" && !hasDocumentedCurrentQuantity(item)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes) || (missing === "release-lot" && releaseLotIssueIds.has(item.inventoryId));
     const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
-    return haystack.includes(query.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && (!initialActiveOnly || (item.currentQty ?? 0) > 0);
+    return matchesInventorySearch(item,query) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && (!initialActiveOnly || (item.currentQty ?? 0) > 0);
   }), [scopedItems, query, status, missing, storage, initialCollectionId, initialActiveOnly, releaseLotIssueIds]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -270,10 +286,11 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     <PhotoInventoryIntake catalog={catalog} inventory={items} mode={mode} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("");setLastCreated(null)}} onApproved={(approved)=>{setItems(current=>[...current,...approved.filter(item=>!current.some(existing=>existing.inventoryId===item.inventoryId))]);setDraft(null);const saved=approved.at(-1);if(saved){setLastCreated(saved);setRecentlySaved({inventoryId:saved.inventoryId,token:Date.now()});setMessage(`${approved.length} ${approved.length===1?"cigar record was":"cigar records were"} saved to your private Vault. Choose what to do next below.`)}}} />
     {lastCreated&&<section className="card firstRecordSuccess" aria-live="polite"><div><div className="eyebrow">Saved to your private Vault</div><h2>{lastCreated.brand} {lastCreated.line}</h2><p>Your first useful record is complete. You can stop here with confidence or add the next piece of its story.</p></div><div className="firstRecordActions"><a className="button" href={`/inventory/${encodeURIComponent(lastCreated.inventoryId)}`}>Open saved record</a><button type="button" className="button secondary" onClick={()=>startEditing(lastCreated,"storage")}>Assign storage</button>{isCubanInventory(lastCreated)&&<a className="button secondary" href="/verification">Review Habanos evidence</a>}<a className="button secondary" href="/">See my first collection insight</a><button type="button" className="textLink" onClick={()=>setLastCreated(null)}>I’m done for now</button></div></section>}
     <section className="toolbar" id="inventory-records" aria-label="Inventory records and filters">
-      <label><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label>
+      <form className="inventorySearchForm" role="search" onSubmit={searchInventory}><label><span>Search existing inventory</span><input type="search" value={queryInput} onChange={(event) => setQueryInput(event.target.value)} placeholder="Brand, line, vitola, or ID" /></label><button className="button" disabled={!queryInput.trim()}>Search Vault</button></form>
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="release-lot">Release / lot integrity ({releaseLotIssueIds.size})</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>
       <label><span>Storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All locations</option><option value="unassigned">Unassigned</option>{locations.map((value)=><option key={value}>{value}</option>)}</select></label>
+      <button type="button" className="button secondary clearInventoryFilters" onClick={clearInventorySearch} disabled={!queryInput&&!query&&status==="all"&&missing==="all"&&storage==="all"&&!initialCollectionId&&!initialActiveOnly}>Clear search and filters</button>
       <div className="filterCount">{filtered.length} of {scopedItems.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
     </section>
     {message&&missing!=="all"&&<div className="inventoryQueueNotice" role="status" aria-live="polite">{message}<small>{filtered.length} record{filtered.length===1?"":"s"} currently remain in this audit view.</small></div>}

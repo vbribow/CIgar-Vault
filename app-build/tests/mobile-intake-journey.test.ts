@@ -21,7 +21,7 @@ test("unfinished typed work is restored locally without overstating photo persis
 });
 
 test("completion choices and founder-only controls remain clear", () => {
-  assert.match(intake, /Document another cigar/);
+  assert.match(intake, /Enter another cigar/);
   assert.match(intake, /Return to Vault/);
   assert.match(intake, /mode === "smartsheet" && <fieldset className="founderMasterControls"/);
   assert.match(intake, /Possible duplicate — review before saving/);

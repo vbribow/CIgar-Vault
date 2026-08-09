@@ -16,22 +16,17 @@ import { valuationRetailLead,type ValuationResearch } from "@/lib/valuation-rese
 import type { CigarVisionResult } from "@/lib/cigar-vision";
 import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-capture";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
+import { matchesInventorySearch, normalizeCigarSearch } from "@/lib/cigar-search";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
-function normalizeSmokeSearch(value: string) {
-  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\btaurus\b/g, "tauros").replace(/\bopus x\b/g, "opusx").trim();
-}
 export function matchesSmokeInventory(item: InventoryItem, query: string) {
-  const terms = normalizeSmokeSearch(query).split(" ").filter(Boolean);
-  if (!terms.length) return true;
-  const searchable = normalizeSmokeSearch([item.inventoryId, item.brand, item.line, item.vitola, item.vintage, item.collectionId].filter(Boolean).join(" "));
-  return terms.every(term => searchable.includes(term));
+  return matchesInventorySearch(item,query);
 }
 export function compareSmokeInventory(left: InventoryItem, right: InventoryItem) {
-  const leftFamily = normalizeSmokeSearch(`${left.brand} ${left.line}`);
-  const rightFamily = normalizeSmokeSearch(`${right.brand} ${right.line}`);
+  const leftFamily = normalizeCigarSearch(`${left.brand} ${left.line}`);
+  const rightFamily = normalizeCigarSearch(`${right.brand} ${right.line}`);
   return leftFamily.localeCompare(rightFamily, undefined, { numeric: true })
-    || normalizeSmokeSearch(left.vitola).localeCompare(normalizeSmokeSearch(right.vitola), undefined, { numeric: true })
+    || normalizeCigarSearch(left.vitola).localeCompare(normalizeCigarSearch(right.vitola), undefined, { numeric: true })
     || String(left.vintage || "").localeCompare(String(right.vintage || ""), undefined, { numeric: true })
     || left.inventoryId.localeCompare(right.inventoryId, undefined, { numeric: true });
 }
