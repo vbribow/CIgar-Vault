@@ -113,6 +113,16 @@ test("a successful async save resets the captured form without falling into Retr
   assert.match(manager,/setNewSmokeConfirmed\(false\)/);
 });
 
+test("a lost mobile save response is confirmed automatically with the same submission",()=>{
+  const manager=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
+  const requests=readFileSync(new URL("../lib/request-control.ts",import.meta.url),"utf8");
+  assert.match(manager,/fetchWithConfirmationRetry\(endpoint, request, 20_000\)/);
+  assert.match(manager,/payload\.submissionId = smokeSubmissionId/);
+  assert.match(requests,/return await fetchWithTimeout\(input, init, timeoutMs\)/g);
+  assert.match(manager,/focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(manager,/smokeSaveFeedback\.current\?\.scrollIntoView/);
+});
+
 test("inventory decrement runs only after the insert-only smoke reservation wins",()=>{
   const route=readFileSync(new URL("../app/api/smoking-log/route.ts",import.meta.url),"utf8");
   const reserve=route.indexOf('createOwnedRecord("smokes"');

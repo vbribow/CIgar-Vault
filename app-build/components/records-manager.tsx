@@ -16,7 +16,7 @@ import { valuationRetailLead,type ValuationResearch } from "@/lib/valuation-rese
 import type { CigarVisionResult } from "@/lib/cigar-vision";
 import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-capture";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
-import { fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
+import { fetchWithConfirmationRetry, fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
 import { matchesInventorySearchForgiving } from "@/lib/cigar-search";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
@@ -137,11 +137,15 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     } else payload.submissionId = valuationSubmissionId;
     let failureStatus=0;
     try {
-      const response = await fetchWithTimeout(kind === "smoke" ? "/api/smoking-log" : "/api/valuations", {
+      const endpoint = kind === "smoke" ? "/api/smoking-log" : "/api/valuations";
+      const request = {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-founder-key": key },
         body: JSON.stringify(payload),
-      }, 15_000);
+      };
+      const response = kind === "smoke"
+        ? await fetchWithConfirmationRetry(endpoint, request, 20_000)
+        : await fetchWithTimeout(endpoint, request, 15_000);
       failureStatus=response.status;
       const result = await readSaveResponse(response);
       if (!response.ok) throw new Error(result.error || "Save failed");
@@ -165,8 +169,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       mutation.fail();
       setMessage(saveRecoveryMessage(error, kind === "smoke" ? "this smoking experience" : "this valuation evidence"));
       if (kind === "smoke") window.setTimeout(() => {
-        smokeSaveFeedback.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        smokeSaveFeedback.current?.focus();
+        smokeSaveFeedback.current?.focus({ preventScroll: true });
       }, 0);
     }
   }
@@ -315,10 +318,10 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <label><span>Tasting notes</span><textarea name="tastingNotes" rows={4} placeholder="How did it begin, develop, and finish? What stood out?" /></label>
         <label className="check"><input name="buyAgain" type="checkbox" /> Buy again</label>
         {mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}
-        <button type="submit" className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Retry save"})}</button>
+        <button type="submit" className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Check save status"})}</button>
+        {message && smokeMutation.status !== "idle" && <output ref={smokeSaveFeedback} className="wideMessage deviceDraftNotice" tabIndex={-1} role={smokeMutation.status === "error" ? "alert" : "status"} aria-live="polite" aria-atomic="true">{message}</output>}
         </fieldset>
       </form>
-      {message && smokeMutation.status !== "idle" && <output ref={smokeSaveFeedback} className="wideMessage deviceDraftNotice" tabIndex={-1} role={smokeMutation.status === "error" ? "alert" : "status"} aria-live="polite" aria-atomic="true">{message}</output>}
       {smokeMutation.complete && <section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="smoke-saved-title"><strong id="smoke-saved-title">Smoke saved.</strong><p>Continue without refreshing or searching for this journal again.</p><div><button type="button" className="button" onClick={() => startAnotherSmoke(true)}>Log this cigar again</button><button type="button" className="button secondary" onClick={() => startAnotherSmoke(false)}>Log another</button>{lastSmokeIdentity?.source&&lastSmokeIdentity.source!=="MANUAL"&&<a className="button secondary" href={`/inventory/${encodeURIComponent(lastSmokeIdentity.source)}`}>Open cigar record</a>}<a className="textLink" href="/inventory">Return to Vault</a></div></section>}
       <div className="recordList" id="smoking-history"><div className="recordListHeader"><h3>Recent smokes</h3><a className="textLink" href="/smoke-journal">View and search every smoke →</a></div>{smokes.slice(0, 8).map(smoke => <div id={`smoke-${smoke.smokeId}`} key={smoke.smokeId}><strong>{smoke.cigarName || smoke.inventoryId}</strong><span>Entry #{smokeEntryOrder(smokes, smoke.smokeId)} · {smoke.dateSmoked} · {smoke.quantitySmoked ?? 1} cigar{(smoke.quantitySmoked ?? 1) === 1 ? "" : "s"} · {smoke.overall ?? "—"}</span><a className="textLink" href={`/smoke-journal?editSmoke=${encodeURIComponent(smoke.smokeId)}#smoke-${encodeURIComponent(smoke.smokeId)}`}>Edit smoke →</a></div>)}</div>
     </section>

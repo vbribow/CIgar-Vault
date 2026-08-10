@@ -6,7 +6,7 @@ export function saveRecoveryMessage(error: unknown, subject: string) {
   const guidance = "Your entries are still on this screen. Review them and try again; retrying will not create a duplicate.";
 
   if (networkFailure.test(detail)) return `Hojavía could not reach your private Vault. ${guidance}`;
-  if (timeoutFailure.test(detail)) return `The save took too long to confirm. Nothing has been marked as saved. ${guidance}`;
+  if (timeoutFailure.test(detail)) return `Hojavía could not confirm whether the save completed. Use “Check save status”; retrying will not create a duplicate because Hojavía checks the same secure submission. Your entries are still on this screen.`;
   if (detail && !/^save failed$|^reading failed$/i.test(detail)) return `Nothing was saved. ${detail} ${guidance}`;
   return `Hojavía could not save ${subject}. ${guidance}`;
 }

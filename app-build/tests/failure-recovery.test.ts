@@ -18,7 +18,7 @@ test("save failures provide calm guidance without claiming success", () => {
     assert.doesNotMatch(message, /saved successfully|saved ✓/i);
   }
   assert.match(network, /could not reach your private Vault/);
-  assert.match(timeout, /Nothing has been marked as saved/);
+  assert.match(timeout, /could not confirm whether the save completed/);
   assert.match(validation, /Nothing was saved\. Quantity must be a whole number/);
 });
 
@@ -27,12 +27,12 @@ test("journal and valuation retries retain the form and submission identity", ()
 
   assert.match(records, /readSaveResponse\(response\)/);
   assert.match(records, /saveRecoveryMessage\(error, kind === "smoke"/);
-  assert.match(records, /error:"Retry save"/g);
+  assert.match(records, /error:"Check save status"/);
   assert.match(records, /const formElement = event\.currentTarget/);
   assert.match(records, /mutation\.succeed\(\);\s*formElement\.reset\(\)/);
   assert.match(records, /setSmokeSubmissionId\(createClientUuid\(\)\)/);
   assert.match(records, /setValuationSubmissionId\(createClientUuid\(\)\)/);
-  assert.match(records, /fetchWithTimeout\(kind === "smoke"/);
+  assert.match(records, /fetchWithConfirmationRetry\(endpoint, request, 20_000\)/);
   assert.match(records, /ref=\{smokeSaveFeedback\}/);
 });
 

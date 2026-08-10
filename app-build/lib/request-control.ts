@@ -30,3 +30,25 @@ export async function fetchWithTimeout(
     externalSignal?.removeEventListener("abort", abortFromCaller);
   }
 }
+
+function isRetryableConfirmationFailure(error: unknown) {
+  return error instanceof RequestTimeoutError
+    || (error instanceof TypeError && /fetch|network|load failed/i.test(error.message));
+}
+
+/**
+ * Repeats an idempotent mutation once when the browser loses the response.
+ * Callers must reuse the same server-owned submission key on both attempts.
+ */
+export async function fetchWithConfirmationRetry(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs = 20_000,
+) {
+  try {
+    return await fetchWithTimeout(input, init, timeoutMs);
+  } catch (error) {
+    if (!isRetryableConfirmationFailure(error) || init.signal?.aborted) throw error;
+    return await fetchWithTimeout(input, init, timeoutMs);
+  }
+}
