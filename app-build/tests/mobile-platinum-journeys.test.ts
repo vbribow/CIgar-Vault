@@ -14,7 +14,7 @@ test("mobile navigation dialogs contain focus and restore the collector's place"
   assert.match(navigation, /aria-describedby="mobile-more-description"/);
   assert.match(navigation, /aria-current=\{active\?"page":undefined\}/);
   assert.match(search, /palette\.current\?\.querySelectorAll/);
-  assert.match(search, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(search, /lockBodyScroll\(\)/);
   assert.match(search, /rememberQuery\(query\); closeSearch\(\)/);
 });
 

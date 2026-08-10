@@ -9,6 +9,7 @@ import {
   searchQueryParam,
 } from "@/lib/search-navigation";
 import { fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 
 const recentSearchStorageKey = "hojavia:recent-searches:v1";
 
@@ -85,8 +86,7 @@ export function GlobalSearch({ initialOpen = false }: { initialOpen?: boolean })
 
   useEffect(() => {
     if (!open) return;
-    const priorOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockBodyScroll();
     const focusTimer = window.setTimeout(() => input.current?.focus(), 0);
     const trapFocus = (event: KeyboardEvent) => {
       if (event.key !== "Tab") return;
@@ -100,7 +100,7 @@ export function GlobalSearch({ initialOpen = false }: { initialOpen?: boolean })
     return () => {
       window.clearTimeout(focusTimer);
       window.removeEventListener("keydown", trapFocus);
-      document.body.style.overflow = priorOverflow;
+      releaseScroll();
     };
   }, [open]);
 

@@ -9,6 +9,7 @@ import { brand } from "@/lib/brand";
 import { DeviceAwareSignOut } from "@/components/device-aware-sign-out";
 import { rememberInternalNavigation } from "@/components/navigation-back";
 import { canonicalAppOrigin } from "@/lib/app-install";
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 
 function matches(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -26,8 +27,7 @@ export function AppNavigation() {
 
   useEffect(() => {
     if (!mobileMoreOpen) return;
-    const priorOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockBodyScroll();
     const focusTimer = window.setTimeout(() => mobileMoreClose.current?.focus(), 0);
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -46,7 +46,7 @@ export function AppNavigation() {
     return () => {
       window.clearTimeout(focusTimer);
       window.removeEventListener("keydown", closeOnEscape);
-      document.body.style.overflow = priorOverflow;
+      releaseScroll();
     };
   }, [mobileMoreOpen]);
 
