@@ -41,6 +41,13 @@ function smokeSaveMessage(result: { collector25?: { status?: string } }, manual:
 }
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
 export const flavorOptions = ["Cedar", "Earth", "Leather", "Pepper", "Cream", "Coffee", "Cocoa / chocolate", "Nuts", "Sweetness", "Baking spice", "Fruit", "Floral", "Toast", "Mineral", "Other"] as const;
+export function smokeRequiredFieldMessage(name: string) {
+  if (name === "inventoryId") return "Choose ‘Remove from my Vault’ and select the exact lot, or choose ‘Do not remove from my Vault’ for a cigar acquired elsewhere.";
+  if (name === "cigarName") return "Enter the cigar’s name before saving this smoking experience.";
+  if (name === "quantitySmoked") return "Enter how many cigars were smoked from the selected Vault lot.";
+  if (name === "dateSmoked") return "Choose the date of this smoking experience.";
+  return "Review the required field highlighted above, then save again.";
+}
 
 export function RecordsManager({ inventory, initialSmokes, initialValuations, mode, selectedInventoryId }: {
   inventory: InventoryItem[];
@@ -92,8 +99,19 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   async function send(event: FormEvent<HTMLFormElement>, kind: "smoke" | "valuation") {
     event.preventDefault();
     const mutation = kind === "smoke" ? smokeMutation : valuationMutation;
-    if (!mutation.begin()) return;
     const formElement = event.currentTarget;
+    if (kind === "smoke" && !formElement.checkValidity()) {
+      if (!mutation.begin()) return;
+      const invalid = formElement.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(":invalid");
+      mutation.fail();
+      setMessage(smokeRequiredFieldMessage(invalid?.name || ""));
+      window.setTimeout(() => {
+        invalid?.focus({ preventScroll: true });
+        invalid?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
+      return;
+    }
+    if (!mutation.begin()) return;
     const form = new FormData(formElement);
     const key = String(form.get("writeKey") || "");
     const numeric = new Set(["overall", "quantitySmoked", "replacementValue", "marketValue", "marketRangeLow", "marketRangeHigh", "askingPrice", "comparableCount", "lastSaleValue"]);
@@ -258,7 +276,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <a href="/inventory#mobile-intake"><strong>Add to Vault first</strong><small>Create and verify the inventory lot before logging its smoke.</small></a>
       </div>
       {smokeDraft.restoredFields && <p className="deviceDraftNotice" role="status">Unfinished tasting details were restored from this browser profile. Review them before saving.</p>}
-      <form ref={smokeDraft.formRef} className="recordForm" onSubmit={event => send(event, "smoke")} onChange={smokeDraft.capture} aria-busy={smokeMutation.pending}>
+      <form ref={smokeDraft.formRef} className="recordForm" noValidate onSubmit={event => send(event, "smoke")} onChange={smokeDraft.capture} aria-busy={smokeMutation.pending}>
         <fieldset disabled={smokeMutation.pending || smokeMutation.complete}>
         {smokeSource !== "MANUAL" && <div className="smokeInventoryFinder">
           <label htmlFor="smoke-inventory-search"><span>Search my Vault</span><input id="smoke-inventory-search" type="search" value={smokeInventoryQuery} onChange={event => setSmokeInventoryQuery(event.target.value)} placeholder="Type brand, line, vitola, or inventory ID" autoComplete="off" /></label>
