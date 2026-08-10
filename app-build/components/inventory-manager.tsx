@@ -257,7 +257,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       setRecentlySaved({inventoryId:savedId,token:Date.now()});
       if(!isEdit)setLastCreated(savedItem);
       formElement.reset();
-      if(isEdit)window.location.assign(`/inventory/${encodeURIComponent(savedId)}?saved=inventory`);
+      window.location.assign(`/inventory/${encodeURIComponent(savedId)}?saved=inventory`);
     } catch (error) { void captureOperationalFailure("inventory-save",failureStatus);setMessage(error instanceof RequestTimeoutError ? "Saving is taking longer than expected. Your form is still here—try again when you’re ready." : error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
