@@ -13,3 +13,9 @@ test("private humidor and changed storage assignments save atomically",()=>{
   assert.doesNotMatch(source,/saveOwnedRecord\("humidors"/);
   assert.doesNotMatch(source,/Promise\.all\(inventory\.map/);
 });
+
+test("a new humidor never preselects every unassigned inventory lot",()=>{
+  const manager=fs.readFileSync(path.join(process.cwd(),"components/humidor-manager.tsx"),"utf8");
+  assert.match(manager,/defaultChecked=\{current\?i\.storageLocationId===current\.humidorId:false\}/);
+  assert.doesNotMatch(manager,/defaultChecked=\{i\.storageLocationId===current\?\.humidorId\}/);
+});
