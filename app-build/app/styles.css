@@ -143,7 +143,7 @@ button.button { border:0; cursor:pointer; font:inherit; }
 button.button:disabled { opacity:.45; cursor:not-allowed; }
 output { color:#e5bf76; }
 .privateRecordExport{display:grid;gap:7px}.privateRecordExport .button{width:100%}.privateRecordExport output{max-width:280px;color:var(--gold2);font-size:11px;line-height:1.4}
-.inventorySearchForm{display:grid;grid-template-columns:minmax(220px,1fr) auto;align-items:end;gap:10px}.inventorySearchForm label{min-width:0}.clearInventoryFilters{align-self:end;min-height:44px}
+.inventorySearchForm{display:grid;grid-template-columns:minmax(220px,1fr) auto;align-items:end;gap:10px}.inventorySearchForm label{min-width:0}.inventorySearchFeedback{grid-column:1/-1;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#17120f;color:var(--gold2);font-size:11px}.clearInventoryFilters{align-self:end;min-height:44px}
 @media (max-width:800px){ .toolbar{grid-template-columns:1fr}.inventorySearchForm{grid-template-columns:1fr}.inventorySearchForm .button,.clearInventoryFilters{width:100%}.inventoryForm,.focusedInventoryForm{grid-template-columns:1fr 1fr}.inventoryForm .wide{grid-column:span 2} }
 @media (max-width:520px){ .grid{grid-template-columns:1fr}.inventoryForm{grid-template-columns:1fr}.inventoryForm .wide{grid-column:span 1} }
 @media(max-width:700px){.inventoryDesktopTable{display:none}.inventoryMobileList{display:grid;gap:10px}.inventoryMobileList article{display:grid;grid-template-columns:1fr auto;gap:14px}.mobileLotActions{grid-column:1/-1}.editingEditor{margin-left:-8px;margin-right:-8px;padding:16px}.editingEditor .formActions .button{width:100%}}
