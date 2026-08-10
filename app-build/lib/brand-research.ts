@@ -62,6 +62,13 @@ export const brandResearchSources = [
     use: "Cross-check announcements and surface boutique releases",
     href: "https://halfwheel.com/category/news/",
   },
+  {
+    name: "The Late Smoke",
+    kind: "Editorial discovery",
+    cadence: "Every scan",
+    use: "Exact-cigar reviews, tasting perspective, cultural articles, and attributable media leads; independently verify product facts and image rights",
+    href: "https://www.thelatesmoke.com/",
+  },
 ] as const;
 
 function fold(value: string) {

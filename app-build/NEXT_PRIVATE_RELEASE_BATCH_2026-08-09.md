@@ -29,6 +29,9 @@ activation remain held.
   changing Vault quantities or silently reclassifying historical records.
 - Keep direct manual community ratings writable against the current production
   schema while the held contribution-source migration remains unapplied.
+- Display **The Way of the Leaf** beneath the Hojavía wordmark as the controlled
+  private signature while retaining **Knowledge carried forward.** for
+  contextual brand messaging.
 
 ## Explicitly excluded
 
@@ -38,6 +41,8 @@ activation remain held.
 - Do not execute paid research requests or the paid founder evaluation.
 - Do not widen beta access, publish the feature, alter the public website,
   launch affiliate or partner activity, or perform Fox Cigars outreach.
+- Do not treat the private signature as public approval, commercial adoption,
+  or completion of the linguistic gate.
 
 ## Private-release acceptance
 

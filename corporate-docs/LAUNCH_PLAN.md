@@ -1,11 +1,11 @@
 # Document 015 — Cedriva Launch Schedule
 
-**Version:** 1.4
+**Version:** 1.6
 **Status:** Active operating plan  
 **Owner:** Brian Bowers  
 **Engineering owner:** Codex  
 **Baseline date:** July 24, 2026  
-**Last Updated:** July 30, 2026
+**Last Updated:** August 9, 2026
 **Founder Beta target:** September 21, 2026  
 **Public Launch target:** October 26, 2026  
 
@@ -13,6 +13,12 @@
 > document’s title and historical references. Hojavía (pronounced oh-ha-VEE-ah) is a clearance candidate,
 > not an adopted brand. This operating schedule governs the platform regardless
 > of the replacement name and does not authorize a public rename.
+
+> **Private signature decision:** Brian approved **The Way of the Leaf** beneath
+> the Hojavía wordmark for controlled private pre-clearance surfaces.
+> **Knowledge carried forward.** remains the contextual primary brand line.
+> This does not authorize public use; the professional linguistic and final
+> adoption gates remain open.
 
 ## Launch principle
 
@@ -57,6 +63,7 @@ brand clearance gates remain incomplete.
 - Accessibility, security, performance, and browser/device acceptance
 - Support intake, incident response, and launch-day ownership
 - Analytics for activation, retention, errors, research cost, and valuation coverage
+- A dedicated OpenAI Platform project with a founder-approved hard spending limit and alerts, protected production credentials, provisioned research ledgers, per-user quotas, source-provenance validation, caching, failure recovery, and a passed founder research evaluation
 
 ### Feature-flagged or deferred
 
@@ -158,6 +165,7 @@ brand clearance gates remain incomplete.
 - Publish privacy, terms, community rules, valuation methodology/disclaimer, and deletion/export instructions.
 - Add error and cost dashboards for OpenAI, Supabase, Vercel, email, and scheduled research.
 - Test spend caps and canonical-value reuse to prevent unnecessary AI searches.
+- Complete the held OpenAI research activation sequence: create the dedicated project, approve its hard spending limit and alerts, provision the local research-ledger migration after database reconciliation, add the production secret, enable the feature flag, and run the controlled founder query set. The prepared code must remain disabled until this exact sequence is approved.
 
 **Exit gate:** A test customer can subscribe, use entitled features, cancel, export data, and receive support without manual database work.
 
@@ -240,6 +248,7 @@ The checkpoint creates a required decision; it does not automatically authorize 
 | Backup restore rehearsal | Pass | Pass |
 | Legal/privacy/support readiness | Drafted | Published and tested |
 | Paid billing | Test mode may be acceptable | Live and reconciled |
+| Paid OpenAI research service | Dedicated project, hard cap, protected key, ledgers, quotas, cache, provenance checks, and founder evaluation pass | Live limits, monitoring, failure alerts, and cost-per-active-collector evidence pass |
 | Critical mobile workflows | Pass | Pass |
 | Seven stable production days | Required | Required |
 
@@ -274,11 +283,14 @@ The checkpoint creates a required decision; it does not automatically authorize 
 3. Keep Google Places disabled until the October 5 scope decision unless earlier beta evidence makes it essential.
 4. Configure Stripe only after core workflows pass the Week 5 gate.
 5. Reforecast every Friday. Move dates when a hard gate fails; never redefine “done.”
+6. Before Founder Beta research is enabled, complete the launch-blocking OpenAI billing activation reminder recorded above; do not treat a ChatGPT subscription, local code readiness, or an unprotected key as completion.
 
 ## Revision history
 
 | Version | Date | Author | Change |
 |---:|---|---|---|
+| 1.6 | August 9, 2026 | Brian Bowers / Codex | Recorded The Way of the Leaf as the controlled private wordmark signature, retained Knowledge carried forward. as contextual messaging, and preserved the linguistic and public-adoption holds. |
+| 1.5 | August 9, 2026 | Brian Bowers / Codex | Added the launch-blocking OpenAI research activation gate after completing the no-billing service foundation; no billing, credential, migration, deployment, or paid call was authorized. |
 | 1.4 | July 30, 2026 | Brian Bowers / Codex | Added the controlling replacement-brand clearance and confidential-disclosure gates and recorded the current launch decision as HOLD until every active product and brand gate passes. |
 | 1.3 | July 26, 2026 | Brian Bowers / Codex | Recorded the retired Cedriva terminology and made the launch gates independent of an unapproved replacement name. |
 | 1.2 | July 26, 2026 | Brian Bowers / Codex | Added a mandatory, event-based Founding Lounge decision checkpoint after two stable public-launch weeks and within 30 days of launch. |
