@@ -19,7 +19,8 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(page,/tracked separately/);
  assert.match(page,/Open Valuable Collections/);
  assert.match(manager,/setItems\(cigarInventoryRecords\(result\.data,collections\)\)/);
- assert.match(page,/href="#inventory-records"/);
+ assert.match(page,/href="\/inventory#inventory-records"/);
+ assert.match(page,/<a href="\/inventory#inventory-records"><span>Individual inventory<\/span><strong>Browse Vault<\/strong>/);
  assert.match(page,/Audit My Inventory/);
  assert.match(page,/href="\/collection-health"/);
  assert.match(page,/href="\/collections"/);
