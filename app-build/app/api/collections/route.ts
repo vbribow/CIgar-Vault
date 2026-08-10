@@ -50,7 +50,14 @@ export async function POST(request: Request) {
     if(template){
       const protocol=auditCollectionTemplateProtocol(template);
       const selected=inventory.filter(item=>memberIds.includes(item.inventoryId));
-      const verifiedIds=new Set(collectionRequirementMatches(collection,selected).flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
+      // An ownership-count edit may legitimately increase the required quantity
+      // before the generated component rows are expanded by the population step.
+      // Validate existing membership against its saved count here; exact identity
+      // remains mandatory and the population endpoint performs the safe quantity repair.
+      const membershipValidationCollection=existingCollection
+        ? {...collection,ownedSetQty:existingCollection.ownedSetQty}
+        : collection;
+      const verifiedIds=new Set(collectionRequirementMatches(membershipValidationCollection,selected).flatMap(match=>match.inventoryId?[match.inventoryId]:[]));
       const unverified=memberIds.filter(inventoryId=>!verifiedIds.has(inventoryId));
       if(unverified.length)return NextResponse.json({error:`${unverified.length} selected lot${unverified.length===1?" does":"s do"} not exactly match a sourced component and cannot be assigned.`},{status:409});
       if(memberIds.length&&!protocol.sourcedRequirements.length)return NextResponse.json({error:"This collection remains in sourced component research and cannot receive inventory assignments yet."},{status:409});

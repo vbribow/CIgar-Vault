@@ -31,6 +31,14 @@ test("component creation multiplies quantities for multiple complete sets",()=>{
   assert.equal(drafts[0]?.currentQty,4);
 });
 
+test("an untouched generated component expands when the collector adds a second complete set",()=>{
+  const sourceTemplate=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-FATHER-SON-2026")!;
+  const initial=collectionComponentDrafts({collectionId:"COL-FUENTE-FATHER-SON-2026",name:sourceTemplate.name,releaseYear:2026},sourceTemplate,[])[0]!;
+  const repairs=collectionComponentRepairs({collectionId:"COL-FUENTE-FATHER-SON-2026",name:sourceTemplate.name,releaseYear:2026,ownedSetQty:2},sourceTemplate,[initial]);
+  assert.equal(repairs[0]?.originalQty,4);
+  assert.equal(repairs[0]?.currentQty,4);
+});
+
 test("complete collections create linked inventory lots with stated quantities", () => {
   const drafts = collectionComponentDrafts(collection, template, []);
   assert.equal(drafts.length, 2);

@@ -148,16 +148,22 @@ export function collectionComponentRepairs(collection: CigarCollection, template
       && (existing.looseStickQty??0)===0
       && (existing.fullBoxQty??0)===0
       && (existing.smokedQty??0)===0;
-    const restoreDocumentedQuantity=untouchedGeneratedQuantity||emptyGeneratedBaseline;
+    const ownedQuantity=identity.quantity*(collection.ownedSetQty??1);
+    const expandUntouchedGeneratedQuantity=(collection.ownedSetQty??1)>1
+      && existing.originalQty===identity.quantity
+      && existing.currentQty===existing.originalQty
+      && (existing.looseStickQty??existing.currentQty)===existing.currentQty
+      && (existing.smokedQty??0)===0;
+    const restoreDocumentedQuantity=untouchedGeneratedQuantity||emptyGeneratedBaseline||expandUntouchedGeneratedQuantity;
     const repaired = {
       ...existing,
       catalogId: canonical.identityId,
       brand: identity.brand,
       line: identity.line,
       vitola: identity.vitola,
-      originalQty: restoreDocumentedQuantity ? identity.quantity : existing.originalQty ?? identity.quantity,
-      currentQty: restoreDocumentedQuantity ? identity.quantity : existing.currentQty ?? existing.looseStickQty ?? identity.quantity,
-      looseStickQty: restoreDocumentedQuantity ? identity.quantity : existing.looseStickQty ?? existing.currentQty ?? identity.quantity,
+      originalQty: restoreDocumentedQuantity ? ownedQuantity : existing.originalQty ?? ownedQuantity,
+      currentQty: restoreDocumentedQuantity ? ownedQuantity : existing.currentQty ?? existing.looseStickQty ?? ownedQuantity,
+      looseStickQty: restoreDocumentedQuantity ? ownedQuantity : existing.looseStickQty ?? existing.currentQty ?? ownedQuantity,
       smokedQty: existing.smokedQty ?? 0,
       vintage: cigarVintage,
       provenanceNotes,
