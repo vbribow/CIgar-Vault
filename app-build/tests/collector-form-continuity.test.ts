@@ -14,6 +14,7 @@ test("device drafts preserve collector fields but never cache passwords or files
   assert.match(draftHook, /window\.localStorage\.setItem/);
   assert.match(draftHook, /window\.localStorage\.removeItem/);
   assert.match(draftHook, /\["password", "file"\]/);
+  assert.match(draftHook, /field\.type === "hidden" && field\.dataset\.draftSafe !== "true"/);
   assert.match(draftHook, /restoreFields/);
   assert.match(draftHook, /A damaged or blocked cache must never block the form/);
 });

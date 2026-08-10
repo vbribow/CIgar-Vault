@@ -20,7 +20,7 @@ test("smoking journal supports manual cigars without consuming inventory", () =>
 test("mobile smoke saves explain missing required fields instead of appearing unresponsive", () => {
   assert.match(source, /className="recordForm" noValidate onSubmit=/);
   assert.match(source, /!formElement\.checkValidity\(\)/);
-  assert.match(source, /querySelector<[^>]+>\(":invalid"\)/);
+  assert.match(source, /querySelector<[^>]+>\("input:invalid, select:invalid, textarea:invalid"\)/);
   assert.match(source, /setAttribute\("aria-invalid", "true"\)/);
   assert.match(source, /smokeRequiredFieldMessage\(invalid\?\.name/);
   assert.match(source, /Choose ‘Remove from my Vault’ and select the exact lot/);
@@ -67,10 +67,16 @@ test("smoking journal keeps construction and burn optional, structured, and dist
 test("mobile smoke saves explain missing required fields instead of appearing unresponsive", () => {
   assert.match(source, /className="recordForm" noValidate onSubmit=/);
   assert.match(source, /!formElement\.checkValidity\(\)/);
-  assert.match(source, /querySelector<[^>]+>\(":invalid"\)/);
+  assert.match(source, /querySelector<[^>]+>\("input:invalid, select:invalid, textarea:invalid"\)/);
   assert.match(source, /smokeRequiredFieldMessage\(invalid\?\.name/);
   assert.match(source, /Choose ‘Remove from my Vault’ and select the exact lot/);
   assert.match(source, /invalid\?\.scrollIntoView/);
   assert.match(source, /type="submit" className="button"/);
   assert.match(source, /ref=\{smokeSaveFeedback\}/);
+});
+
+test("outside-Vault choice survives app updates and draft restoration", () => {
+  assert.match(source, /name="inventoryId" value="MANUAL" data-draft-safe="true"/);
+  assert.match(source, /restoredFields\?\.inventoryId/);
+  assert.match(source, /setSmokeSource\(restoredSource\)/);
 });

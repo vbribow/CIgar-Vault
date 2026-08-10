@@ -22,7 +22,8 @@ function readFields(form: HTMLFormElement): StoredFields {
   const values: StoredFields = {};
   for (const field of [...form.elements]) {
     if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) || !field.name || isPrivateField(field)) continue;
-    if (field instanceof HTMLInputElement && ["submit", "button", "reset", "hidden"].includes(field.type)) continue;
+    if (field instanceof HTMLInputElement && ["submit", "button", "reset"].includes(field.type)) continue;
+    if (field instanceof HTMLInputElement && field.type === "hidden" && field.dataset.draftSafe !== "true") continue;
     if (field instanceof HTMLInputElement && ["checkbox", "radio"].includes(field.type) && !field.checked) continue;
     const selected = field instanceof HTMLSelectElement && field.multiple ? [...field.selectedOptions].map((option) => option.value) : [field.value];
     values[field.name] = [...(values[field.name] ?? []), ...selected];
