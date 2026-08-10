@@ -6,4 +6,6 @@ test("a single approved photo-intake lot opens its exact saved record",()=>{
   const manager=readFileSync(new URL("../components/inventory-manager.tsx",import.meta.url),"utf8");
   assert.match(manager,/if\(approved\.length===1\)\{window\.location\.assign\(`\/inventory\/\$\{encodeURIComponent\(saved\.inventoryId\)\}\?saved=inventory`\);return\}/);
   assert.match(manager,/if\(!saved\)return/);
+  const intake=readFileSync(new URL("../components/photo-inventory-intake.tsx",import.meta.url),"utf8");
+  assert.match(intake,/if\(approvedInventory\.length===1\)\{setMessage\(""\);onApproved\(approvedInventory\);return\}/);
 });

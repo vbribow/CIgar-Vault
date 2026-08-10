@@ -248,12 +248,11 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       void captureOperationalSuccess("inventory-save",response.status);
       setItems((current) => isEdit ? current.map((item) => item.inventoryId === editing!.inventoryId ? result.data : item) : [...current, result.data]);
       const savedId=String(result.data.inventoryId||id);
-      const valuationStatus=result.valuation?.status?` ${result.valuation.status}.`:"";
       setEditing(null); setDraft(null); if(!isEdit)setSubmissionId(createClientUuid());
       editSafety.markSaved();
       inventoryDraft.clear();
       const savedItem=result.data as InventoryItem;
-      setMessage(isEdit?`${savedItem.brand} ${savedItem.line} was updated in your private Vault.${valuationStatus}`:`${savedItem.brand} ${savedItem.line} was saved to your private Vault. Choose what to do next below.${valuationStatus}`);
+      setMessage("");
       setRecentlySaved({inventoryId:savedId,token:Date.now()});
       if(!isEdit)setLastCreated(savedItem);
       formElement.reset();
