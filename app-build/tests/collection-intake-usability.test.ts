@@ -29,6 +29,26 @@ test("Vault and collection hero expose a direct add-collection path",()=>{
   assert.match(inventoryPage,/href="\/collections#add-collection">Add a collection/);
 });
 
+test("a researched edition reopens its existing record and keeps lot and cigar counts distinct",()=>{
+  assert.match(manager,/setEditing\(collections\.find\(collection=>collectionTemplateFor\(collection\)\?\.templateId===item\.templateId&&Number\(collection\.releaseYear\)===Number\(item\.releaseYear\)\)\)/);
+  assert.match(manager,/editing\?\{"If-Match":collectionRevision\(editing,inventory\)\}/);
+  assert.match(manager,/>Physical component lots</);
+  assert.match(manager,/name="expectedCigars"/);
+  assert.match(manager,/>Total cigars in the collection</);
+  assert.match(manager,/expectedComponents:template\.expectedComponents,expectedCigars:template\.expectedCigars/);
+  assert.ok(manager.includes("Number(collection.releaseYear)!==Number(template.releaseYear)"));
+  assert.match(manager,/Number\(collection\.releaseYear\)===Number\(item\.releaseYear\)/);
+  assert.ok(manager.includes("Number(collection.releaseYear)!==Number(template.releaseYear)"));
+});
+
+test("collector can explicitly populate exact researched rows after saving",()=>{
+  assert.match(manager,/name="populateAfterSave" value="1"/);
+  assert.match(manager,/Add the researched cigars to row inventory after saving/);
+  assert.match(manager,/Existing standalone cigars and other release years remain separate/);
+  assert.match(manager,/\/api\/collections\/\$\{encodeURIComponent\(result\.data\.collectionId\)\}\/populate/);
+  assert.match(manager,/key==="populateAfterSave"/);
+});
+
 test("mobile overlays share the defensive body scroll lock",()=>{
   assert.match(navigation,/lockBodyScroll\(\)/);
   assert.match(search,/lockBodyScroll\(\)/);
