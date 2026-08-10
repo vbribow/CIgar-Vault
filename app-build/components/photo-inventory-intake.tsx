@@ -110,7 +110,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
 
   function applyIdentification(value: CigarVisionResult) {
     setAnalysis(value); setBrand(value.brand); setLine(value.line); setVitola(value.vitola); setVintage(value.vintage || ""); setPackaging(value.packaging || "");
-    setFullBoxQty(value.fullBoxQty === undefined ? "" : String(value.fullBoxQty)); setSticksPerBox(value.sticksPerBox === undefined ? "" : String(value.sticksPerBox)); setLooseStickQty(value.looseStickQty === undefined ? "" : String(value.looseStickQty));
+    setFullBoxQty(value.fullBoxQty == null ? "" : String(value.fullBoxQty)); setSticksPerBox(value.sticksPerBox == null ? "" : String(value.sticksPerBox)); setLooseStickQty(value.looseStickQty == null ? "" : String(value.looseStickQty));
     setStage("review"); setMessage(`Identification ready (${value.confidence} confidence). Review every field before adding the draft.`);
   }
   function checkVault() {

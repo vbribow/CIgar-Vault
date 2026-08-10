@@ -56,7 +56,8 @@ test("inventory and photo intake keep their existing duplicate-safe drafts", () 
 
   assert.match(inventory, /if\(!editing\)payload\.submissionId=submissionId/);
   assert.match(inventory, /if\(!isEdit\)setSubmissionId\(createClientUuid\(\)\)/);
-  assert.match(inventory, /formElement\.reset\(\);\s*\}\s*catch/);
+  assert.match(inventory, /formElement\.reset\(\)/);
+  assert.match(inventory, /if\(isEdit\)window\.location\.assign/);
   assert.match(intake, /localStorage\.setItem\(queueKey,JSON\.stringify\(queue\)\)/);
   assert.match(intake, /if\(approvalInFlight\.current\)return/);
   assert.match(intake, /setQueue\(current=>current\.filter\(entry=>!approved\.has/);

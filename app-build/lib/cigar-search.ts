@@ -38,3 +38,13 @@ export function matchesInventorySearch(item: InventoryItem, query: string) {
   const searchableTerms = searchable.split(" ").filter(Boolean);
   return terms.every((term) => searchableTerms.some((candidate) => candidate === term || candidate.startsWith(term)));
 }
+
+/** Tolerate one extra family word in the quick journal search only. */
+export function matchesInventorySearchForgiving(item: InventoryItem, query: string) {
+  if (matchesInventorySearch(item, query)) return true;
+  const terms = normalizeCigarSearch(query).split(" ").filter(Boolean);
+  if (terms.length < 3) return false;
+  const searchableTerms = inventorySearchText(item).split(" ").filter(Boolean);
+  const matched = terms.filter(term => searchableTerms.some(candidate => candidate === term || candidate.startsWith(term))).length;
+  return matched >= 2 && matched / terms.length >= 2 / 3;
+}

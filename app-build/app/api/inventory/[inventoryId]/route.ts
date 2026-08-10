@@ -53,7 +53,7 @@ export async function PUT(request: Request, context: Context) {
       );
     if (expectedRevision && expectedRevision !== recordRevision(existing))
       return NextResponse.json(
-        { error: "This record changed on another device. Refresh your Vault, review the newer information, and try again." },
+        { error: "This record changed since you opened it—possibly after a photo update or on another device. Refresh your Vault, review the newer information, and try again." },
         { status: 409 },
       );
     const parsedInput=parseInventoryUpdate(await request.json(), existing);

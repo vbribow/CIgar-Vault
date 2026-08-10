@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { findInventoryDuplicates, photoDraftId } from "../lib/photo-intake";
-import { CigarVisionResultSchema, responseOutputText } from "../lib/cigar-vision";
+import { CigarVisionResultSchema, reconcileVisionQuantityProposal, responseOutputText } from "../lib/cigar-vision";
 
 const inventory = [
   { inventoryId: "INV-1", brand: "Arturo Fuente", line: "OpusX", vitola: "PerfecXion X", vintage: 2023 },
@@ -27,4 +27,13 @@ test("extracts and validates structured vision output", () => {
   const value = { brand: "Cohiba", line: "Línea 1492", vitola: "Siglo IV", vintage: "2025", packaging: "Box of 25", fullBoxQty: 0, sticksPerBox: 25, looseStickQty: 20, boxCode: "BPM ABR 25", confidence: "high", evidenceSummary: "Bands and box label are visible.", uncertainties: [] };
   const text = responseOutputText({ output: [{ content: [{ type: "output_text", text: JSON.stringify(value) }] }] });
   assert.deepEqual(CigarVisionResultSchema.parse(JSON.parse(text!)), value);
+});
+
+test("a photographed box capacity is not counted again as loose cigars", () => {
+  const value = CigarVisionResultSchema.parse({ brand: "Example", line: "Reserva", vitola: "Toro", vintage: null, packaging: "Box of 10", fullBoxQty: 1, sticksPerBox: 10, looseStickQty: 10, boxCode: null, confidence: "medium", evidenceSummary: "One box is visible.", uncertainties: [] });
+  const reconciled = reconcileVisionQuantityProposal(value);
+  assert.equal(reconciled.fullBoxQty, 1);
+  assert.equal(reconciled.sticksPerBox, 10);
+  assert.equal(reconciled.looseStickQty, 0);
+  assert.match(reconciled.uncertainties.join(" "), /not counted again as loose cigars/);
 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeWrite } from "@/lib/config";
-import { CigarVisionResultSchema, cigarVisionJsonSchema, responseOutputText } from "@/lib/cigar-vision";
+import { CigarVisionResultSchema, cigarVisionJsonSchema, reconcileVisionQuantityProposal, responseOutputText } from "@/lib/cigar-vision";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { retryableVisionFailure, visionFailureMessage } from "@/lib/photo-identification";
 
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     if(!payload||responseStatus>=400)throw new Error(visionFailureMessage(responseMessage||"Photo analysis failed"));
     const text = responseOutputText(payload);
     if (!text) throw new Error("The vision model returned no identification");
-    return NextResponse.json({ data: CigarVisionResultSchema.parse(JSON.parse(text)) });
+    return NextResponse.json({ data: reconcileVisionQuantityProposal(CigarVisionResultSchema.parse(JSON.parse(text))) });
   } catch (error) {
     const message=error instanceof Error?error.message:"Photo analysis failed";
     if(error instanceof Error&&error.name==="TimeoutError")return NextResponse.json({error:"Photo identification took too long. Your draft is safe—tap Identify again."},{status:504});

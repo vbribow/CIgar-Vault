@@ -15,6 +15,16 @@ test("smoking journal supports manual cigars without consuming inventory", () =>
   assert.match(source, /no Vault record and no quantity change/);
 });
 
+test("mobile smoke saves explain missing required fields instead of appearing unresponsive", () => {
+  assert.match(source, /className="recordForm" noValidate onSubmit=/);
+  assert.match(source, /!formElement\.checkValidity\(\)/);
+  assert.match(source, /querySelector<[^>]+>\(":invalid"\)/);
+  assert.match(source, /setAttribute\("aria-invalid", "true"\)/);
+  assert.match(source, /smokeRequiredFieldMessage\(invalid\?\.name/);
+  assert.match(source, /Choose ‘Remove from my Vault’ and select the exact lot/);
+  assert.match(source, /invalid\?\.scrollIntoView/);
+});
+
 test("smoking journal clearly separates review-only, owned-lot, and add-to-Vault paths", () => {
   assert.match(source, /Do not remove from my Vault/);
   assert.match(source, /Remove from my Vault/);

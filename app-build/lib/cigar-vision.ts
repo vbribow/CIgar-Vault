@@ -8,6 +8,17 @@ export const CigarVisionResultSchema = z.object({
 
 export type CigarVisionResult = z.infer<typeof CigarVisionResultSchema>;
 
+export function reconcileVisionQuantityProposal(value: CigarVisionResult): CigarVisionResult {
+  if (value.fullBoxQty === 1 && value.sticksPerBox && value.looseStickQty === value.sticksPerBox) {
+    return {
+      ...value,
+      looseStickQty: 0,
+      uncertainties: [...new Set([...value.uncertainties, "The visible box capacity was not counted again as loose cigars; confirm any genuinely separate loose sticks."])],
+    };
+  }
+  return value;
+}
+
 export const cigarVisionJsonSchema = {
   type: "object", additionalProperties: false,
   properties: {

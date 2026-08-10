@@ -13,6 +13,7 @@ test("photo-assisted drafts preserve explicit zeroes and reject malformed counts
   assert.match(intake, /Number\.isInteger\(value\)/);
   assert.match(intake, /Boxes and loose sticks may be 0/);
   assert.doesNotMatch(intake, /fullBoxQty:fullBoxQty\|\|undefined/);
+  assert.match(intake, /value\.looseStickQty == null \? ""/);
 });
 
 test("restored photo drafts explain the browser file-security boundary", () => {

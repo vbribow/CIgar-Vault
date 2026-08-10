@@ -257,6 +257,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       setRecentlySaved({inventoryId:savedId,token:Date.now()});
       if(!isEdit)setLastCreated(savedItem);
       formElement.reset();
+      if(isEdit)window.location.assign(`/inventory/${encodeURIComponent(savedId)}?saved=inventory`);
     } catch (error) { void captureOperationalFailure("inventory-save",failureStatus);setMessage(error instanceof RequestTimeoutError ? "Saving is taking longer than expected. Your form is still here—try again when you’re ready." : error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
@@ -281,9 +282,17 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     setSelected((current) => { const next = new Set(current); if (next.has(inventoryId)) next.delete(inventoryId); else next.add(inventoryId); return next; });
   }
 
-  function startEditing(item: InventoryItem, focus: EditMode = "all") {
+  async function startEditing(item: InventoryItem, focus: EditMode = "all") {
     if (focus === "all") void loadSupport("catalog");
-    setDraft(null); setEditing(item); setEditMode(focus); setMessage("");
+    setDraft(null); setEditMode(focus); setMessage("Opening the latest saved record…");
+    let latest = item;
+    try {
+      const response = await fetch("/api/inventory", { cache: "no-store" });
+      const result = await response.json();
+      if (response.ok && Array.isArray(result.data)) latest = result.data.find((candidate: InventoryItem) => candidate.inventoryId === item.inventoryId) ?? item;
+    } catch { /* The existing record remains editable if refresh is temporarily unavailable. */ }
+    setItems(current => current.map(candidate => candidate.inventoryId === latest.inventoryId ? latest : candidate));
+    setEditing(latest); setMessage("");
     window.setTimeout(() => {
       document.querySelector(".editingEditor")?.scrollIntoView({ behavior: "smooth", block: "start" });
       if (focus === "quantity") (document.querySelector('.editingEditor input[name="quickTotal"]') as HTMLInputElement | null)?.focus();

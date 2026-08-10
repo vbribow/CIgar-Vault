@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { InventoryItem } from "../lib/types";
-import { matchesInventorySearch } from "../lib/cigar-search";
+import { matchesInventorySearch, matchesInventorySearchForgiving } from "../lib/cigar-search";
 
 const toyMaker: InventoryItem = {
   inventoryId: "INV-0020",
@@ -25,4 +25,11 @@ test("BMF and BBMF remain distinct while common spacing and partial wording work
 test("search convenience aliases do not match a nearby Toy Maker cigar", () => {
   const granOpus = { ...toyMaker, inventoryId: "INV-0021", vitola: "Gran Opus" };
   assert.equal(matchesInventorySearch(granOpus,"opus x toy make bmf"),false);
+});
+
+test("smoke search finds Casa Cuba despite one mistaken family term", () => {
+  const casaCuba: InventoryItem = { inventoryId: "INV-CASA-CUBA", brand: "Arturo Fuente", line: "Casa Cuba", vitola: "Divine Inspiration", currentQty: 30 };
+  assert.equal(matchesInventorySearch(casaCuba, "opus x casa cuba"), false);
+  assert.equal(matchesInventorySearchForgiving(casaCuba, "opus x casa cuba"), true);
+  assert.equal(matchesInventorySearchForgiving(toyMaker, "opus x casa cuba"), false);
 });

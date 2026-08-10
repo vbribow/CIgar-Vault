@@ -17,16 +17,14 @@ import type { CigarVisionResult } from "@/lib/cigar-vision";
 import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-capture";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 import { fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
+import { matchesInventorySearchForgiving } from "@/lib/cigar-search";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 function normalizeSmokeSearch(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\btaurus\b/g, "tauros").replace(/\bopus x\b/g, "opusx").trim();
 }
 export function matchesSmokeInventory(item: InventoryItem, query: string) {
-  const terms = normalizeSmokeSearch(query).split(" ").filter(Boolean);
-  if (!terms.length) return true;
-  const searchable = normalizeSmokeSearch([item.inventoryId, item.brand, item.line, item.vitola, item.vintage, item.collectionId].filter(Boolean).join(" "));
-  return terms.every(term => searchable.includes(term));
+  return matchesInventorySearchForgiving(item,query);
 }
 export function compareSmokeInventory(left: InventoryItem, right: InventoryItem) {
   const leftFamily = normalizeSmokeSearch(`${left.brand} ${left.line}`);
@@ -109,13 +107,15 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     event.preventDefault();
     const mutation = kind === "smoke" ? smokeMutation : valuationMutation;
     const formElement = event.currentTarget;
+    formElement.querySelectorAll("[aria-invalid='true']").forEach(control => control.removeAttribute("aria-invalid"));
     if (kind === "smoke" && !formElement.checkValidity()) {
       if (!mutation.begin()) return;
       const invalid = formElement.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(":invalid");
+      invalid?.setAttribute("aria-invalid", "true");
       mutation.fail();
       setMessage(smokeRequiredFieldMessage(invalid?.name || ""));
       window.setTimeout(() => {
-        invalid?.focus();
+        invalid?.focus({ preventScroll: true });
         invalid?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 0);
       return;

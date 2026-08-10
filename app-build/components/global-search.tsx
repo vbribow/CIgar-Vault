@@ -218,7 +218,7 @@ export function GlobalSearch({ initialOpen = false }: { initialOpen?: boolean })
                     query,
                   )}
                   key={result.id}
-                  onClick={() => rememberQuery(query)}
+                  onClick={() => { rememberQuery(query); closeSearch(); }}
                 >
                   <span className="resultKind">{result.kind}</span>
                   <div>
