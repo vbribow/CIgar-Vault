@@ -28,7 +28,10 @@ export async function POST(request: Request) {
     if (!collector) return NextResponse.json({ error: "Beta tester not found" }, { status: 404 });
     assertBetaSeatAvailable(collectors || [], { ...collector, stage: "Invited" });
     const configuration = accountEmailConfiguration();
-    if (!configuration.configured) return NextResponse.json({ error: "Hojavía system email is not configured. Add RESEND_API_KEY and HOJAVIA_EMAIL_FROM before sending." }, { status: 503 });
+    if (!configuration.configured) return NextResponse.json({
+      code: "EMAIL_PROVIDER_NOT_CONFIGURED",
+      error: "Automated Hojavía email is not configured. Use the prepared webmail invitation instead.",
+    }, { status: 503 });
     const email = betaInvitationEmail(collector);
     const submission = await submitAccountEmail(email.recipient, email.subject, email.body, `beta-invitation-${collector.id}-${submissionId}`);
     if (!submission) throw new Error("Hojavía system email is not configured");

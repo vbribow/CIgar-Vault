@@ -20,6 +20,7 @@ import { FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
 
 const stages: BetaStage[] = ["Prospect", "Invited", "Signed up", "Imported", "Activated"];
 type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; backedUp:number; openFeedback:number; blockingFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
+type InvitationResult = { kind:"accepted"; providerId:string } | { kind:"prepared" } | { kind:"cancelled" };
 
 export function FounderOnboarding() {
   const [key, setKey] = useState("");
@@ -104,17 +105,22 @@ export function FounderOnboarding() {
     }
   }
 
-  async function sendInvitation(item: BetaCollector) {
-    if (!window.confirm(`Send the private beta invitation to ${item.email}?`)) return false;
+  async function sendInvitation(item: BetaCollector): Promise<InvitationResult> {
+    if (!window.confirm(`Send the private beta invitation to ${item.email}?`)) return { kind:"cancelled" };
     const response = await fetch("/api/founder-onboarding/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-founder-key": key },
       body: JSON.stringify({ collectorId:item.id, submissionId:createClientUuid() }),
     });
     const result = await response.json();
+    if (!response.ok && response.status === 503 && result.code === "EMAIL_PROVIDER_NOT_CONFIGURED") {
+      setPrepared(item);
+      setCopied(false);
+      return { kind:"prepared" };
+    }
     if (!response.ok) throw new Error(result.error || "Unable to send invitation");
     setItems(current => (current || []).map(value => value.id === item.id ? { ...value, ...result.data.collector, progress:value.progress } : value));
-    return String(result.data.providerId || "accepted");
+    return { kind:"accepted", providerId:String(result.data.providerId || "accepted") };
   }
 
   async function create(event: FormEvent<HTMLFormElement>) {
@@ -137,8 +143,9 @@ export function FounderOnboarding() {
       setItems(current => [collector, ...(current || [])]);
       event.currentTarget.reset();
       const sent = await sendInvitation(collector);
-      if (!sent) setMessage(`${collector.name} was added without access. Send the invitation from their card when ready.`);
-      else setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${sent}. Delivery is not yet confirmed.`);
+      if (sent.kind === "accepted") setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed.`);
+      else if (sent.kind === "prepared") setMessage(`Automated email is not configured. ${collector.name}'s invitation is ready below—use Open Gmail to send it now.`);
+      else setMessage(`${collector.name} was added without access. Send the invitation from their card when ready.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to add tester");
     } finally {
@@ -230,8 +237,8 @@ export function FounderOnboarding() {
         return <article key={item.id}>
           <div><small>{item.email}</small><h3>{item.name}</h3><p>{item.notes || "No follow-up notes yet."}</p></div>
           <label><span>Stage</span><select value={item.stage} disabled={busy} onChange={event => update(item, event.target.value as BetaStage)}>{stages.map(stage => <option value={stage} key={stage}>{betaStageLabel(stage)}</option>)}</select></label>
-          <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Sending invitation…");try{const sent=await sendInvitation(item);if(sent)setMessage(`A fresh invitation was accepted for ${item.email} · provider reference ${sent}. Delivery is not yet confirmed.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to send invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Send invitation" : "Resend invitation"}</button>
-          <button type="button" className="textButton" disabled={busy || item.stage !== "Invited"} onClick={() => prepare(item)}>View invitation</button>
+          <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Sending invitation…");try{const sent=await sendInvitation(item);if(sent.kind === "accepted")setMessage(`A fresh invitation was accepted for ${item.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed.`);else if(sent.kind === "prepared")setMessage(`Automated email is not configured. ${item.name}'s invitation is ready below—use Open Gmail to send it now.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to send invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Send invitation" : "Resend invitation"}</button>
+          <button type="button" className="textButton" disabled={busy || item.stage !== "Invited"} onClick={() => prepare(item)}>View invitation / Gmail</button>
           <button type="button" className="button secondary" disabled={busy || item.stage === "Prospect"} onClick={() => sendReinstall(item)}>Send app update</button>
           <section className="betaCollectorProgress" aria-label={`${item.name} beta progress`}>
             <header><div><span>Next required action</span><strong>{next.label}</strong><small>{next.detail}</small></div><b>{betaProgressSteps(item.progress).filter(step => step.complete).length}/7</b></header>

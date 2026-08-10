@@ -16,9 +16,10 @@ test("founder can directly send a confirmed invitation while the server records 
   assert.match(route, /submitAccountEmail/);
   assert.match(route, /assertBetaSeatAvailable/);
   assert.match(route, /stage: "Invited"/);
-  assert.match(route, /RESEND_API_KEY/);
+  assert.match(route, /accountEmailConfiguration/);
   assert.match(route, /submissionId: z\.string\(\)\.uuid\(\)/);
   assert.match(route, /beta-invitation-\$\{collector\.id\}-\$\{submissionId\}/);
+  assert.match(route, /EMAIL_PROVIDER_NOT_CONFIGURED/);
   assert.doesNotMatch(route, /`beta-invitation-\$\{collector\.id\}`/);
 });
 
@@ -53,6 +54,10 @@ test("founder onboarding offers one add-and-send invitation action with visible 
   assert.match(component, /Adding and sending…/);
   assert.match(component, /submissionId:createClientUuid\(\)/);
   assert.match(component, /provider reference/);
+  assert.match(component, /View invitation \/ Gmail/);
+  assert.match(component, /use Open Gmail to send it now/);
+  assert.match(component, /response\.status === 503/);
+  assert.match(component, /EMAIL_PROVIDER_NOT_CONFIGURED/);
   assert.match(component, /\/api\/founder-onboarding\/invite/);
   assert.doesNotMatch(component, /Add to queue/);
 });
