@@ -45,6 +45,7 @@ export default async function CigarPage({
   const backLabel = searchReturn ? "← Back to search results" : "← Back to Vault";
   const storyEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=provenance#inventory-editor`;
   const allEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=all#inventory-editor`;
+  const quantityEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=quantity#inventory-editor`;
   const ratingEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=rating#inventory-editor`;
   const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
   if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
@@ -133,7 +134,7 @@ export default async function CigarPage({
             {item.vintage ? ` · ${item.vintage}` : ""}
           </span>
           <CollectionRelationshipTag relationship={collectionRelationship}/>
-          <div className="ctaRow detailHeroActions"><Link className="button secondary" href={storyEditHref}>Edit story</Link><InventoryRecordActions item={item} editHref={allEditHref}/></div>
+          <div className="ctaRow detailHeroActions"><Link className="button secondary" href={quantityEditHref}>Edit box or cigar quantity</Link><Link className="button secondary" href="#record-photos">Add photos</Link><Link className="button secondary" href={storyEditHref}>Edit story</Link><InventoryRecordActions item={item} editHref={allEditHref}/></div>
         </div>
         <div className="scoreCard">
           <RatingLeafMark value={item.score ?? "—"} label="Personal collection score" detail={item.priority || "Unrated priority"}/>

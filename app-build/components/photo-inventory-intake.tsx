@@ -185,7 +185,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
         try { const photoResponse = await fetchWithTimeout(`/api/inventory/${encodeURIComponent(item.inventoryId)}/photos`, { method: "POST", body: upload }, 30_000); const photoResult = await photoResponse.json(); if (!photoResponse.ok) throw new Error(photoResult.error||"Photo attachment failed"); approvedInventory[index] = photoResult.data; attached++; }
         catch (error) { photoRetries++; failures.push({ inventoryId: item.inventoryId, reason: error instanceof Error ? error.message : "Photo attachment failed." }); }
       }
-      setPhotoFailures(failures); const approved = new Set(selected.map((entry) => entry.draft.inventoryId)); approved.forEach((id) => draftPhotos.current.delete(id)); setQueue(current=>current.filter(entry=>!approved.has(entry.draft.inventoryId)));
+      setPhotoFailures(failures); const approved = new Set(selected.map((entry) => entry.draft.inventoryId)); approved.forEach((id) => draftPhotos.current.delete(id)); const remaining=queue.filter(entry=>!approved.has(entry.draft.inventoryId));setQueue(remaining);localStorage.setItem(queueKey,JSON.stringify(remaining));localStorage.removeItem(workingKey);
       if(approvedInventory.length===1){setMessage("");onApproved(approvedInventory);return}
       onApproved(approvedInventory);
       const masterStatus = syncMaster ? ` ${result.data.masterSaved} also saved to the founder’s master list.` : "", photoStatus = attached ? ` ${attached} primary photo${attached === 1 ? "" : "s"} attached.` : "", retryStatus = photoRetries ? ` ${photoRetries} photo${photoRetries === 1 ? "" : "s"} still need to be attached from the saved record.` : "";
