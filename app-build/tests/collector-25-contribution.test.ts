@@ -52,7 +52,8 @@ test("collector UX explains automation, privacy, and the manual correction path"
   assert.match(account,/Anonymous Collector 25 contribution/);
   assert.match(account,/tasting notes, inventory, and purchase details remain private/);
   assert.match(journal,/anonymous score updated the Hojavía 25/);
-  assert.match(journal,/I smoked this cigar outside my Vault and confirm the identity below is exact/);
+  assert.match(journal,/Share my numeric score using the exact cigar identity below/);
+  assert.match(journal,/Leave this unchecked to save only to your private journal/);
   assert.match(community,/No re-entry is needed/);
   assert.match(community,/deliberately replace your current score/);
 });

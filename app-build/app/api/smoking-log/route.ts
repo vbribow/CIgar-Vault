@@ -10,10 +10,15 @@ import { loadInventory } from "@/lib/inventory";
 import { consumeInventory } from "@/lib/inventory-model";
 import { syncCollector25Contribution } from "@/lib/collector-25-contribution";
 import { createOwnedRecord, deleteOwnedRecord, loadOwnedRecord, saveOwnedRecord } from "@/lib/user-data";
-export async function GET() {
+export async function GET(request: Request) {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
-    return NextResponse.json({ data: await loadSmokingLogs() });
+    const records = await loadSmokingLogs();
+    const submissionId = new URL(request.url).searchParams.get("submissionId");
+    if (!submissionId) return NextResponse.json({ data: records });
+    const parsedSubmission = SmokingLogCreateSchema.shape.submissionId.safeParse(submissionId);
+    if (!parsedSubmission.success) return NextResponse.json({ error: "Invalid submission check" }, { status: 400 });
+    return NextResponse.json({ data: records.find(record => record.smokeId === createSmokeId(parsedSubmission.data)) ?? null });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Failed" },

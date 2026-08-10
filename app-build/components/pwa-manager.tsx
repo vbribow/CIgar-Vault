@@ -25,6 +25,9 @@ export function PwaManager({ initialEvent }: { initialEvent?: InstallEvent }){
       if(value.waiting)setWaiting(value.waiting);
       value.addEventListener("updatefound",()=>{const worker=value.installing;worker?.addEventListener("statechange",()=>{if(worker.state==="installed"&&navigator.serviceWorker.controller)setWaiting(worker)})});
     }).catch(()=>{/* Service-worker support must never prevent the app from opening. */});
+    const refreshUpdate=()=>{if(document.visibilityState==="visible")void registration?.update().catch(()=>{/* Keep the current shell when an update check cannot connect. */})};
+    document.addEventListener("visibilitychange",refreshUpdate);
+    window.addEventListener("online",refreshUpdate);
     let installDismissed=false;
     try{installDismissed=localStorage.getItem(installDismissedKey)==="1"}catch{/* Storage may be unavailable in a private or restricted web view. */}
     if(!installStandalone&&!installDismissed){setHidden(false);setShowIos(/iphone|ipad|ipod/i.test(navigator.userAgent))}
@@ -33,7 +36,7 @@ export function PwaManager({ initialEvent }: { initialEvent?: InstallEvent }){
     window.addEventListener("beforeinstallprompt",listener);
     window.addEventListener("appinstalled",installed);
     const timer=window.setInterval(()=>void registration?.update(),15*60_000);
-    return()=>{window.removeEventListener("beforeinstallprompt",listener);window.removeEventListener("appinstalled",installed);navigator.serviceWorker?.removeEventListener("controllerchange",controllerChange);window.clearInterval(timer)};
+    return()=>{window.removeEventListener("beforeinstallprompt",listener);window.removeEventListener("appinstalled",installed);document.removeEventListener("visibilitychange",refreshUpdate);window.removeEventListener("online",refreshUpdate);navigator.serviceWorker?.removeEventListener("controllerchange",controllerChange);window.clearInterval(timer)};
   },[]);
   function dismiss(){try{localStorage.setItem(installDismissedKey,"1")}catch{/* Dismiss for this session even when storage is unavailable. */}setHidden(true)}
   async function install(){

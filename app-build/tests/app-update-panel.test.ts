@@ -27,3 +27,11 @@ test("the active worker and build artifact expose the same private release ident
   assert.match(build,/public\/release\.json/);
   assert.match(build,/hojavia-beta-shell-v4-\$\{release\}/);
 });
+
+test("installed phones can check the release and refresh when the app resumes",()=>{
+  const proxy=readFileSync(new URL("../proxy.ts",import.meta.url),"utf8");
+  const manager=readFileSync(new URL("../components/pwa-manager.tsx",import.meta.url),"utf8");
+  assert.match(proxy,/sw\.js\|release\.json\|manifest\.webmanifest/);
+  assert.match(manager,/visibilitychange/);
+  assert.match(manager,/window\.addEventListener\("online",refreshUpdate\)/);
+});

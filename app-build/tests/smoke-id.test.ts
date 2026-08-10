@@ -121,6 +121,11 @@ test("a lost mobile save response is confirmed automatically with the same submi
   assert.match(requests,/return await fetchWithTimeout\(input, init, timeoutMs\)/g);
   assert.match(manager,/focus\(\{ preventScroll: true \}\)/);
   assert.doesNotMatch(manager,/smokeSaveFeedback\.current\?\.scrollIntoView/);
+  assert.match(manager,/\/api\/smoking-log\?submissionId=/);
+  assert.match(manager,/finishSmokeSave\(\{ data:confirmed\.data/);
+  const route=readFileSync(new URL("../app/api/smoking-log/route.ts",import.meta.url),"utf8");
+  assert.match(route,/searchParams\.get\("submissionId"\)/);
+  assert.match(route,/record\.smokeId === createSmokeId\(parsedSubmission\.data\)/);
 });
 
 test("inventory decrement runs only after the insert-only smoke reservation wins",()=>{

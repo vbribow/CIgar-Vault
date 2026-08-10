@@ -47,6 +47,9 @@ export const flavorOptions = ["Cedar", "Earth", "Leather", "Pepper", "Cream", "C
 export function smokeRequiredFieldMessage(name: string) {
   if (name === "inventoryId") return "Choose ‘Remove from my Vault’ and select the exact lot, or choose ‘Do not remove from my Vault’ for a cigar outside your inventory.";
   if (name === "cigarName") return "Enter the cigar’s brand, line, and exact vitola before saving.";
+  if (name === "cigarBrand") return "To share this score with the Hojavía 25, enter the cigar brand—or turn off optional Hojavía 25 sharing.";
+  if (name === "cigarLine") return "To share this score with the Hojavía 25, enter the exact line or blend—or turn off optional Hojavía 25 sharing.";
+  if (name === "cigarVitola") return "To share this score with the Hojavía 25, enter the exact vitola—or turn off optional Hojavía 25 sharing.";
   if (name === "quantitySmoked") return "Enter how many cigars were smoked from this lot.";
   if (name === "dateSmoked") return "Choose the date smoked before saving.";
   if (name === "writeKey") return "Enter the founder write key before saving.";
@@ -135,6 +138,24 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       const flavors = [...new Set(["flavor1", "flavor2", "flavor3"].map(name => String(form.get(name) || "")).filter(Boolean))];
       if (flavors.length) payload.flavor = flavors.join(", ");
     } else payload.submissionId = valuationSubmissionId;
+    const finishSmokeSave = (result: { data: SmokingLog; collector25?: { status?: string } }, status: number) => {
+      void captureOperationalSuccess("smoke-save",status);
+      setSmokes(values => values.some(value => value.smokeId === result.data.smokeId) ? values : [result.data, ...values]);
+      setLastSmokeIdentity({ source: smokeSource, cigarName: smokeCigarName, outsideIdentity });
+      setMessage(smokeSaveMessage(result, smokeSource === "MANUAL", Number(payload.quantitySmoked ?? 1)));
+      mutation.succeed();
+      formElement.reset();
+      smokeDraft.clear();
+      recordSafety.markSaved();
+      setSmokeSubmissionId(createClientUuid());
+      setNewSmokeConfirmed(false);
+      setSmokeSource(selectedInventoryId || "");
+      setSmokeCigarName("");
+      setOutsideIdentity({confirmed:false,brand:"",line:"",vitola:""});
+      setSmokePhotos([]);
+      setSmokePhotoAnalysis(undefined);
+      setSmokePhotoMessage("");
+    };
     let failureStatus=0;
     try {
       const endpoint = kind === "smoke" ? "/api/smoking-log" : "/api/valuations";
@@ -150,21 +171,29 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       const result = await readSaveResponse(response);
       if (!response.ok) throw new Error(result.error || "Save failed");
       if (kind === "smoke") {
-        void captureOperationalSuccess("smoke-save",response.status);
-        setSmokes(values => values.some(value => value.smokeId === result.data.smokeId) ? values : [result.data, ...values]);
-        setLastSmokeIdentity({ source: smokeSource, cigarName: smokeCigarName, outsideIdentity });
+        finishSmokeSave(result,response.status);
+        return;
       }
       else {
         setValuations(values => values.some(value => value.valuationId === result.data.valuationId) ? values : [result.data, ...values]);
       }
-      setMessage(kind === "smoke" ? smokeSaveMessage(result, smokeSource === "MANUAL", Number(payload.quantitySmoked ?? 1)) : "Valuation evidence saved to your private Vault.");
+      setMessage("Valuation evidence saved to your private Vault.");
       mutation.succeed();
       formElement.reset();
-      if (kind === "smoke") smokeDraft.clear(); else valuationFormDraft.clear();
+      valuationFormDraft.clear();
       recordSafety.markSaved();
-      if (kind === "smoke") { setSmokeSubmissionId(createClientUuid()); setNewSmokeConfirmed(false); setSmokeSource(selectedInventoryId || ""); setSmokeCigarName(""); setOutsideIdentity({confirmed:false,brand:"",line:"",vitola:""}); setSmokePhotos([]); setSmokePhotoAnalysis(undefined); setSmokePhotoMessage(""); }
-      else setValuationSubmissionId(createClientUuid());
+      setValuationSubmissionId(createClientUuid());
     } catch (error) {
+      if (kind === "smoke" && (error instanceof RequestTimeoutError || error instanceof TypeError)) {
+        try {
+          const confirmation = await fetchWithTimeout(`/api/smoking-log?submissionId=${encodeURIComponent(smokeSubmissionId)}`, { cache:"no-store" }, 12_000);
+          const confirmed = await readSaveResponse(confirmation);
+          if (confirmation.ok && confirmed.data) {
+            finishSmokeSave({ data:confirmed.data, collector25:{ status:"unavailable" } },confirmation.status);
+            return;
+          }
+        } catch {/* Continue to the retained-form recovery state when confirmation is also unavailable. */}
+      }
       if(kind==="smoke")void captureOperationalFailure("smoke-save",failureStatus);
       mutation.fail();
       setMessage(saveRecoveryMessage(error, kind === "smoke" ? "this smoking experience" : "this valuation evidence"));
@@ -299,9 +328,9 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
           {smokePhotoMessage && <output className="smokePhotoMessage" aria-live="polite">{smokePhotoMessage}</output>}
           {smokePhotoAnalysis && <div className={`visionEvidence confidence-${smokePhotoAnalysis.confidence}`}><strong>{smokePhotoAnalysis.confidence} confidence · review required</strong><p>{smokePhotoAnalysis.evidenceSummary}</p>{smokePhotoAnalysis.uncertainties.length > 0 && <small><b>Confirm:</b> {smokePhotoAnalysis.uncertainties.join(" · ")}</small>}</div>}
           <label className="manualSmokeCigar"><span>What did you smoke? *</span><input name="cigarName" required minLength={3} maxLength={300} value={smokeCigarName} onChange={event => setSmokeCigarName(event.target.value)} placeholder="Brand, line, exact vitola, and year if known" /><small>Review and correct photo suggestions. Saving creates only a private smoking review—no Vault record and no quantity change.</small></label>
-          <fieldset className="outsideVaultIdentity"><legend>Outside-Vault rating</legend>
-            <label className="check"><input name="outsideInventory" type="checkbox" checked={outsideIdentity.confirmed} onChange={event=>setOutsideIdentity(current=>({...current,confirmed:event.target.checked}))}/> I smoked this cigar outside my Vault and confirm the identity below is exact.</label>
-            <small>This label keeps the experience distinct from owned inventory. If anonymous Hojavía 25 sharing is enabled, only the exact identity and numeric score may contribute—never notes, purchase details, or inventory.</small>
+          <fieldset className="outsideVaultIdentity"><legend>Optional · Share this score with the Hojavía 25</legend>
+            <label className="check"><input name="outsideInventory" type="checkbox" checked={outsideIdentity.confirmed} onChange={event=>setOutsideIdentity(current=>({...current,confirmed:event.target.checked}))}/> Share my numeric score using the exact cigar identity below.</label>
+            <small>Leave this unchecked to save only to your private journal. If you opt in, Hojavía needs the exact brand, line, and vitola; notes, purchase details, and inventory are never shared.</small>
             {outsideIdentity.confirmed&&<div className="outsideVaultIdentityFields">
               <label><span>Brand *</span><input name="cigarBrand" required value={outsideIdentity.brand} onChange={event=>setOutsideIdentity(current=>({...current,brand:event.target.value}))}/></label>
               <label><span>Line or blend *</span><input name="cigarLine" required value={outsideIdentity.line} onChange={event=>setOutsideIdentity(current=>({...current,line:event.target.value}))}/></label>

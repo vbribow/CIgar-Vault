@@ -50,7 +50,7 @@ test("every production build gives the installed app a source-derived release",(
 test("offline, install, and social-preview assets bypass protected-route middleware", () => {
   const proxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
   assert.match(proxy, /pathname === "\/offline"/);
-  assert.match(proxy, /assets\/\|favicon\.ico\|api\/\|icons\/\|sw\.js\|manifest\.webmanifest/);
+  assert.match(proxy, /assets\/\|favicon\.ico\|api\/\|icons\/\|sw\.js\|release\.json\|manifest\.webmanifest/);
   assert.match(proxy, /hojavia-mark\.svg/);
   assert.match(proxy, /pathname === "\/install"/);
 });
