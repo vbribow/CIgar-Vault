@@ -41,6 +41,8 @@ test("every production build gives the installed app a source-derived release",(
   assert.match(build,/createHash\("sha256"\)/);
   assert.match(build,/releaseInputs/);
   assert.match(build,/dist\/client\/sw\.js/);
+  assert.match(build,/stampVercelInstalledAppRelease/);
+  assert.match(build,/public\/release\.json/);
   assert.match(build,/replaceAll\(releaseMarker, release\)/);
   assert.match(build,/release marker was not fully replaced/);
 });

@@ -23,5 +23,7 @@ test("the active worker and build artifact expose the same private release ident
   assert.match(worker,/GET_RELEASE/);
   assert.match(worker,/postMessage\(\{release:CACHE\}\)/);
   assert.match(build,/dist\/client\/release\.json/);
+  assert.match(build,/stampVercelInstalledAppRelease/);
+  assert.match(build,/public\/release\.json/);
   assert.match(build,/hojavia-beta-shell-v4-\$\{release\}/);
 });
