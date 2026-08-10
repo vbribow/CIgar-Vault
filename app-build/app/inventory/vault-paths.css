@@ -7,6 +7,7 @@
 .vaultPaths small{line-height:1.5}
 .vaultPaths b{align-self:end;color:var(--gold2);font-size:12px}
 #inventory-records{scroll-margin-top:16px}
+.recentlyAdded{display:grid;gap:14px;margin-bottom:22px}.recentlyAddedHeader{display:flex;align-items:end;justify-content:space-between;gap:16px}.recentlyAddedHeader h2{margin:4px 0 0}.recentlyAddedHeader>a{color:var(--gold2);font-size:12px;font-weight:800}.recentlyAdded ol{display:grid;margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}.recentlyAdded li{border-bottom:1px solid var(--line)}.recentlyAdded li>a{display:flex;justify-content:space-between;gap:16px;padding:13px 2px;color:inherit;text-decoration:none}.recentlyAdded li span{display:grid;gap:4px}.recentlyAdded li small,.recentlyAdded time{color:var(--muted);font-size:12px}.recentlyAdded time{white-space:nowrap}
 .inventoryDataNotice{display:grid;gap:10px;margin:0 0 22px;border-color:#805b2d}
 .inventoryDataNotice h2,.inventoryDataNotice p{margin:0}
 .inventoryDataNotice p{max-width:760px;color:var(--muted);line-height:1.65}
@@ -14,4 +15,4 @@
 .inventoryQueueNotice{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0 20px;padding:14px 16px;border:1px solid #805b2d;border-radius:14px;background:#241a12;color:#f3dfba}
 .inventoryQueueNotice small{color:var(--muted)}
 @media(max-width:640px){.inventoryQueueNotice{align-items:flex-start;flex-direction:column;gap:5px}}
-@media(max-width:800px){.vaultPaths{grid-template-columns:1fr}.vaultPaths>a{min-height:auto}}
+@media(max-width:800px){.vaultPaths{grid-template-columns:1fr}.vaultPaths>a{min-height:auto}.recentlyAdded li>a{align-items:start}.recentlyAdded time{font-size:11px}}

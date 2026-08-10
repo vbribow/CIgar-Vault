@@ -1,5 +1,7 @@
 export type InventoryItem = {
   inventoryId: string;
+  /** Trusted account-record creation time. Read-only and never collector-entered. */
+  addedAt?: string;
   catalogId?: string;
   brand: string;
   line: string;

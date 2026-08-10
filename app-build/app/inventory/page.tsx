@@ -7,6 +7,7 @@ import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
+import { recentlyAddedInventory } from "@/lib/recent-inventory";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -43,6 +44,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
   const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
   const cigarItems = cigarInventoryRecords(items, collections);
+  const recentItems = recentlyAddedInventory(cigarItems, 5);
   const presentationAssetCount = items.length - cigarItems.length;
   const collectionLinksReady = collectionsResult.status === "fulfilled";
   const editFocus = ["quantity","year","packaging","price","storage","provenance","rating","all"].includes(filters.focus||"")
@@ -55,6 +57,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       <Link href="/collection-health"><span>Record integrity</span><strong>Audit My Inventory</strong><small>Review quantities, years, values, storage, provenance, and collection links.</small><b>Start audit →</b></Link>
       <Link href="/collections" prefetch><span>Named collectible sets</span><strong>Valuable Collections</strong><small>Manage exact contents, collection premiums, and humidor value.</small><b>{collectionLinksReady?`${collections.length} collection${collections.length===1?"":"s"} →`:"Records unavailable →"}</b></Link>
     </nav>
+    {recentItems.length>0&&<section className="card recentlyAdded" aria-labelledby="recently-added-title"><div className="recentlyAddedHeader"><div><div className="eyebrow">Latest Vault entries</div><h2 id="recently-added-title">Recently added</h2></div><a href="/inventory#inventory-records">Browse all</a></div><ol>{recentItems.map(item=><li key={item.inventoryId}><Link href={`/inventory/${encodeURIComponent(item.inventoryId)}`}><span><strong>{item.brand} {item.line}</strong><small>{item.vitola} · {item.currentQty ?? "Quantity not recorded"}{item.collectionId?" · Collection cigar":""}</small></span><time dateTime={item.addedAt}>{new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",year:"numeric"}).format(new Date(item.addedAt!))}</time></Link></li>)}</ol></section>}
     {!items.length&&<section className="card firstInventoryGuide" aria-labelledby="first-inventory-title"><div><div className="eyebrow">A focused beginning</div><h2 id="first-inventory-title">Start with one cigar—not the whole collection.</h2><p>Photograph it or enter the details you already know. Review the suggested identity, record the quantity, and save. Everything else can be added later.</p></div><a className="button" href="#mobile-intake">Document my first cigar ↓</a></section>}
     <WorkspaceGuide items={[{label:"Capture",title:"Add by camera or form",detail:"Identify a cigar, review the fields, then approve it into inventory.",href:"#mobile-intake"},{label:"Count",title:"Reconcile boxes and loose sticks",detail:"Record what is physically present without disturbing the rest of the lot.",href:"/inventory-count"},{label:"Protect",title:"Complete value and provenance",detail:"Close evidence gaps for reporting, verification, and climate exposure.",href:"/collection-health"}]}/>
     {!collectionLinksReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Collection links temporarily unavailable</div><p>Your inventory is intact and available. Collection links are hidden rather than shown as absent.</p></section>}

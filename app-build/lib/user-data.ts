@@ -40,6 +40,14 @@ export async function loadAccountRecords<T>(kind: VaultRecordKind): Promise<T[] 
   return (data ?? []).map(row => row.payload as T);
 }
 
+export async function loadAccountRecordRows<T>(kind: VaultRecordKind): Promise<Array<{payload:T;createdAt:string}> | undefined> {
+  const context = await accountContext();
+  if (!context) return undefined;
+  const { data, error } = await context.supabase.from("vault_records").select("payload,created_at").eq("user_id", context.user.id).eq("kind", kind).order("record_id");
+  if (error) throw error;
+  return (data ?? []).map(row => ({ payload: row.payload as T, createdAt: row.created_at as string }));
+}
+
 export async function saveOwnedRecord(kind: VaultRecordKind, recordId: string, payload: unknown): Promise<boolean> {
   const context = await accountContext();
   if (!context) return false;

@@ -56,7 +56,12 @@ export async function PUT(request: Request, context: Context) {
         { error: "This record changed since you opened it—possibly after a photo update or on another device. Refresh your Vault, review the newer information, and try again." },
         { status: 409 },
       );
-    const parsedInput=parseInventoryUpdate(await request.json(), existing);
+    const body=await request.json();
+    if(typeof body==="object"&&body!==null&&"addedAt" in body){
+      if(body.addedAt!==existing.addedAt)return NextResponse.json({error:"The Vault entry date is maintained automatically and cannot be changed."},{status:409});
+      delete body.addedAt;
+    }
+    const parsedInput=parseInventoryUpdate(body, existing);
     const parsed = normalizeInventory(reconcileSmokedQuantityEdit(parsedInput,existing));
     const item = canonicalizeInventoryNaming(parsed, await getCatalog().catch(() => []));
     if (item.inventoryId !== inventoryId)
@@ -73,7 +78,7 @@ export async function PUT(request: Request, context: Context) {
         );
     }
     const result = await saveOwnedRecordIfUnchanged("inventory", inventoryId, item, expectedRevision);
-    if (result === "saved") return NextResponse.json({ data: item, revision: recordRevision(item) });
+    if (result === "saved") return NextResponse.json({ data: {...item,addedAt:existing.addedAt}, revision: recordRevision({...item,addedAt:existing.addedAt}) });
     if (result === "conflict")
       return NextResponse.json(
         { error: "This record changed while you were saving. Refresh your Vault, review the newer information, and try again." },
