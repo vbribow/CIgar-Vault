@@ -21,3 +21,9 @@ test("moving an owned sensor atomically follows its existing readings",()=>{
   assert.match(route,/humidorId:sensor\.humidorId/);
   assert.match(route,/saveOwnedRecordsAtomically/);
 });
+test("the sensor registry exposes a safe correction control",()=>{
+  const editor=readFileSync(new URL("../components/sensor-assignment-editor.tsx",import.meta.url),"utf8");
+  assert.match(editor,/method: "PATCH"/);
+  assert.match(editor,/Existing readings/);
+  assert.match(editor,/reassignedReadings/);
+});
