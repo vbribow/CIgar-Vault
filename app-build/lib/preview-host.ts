@@ -2,7 +2,6 @@ const activeProductHostnames = new Set([
   "hojavia.com",
   "www.hojavia.com",
   "c-igar-vault-lmug.vercel.app",
-  "cedriva-app.brian-bowers-3344.chatgpt.site",
 ]);
 
 export function isActiveProductHostname(hostname: string): boolean {

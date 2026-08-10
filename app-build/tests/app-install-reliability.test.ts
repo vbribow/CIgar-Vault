@@ -20,6 +20,13 @@ test("installation health covers obsolete hosts, connectivity, updates, home scr
   assert.match(component,/navigator\.serviceWorker\.getRegistration/);
 });
 
+test("public sign in always leaves retired previews for the permanent authentication host",()=>{
+  const navigation=readFileSync(new URL("../components/app-navigation.tsx",import.meta.url),"utf8");
+  assert.match(navigation,/import \{ canonicalAppOrigin \} from "@\/lib\/app-install"/);
+  assert.match(navigation,/<a href=\{`\$\{canonicalAppOrigin\}\/login`\} className="button secondary">Sign in<\/a>/);
+  assert.doesNotMatch(navigation,/<Link href="\/login" className="button secondary">Sign in<\/Link>/);
+});
+
 test("installation confirmation is operational and remains available when analytics are disabled",()=>{
   const route=readFileSync(new URL("../app/api/product-events/route.ts",import.meta.url),"utf8");
   assert.match(route,/app-install-confirmed/);

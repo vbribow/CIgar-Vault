@@ -7,7 +7,6 @@ test("current Hojavía production hosts are recognized even before the custom do
     "hojavia.com",
     "www.hojavia.com",
     "c-igar-vault-lmug.vercel.app",
-    "cedriva-app.brian-bowers-3344.chatgpt.site",
   ]) {
     assert.equal(isActiveProductHostname(hostname), true, hostname);
   }
@@ -33,6 +32,7 @@ test("loopback and private-network preview hosts are not treated as obsolete ins
 
 test("public and obsolete deployment hosts still receive the migration warning", () => {
   for (const hostname of [
+    "cedriva-app.brian-bowers-3344.chatgpt.site",
     "old-hojavia.example.com",
     "172.15.0.1",
     "172.32.0.1",
