@@ -9,6 +9,14 @@ import { isActiveInventoryHolding, isCurrentInventoryRecord } from "@/lib/invent
 import { brand } from "@/lib/brand";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+function HomeClimateCard({ intelligence }: { intelligence: ReturnType<typeof buildCollectionIntelligence> }) {
+  const climate = intelligence.components.find(component => component.key === "climate");
+  const hasClimateEvidence = Boolean(climate && climate.detail !== "No monitored humidor evidence");
+  return <section className="homeClimateCard" aria-labelledby="home-climate-title">
+    <div><div className="eyebrow">Humidor climate</div><h2 id="home-climate-title">Protect the collection environment.</h2><p>{climate?.detail || "Set up a humidor and connect its climate history."}</p><div className="ctaRow"><a className="button" href="/humidors">Open Humidors</a><a className="button secondary" href="/sensors">Manage Sensors</a></div></div>
+    <div className="homeClimateMetric"><span>Humidity stability</span><strong>{hasClimateEvidence ? climate?.score : "—"}</strong><small>{hasClimateEvidence ? "Evidence-based climate score" : "Monitoring not established"}</small></div>
+  </section>;
+}
 export function Dashboard({ items, onboarding,intelligence }: { items: InventoryItem[]; onboarding: OnboardingStep[];intelligence:ReturnType<typeof buildCollectionIntelligence> }) {
   const current = items.filter(isCurrentInventoryRecord);
   const active = current.filter(isActiveInventoryHolding);
@@ -32,10 +40,12 @@ export function Dashboard({ items, onboarding,intelligence }: { items: Inventory
       <div className="ctaRow"><a className="button" href="/inventory#mobile-intake">Document my first cigar</a><a className="button secondary" href="/collector-walkthrough">Practice with a safe example</a></div>
       <small className="firstSessionAssurance">Private by default · You remain in control · Uncertain details can stay blank</small>
     </section>
+    <HomeClimateCard intelligence={intelligence} />
     <OnboardingDashboard steps={onboarding} />
   </>;
   return <>
     <CollectorCommandCenter intelligence={intelligence} />
+    <HomeClimateCard intelligence={intelligence} />
     <div className="grid">
       <div className="card"><div className="metric">{current.length}</div><div className="label">Current inventory records</div></div>
       <div className="card"><div className="metric">{knownQty}</div><div className="label">Known cigars remaining</div></div>

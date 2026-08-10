@@ -1,4 +1,4 @@
-.vaultPaths{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 22px}
+.vaultPaths{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 22px}
 .vaultPaths>a{display:grid;gap:6px;min-height:170px;padding:20px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#241a14,#15110e);color:inherit;text-decoration:none}
 .vaultPaths>a:hover{border-color:#92703e;transform:translateY(-1px)}
 .vaultPaths span,.vaultPaths small{color:var(--muted)}
@@ -15,4 +15,5 @@
 .inventoryQueueNotice{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0 20px;padding:14px 16px;border:1px solid #805b2d;border-radius:14px;background:#241a12;color:#f3dfba}
 .inventoryQueueNotice small{color:var(--muted)}
 @media(max-width:640px){.inventoryQueueNotice{align-items:flex-start;flex-direction:column;gap:5px}}
+@media(max-width:1100px){.vaultPaths{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:800px){.vaultPaths{grid-template-columns:1fr}.vaultPaths>a{min-height:auto}.recentlyAdded li>a{align-items:start}.recentlyAdded time{font-size:11px}}

@@ -25,6 +25,8 @@ test("mobile navigation exposes a focused five-item bar and complete More sheet"
   assert.match(navigation, /Search \{brand\.name\}/);
   assert.match(navigation, /mobileFeaturedLinks\.map/);
   assert.match(navigation, /moreLinks\.map/);
+  assert.match(navigation, /\["\/humidors","Humidors"/);
+  assert.match(navigation, /\["\/sensors","Sensors"/);
   assert.match(navigation, /\["\/cigar-somm","Cigar Somm"/);
   assert.match(navigation, /<DeviceAwareSignOut compact \/>/);
   assert.match(deviceAwareSignOut, /action=\{signOut\}/);

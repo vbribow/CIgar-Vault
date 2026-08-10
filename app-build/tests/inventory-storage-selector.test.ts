@@ -17,3 +17,10 @@ test("bulk storage changes use the same registered-humidor selector",()=>{
   assert.match(manager,/select name="bulkStorage"/);
   assert.doesNotMatch(manager,/input name="bulkStorage"/);
 });
+
+test("Vault filtering lists every registered humidor by name and supports legacy assignments",()=>{
+  assert.match(manager,/const storageOptions = useMemo/);
+  assert.match(manager,/value: humidor\.humidorId, label: humidor\.name/);
+  assert.match(manager,/selectedHumidor\.humidorId, selectedHumidor\.name/);
+  assert.match(manager,/legacy location/);
+});

@@ -196,6 +196,12 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const scopedItems = useMemo(() => cigarInventoryRecords(items, collections), [items, collections]);
   const statuses = useMemo(() => [...new Set(scopedItems.map((item) => item.status).filter(Boolean))].sort(), [scopedItems]);
   const locations = useMemo(() => [...new Set(scopedItems.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [scopedItems]);
+  const storageOptions = useMemo(() => {
+    const registered = humidors.map(humidor => ({ value: humidor.humidorId, label: humidor.name }));
+    const recognized = new Set(humidors.flatMap(humidor => [humidor.humidorId, humidor.name]).map(value => value.trim().toLowerCase()));
+    const legacy = locations.filter(value => !recognized.has(value.trim().toLowerCase())).map(value => ({ value, label: `${value} · legacy location` }));
+    return [...registered, ...legacy];
+  }, [humidors, locations]);
   const collectionRelationships = useMemo(() => inventoryCollectionRelationships(items,collections), [items,collections]);
   const collectionContents = useMemo(() => new Map(collections.map(collection => [collection.collectionId,collectionContentsSummary(collection,items)])), [collections,items]);
   const releaseLotIssues = useMemo(() => releaseLotIntegrityIssues(scopedItems), [scopedItems]);
@@ -209,10 +215,13 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const filtered = useMemo(() => scopedItems.filter((item) => {
     const haystack = `${item.inventoryId} ${item.brand} ${item.line} ${item.vitola}`.toLowerCase();
     const missingMatch = missing === "all" || (missing === "quantity" && !hasDocumentedCurrentQuantity(item)) || (missing === "value" && item.retailValue === undefined) || (missing === "vintage" && item.vintage === undefined) || (missing === "storage" && !item.storageLocationId) || (missing === "provenance" && !item.provenanceNotes) || (missing === "release-lot" && releaseLotIssueIds.has(item.inventoryId));
-    const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : item.storageLocationId === storage);
+    const selectedHumidor = humidors.find(humidor => humidor.humidorId === storage);
+    const storageMatch = storage === "all" || (storage === "unassigned" ? !item.storageLocationId : selectedHumidor
+      ? [selectedHumidor.humidorId, selectedHumidor.name].some(value => value.trim().toLowerCase() === item.storageLocationId?.trim().toLowerCase())
+      : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
     return haystack.includes(deferredQuery.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && (!initialActiveOnly || (item.currentQty ?? 0) > 0);
-  }), [scopedItems, deferredQuery, status, missing, storage, initialCollectionId, initialActiveOnly, releaseLotIssueIds]);
+  }), [scopedItems, deferredQuery, status, missing, storage, initialCollectionId, initialActiveOnly, releaseLotIssueIds, humidors]);
   const visibleItems = useMemo(() => filtered.slice(0, visibleLimit), [filtered, visibleLimit]);
 
   useEffect(() => setVisibleLimit(inventoryBatchSize), [deferredQuery, status, missing, storage, initialCollectionId, initialActiveOnly]);
@@ -409,7 +418,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       {searchFeedback&&<output key={searchFeedback.token} className="inventorySearchFeedback" role="status" aria-live="polite" aria-atomic="true">{searchFeedback.message}</output>}
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="release-lot">Release / lot integrity ({releaseLotIssueIds.size})</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>
-      <label><span>Storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All locations</option><option value="unassigned">Unassigned</option>{locations.map((value)=><option key={value}>{value}</option>)}</select></label>
+      <label><span>Humidor / storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All humidors and locations</option><option value="unassigned">Unassigned</option>{storageOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
       <button type="button" className="button secondary clearInventoryFilters" onClick={clearInventorySearch} disabled={!queryInput&&!query&&status==="all"&&missing==="all"&&storage==="all"&&!initialCollectionId&&!initialActiveOnly}>Clear search and filters</button>
       <div className="filterCount">{filtered.length} of {scopedItems.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
       {!ratingsLoaded&&<button type="button" className="button secondary" disabled={supportBusy==="ratings"} onClick={()=>void loadSupport("ratings")}>{supportBusy==="ratings"?"Loading ratings…":"Load published ratings"}</button>}

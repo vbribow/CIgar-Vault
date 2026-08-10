@@ -25,7 +25,11 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(page,/href="\/collection-health"/);
  assert.match(page,/href="\/collections"/);
  assert.match(page,/Valuable Collections/);
+ assert.match(page,/href="\/humidors"/);
+ assert.match(page,/<strong>Humidors<\/strong>/);
  assert.match(manager,/id="inventory-records"/);
+ assert.match(manager,/Humidor \/ storage/);
+ assert.match(manager,/storageOptions\.map/);
  assert.match(manager,/aria-label="Inventory records and filters"/);
  assert.match(audit,/Audit my inventory/);
  assert.match(audit,/Physical quantity/);

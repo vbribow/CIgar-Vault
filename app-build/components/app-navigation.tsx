@@ -56,6 +56,8 @@ export function AppNavigation() {
     <nav aria-label="Public navigation"><Link href="/industry" className={matches(pathname,"/industry")?"active":undefined}>Industry Hub</Link><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><a href={`${canonicalAppOrigin}/login`} className="button secondary">Sign in</a></nav>
   </div></header>;
   const moreLinks=[
+    ["/humidors","Humidors","Review climate, alerts, and every storage environment"],
+    ["/sensors","Sensors","Manage connected devices and imported climate history"],
     ["/smoke-journal","My Smoke Journal","Search and revisit every smoke you have logged"],
     ["/records","Tasting Journal","Log any smoke and learn from your own experience"],
     ["/valuations","Market","Understand value through dated evidence"],
@@ -98,7 +100,7 @@ export function AppNavigation() {
     <DeferredGlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <Link href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</Link>
       <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>
-      <Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")||matches(pathname,"/humidors")?"active":undefined}>Vault</Link>
+      <Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")?"active":undefined}>Vault</Link>
       <Link href="/records#log-smoke" className={matches(pathname,"/records")?"active":undefined}>Log a Smoke</Link>
       <Link href="/learn" className={matches(pathname,"/learn")||matches(pathname,"/sommelier-library")||matches(pathname,"/data-model")?"active":undefined}>Learn</Link>
       <Link href="/community" className={matches(pathname,"/community")||matches(pathname,"/places")?"active":undefined}>Collectors’ Lounge</Link>
@@ -112,7 +114,7 @@ export function AppNavigation() {
     <Link href="/" className={pathname==="/"?"active":undefined} aria-current={pathname==="/"?"page":undefined}><span>⌂</span><small>Home</small></Link>
     <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined} aria-current={matches(pathname,"/discover")||matches(pathname,"/catalog")?"page":undefined}><span>◇</span><small>Discover</small></Link>
     <Link href="/records#log-smoke" className={`mobileAdd ${matches(pathname,"/records")?"active":""}`} aria-current={matches(pathname,"/records")?"page":undefined}><span>＋</span><small>Log Smoke</small></Link>
-    <Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")||matches(pathname,"/humidors")?"active":undefined} aria-current={matches(pathname,"/inventory")||matches(pathname,"/collections")||matches(pathname,"/humidors")?"page":undefined}><span>▦</span><small>Vault</small></Link>
+    <Link href="/inventory" className={matches(pathname,"/inventory")||matches(pathname,"/collections")?"active":undefined} aria-current={matches(pathname,"/inventory")||matches(pathname,"/collections")?"page":undefined}><span>▦</span><small>Vault</small></Link>
     <button ref={mobileMoreTrigger} type="button" className={mobileMoreActive?"active":undefined} aria-haspopup="dialog" aria-expanded={mobileMoreOpen} aria-controls="mobile-more-sheet" onClick={()=>setMobileMoreOpen(true)}><span>•••</span><small>More</small></button>
   </nav>
   {mobileMoreOpen&&<div className="mobileMoreOverlay" onMouseDown={(event)=>{if(event.currentTarget===event.target)closeMobileMore(true)}}>
