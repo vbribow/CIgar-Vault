@@ -51,7 +51,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     ? filters.focus as "quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"rating"|"all"
     : "all";
   return <main className="shell">
-    <section className="section inventoryHeader"><div><div className="eyebrow">{brand.name} Vault · Your private record</div><h1>My collection</h1><p className="lede">Document every box and individual cigar, preserve provenance, understand what you own, and care for the story it carries.</p></div></section>
+    <section className="section inventoryHeader"><div><div className="eyebrow">{brand.name} Vault · Your private record</div><h1>My collection</h1><p className="lede">Document every box and individual cigar, preserve provenance, understand what you own, and care for the story it carries.</p><div className="ctaRow"><Link className="button" href="/inventory?add=new#mobile-intake">Add a cigar</Link><Link className="button secondary" href="/collections#add-collection">Add a collection</Link></div></div></section>
     <nav className="vaultPaths" aria-label="Vault workspaces">
       <a href="/inventory#inventory-records"><span>Individual inventory</span><strong>Browse Vault</strong><small>View, add, and edit every box and loose cigar.</small><b>{cigarItems.length} cigar lot{cigarItems.length===1?"":"s"} →</b></a>
       <Link href="/collection-health"><span>Record integrity</span><strong>Audit My Inventory</strong><small>Review quantities, years, values, storage, provenance, and collection links.</small><b>Start audit →</b></Link>

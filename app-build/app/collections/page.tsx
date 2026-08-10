@@ -37,6 +37,7 @@ export default async function CollectionsPage() {
             Group special releases, collaborations, and collectible series while
             preserving both their component value and complete-set premium.
           </p>
+          <a className="button" href="#add-collection">Add a collection</a>
         </div>
         <div className="valueHeroCard">
           <span>Collection intelligence</span>
