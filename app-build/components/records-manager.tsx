@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { DataMode } from "@/lib/config";
 import type { InventoryItem, SmokingLog, Valuation } from "@/lib/types";
 import { smokeEntryOrder } from "@/lib/smoke-journal";
@@ -52,6 +52,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [smokes, setSmokes] = useState(initialSmokes);
   const [valuations, setValuations] = useState(initialValuations);
   const [message, setMessage] = useState("");
+  const smokeSaveFeedback = useRef<HTMLOutputElement>(null);
   const [smokeSource, setSmokeSource] = useState(selectedInventoryId || "");
   const [smokeInventoryQuery, setSmokeInventoryQuery] = useState("");
   const [smokeCigarName, setSmokeCigarName] = useState("");
@@ -108,11 +109,15 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       if (flavors.length) payload.flavor = flavors.join(", ");
     } else payload.submissionId = valuationSubmissionId;
     let failureStatus=0;
+    setMessage("");
+    const controller=new AbortController();
+    const timeout=window.setTimeout(()=>controller.abort(new Error("Save timed out")),20_000);
     try {
       const response = await fetch(kind === "smoke" ? "/api/smoking-log" : "/api/valuations", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-founder-key": key },
         body: JSON.stringify(payload),
+        signal:controller.signal,
       });
       failureStatus=response.status;
       const result = await readSaveResponse(response);
@@ -135,8 +140,9 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     } catch (error) {
       if(kind==="smoke")void captureOperationalFailure("smoke-save",failureStatus);
       mutation.fail();
-      setMessage(saveRecoveryMessage(error, kind === "smoke" ? "this smoking experience" : "this valuation evidence"));
-    }
+      setMessage(saveRecoveryMessage(controller.signal.aborted?new Error("Save timed out"):error, kind === "smoke" ? "this smoking experience" : "this valuation evidence"));
+      if(kind==="smoke")window.setTimeout(()=>{smokeSaveFeedback.current?.scrollIntoView({behavior:"smooth",block:"center"});smokeSaveFeedback.current?.focus({preventScroll:true})},0);
+    } finally { window.clearTimeout(timeout); }
   }
 
   function startAnotherSmoke(reuseIdentity = false) {
@@ -285,7 +291,8 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <label><span>Tasting notes</span><textarea name="tastingNotes" rows={4} placeholder="How did it begin, develop, and finish? What stood out?" /></label>
         <label className="check"><input name="buyAgain" type="checkbox" /> Buy again</label>
         {mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}
-        <button className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Retry save"})}</button>
+        <button type="submit" className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Retry save"})}</button>
+        {message&&smokeMutation.status!=="idle"&&<output ref={smokeSaveFeedback} className="wideMessage deviceDraftNotice" tabIndex={-1} role={smokeMutation.status==="error"?"alert":"status"} aria-live="polite" aria-atomic="true">{message}</output>}
         </fieldset>
       </form>
       {smokeMutation.complete && <section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="smoke-saved-title"><strong id="smoke-saved-title">Smoke saved.</strong><p>Continue without refreshing or searching for this journal again.</p><div><button type="button" className="button" onClick={() => startAnotherSmoke(true)}>Log this cigar again</button><button type="button" className="button secondary" onClick={() => startAnotherSmoke(false)}>Log another</button></div></section>}
@@ -326,6 +333,6 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       {valuationMutation.complete&&<button type="button" className="button secondary" onClick={startAnotherValuation}>Add another valuation</button>}
       <div className="recordList"><h3>Recent valuations</h3>{valuations.slice(0, 8).map(value => <div key={value.valuationId}><strong>{value.inventoryId}</strong><span>{value.valuationDate} · {isVerifiedCompletedSale(value) || claimsUnverifiedCompletedSale(value) ? completedSaleLabel(value) : marketEvidenceType(value)==="Observed asking price" ? marketAskingPriceLabel : marketEvidenceType(value)} · aftermarket ${value.marketValue ?? "—"} · {isVerifiedCompletedSale(value) ? `verified sale $${value.lastSaleValue}` : claimsUnverifiedCompletedSale(value) ? `legacy sale claim $${value.lastSaleValue ?? "—"}` : value.askingPrice!==undefined ? `asking $${value.askingPrice} · no confirmed sale` : "no verified sale"}</span></div>)}</div>
     </section>
-    {message && <output className="wideMessage" aria-live="polite" aria-atomic="true">{message}</output>}
+    {message && valuationMutation.status!=="idle" && <output className="wideMessage" aria-live="polite" aria-atomic="true">{message}</output>}
   </div>;
 }

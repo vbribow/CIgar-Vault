@@ -26,11 +26,16 @@ test("journal and valuation retries retain the form and submission identity", ()
   const records = read("components/records-manager.tsx");
 
   assert.match(records, /readSaveResponse\(response\)/);
-  assert.match(records, /saveRecoveryMessage\(error, kind === "smoke"/);
+  assert.match(records, /saveRecoveryMessage\([\s\S]*kind === "smoke" \? "this smoking experience"/);
   assert.match(records, /error:"Retry save"/g);
   assert.match(records, /mutation\.succeed\(\);\s*formElement\.reset\(\)/);
   assert.match(records, /setSmokeSubmissionId\(createClientUuid\(\)\)/);
   assert.match(records, /setValuationSubmissionId\(createClientUuid\(\)\)/);
+  assert.match(records, /type="submit" className="button"/);
+  assert.match(records, /signal:controller\.signal/);
+  assert.match(records, /controller\.abort\(new Error\("Save timed out"\)\)/);
+  assert.match(records, /window\.clearTimeout\(timeout\)/);
+  assert.match(records, /ref=\{smokeSaveFeedback\}/);
 });
 
 test("climate saves survive interrupted or unreadable responses", () => {
