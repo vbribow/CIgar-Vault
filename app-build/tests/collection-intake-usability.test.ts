@@ -15,6 +15,13 @@ test("collection search state is isolated from the full Vault manager",()=>{
   assert.match(intake,/Typing no longer rerenders your full Vault/);
 });
 
+test("heritage brand and year controls include their own search action",()=>{
+  assert.match(intake,/searchBrandAndYear/);
+  assert.match(intake,/Search this brand and year/);
+  assert.match(intake,/disabled=\{!researchBrand\|\|researching\}/);
+  assert.match(intake,/runResearch\(researchBrand,"",researchYear\)/);
+});
+
 test("collection intake accepts photos and exposes documented contents before save",()=>{
   assert.match(intake,/>Add a collection</);
   assert.match(intake,/image\/jpeg,image\/png,image\/webp/);
