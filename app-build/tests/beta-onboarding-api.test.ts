@@ -17,6 +17,9 @@ test("founder can directly send a confirmed invitation while the server records 
   assert.match(route, /assertBetaSeatAvailable/);
   assert.match(route, /stage: "Invited"/);
   assert.match(route, /RESEND_API_KEY/);
+  assert.match(route, /submissionId: z\.string\(\)\.uuid\(\)/);
+  assert.match(route, /beta-invitation-\$\{collector\.id\}-\$\{submissionId\}/);
+  assert.doesNotMatch(route, /`beta-invitation-\$\{collector\.id\}`/);
 });
 
 test("the database applies a transaction-safe 10-collector cohort limit", () => {
@@ -48,6 +51,8 @@ test("founder onboarding offers one add-and-send invitation action with visible 
   const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
   assert.match(component, /Add & send invitation/);
   assert.match(component, /Adding and sending…/);
+  assert.match(component, /submissionId:createClientUuid\(\)/);
+  assert.match(component, /provider reference/);
   assert.match(component, /\/api\/founder-onboarding\/invite/);
   assert.doesNotMatch(component, /Add to queue/);
 });

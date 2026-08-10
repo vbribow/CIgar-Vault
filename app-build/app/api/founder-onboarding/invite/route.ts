@@ -6,7 +6,7 @@ import { assertBetaSeatAvailable } from "@/lib/beta-cohort";
 import { betaInvitationEmail } from "@/lib/beta-onboarding";
 import { accountEmailConfiguration, submitAccountEmail } from "@/lib/alert-notifications";
 
-const Input = z.object({ collectorId: z.string().uuid() });
+const Input = z.object({ collectorId: z.string().uuid(), submissionId: z.string().uuid() });
 
 function admin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -18,7 +18,7 @@ function admin() {
 export async function POST(request: Request) {
   if (!authorizeWrite(request)) return NextResponse.json({ error: "Founder authorization required" }, { status: 401 });
   try {
-    const { collectorId } = Input.parse(await request.json());
+    const { collectorId, submissionId } = Input.parse(await request.json());
     const client = admin();
     const [{ data: collector, error }, { data: collectors, error: listError }] = await Promise.all([
       client.from("beta_collectors").select("id,name,email,stage,notes,invited_at,last_contact_at,created_at,updated_at").eq("id", collectorId).maybeSingle(),
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const configuration = accountEmailConfiguration();
     if (!configuration.configured) return NextResponse.json({ error: "Hojavía system email is not configured. Add RESEND_API_KEY and HOJAVIA_EMAIL_FROM before sending." }, { status: 503 });
     const email = betaInvitationEmail(collector);
-    const submission = await submitAccountEmail(email.recipient, email.subject, email.body, `beta-invitation-${collector.id}`);
+    const submission = await submitAccountEmail(email.recipient, email.subject, email.body, `beta-invitation-${collector.id}-${submissionId}`);
     if (!submission) throw new Error("Hojavía system email is not configured");
     const acceptedAt = new Date().toISOString();
     const { data: updated, error: updateError } = await client.from("beta_collectors").update({ stage: "Invited", invited_at: collector.invited_at || acceptedAt, last_contact_at: acceptedAt, updated_at: acceptedAt }).eq("id", collector.id).select().single();

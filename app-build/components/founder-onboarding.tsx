@@ -13,6 +13,7 @@ import {
   type BetaCollector,
   type BetaStage,
 } from "@/lib/beta-onboarding";
+import { createClientUuid } from "@/lib/client-uuid";
 import { FounderBetaFeedback } from "@/components/founder-beta-feedback";
 import { forgetFounderSessionKey, readFounderSessionKey, rememberFounderSessionKey } from "@/lib/founder-session";
 import { FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
@@ -108,12 +109,12 @@ export function FounderOnboarding() {
     const response = await fetch("/api/founder-onboarding/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-founder-key": key },
-      body: JSON.stringify({ collectorId:item.id }),
+      body: JSON.stringify({ collectorId:item.id, submissionId:createClientUuid() }),
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Unable to send invitation");
     setItems(current => (current || []).map(value => value.id === item.id ? { ...value, ...result.data.collector, progress:value.progress } : value));
-    return true;
+    return String(result.data.providerId || "accepted");
   }
 
   async function create(event: FormEvent<HTMLFormElement>) {
@@ -137,7 +138,7 @@ export function FounderOnboarding() {
       event.currentTarget.reset();
       const sent = await sendInvitation(collector);
       if (!sent) setMessage(`${collector.name} was added without access. Send the invitation from their card when ready.`);
-      else setMessage(`The email provider accepted the invitation for ${collector.email}; delivery is not yet confirmed.`);
+      else setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${sent}. Delivery is not yet confirmed.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to add tester");
     } finally {
@@ -229,7 +230,7 @@ export function FounderOnboarding() {
         return <article key={item.id}>
           <div><small>{item.email}</small><h3>{item.name}</h3><p>{item.notes || "No follow-up notes yet."}</p></div>
           <label><span>Stage</span><select value={item.stage} disabled={busy} onChange={event => update(item, event.target.value as BetaStage)}>{stages.map(stage => <option value={stage} key={stage}>{betaStageLabel(stage)}</option>)}</select></label>
-          <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Sending invitation…");try{const sent=await sendInvitation(item);if(sent)setMessage(`The email provider accepted the invitation for ${item.email}; delivery is not yet confirmed.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to send invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Send invitation" : "Resend invitation"}</button>
+          <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Sending invitation…");try{const sent=await sendInvitation(item);if(sent)setMessage(`A fresh invitation was accepted for ${item.email} · provider reference ${sent}. Delivery is not yet confirmed.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to send invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Send invitation" : "Resend invitation"}</button>
           <button type="button" className="textButton" disabled={busy || item.stage !== "Invited"} onClick={() => prepare(item)}>View invitation</button>
           <button type="button" className="button secondary" disabled={busy || item.stage === "Prospect"} onClick={() => sendReinstall(item)}>Send app update</button>
           <section className="betaCollectorProgress" aria-label={`${item.name} beta progress`}>
