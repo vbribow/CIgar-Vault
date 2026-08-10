@@ -11,6 +11,7 @@ import { VitolaField } from "@/components/vitola-field";
 import { recentYearOptions } from "@/lib/year-options";
 import searchStyles from "./photo-identification-progress.module.css";
 import { fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
+import { catalogLinesForBrand, catalogVitolasForCigar } from "@/lib/catalog-intake-options";
 
 const evidenceTypes = ["Typed description", "Cigar band", "Single cigar", "Sealed box", "Open box", "Box code", "Habanos seal", "Receipt / provenance"];
 const queueKey = "cigar-vault:intake-drafts:v1";
@@ -67,8 +68,8 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
   const completion = useRef<HTMLElement>(null);
   const messageOutput = useRef<HTMLOutputElement>(null);
   const brands = useMemo(() => [...new Set([...cigarBrands.map((item) => item.name), ...catalog.map((item) => item.brand)])].sort(), [catalog]);
-  const lines = useMemo(() => [...new Set(catalog.filter((item) => !brand || item.brand.toLowerCase() === brand.toLowerCase()).map((item) => item.line))].sort(), [brand, catalog]);
-  const vitolas = useMemo(() => [...new Set(catalog.filter((item) => (!brand || item.brand.toLowerCase() === brand.toLowerCase()) && (!line || item.line.toLowerCase() === line.toLowerCase())).map((item) => item.vitola))].sort(), [brand, line, catalog]);
+  const lines = useMemo(() => brand ? catalogLinesForBrand(catalog,brand) : [...new Set(catalog.map(item=>item.line).filter(Boolean))].sort(), [brand, catalog]);
+  const vitolas = useMemo(() => brand&&line ? catalogVitolasForCigar(catalog,brand,line) : [], [brand, line, catalog]);
   const duplicates = useMemo(() => findInventoryDuplicates({ brand, line, vitola, vintage }, inventory), [brand, inventory, line, vintage, vitola]);
 
   useEffect(() => {

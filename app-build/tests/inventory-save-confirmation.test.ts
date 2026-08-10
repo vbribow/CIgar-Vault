@@ -9,6 +9,7 @@ test("the exact saved record shows a clear mobile-safe confirmation",()=>{
   assert.match(page,/query\.saved==="inventory"/);
   assert.match(page,/Saved to your private Vault/);
   assert.match(page,/This is the exact record that was saved/);
+  assert.match(page,/href="\/inventory#mobile-intake">Add another cigar/);
   assert.match(manager,/setMessage\(""\);\s*setRecentlySaved/);
   assert.doesNotMatch(manager,/was saved to your private Vault\. Choose what to do next below/);
   assert.match(styles,/\.inventorySavedConfirmation/);

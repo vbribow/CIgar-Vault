@@ -120,7 +120,7 @@ export default async function CigarPage({
       <Link className="button secondary detailReturnLink" href={backHref}>
         {backLabel}
       </Link>
-      {query.saved==="inventory"&&<section className="inventorySavedConfirmation" role="status" aria-live="polite" aria-atomic="true"><div><div className="eyebrow">Save complete</div><strong>Saved to your private Vault</strong><p>{item.brand} {item.line} is ready below. This is the exact record that was saved.</p></div><Link href={backHref}>Return to Vault</Link></section>}
+      {query.saved==="inventory"&&<section className="inventorySavedConfirmation" role="status" aria-live="polite" aria-atomic="true"><div><div className="eyebrow">Save complete</div><strong>Saved to your private Vault</strong><p>{item.brand} {item.line} is ready below. This is the exact record that was saved.</p></div><div className="inventorySavedActions"><Link href="/inventory#mobile-intake">Add another cigar</Link><Link href={backHref}>Return to Vault</Link></div></section>}
       <section className="detailHero">
         <div>
           <div className="eyebrow">
