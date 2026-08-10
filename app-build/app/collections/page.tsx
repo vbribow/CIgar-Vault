@@ -7,7 +7,8 @@ import "./dashboard.css";
 import { WorkspaceGuide } from "@/components/workspace-guide";
 import { brand } from "@/lib/brand";
 export const dynamic = "force-dynamic";
-export default async function CollectionsPage() {
+export default async function CollectionsPage({searchParams}:{searchParams:Promise<{edit?:string}>}) {
+  const {edit}=await searchParams;
   const [modeResult, inventoryResult, collectionsResult, valuationsResult] =
     await Promise.allSettled([
       accountDataMode(),
@@ -76,6 +77,7 @@ export default async function CollectionsPage() {
             inventory={inventory}
             valuations={valuations}
             mode={mode}
+            initialEditId={edit}
           />
         </>
       )}

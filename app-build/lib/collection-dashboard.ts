@@ -23,6 +23,8 @@ export type CollectionDashboardSummary = {
   expectedComponents?: number;
   expectedIdentities?: number;
   expectedCigars?: number;
+  ownedSetQty: number;
+  ownedCigarsExpected?: number;
   expectedContents: string[];
   completionPercent: number;
   missingComponents: string[];
@@ -82,7 +84,7 @@ export function collectionRequirementMatches(collection: CigarCollection, member
       const expected=documented.get(requirement);
       if(!expected)return{requirement,score:0};
       const productKey=cigarProductKey(expected);
-      const quantity=Number(requirement.match(/^(\d+)\s+/)?.[1]??1);
+      const quantity=Number(requirement.match(/^(\d+)\s+/)?.[1]??1)*(collection.ownedSetQty??1);
       const exact=ownedMembers.find(item=>{
         if(assigned.has(item.inventoryId)||cigarProductKey(item)!==productKey)return false;
         const documentedQuantity=item.originalQty??item.currentQty;
@@ -174,10 +176,12 @@ export function summarizeCollection(
           ? "Component inventory"
           : "Pending";
   const expectedCigars = template?.expectedCigars ?? collection.expectedCigars;
+  const ownedSetQty = collection.ownedSetQty ?? 1;
+  const ownedCigarsExpected = expectedCigars === undefined ? undefined : expectedCigars * ownedSetQty;
   const originalCigars = members.reduce((sum,item)=>sum+(item.originalQty??item.currentQty??0),0);
   const hasCompleteCigarRetail = members.length > 0
     && componentEvidence.every(evidence => evidence.retailUnit !== undefined)
-    && (expectedCigars === undefined || originalCigars >= expectedCigars);
+    && (ownedCigarsExpected === undefined || originalCigars >= ownedCigarsExpected);
   const humidorValue = isHumidorCollection && valueEvidence !== "Pending" && hasCompleteCigarRetail
     ? Math.max(0, wholeValue - cigarRetailValue)
     : undefined;
@@ -217,6 +221,8 @@ export function summarizeCollection(
     expectedComponents,
     expectedIdentities,
     expectedCigars,
+    ownedSetQty,
+    ownedCigarsExpected,
     expectedContents: template?.requirements ?? [],
     completionPercent,
     missingComponents,

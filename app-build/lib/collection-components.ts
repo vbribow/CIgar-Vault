@@ -91,6 +91,7 @@ export function collectionComponentIdentity(requirement: string, template: Colle
 
 export function collectionComponentDrafts(collection: CigarCollection, template: CollectionTemplate, inventory: InventoryItem[], fulfilledRequirements = new Set<string>()) {
   const existing = new Set(inventory.map(item => item.inventoryId));
+  const ownedSetQty = collection.ownedSetQty ?? 1;
   return template.requirements.flatMap((requirement, index) => {
     if (fulfilledRequirements.has(requirement) || evidenceOnly.test(requirement) || vague.test(requirement)) return [];
     const documented = template.componentEvidence?.find(component => component.requirement === requirement);
@@ -104,7 +105,8 @@ export function collectionComponentDrafts(collection: CigarCollection, template:
     const canonical = canonicalCigarIdentity(identity);
     const evidenceLabel = documented?.sourceLabel || template.sourceLabel;
     const evidenceUrl = documented?.sourceUrl || template.sourceUrl;
-    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, originalQty: identity.quantity, currentQty: identity.quantity, looseStickQty: identity.quantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`, notes: `Expected component: ${requirement}${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
+    const ownedQuantity = identity.quantity * ownedSetQty;
+    const draft = { inventoryId, catalogId: canonical.identityId, collectionId: collection.collectionId, brand: identity.brand, line: identity.line, vitola: identity.vitola, originalQty: ownedQuantity, currentQty: ownedQuantity, looseStickQty: ownedQuantity, smokedQty: 0, packaging: template.packaging, status: identity.needsIdentityReview ? "Review" : "Preserve", priority: "High", provenanceNotes: `Collection component documented by ${evidenceLabel}: ${evidenceUrl}`, notes: `Expected component: ${requirement} · ${ownedSetQty} complete set${ownedSetQty===1?"":"s"} owned${identity.needsIdentityReview ? " · Exact vitola still requires verification." : ""}` } satisfies InventoryItem;
     return [{ ...draft, retailValue: knownRetailValue(draft, inventory) }];
   });
 }

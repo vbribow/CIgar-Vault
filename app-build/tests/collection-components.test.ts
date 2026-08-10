@@ -24,6 +24,13 @@ const template: CollectionTemplate = {
 };
 const collection = { collectionId: "COL-TEST", name: "Test Set", expectedComponents: 2 };
 
+test("component creation multiplies quantities for multiple complete sets",()=>{
+  const template={templateId:"TPL-TWO-SETS",name:"Two Sets",maker:"Arturo Fuente",releaseYear:2026,edition:"2026",expectedComponents:1,expectedCigars:2,requirements:["2 Don Carlos Robusto"],componentEvidence:[{requirement:"2 Don Carlos Robusto",brand:"Arturo Fuente",line:"Don Carlos",vitola:"Robusto (5.25 × 50)",sourceUrl:"https://example.com/source",sourceLabel:"Official source"}],packaging:"Collection box",matchingRule:"Exact",accent:"#000",sourceUrl:"https://example.com/source",sourceLabel:"Official source",researchStatus:"Verified" as const};
+  const drafts=collectionComponentDrafts({...collection,ownedSetQty:2},template,[]);
+  assert.equal(drafts[0]?.originalQty,4);
+  assert.equal(drafts[0]?.currentQty,4);
+});
+
 test("complete collections create linked inventory lots with stated quantities", () => {
   const drafts = collectionComponentDrafts(collection, template, []);
   assert.equal(drafts.length, 2);
