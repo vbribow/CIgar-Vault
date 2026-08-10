@@ -44,7 +44,7 @@ type EditMode="quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"rati
 const inventoryBatchSize = 30;
 const vaultViewStorageKey = "hojavia:vault-view:v1";
 
-export function InventoryManager({ initialItems, catalog, ratings, collections, humidors, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all",initialIntakeQuery,editorOnly=false,saveReturnHref }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; humidors:Humidor[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode;initialIntakeQuery?:string;editorOnly?:boolean;saveReturnHref?:string }) {
+export function InventoryManager({ initialItems, catalog, ratings, collections, humidors, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all",initialIntakeQuery,initialIntakeOpen=false,editorOnly=false,saveReturnHref }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; humidors:Humidor[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode;initialIntakeQuery?:string;initialIntakeOpen?:boolean;editorOnly?:boolean;saveReturnHref?:string }) {
   const [items, setItems] = useState(initialItems);
   const requestedItem=initialEditId?initialItems.find(item=>item.inventoryId===initialEditId):undefined;
   const [query, setQuery] = useState(initialQuery||requestedItem?.inventoryId||"");
@@ -73,7 +73,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const [supportBusy, setSupportBusy] = useState<"catalog" | "ratings" | null>(null);
   const [supportMessage, setSupportMessage] = useState("");
   const [failedSupportKind, setFailedSupportKind] = useState<"catalog" | "ratings">();
-  const [photoIntakeOpen, setPhotoIntakeOpen] = useState(false);
+  const [photoIntakeOpen, setPhotoIntakeOpen] = useState(initialIntakeOpen);
   const supportRequests = useRef({ catalog: 0, ratings: 0 });
   const inventoryRefreshRequest = useRef(0);
   const editSafety = useUnsavedChanges();
@@ -135,10 +135,11 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   }
 
   useEffect(() => {
-    if (window.location.hash !== "#mobile-intake") return;
+    if (!initialIntakeOpen && window.location.hash !== "#mobile-intake") return;
     setPhotoIntakeOpen(true);
     void loadSupport("catalog");
-  }, []);
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => document.getElementById("mobile-intake")?.scrollIntoView({ behavior:"smooth", block:"start" })));
+  }, [initialIntakeOpen]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -401,7 +402,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const storageDefaultValue = registeredStorage?.humidorId ?? formItem.storageLocationId ?? "";
   return <>
     <div className="inventoryBrowseWorkspace" hidden={editorOnly||Boolean(editing||draft)}>
-    {photoIntakeOpen?<PhotoInventoryIntake catalog={catalogData} inventory={items} mode={mode} initialQuery={initialIntakeQuery} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("");setLastCreated(null)}} onApproved={(approved)=>{setItems(current=>[...current,...approved.filter(item=>!current.some(existing=>existing.inventoryId===item.inventoryId))]);setDraft(null);const saved=approved.at(-1);if(!saved)return;if(approved.length===1){window.location.assign(`/inventory/${encodeURIComponent(saved.inventoryId)}?saved=inventory`);return}setLastCreated(saved);setRecentlySaved({inventoryId:saved.inventoryId,token:Date.now()});setMessage(`${approved.length} cigar records were saved to your private Vault. Choose what to do next below.`)}} />:<section className="card deferredIntakeLauncher" id="mobile-intake"><div><div className="eyebrow">Camera documentation</div><h2>Add a cigar when you’re ready.</h2><p>The camera and catalog stay unloaded until you open this private workspace.</p></div><button type="button" className="button" onClick={()=>{setPhotoIntakeOpen(true);void loadSupport("catalog")}}>Open camera documentation</button></section>}
+    {photoIntakeOpen?<PhotoInventoryIntake catalog={catalogData} inventory={items} mode={mode} initialQuery={initialIntakeQuery} startFresh={initialIntakeOpen} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("");setLastCreated(null)}} onApproved={(approved)=>{setItems(current=>[...current,...approved.filter(item=>!current.some(existing=>existing.inventoryId===item.inventoryId))]);setDraft(null);const saved=approved.at(-1);if(!saved)return;if(approved.length===1){window.location.assign(`/inventory/${encodeURIComponent(saved.inventoryId)}?saved=inventory`);return}setLastCreated(saved);setRecentlySaved({inventoryId:saved.inventoryId,token:Date.now()});setMessage(`${approved.length} cigar records were saved to your private Vault. Choose what to do next below.`)}} />:<section className="card deferredIntakeLauncher" id="mobile-intake"><div><div className="eyebrow">Camera documentation</div><h2>Add a cigar when you’re ready.</h2><p>The camera and catalog stay unloaded until you open this private workspace.</p></div><button type="button" className="button" onClick={()=>{setPhotoIntakeOpen(true);void loadSupport("catalog")}}>Open camera documentation</button></section>}
     {lastCreated&&<section className="card firstRecordSuccess" aria-live="polite"><div><div className="eyebrow">Saved to your private Vault</div><h2>{lastCreated.brand} {lastCreated.line}</h2><p>Your first useful record is complete. You can stop here with confidence or add the next piece of its story.</p></div><div className="firstRecordActions"><a className="button" href={`/inventory/${encodeURIComponent(lastCreated.inventoryId)}`}>Open saved record</a><button type="button" className="button secondary" onClick={()=>startEditing(lastCreated,"storage")}>Assign storage</button>{isCubanInventory(lastCreated)&&<a className="button secondary" href="/verification">Review Habanos evidence</a>}<a className="button secondary" href="/">See my first collection insight</a><button type="button" className="textLink" onClick={()=>setLastCreated(null)}>I’m done for now</button></div></section>}
     <section className="toolbar" id="inventory-records" aria-label="Inventory records and filters">
       <form className="inventorySearchForm" role="search" onSubmit={searchInventory}><label><span>Search existing inventory</span><input type="search" value={queryInput} onChange={(event) => { setQueryInput(event.target.value); setSearchFeedback(undefined); }} placeholder="Brand, line, vitola, or ID" /></label><button type="submit" className="button">{queryInput.trim() ? "Search Vault" : "Browse all lots"}</button></form>

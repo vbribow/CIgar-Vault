@@ -21,7 +21,7 @@ async function InventoryUpgradeNudge({ lotCount, portfolioValue }: { lotCount: n
   return <UpgradeNudge plan={plan} context="inventory" usage={lotCount} signals={{ lotCount, portfolioValue }}/>;
 }
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; status?: string; collectionId?: string; active?: string; vaultSearch?: string; inventoryId?:string; edit?: string; focus?: string;cigarName?:string }> }) {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ missing?: string; storage?: string; status?: string; collectionId?: string; active?: string; vaultSearch?: string; inventoryId?:string; edit?: string; focus?: string;cigarName?:string;add?:string }> }) {
   const [modeResult, inventoryResult, filters] = await Promise.all([
     accountDataMode().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
     loadInventory().then(value => ({ ok: true as const, value })).catch(() => ({ ok: false as const })),
@@ -63,6 +63,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     {!collectionLinksReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Collection links temporarily unavailable</div><p>Your inventory is intact and available. Collection links are hidden rather than shown as absent.</p></section>}
     <Suspense fallback={null}><InventoryUpgradeNudge lotCount={cigarItems.length} portfolioValue={cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}/></Suspense>
     {presentationAssetCount>0&&<section className="card inventoryDataNotice"><div><strong>{presentationAssetCount} presentation asset{presentationAssetCount===1?" is":"s are"} tracked separately</strong><p>Presentation humidors and cases remain connected to their collectible sets without appearing as individual cigars.</p></div><Link className="button secondary" href="/collections">Open Valuable Collections</Link></section>}
-    <div><InventoryManager initialItems={cigarItems} catalog={[]} ratings={[]} collections={collections} humidors={humidors} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch||filters.inventoryId} initialEditId={filters.edit} initialEditMode={editFocus} initialIntakeQuery={filters.cigarName}/></div>
+    <div><InventoryManager initialItems={cigarItems} catalog={[]} ratings={[]} collections={collections} humidors={humidors} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch||filters.inventoryId} initialEditId={filters.edit} initialEditMode={editFocus} initialIntakeQuery={filters.cigarName} initialIntakeOpen={filters.add === "new"}/></div>
   </main>;
 }

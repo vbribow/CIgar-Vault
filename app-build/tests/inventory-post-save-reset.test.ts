@@ -9,6 +9,14 @@ test("approved intake removes the saved draft before navigating away",()=>{
   assert.match(intake,/localStorage\.removeItem\(workingKey\)/);
 });
 
+test("Add another cigar opens a blank intake instead of Browse Vault",()=>{
+  const page=readFileSync(new URL("../app/inventory/page.tsx",import.meta.url),"utf8");
+  const intake=readFileSync(new URL("../components/photo-inventory-intake.tsx",import.meta.url),"utf8");
+  assert.match(page,/initialIntakeOpen=\{filters\.add === "new"\}/);
+  assert.match(intake,/if\(startFresh\)\{localStorage\.removeItem\(workingKey\)/);
+  assert.match(intake,/identificationInput\.current\?\.focus/);
+});
+
 test("an opened record offers exact quantity editing and photo attachment",()=>{
   const page=readFileSync(new URL("../app/inventory/[inventoryId]/page.tsx",import.meta.url),"utf8");
   const photos=readFileSync(new URL("../components/photo-manager.tsx",import.meta.url),"utf8");

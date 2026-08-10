@@ -34,7 +34,7 @@ function intakePhotoKind(evidenceType: string): IntakePhotoKind {
   return "cigar";
 }
 
-export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onApproved,initialQuery="" }: { catalog: CatalogCigar[]; inventory: InventoryItem[]; mode: DataMode; onDraft: (draft: InventoryItem) => void; onApproved: (items: InventoryItem[]) => void;initialQuery?:string }) {
+export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onApproved,initialQuery="",startFresh=false }: { catalog: CatalogCigar[]; inventory: InventoryItem[]; mode: DataMode; onDraft: (draft: InventoryItem) => void; onApproved: (items: InventoryItem[]) => void;initialQuery?:string;startFresh?:boolean }) {
   const [photos, setPhotos] = useState<Array<{ name: string; url: string; file: File }>>([]);
   const [brand, setBrand] = useState("");
   const [line, setLine] = useState("");
@@ -85,6 +85,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
 
   useEffect(() => {
     try {
+      if(startFresh){localStorage.removeItem(workingKey);setWorkingReady(true);window.setTimeout(()=>identificationInput.current?.focus(),0);return}
       const saved = JSON.parse(localStorage.getItem(workingKey) || "null") as WorkingDraft | null;
       if (saved) {
         setQuery(saved.query || ""); setBrand(saved.brand || ""); setLine(saved.line || ""); setVitola(saved.vitola || ""); setVintage(saved.vintage || "");
@@ -94,7 +95,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
       }
     } catch { /* ignore damaged working draft */ }
     setWorkingReady(true);
-  }, []);
+  }, [startFresh]);
   useEffect(() => {
     if (!workingReady || stage === "saved") return;
     const working: WorkingDraft = { query, brand, line, vitola, vintage, evidenceType, packaging, fullBoxQty, sticksPerBox, looseStickQty, stage };
