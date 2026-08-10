@@ -12,13 +12,14 @@ const inventoryApi = await readFile(
 );
 
 test("signed-in account inventory is resolved before mock data with no anonymous Smartsheet fallback", () => {
-  const accountLookup = inventorySource.indexOf("loadAccountRecords");
+  const accountLookup = inventorySource.indexOf("loadAccountRecordRows");
   const mockLookup = inventorySource.indexOf('dataMode() === "mock"');
 
   assert.ok(accountLookup >= 0);
   assert.ok(mockLookup > accountLookup);
   assert.equal(inventorySource.includes('from "./smartsheet"'), false);
   assert.match(inventorySource, /accountInventory !== undefined/);
+  assert.match(inventorySource, /addedAt: row\.createdAt/);
   assert.match(inventorySource, /return \[\];/);
 });
 

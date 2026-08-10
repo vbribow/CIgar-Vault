@@ -6,7 +6,7 @@ const source=readFileSync("lib/user-data.ts","utf8");
 
 test("every collector read, conditional update, and delete is explicitly owner scoped",()=>{
   const ownerFilters=source.match(/\.eq\("user_id", context\.user\.id\)/g)??[];
-  assert.equal(ownerFilters.length,7);
+  assert.equal(ownerFilters.length,8);
   assert.match(source,/select\("payload"\)\.eq\("user_id", context\.user\.id\)\.eq\("kind", kind\)/);
   assert.match(source,/select\("payload,updated_at"\)\s*\.eq\("user_id", context\.user\.id\)/);
   assert.match(source,/update\(\{ payload, updated_at: new Date\(\)\.toISOString\(\) \}\)\s*\.eq\("user_id", context\.user\.id\)/);

@@ -132,7 +132,7 @@ export default async function CigarPage({
             {item.vintage ? ` · ${item.vintage}` : ""}
           </span>
           <CollectionRelationshipTag relationship={collectionRelationship}/>
-          <div className="ctaRow detailHeroActions"><Link className="button secondary" href={inlineEditHref}>Edit box or cigar quantity</Link><Link className="button secondary" href="#record-photos">Add photos</Link><Link className="button secondary" href={inlineEditHref}>Edit story</Link><InventoryRecordActions item={item} editHref={inlineEditHref}/></div>
+          <div className="ctaRow detailHeroActions"><Link className="button secondary" href={inlineEditHref}>Edit box or cigar quantity</Link><Link className="button secondary" href="#record-photos">Add photos</Link><InventoryRecordActions item={item} editHref={inlineEditHref}/></div>
         </div>
         <div className="scoreCard">
           <RatingLeafMark value={item.score ?? "—"} label="Personal collection score" detail={item.priority || "Unrated priority"}/>

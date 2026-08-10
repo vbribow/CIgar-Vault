@@ -60,5 +60,6 @@ test("inventory and photo intake keep their existing duplicate-safe drafts", () 
   assert.match(inventory, /if\(isEdit\)window\.location\.assign/);
   assert.match(intake, /localStorage\.setItem\(queueKey,JSON\.stringify\(queue\)\)/);
   assert.match(intake, /if\(approvalInFlight\.current\)return/);
-  assert.match(intake, /setQueue\(current=>current\.filter\(entry=>!approved\.has/);
+  assert.match(intake, /const remaining=queue\.filter\(entry=>!approved\.has/);
+  assert.match(intake, /localStorage\.setItem\(queueKey,JSON\.stringify\(remaining\)\)/);
 });

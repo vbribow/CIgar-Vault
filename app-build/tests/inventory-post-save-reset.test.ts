@@ -12,7 +12,8 @@ test("approved intake removes the saved draft before navigating away",()=>{
 test("an opened record offers exact quantity editing and photo attachment",()=>{
   const page=readFileSync(new URL("../app/inventory/[inventoryId]/page.tsx",import.meta.url),"utf8");
   const photos=readFileSync(new URL("../components/photo-manager.tsx",import.meta.url),"utf8");
-  assert.match(page,/focus=quantity#inventory-editor/);
+  assert.match(page,/const inlineEditHref="#inventory-editor"/);
+  assert.match(page,/href=\{inlineEditHref\}>Edit box or cigar quantity/);
   assert.match(page,/Edit box or cigar quantity/);
   assert.match(page,/href="#record-photos">Add photos/);
   assert.match(photos,/id="record-photos"/);
