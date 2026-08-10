@@ -120,6 +120,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       window.setTimeout(() => {
         invalid?.focus({ preventScroll: true });
         invalid?.scrollIntoView({ behavior: "smooth", block: "center" });
+        invalid?.reportValidity();
       }, 0);
       return;
     }
@@ -347,8 +348,8 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <label><span>Tasting notes</span><textarea name="tastingNotes" rows={4} placeholder="How did it begin, develop, and finish? What stood out?" /></label>
         <label className="check"><input name="buyAgain" type="checkbox" /> Buy again</label>
         {mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}
-        <button type="submit" className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Check save status"})}</button>
         {message && smokeMutation.status !== "idle" && <output ref={smokeSaveFeedback} className="wideMessage deviceDraftNotice" tabIndex={-1} role={smokeMutation.status === "error" ? "alert" : "status"} aria-live="polite" aria-atomic="true">{message}</output>}
+        <button type="submit" className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Check save status"})}</button>
         </fieldset>
       </form>
       {smokeMutation.complete && <section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="smoke-saved-title"><strong id="smoke-saved-title">Smoke saved.</strong><p>Continue without refreshing or searching for this journal again.</p><div><button type="button" className="button" onClick={() => startAnotherSmoke(true)}>Log this cigar again</button><button type="button" className="button secondary" onClick={() => startAnotherSmoke(false)}>Log another</button>{lastSmokeIdentity?.source&&lastSmokeIdentity.source!=="MANUAL"&&<a className="button secondary" href={`/inventory/${encodeURIComponent(lastSmokeIdentity.source)}`}>Open cigar record</a>}<a className="textLink" href="/inventory">Return to Vault</a></div></section>}

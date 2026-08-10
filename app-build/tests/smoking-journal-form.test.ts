@@ -26,6 +26,8 @@ test("mobile smoke saves explain missing required fields instead of appearing un
   assert.match(source, /Choose ‘Remove from my Vault’ and select the exact lot/);
   assert.match(source, /To share this score with the Hojavía 25, enter the exact vitola/);
   assert.match(source, /invalid\?\.scrollIntoView/);
+  assert.match(source, /invalid\?\.reportValidity\(\)/);
+  assert.ok(source.indexOf("ref={smokeSaveFeedback}") < source.indexOf('idle:"Save smoke"'), "save guidance must remain above the sticky mobile save button");
 });
 
 test("smoking journal clearly separates review-only, owned-lot, and add-to-Vault paths", () => {
