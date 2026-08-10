@@ -5,7 +5,7 @@ export const AccountPreferencesSchema = z.object({
   wishlistAlerts: z.boolean().default(true),
   valuationResearch: z.boolean().default(true),
   ratingResearch: z.boolean().default(true),
-  collector25Contributions: z.boolean().default(false),
+  collector25Contributions: z.boolean().default(true),
   productAnalytics: z.boolean().default(true),
   upgradeRecommendations: z.boolean().default(true),
 });

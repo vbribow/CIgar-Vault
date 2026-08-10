@@ -223,7 +223,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <div>
 <div className="eyebrow">Your palate</div>
 <h2>My Top 10</h2>
-<p>Your ten highest published scores, ordered by your ratings. This personal list contributes a preference signal to the {brand.labels.communityRanking}.</p>
+<p>Your ten highest scored smoking experiences, ordered by your ratings. Exact cigar identity and numeric score contribute anonymously to the {brand.labels.communityRanking}; your notes and Vault details remain private.</p>
 </div>
 </div>
 <div className="rankingList personalRanking">{data.myTop10.map(item => <article key={item.cigarKey}>
@@ -233,7 +233,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
 <RatingLeafMark value={item.averageScore} label="Your score" compact/>
-</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Publish your first cigar rating, then keep scoring the cigars you experience. Your list will update automatically.</p></div>}</section>
+</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Add a 1–100 score to a smoking experience with an exact cigar identity. Your list will update automatically.</p></div>}</section>
       <div className="communityLayout">
       <section id="top-25">
 <div className="sectionHead">
@@ -256,7 +256,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating} aria-busy={ratingMutation.pending}>
 <div className="eyebrow">Rate a cigar</div>
 <h2>Document your experience</h2>
-<p>Scores from exact Vault cigars can update automatically when anonymous sharing is enabled in <a href="/account#collector-25-preference">Account preferences</a>. No re-entry is needed. Use this form for a cigar outside your Vault or to deliberately replace your current score.</p>
+<p>Scores from exact Vault cigars update automatically. Only cigar identity and numeric score contribute; private notes and Vault details never do. Use this form for a cigar outside your Vault or to deliberately replace your current score.</p>
 <div className="ratingEntryMode" role="group" aria-label="Choose cigar entry method">
 <button type="button" className={entryMode === "vault" ? "active" : ""} disabled={!inventoryOptions.length} onClick={() => chooseMode("vault")}>Choose from my Vault</button>
 <button type="button" className={entryMode === "manual" ? "active" : ""} onClick={() => chooseMode("manual")}>Enter manually</button>

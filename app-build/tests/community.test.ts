@@ -81,7 +81,7 @@ test("community destinations lead to substantive, distinct content",()=>{
  assert.match(component,/id="recent-discussions"/);
  assert.match(component,/Questions, experience, stewardship, and cultural knowledge/);
  assert.match(component,/id="rate-a-cigar"/);
- assert.match(component,/No re-entry is needed/);
+ assert.match(component,/Scores from exact Vault cigars update automatically/);
  assert.match(component,/id="top-25"/);
  assert.match(component,/Rated by smokers\. Updated by experience\./);
  assert.match(component,/living ranking shaped by what/);

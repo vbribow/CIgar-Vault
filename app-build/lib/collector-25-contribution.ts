@@ -1,5 +1,5 @@
 import { createClient as createAdmin } from "@supabase/supabase-js";
-import { communityCigarKey } from "./community";
+import { communityCigarKey, type CommunityRating } from "./community";
 import { createClient, supabaseConfigured } from "./supabase/server";
 import type { InventoryItem, SmokingLog } from "./types";
 
@@ -32,6 +32,27 @@ export function collector25ContributionFromSmoke(smoke: SmokingLog, inventory?: 
   return { ...identity, score: smoke.overall as number, cigarKey: communityCigarKey(identity) };
 }
 
+export function privateRatingsFromSmokingHistory(smokes: SmokingLog[], inventory: InventoryItem[], userId: string): CommunityRating[] {
+  const inventoryById = new Map(inventory.map(item => [item.inventoryId, item]));
+  return smokes.flatMap(smoke => {
+    const contribution = collector25ContributionFromSmoke(smoke, inventoryById.get(smoke.inventoryId));
+    if (!contribution) return [];
+    return [{
+      id: `smoke:${smoke.smokeId}`,
+      userId,
+      displayName: "Private smoking journal",
+      cigarKey: contribution.cigarKey,
+      brand: contribution.brand,
+      line: contribution.line,
+      vitola: contribution.vitola,
+      vintage: contribution.vintage,
+      score: contribution.score,
+      status: "active" as const,
+      createdAt: `${smoke.dateSmoked}T00:00:00.000Z`,
+    }];
+  });
+}
+
 export async function syncCollector25Contribution(smoke: SmokingLog, inventory?: InventoryItem): Promise<{ status: Collector25ContributionStatus }> {
   const contribution = collector25ContributionFromSmoke(smoke, inventory);
   const exactIdentity = exactSmokeIdentity(smoke, inventory);
@@ -51,9 +72,6 @@ export async function syncCollector25Contribution(smoke: SmokingLog, inventory?:
       return { status:"ineligible" };
     }
     if (!contribution) return { status:"ineligible" };
-    const { data: preferences, error: preferenceError } = await supabase.from("account_preferences").select("collector_25_contributions").eq("user_id", user.id).maybeSingle();
-    if (preferenceError) throw preferenceError;
-    if (preferences?.collector_25_contributions !== true) return { status: "disabled" };
     const { error } = await admin.from("community_ratings").upsert({
       user_id: user.id, display_name: "Anonymous collector", cigar_key: contribution.cigarKey,
       brand: contribution.brand, line: contribution.line, vitola: contribution.vitola,
