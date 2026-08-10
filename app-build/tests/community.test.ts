@@ -99,6 +99,12 @@ test("Collector 25 is the prominent default community destination",()=>{
  assert.match(page,/The \{brand\.labels\.community\}/);
  assert.match(page,/brand\.labels\.communityRanking/);
 });
+
+test("manual ratings remain writable before the contribution-source migration",()=>{
+ const route=readFileSync(new URL("../app/api/community/route.ts",import.meta.url),"utf8");
+ assert.match(route,/contributionSourceUnavailable/);
+ assert.match(route,/upsert\(row,\{onConflict:"user_id,cigar_key"\}\)/);
+});
 test("age and marketplace notice appears with message-board participation",()=>{
  const page=readFileSync(new URL("../app/community/page.tsx",import.meta.url),"utf8");
  const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");

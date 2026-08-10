@@ -32,6 +32,8 @@ test("journal and valuation retries retain the form and submission identity", ()
   assert.match(records, /mutation\.succeed\(\);\s*formElement\.reset\(\)/);
   assert.match(records, /setSmokeSubmissionId\(createClientUuid\(\)\)/);
   assert.match(records, /setValuationSubmissionId\(createClientUuid\(\)\)/);
+  assert.match(records, /fetchWithTimeout\(kind === "smoke"/);
+  assert.match(records, /ref=\{smokeSaveFeedback\}/);
 });
 
 test("climate saves survive interrupted or unreadable responses", () => {

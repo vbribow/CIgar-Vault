@@ -39,7 +39,7 @@ test("photo-assisted journeys preserve visible evidence and accessible progress"
 test("repeat smoke capture keeps the last identity only when the collector asks", () => {
   const records = read("components/records-manager.tsx");
 
-  assert.match(records, /setLastSmokeIdentity\(\{ source: smokeSource, cigarName: smokeCigarName \}\)/);
+  assert.match(records, /setLastSmokeIdentity\(\{ source: smokeSource, cigarName: smokeCigarName, outsideIdentity \}\)/);
   assert.match(records, /function startAnotherSmoke\(reuseIdentity = false\)/);
   assert.match(records, /Log this cigar again/);
   assert.match(records, />Log another</);

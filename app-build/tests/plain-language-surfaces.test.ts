@@ -15,7 +15,7 @@ test("high-use collector workflows avoid internal product terminology", () => {
     assert.doesNotMatch(source, /Safe inventory intake|Saved review queue|Private evidence ledger|Release-aware physical-lot audit|Collection trust audit|Verified owned components/, `${surface} contains retired technical copy`);
   }
   assert.match(inventory, /Purchase and ownership history/);
-  assert.match(intake, /Add .*selected record.* to my Vault/);
+  assert.match(intake, /Add .*selected cigar.* to my Vault/);
   assert.match(verification, /Keep every useful check in one place/);
   assert.match(collection, /What still needs attention/);
 });

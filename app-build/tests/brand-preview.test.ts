@@ -9,6 +9,7 @@ test("Hojavía is the sole product presentation", () => {
   assert.equal(active.name, "Hojavía");
   assert.equal(active.pronunciation, "oh-ha-VEE-ah");
   assert.equal(active.spokenName, "Hojavía (pronounced oh-ha-VEE-ah)");
+  assert.equal(active.signatureLine, "The Way of the Leaf");
   assert.equal(active.isPreview, false);
   assert.equal(active.labels.communityRanking, "Hojavía 25");
   assert.equal(active.labels.places, "Places");
@@ -21,6 +22,7 @@ test("retired presentation values cannot restore the former brand", () => {
   assert.equal(active.name, "Hojavía");
   assert.equal(active.asciiName, "Hojavia");
   assert.equal(active.brandLine, "Knowledge carried forward.");
+  assert.equal(active.signatureLine, "The Way of the Leaf");
   assert.equal(active.isPreview, false);
   assert.deepEqual(active.labels, resolveBrand().labels);
   assert.equal(resolveBrand("Hojavia").key, "hojavia");
@@ -62,7 +64,7 @@ test("Hojavía owns metadata, install identity, and legacy presentation safeguar
   assert.match(layout, /\/hojavia-mark\.svg/);
   assert.match(navigation, /brand\.spokenName/);
   assert.match(navigation, /brandPronunciation/);
-  assert.match(navigation, /<small>\{brand\.brandLine\}<\/small>/);
+  assert.match(navigation, /<small className="brandSignature">\{brand\.signatureLine\}<\/small>/);
   assert.match(home, /brand\.spokenName/);
   assert.match(home, /<CulturePromise\/>/);
   assert.match(culturePromise, /brand\.journeyLine/);

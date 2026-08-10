@@ -8,7 +8,9 @@ const route=readFileSync(new URL("../app/api/inventory/[inventoryId]/route.ts",i
 
 test("every inventory detail exposes explicit edit and delete actions",()=>{
   assert.match(detail,/InventoryRecordActions/);
-  assert.match(actions,/>Edit record</);
+  assert.match(detail,/const allEditHref=`\/inventory\?vaultSearch=\$\{encodeURIComponent\(inventoryId\)\}&edit=\$\{encodeURIComponent\(inventoryId\)\}&focus=all#inventory-editor`/);
+  assert.match(detail,/<InventoryRecordActions item=\{item\} editHref=\{allEditHref\}\/>/);
+  assert.match(actions,/>Edit all details</);
   assert.match(actions,/Delete record/);
   assert.match(actions,/window\.confirm/);
   assert.match(actions,/aria-live="polite"/);

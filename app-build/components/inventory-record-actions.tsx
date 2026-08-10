@@ -22,7 +22,7 @@ export function InventoryRecordActions({item,editHref}:{item:InventoryItem;editH
     finally{setDeleting(false);}
   }
   return <div style={{display:"contents"}} aria-busy={deleting}>
-    <a className="button" href={editHref}>Edit record</a>
+    <a className="button" href={editHref}>Edit all details</a>
     <button className="button danger" type="button" disabled={deleting} onClick={remove}>{deleting?"Deleting…":"Delete record"}</button>
     {message&&<output aria-live="polite">{message}</output>}
   </div>;

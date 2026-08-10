@@ -4,6 +4,11 @@ import { SmokingLogCreateSchema, SmokingLogSchema, ValuationSchema } from "../li
 test("smoking log accepts a valid dated score",()=>assert.equal(SmokingLogSchema.safeParse({smokeId:"SMK-1",inventoryId:"INV-1",dateSmoked:"2026-07-21",overall:95}).success,true));
 test("smoking log rejects an invalid calendar date",()=>assert.equal(SmokingLogSchema.safeParse({smokeId:"SMK-1",inventoryId:"INV-1",dateSmoked:"today"}).success,false));
 test("manual smoking records require the cigar identity",()=>{assert.equal(SmokingLogSchema.safeParse({smokeId:"SMK-2",inventoryId:"MANUAL",dateSmoked:"2026-07-21"}).success,false);assert.equal(SmokingLogSchema.safeParse({smokeId:"SMK-2",inventoryId:"MANUAL",cigarName:"Casa Fuente Double Corona",dateSmoked:"2026-07-21",overall:0,flavor:"Cedar, Cream, Coffee",strength:"Medium"}).success,true)});
+test("outside-Vault rating confirmation requires structured exact identity",()=>{
+  const base={inventoryId:"MANUAL",cigarName:"Casa Fuente Double Corona",outsideInventory:true,dateSmoked:"2026-07-21",overall:94};
+  assert.equal(SmokingLogCreateSchema.safeParse(base).success,false);
+  assert.equal(SmokingLogCreateSchema.safeParse({...base,cigarBrand:"Arturo Fuente",cigarLine:"Casa Fuente",cigarVitola:"Double Corona"}).success,true);
+});
 test("collector smoke input omits the server-owned ID",()=>{assert.equal(SmokingLogCreateSchema.safeParse({inventoryId:"INV-0053",dateSmoked:"2026-07-27"}).success,true);assert.equal(SmokingLogCreateSchema.safeParse({smokeId:"SMK-OVERWRITE",inventoryId:"INV-0053",dateSmoked:"2026-07-27"}).success,false)});
 test("smoking quantity defaults to one and requires a positive whole number",()=>{
   assert.equal(SmokingLogCreateSchema.parse({inventoryId:"INV-0053",dateSmoked:"2026-07-27"}).quantitySmoked,1);

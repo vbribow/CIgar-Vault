@@ -19,6 +19,7 @@ export function resolveBrand(_legacyPresentationValue?: string) {
     pronunciation: "oh-ha-VEE-ah",
     spokenName: "Hojavía (pronounced oh-ha-VEE-ah)",
     isPreview: false,
+    signatureLine: "The Way of the Leaf",
     brandLine: "Knowledge carried forward.",
     productLine: "Know what you collect.",
     journeyLine: "From leaf to legacy.",

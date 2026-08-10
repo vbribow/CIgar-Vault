@@ -63,10 +63,9 @@ test("search and installation support load on interaction or browser idle time",
   assert.match(deferredPwa, /requestIdleCallback/);
 });
 
-test("the Vault avoids unused supporting reads and renders long result sets incrementally", () => {
+test("the Vault avoids unused catalog and rating reads and renders long result sets incrementally", () => {
   const page = read("app/inventory/page.tsx");
   const manager = read("components/inventory-manager.tsx");
-  assert.doesNotMatch(page, /loadHumidors/);
   assert.doesNotMatch(page, /loadCatalog|loadRatings/);
   assert.match(page, /<Suspense fallback=\{null\}><InventoryUpgradeNudge/);
   assert.match(manager, /useDeferredValue\(query\)/);

@@ -48,3 +48,14 @@ test("smoking journal keeps construction and burn optional, structured, and dist
     assert.match(readFileSync(new URL("../lib/records-model.ts", import.meta.url), "utf8"), new RegExp(`"${option}"`));
   }
 });
+
+test("mobile smoke saves explain missing required fields instead of appearing unresponsive", () => {
+  assert.match(source, /className="recordForm" noValidate onSubmit=/);
+  assert.match(source, /!formElement\.checkValidity\(\)/);
+  assert.match(source, /querySelector<[^>]+>\(":invalid"\)/);
+  assert.match(source, /smokeRequiredFieldMessage\(invalid\?\.name/);
+  assert.match(source, /Choose ‘Remove from my Vault’ and select the exact lot/);
+  assert.match(source, /invalid\?\.scrollIntoView/);
+  assert.match(source, /type="submit" className="button"/);
+  assert.match(source, /ref=\{smokeSaveFeedback\}/);
+});

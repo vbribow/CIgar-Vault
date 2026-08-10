@@ -14,20 +14,27 @@ export type Collector25Contribution = {
   cigarKey: string;
 };
 
-export function collector25ContributionFromSmoke(smoke: SmokingLog, inventory?: InventoryItem): Collector25Contribution | undefined {
-  if (!inventory || smoke.inventoryId === "MANUAL" || smoke.inventoryId !== inventory.inventoryId) return undefined;
-  if (!Number.isInteger(smoke.overall) || (smoke.overall ?? 0) < 1 || (smoke.overall ?? 0) > 100) return undefined;
+function exactSmokeIdentity(smoke: SmokingLog, inventory?: InventoryItem, requireOutsideConfirmation = false) {
+  if (smoke.inventoryId === "MANUAL") {
+    if (requireOutsideConfirmation && smoke.outsideInventory !== true) return undefined;
+    const brand = smoke.cigarBrand?.trim(), line = smoke.cigarLine?.trim(), vitola = smoke.cigarVitola?.trim();
+    return brand && line && vitola ? { brand, line, vitola, vintage: smoke.vintage } : undefined;
+  }
+  if (!inventory || smoke.inventoryId !== inventory.inventoryId) return undefined;
   const brand = inventory.brand.trim(), line = inventory.line.trim(), vitola = inventory.vitola.trim();
-  if (!brand || !line || !vitola) return undefined;
-  const identity = { brand, line, vitola, vintage: inventory.vintage };
+  return brand && line && vitola ? { brand, line, vitola, vintage: inventory.vintage } : undefined;
+}
+
+export function collector25ContributionFromSmoke(smoke: SmokingLog, inventory?: InventoryItem): Collector25Contribution | undefined {
+  if (!Number.isInteger(smoke.overall) || (smoke.overall ?? 0) < 1 || (smoke.overall ?? 0) > 100) return undefined;
+  const identity = exactSmokeIdentity(smoke, inventory, true);
+  if (!identity) return undefined;
   return { ...identity, score: smoke.overall as number, cigarKey: communityCigarKey(identity) };
 }
 
 export async function syncCollector25Contribution(smoke: SmokingLog, inventory?: InventoryItem): Promise<{ status: Collector25ContributionStatus }> {
   const contribution = collector25ContributionFromSmoke(smoke, inventory);
-  const exactIdentity = inventory && smoke.inventoryId !== "MANUAL" && smoke.inventoryId === inventory.inventoryId
-    ? { brand:inventory.brand.trim(), line:inventory.line.trim(), vitola:inventory.vitola.trim(), vintage:inventory.vintage }
-    : undefined;
+  const exactIdentity = exactSmokeIdentity(smoke, inventory);
   if (!contribution && !exactIdentity) return { status: "ineligible" };
   if (!supabaseConfigured()) return { status: "unavailable" };
   try {

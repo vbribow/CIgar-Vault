@@ -20,7 +20,10 @@ export async function PUT(request: Request, context: Context) {
     if (owned) {
       if (recordRevision(owned) !== expectedRevision) return NextResponse.json({ error:"This entry changed on another device. Refresh, review it, and try again." }, { status:409 });
       const corrections = SmokingLogEditSchema.parse(await request.json());
-      const updated: SmokingLog = { smokeId:owned.smokeId, inventoryId:owned.inventoryId, cigarName:owned.cigarName, quantitySmoked:owned.quantitySmoked, ...corrections };
+      if (owned.inventoryId !== "MANUAL" && (corrections.outsideInventory !== undefined || corrections.cigarBrand || corrections.cigarLine || corrections.cigarVitola || corrections.cigarName)) {
+        return NextResponse.json({ error:"Vault-linked cigar identity cannot be changed from the smoking journal." }, { status:422 });
+      }
+      const updated: SmokingLog = { smokeId:owned.smokeId, inventoryId:owned.inventoryId, cigarName:owned.cigarName, outsideInventory:owned.outsideInventory, cigarBrand:owned.cigarBrand, cigarLine:owned.cigarLine, cigarVitola:owned.cigarVitola, quantitySmoked:owned.quantitySmoked, ...corrections };
       const result = await saveOwnedRecordIfUnchanged("smokes", smokeId, updated, expectedRevision);
       if (result !== "saved") return NextResponse.json({ error:"This entry changed while saving. Refresh and try again." }, { status:409 });
       const inventory = owned.inventoryId === "MANUAL" ? undefined : (await loadInventory()).find(item => item.inventoryId === owned.inventoryId);
@@ -35,7 +38,8 @@ export async function PUT(request: Request, context: Context) {
     if (!existing) return NextResponse.json({ error:"Smoking entry was not found" }, { status:404 });
     if (recordRevision(existing) !== expectedRevision) return NextResponse.json({ error:"This entry changed. Refresh and try again." }, { status:409 });
     const corrections = SmokingLogEditSchema.parse(await request.json());
-    const updated: SmokingLog = { smokeId:existing.smokeId, inventoryId:existing.inventoryId, cigarName:existing.cigarName, quantitySmoked:existing.quantitySmoked, ...corrections };
+    if (existing.inventoryId !== "MANUAL" && (corrections.outsideInventory !== undefined || corrections.cigarBrand || corrections.cigarLine || corrections.cigarVitola || corrections.cigarName)) return NextResponse.json({ error:"Vault-linked cigar identity cannot be changed from the smoking journal." }, { status:422 });
+    const updated: SmokingLog = { smokeId:existing.smokeId, inventoryId:existing.inventoryId, cigarName:existing.cigarName, outsideInventory:existing.outsideInventory, cigarBrand:existing.cigarBrand, cigarLine:existing.cigarLine, cigarVitola:existing.cigarVitola, quantitySmoked:existing.quantitySmoked, ...corrections };
     await updateSmokingLog(smokeId, updated);
     return NextResponse.json({ data:updated, collector25:{ status:"ineligible" } });
   } catch (error) {

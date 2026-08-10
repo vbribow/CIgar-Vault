@@ -1,6 +1,9 @@
 # Next private code-release batch
 
-**Status:** queued; not committed, pushed, deployed, activated, or published.
+**Status:** the original disabled-research foundation shipped privately in
+version 60. The outside-Vault rating and legacy community-rating compatibility
+increment described below is queued; it is not committed, pushed, deployed,
+activated, or published.
 
 **Release boundary:** private application code only. Database and paid-service
 activation remain held.
@@ -18,6 +21,14 @@ activation remain held.
   `CIGAR_RESEARCH_ACTIVATION_RUNBOOK.md`.
 - Preserve the existing no-cost catalog and inventory search paths while live
   research is unavailable.
+- Allow collectors to explicitly mark a cigar as smoked outside their Vault,
+  require exact brand, line, and vitola before its score can qualify, retain the
+  classification on the private smoking record, and keep tasting notes,
+  purchase details, and inventory outside the anonymous contribution.
+- Let collectors deliberately classify existing manual smoking records without
+  changing Vault quantities or silently reclassifying historical records.
+- Keep direct manual community ratings writable against the current production
+  schema while the held contribution-source migration remains unapplied.
 
 ## Explicitly excluded
 
@@ -41,6 +52,9 @@ activation remain held.
    blocking hold.
 6. The release contains no database migration, secret, access change, public
    announcement, or partner communication.
+7. An outside-Vault score qualifies only after the collector checks the explicit
+   confirmation and supplies exact brand, line, and vitola; unchecked legacy
+   manual records remain private and ineligible.
 
 ## Later activation checkpoint
 

@@ -1,7 +1,7 @@
 import { InventoryManager } from "@/components/inventory-manager";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadCollections } from "@/lib/data";
+import { loadCollections, loadHumidors } from "@/lib/data";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
@@ -39,8 +39,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   }
   const mode = modeResult.value;
   const items = inventoryResult.value;
-  const [collectionsResult] = await Promise.allSettled([loadCollections()]);
+  const [collectionsResult, humidorsResult] = await Promise.allSettled([loadCollections(), mode === "mock" ? Promise.resolve([]) : loadHumidors()]);
   const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+  const humidors = humidorsResult.status === "fulfilled" ? humidorsResult.value : [];
   const cigarItems = cigarInventoryRecords(items, collections);
   const presentationAssetCount = items.length - cigarItems.length;
   const collectionLinksReady = collectionsResult.status === "fulfilled";
@@ -59,6 +60,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     {!collectionLinksReady&&<section className="card inventoryDataNotice"><div className="eyebrow">Collection links temporarily unavailable</div><p>Your inventory is intact and available. Collection links are hidden rather than shown as absent.</p></section>}
     <Suspense fallback={null}><InventoryUpgradeNudge lotCount={cigarItems.length} portfolioValue={cigarItems.reduce((sum,item)=>sum+(item.retailValue||0)*(item.currentQty||0),0)}/></Suspense>
     {presentationAssetCount>0&&<section className="card inventoryDataNotice"><div><strong>{presentationAssetCount} presentation asset{presentationAssetCount===1?" is":"s are"} tracked separately</strong><p>Presentation humidors and cases remain connected to their collectible sets without appearing as individual cigars.</p></div><Link className="button secondary" href="/collections">Open Valuable Collections</Link></section>}
-    <div><InventoryManager initialItems={cigarItems} catalog={[]} ratings={[]} collections={collections} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch||filters.inventoryId} initialEditId={filters.edit} initialEditMode={editFocus} initialIntakeQuery={filters.cigarName}/></div>
+    <div><InventoryManager initialItems={cigarItems} catalog={[]} ratings={[]} collections={collections} humidors={humidors} mode={mode} initialMissing={filters.missing} initialStorage={filters.storage} initialStatus={filters.status} initialCollectionId={filters.collectionId} initialActiveOnly={filters.active === "1"} initialQuery={filters.vaultSearch||filters.inventoryId} initialEditId={filters.edit} initialEditMode={editFocus} initialIntakeQuery={filters.cigarName}/></div>
   </main>;
 }

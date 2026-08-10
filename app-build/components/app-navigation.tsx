@@ -51,7 +51,7 @@ export function AppNavigation() {
 
   const publicPaths = ["/manifesto", "/constitution", "/industry", "/login", "/recover", "/reset-password", "/privacy", "/terms", "/beta-agreement", "/partners/join", "/partners/invite", "/r"];
   if (publicPaths.some((path) => matches(pathname, path))) return <header className="publicHeader"><div className="publicHeaderInner">
-    <Link className="appBrand" href="/" aria-label={`${brand.spokenName} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}<span className="brandPronunciation">({brand.pronunciation})</span></strong><small>{brand.brandLine}</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.spokenName} — ${brand.signatureLine} — home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}<span className="brandPronunciation">({brand.pronunciation})</span></strong><small className="brandSignature">{brand.signatureLine}</small></span></Link>
     <nav aria-label="Public navigation"><Link href="/industry" className={matches(pathname,"/industry")?"active":undefined}>Industry Hub</Link><Link href="/manifesto" className={matches(pathname,"/manifesto")?"active":undefined}>Manifesto</Link><Link href="/constitution" className={matches(pathname,"/constitution")?"active":undefined}>Constitution</Link><Link href="/login" className="button secondary">Sign in</Link></nav>
   </div></header>;
   const moreLinks=[
@@ -93,7 +93,7 @@ export function AppNavigation() {
     window.setTimeout(() => window.dispatchEvent(new Event("hojavia:open-search")), 0);
   };
   return <><header className="appHeader"><div className="appHeaderInner">
-    <Link className="appBrand" href="/" aria-label={`${brand.spokenName} home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}<span className="brandPronunciation">({brand.pronunciation})</span></strong><small>{brand.brandLine}</small></span></Link>
+    <Link className="appBrand" href="/" aria-label={`${brand.spokenName} — ${brand.signatureLine} — home`}>{!brand.isPreview&&<HojaviaMark/>}<span><strong>{brand.name}<span className="brandPronunciation">({brand.pronunciation})</span></strong><small className="brandSignature">{brand.signatureLine}</small></span></Link>
     <DeferredGlobalSearch/><nav className="appNav" aria-label="Primary navigation">
       <Link href="/" className={pathname === "/" ? "active" : undefined} aria-current={pathname === "/" ? "page" : undefined}>Home</Link>
       <Link href="/discover" className={matches(pathname,"/discover")||matches(pathname,"/catalog")?"active":undefined}>Discover</Link>

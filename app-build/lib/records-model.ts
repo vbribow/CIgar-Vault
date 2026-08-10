@@ -5,13 +5,24 @@ export const burnQualityOptions = ["Even throughout", "Minor touch-up", "Multipl
 
 const SmokingLogFields = {
   inventoryId: z.string().trim().min(1).max(100),
-  cigarName: z.string().trim().min(3).max(300).optional(), dateSmoked: z.iso.date(), quantitySmoked: z.coerce.number().int().min(1).max(1000).default(1), vintage: z.union([z.string(), z.number()]).optional(), overall: z.coerce.number().min(0).max(100).optional(),
+  cigarName: z.string().trim().min(3).max(300).optional(),
+  outsideInventory: z.boolean().optional(),
+  cigarBrand: z.string().trim().min(1).max(100).optional(),
+  cigarLine: z.string().trim().min(1).max(150).optional(),
+  cigarVitola: z.string().trim().min(1).max(120).optional(),
+  dateSmoked: z.iso.date(), quantitySmoked: z.coerce.number().int().min(1).max(1000).default(1), vintage: z.union([z.string(), z.number()]).optional(), overall: z.coerce.number().min(0).max(100).optional(),
   flavor: z.string().max(500).optional(), strength: z.string().max(100).optional(), sweetness: z.string().max(100).optional(),
   construction: z.string().max(500).optional(), burn: z.enum(burnQualityOptions).optional(), tastingNotes: z.string().max(4000).optional(), buyAgain: z.boolean().optional(),
 };
 
-const requireManualCigar = <T extends z.ZodType<{ inventoryId: string; cigarName?: string }>>(schema: T) =>
-  schema.refine(value => value.inventoryId !== "MANUAL" || Boolean(value.cigarName), { message: "Enter the cigar name for a manual smoking record" });
+const requireManualCigar = <T extends z.ZodType<{ inventoryId: string; cigarName?: string; outsideInventory?: boolean; cigarBrand?: string; cigarLine?: string; cigarVitola?: string }>>(schema: T) =>
+  schema.superRefine((value, context) => {
+    if (value.inventoryId !== "MANUAL") return;
+    if (!value.cigarName) context.addIssue({ code:"custom", path:["cigarName"], message:"Enter the cigar name for a manual smoking record" });
+    if (value.outsideInventory && (!value.cigarBrand || !value.cigarLine || !value.cigarVitola)) {
+      context.addIssue({ code:"custom", path:["outsideInventory"], message:"Confirm the exact brand, line, and vitola for an outside-Vault rating" });
+    }
+  });
 
 /** Stored records retain every legacy ID. */
 export const SmokingLogSchema = requireManualCigar(z.object({
@@ -29,6 +40,11 @@ export const SmokingLogCreateSchema = requireManualCigar(z.object({
 
 /** Editing a journal entry may correct experience details, but never its identity or Vault deduction. */
 export const SmokingLogEditSchema = z.object({
+  cigarName: z.string().trim().min(3).max(300).optional(),
+  outsideInventory: z.boolean().optional(),
+  cigarBrand: z.string().trim().min(1).max(100).optional(),
+  cigarLine: z.string().trim().min(1).max(150).optional(),
+  cigarVitola: z.string().trim().min(1).max(120).optional(),
   dateSmoked: z.iso.date(),
   vintage: z.union([z.string(), z.number()]).optional(),
   overall: z.coerce.number().min(0).max(100).optional(),
@@ -39,7 +55,11 @@ export const SmokingLogEditSchema = z.object({
   burn: z.enum(burnQualityOptions).optional(),
   tastingNotes: z.string().max(4000).optional(),
   buyAgain: z.boolean().optional(),
-}).strict();
+}).strict().superRefine((value, context) => {
+  if (value.outsideInventory && (!value.cigarBrand || !value.cigarLine || !value.cigarVitola)) {
+    context.addIssue({ code:"custom", path:["outsideInventory"], message:"Confirm the exact brand, line, and vitola for an outside-Vault rating" });
+  }
+});
 
 export const ValuationSchema = z.object({
   valuationId: z.string().trim().min(1).max(100), inventoryId: z.string().trim().min(1).max(100), valuationDate: z.iso.date(),

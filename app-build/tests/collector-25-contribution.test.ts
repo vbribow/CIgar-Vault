@@ -15,11 +15,18 @@ test("an eligible smoke contributes only exact identity and a numeric score",()=
   assert.equal("buyAgain" in (contribution||{}),false);
 });
 
-test("manual, mismatched, missing, and zero scores never enter Collector 25",()=>{
+test("unconfirmed manual, mismatched, missing, and zero scores never enter Collector 25",()=>{
   assert.equal(collector25ContributionFromSmoke({...smoke,inventoryId:"MANUAL"},inventory),undefined);
   assert.equal(collector25ContributionFromSmoke(smoke,{...inventory,inventoryId:"INV-2"}),undefined);
   assert.equal(collector25ContributionFromSmoke({...smoke,overall:undefined},inventory),undefined);
   assert.equal(collector25ContributionFromSmoke({...smoke,overall:0},inventory),undefined);
+});
+
+test("a confirmed outside-Vault smoke contributes its structured identity without private fields",()=>{
+  const contribution=collector25ContributionFromSmoke({...smoke,inventoryId:"MANUAL",cigarName:"Arturo Fuente OpusX Petite Lancero",outsideInventory:true,cigarBrand:"Arturo Fuente",cigarLine:"Fuente Fuente OpusX",cigarVitola:"Petite Lancero"});
+  assert.deepEqual(contribution,{brand:"Arturo Fuente",line:"Fuente Fuente OpusX",vitola:"Petite Lancero",vintage:undefined,score:94,cigarKey:"arturo-fuente|fuente-fuente-opusx|petite-lancero|"});
+  assert.equal("outsideInventory" in (contribution||{}),false);
+  assert.equal("cigarName" in (contribution||{}),false);
 });
 
 test("smoking sync is opt-in, anonymous, deduplicated, and non-blocking",()=>{
@@ -45,6 +52,7 @@ test("collector UX explains automation, privacy, and the manual correction path"
   assert.match(account,/Anonymous Collector 25 contribution/);
   assert.match(account,/tasting notes, inventory, and purchase details remain private/);
   assert.match(journal,/anonymous score updated the Hojavía 25/);
+  assert.match(journal,/I smoked this cigar outside my Vault and confirm the identity below is exact/);
   assert.match(community,/No re-entry is needed/);
   assert.match(community,/deliberately replace your current score/);
 });
