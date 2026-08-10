@@ -24,6 +24,19 @@ test("surfaces monitored value when a humidor has no readings", () => {
   assert.equal(report.totals.valueAtClimateRisk, 1500);
 });
 
+test("climate reports resolve the exact registered sensor name",()=>{
+  const report=buildInsuranceReport(
+    inventory,
+    [humidor],
+    [{readingId:"R1",humidorId:"H1",sensorId:"S1",recordedAt:"2026-07-21T11:00:00Z",temperatureF:68,humidity:67}],
+    [{sensorId:"S1",humidorId:"H1",provider:"Tempi",name:"Small Cabinet",syncMethod:"CSV import",connectionStatus:"Connected"}],
+    new Date("2026-07-21T12:00:00Z"),
+  );
+  assert.equal(report.climate[0].sensorName,"Small Cabinet");
+  assert.equal(report.climate[0].sensorProvider,"Tempi");
+  assert.match(report.climate[0].evidence,/Small Cabinet/);
+});
+
 test("zero-quantity historical lots stay out of the active insurance schedule", () => {
   const report = buildInsuranceReport([...inventory, { inventoryId: "OLD", brand: "Legacy", line: "Duplicate", vitola: "Churchill", currentQty: 0, retailValue: 500 }], [], [], []);
   assert.equal(report.rows.some(row => row.inventoryId === "OLD"), false);

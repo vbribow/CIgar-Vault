@@ -227,6 +227,7 @@ export default async function ReportsPage() {
                 </p>
                 <small>
                   {money.format(item.storedValue)} stored · {item.evidence}
+                  {item.sensorProvider ? ` · ${item.sensorProvider}` : ""}
                   {item.recordedAt
                     ? ` · ${new Date(item.recordedAt).toLocaleString()}`
                     : ""}

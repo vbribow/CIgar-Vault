@@ -64,12 +64,16 @@ export function buildInsuranceReport(inventory: InventoryItem[], humidors: Humid
       humidorId: item.humidor.humidorId,
       name: item.humidor.name,
       location: item.humidor.location || "Location not recorded",
+      sensorName: item.sensor?.name,
+      sensorProvider: item.sensor?.provider,
       severity: item.severity,
       temperatureF: item.latest?.temperatureF,
       humidity: item.latest?.humidity,
       recordedAt: item.latest?.recordedAt,
       storedValue: item.storedValue,
-      evidence: item.latest ? `${item.rows.length} climate readings` : "No climate readings",
+      evidence: item.latest
+        ? `${item.rows.length} climate readings · ${item.sensor?.name || "Manual or unnamed sensor"}`
+        : "No climate readings",
     })),
     exceptions: {
       missingQuantity: activeInventory.filter(item => item.currentQty === undefined).length,

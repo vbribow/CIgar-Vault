@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseTempiCsv } from "../lib/tempi-csv";
+import { matchTempiSensor,parseTempiCsv } from "../lib/tempi-csv";
 
 test("Tempi reports may include metadata before their real CSV header",()=>{
   const report=[
@@ -15,11 +15,21 @@ test("Tempi reports may include metadata before their real CSV header",()=>{
   const result=parseTempiCsv(report);
   assert.equal(result.totalReadings,2);
   assert.equal(result.sampleEvery,1);
+  assert.equal(result.sensorName,"Small Cabinet");
+  assert.equal(result.serialNumber,"F281BDF2F01B");
   assert.deepEqual(result.readings.map(({temperatureF,humidity})=>({temperatureF,humidity})),[
     {temperatureF:64.5,humidity:67.1},
     {temperatureF:64.6,humidity:67.2},
   ]);
   assert.match(result.readings[0].recordedAt,/2026-05-03T/);
+});
+
+test("multi-report imports match an exact embedded serial before a display name",()=>{
+  const sensors=[
+    {name:"Small Cabinet",externalDeviceId:"OTHER"},
+    {name:"Earlier label",externalDeviceId:"F281BDF2F01B"},
+  ];
+  assert.equal(matchTempiSensor({sensorName:"Small Cabinet",serialNumber:"F281BDF2F01B"},sensors),sensors[1]);
 });
 
 test("oversized minute history is evenly reduced beneath the safe import limit",()=>{

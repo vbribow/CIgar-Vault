@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { accountDataMode } from "@/lib/user-data";
 import { humidorInsights } from "@/lib/humidor-insights";
 import { loadInventory } from "@/lib/inventory";
-import { loadHumidorReadings, loadHumidors } from "@/lib/data";
+import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import { climateIntelligence } from "@/lib/climate-intelligence";
 import { brand } from "@/lib/brand";
 import "../humidors.css";
@@ -16,18 +16,20 @@ export default async function HumidorDetailPage({
   params: Promise<{ humidorId: string }>;
 }) {
   const { humidorId } = await params;
-  const [modeResult, humidorsResult, readingsResult, inventoryResult] =
+  const [modeResult, humidorsResult, readingsResult, inventoryResult, sensorsResult] =
     await Promise.allSettled([
       accountDataMode(),
       loadHumidors(),
       loadHumidorReadings(),
       loadInventory(),
+      loadSensors(),
     ]);
   if (
     modeResult.status !== "fulfilled" ||
     humidorsResult.status !== "fulfilled" ||
     readingsResult.status !== "fulfilled" ||
-    inventoryResult.status !== "fulfilled"
+    inventoryResult.status !== "fulfilled" ||
+    sensorsResult.status !== "fulfilled"
   ) {
     return (
       <main className="shell">
@@ -51,9 +53,12 @@ export default async function HumidorDetailPage({
   const humidors = mode === "mock" ? [] : humidorsResult.value;
   const readings = mode === "mock" ? [] : readingsResult.value;
   const inventory = inventoryResult.value;
+  const sensors = mode === "mock" ? [] : sensorsResult.value;
   const humidor = humidors.find((h) => h.humidorId === humidorId);
   if (!humidor) notFound();
   const insight = humidorInsights(humidor, readings);
+  const humidorSensors = sensors.filter((sensor) => sensor.humidorId === humidorId);
+  const reportingSensor = humidorSensors.find((sensor) => sensor.sensorId === insight.latest?.sensorId) || humidorSensors[0];
   const intelligence = climateIntelligence(humidor, readings);
   const members = inventory.filter((i) => i.storageLocationId === humidorId);
   const quantityKnown = members.filter(i=>i.currentQty!==undefined);
@@ -88,6 +93,9 @@ export default async function HumidorDetailPage({
             {insight.rows.length
               ? `${insight.rows.length} readings analyzed against your selected ranges.`
               : "Add readings to begin climate analysis."}
+          </p>
+          <p className="small">
+            Reporting sensor: {reportingSensor ? `${reportingSensor.name} · ${reportingSensor.provider}` : "Manual or unnamed readings"}
           </p>
         </div>
         <div
@@ -159,6 +167,7 @@ export default async function HumidorDetailPage({
             <div>
               <div className="eyebrow">Recent readings</div>
               <h2>Climate trend</h2>
+              <small>{reportingSensor ? `${reportingSensor.name} · ${reportingSensor.provider}` : "Manual or unnamed readings"}</small>
             </div>
             <span className="small">Oldest → newest</span>
           </div>

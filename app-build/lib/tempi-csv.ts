@@ -35,6 +35,29 @@ function timestamp(value:string) {
 }
 
 export type TempiCsvReading={recordedAt:string;temperatureF:number;humidity:number;batteryPercent?:number};
+export type TempiCsvIdentity={sensorName?:string;serialNumber?:string};
+
+function reportIdentity(rows:string[][],headerIndex:number):TempiCsvIdentity{
+  const metadata=rows.slice(0,headerIndex).map(row=>row.join(",").trim());
+  const sensorLine=metadata.find(line=>/^sensor\s*name\s*:/i.test(line));
+  if(!sensorLine)return{};
+  const value=sensorLine.replace(/^sensor\s*name\s*:\s*/i,"").trim();
+  const serial=value.match(/\[\s*SN\s*:\s*([^\]]+)\]/i)?.[1]?.trim();
+  const name=value.replace(/\s*\[\s*SN\s*:[^\]]+\]\s*$/i,"").trim();
+  return{sensorName:name||undefined,serialNumber:serial||undefined};
+}
+
+const sensorKey=(value:string|undefined)=>value?.trim().toLowerCase().replace(/[^a-z0-9]/g,"")||"";
+
+export function matchTempiSensor<T extends {name:string;externalDeviceId?:string}>(identity:TempiCsvIdentity,sensors:T[]){
+  const serial=sensorKey(identity.serialNumber);
+  if(serial){
+    const matched=sensors.find(sensor=>sensorKey(sensor.externalDeviceId)===serial);
+    if(matched)return matched;
+  }
+  const name=sensorKey(identity.sensorName);
+  return name?sensors.find(sensor=>sensorKey(sensor.name)===name):undefined;
+}
 
 export function parseTempiCsv(text:string,maxReadings=5000){
   const rows=csvRows(text);
@@ -43,6 +66,7 @@ export function parseTempiCsv(text:string,maxReadings=5000){
     return headers.some(value=>value.includes("time")||value.includes("date"))&&headers.some(value=>value.includes("temp"))&&headers.some(value=>value.includes("humidity")||value==="rh");
   });
   if(headerIndex<0)throw new Error("Could not identify the Tempi date, temperature, and humidity columns");
+  const identity=reportIdentity(rows,headerIndex);
   const headers=rows[headerIndex].map(normalizedHeader);
   const find=(patterns:string[])=>headers.findIndex(header=>patterns.some(pattern=>header.includes(pattern)));
   const time=find(["timestamp","datetime","recordedat","time","date"]);
@@ -63,5 +87,5 @@ export function parseTempiCsv(text:string,maxReadings=5000){
   });
   if(!parsed.length)throw new Error("No valid Tempi readings were found");
   const sampleEvery=Math.max(1,Math.ceil(parsed.length/maxReadings));
-  return {readings:parsed.filter((_,index)=>index%sampleEvery===0),totalReadings:parsed.length,sampleEvery};
+  return {...identity,readings:parsed.filter((_,index)=>index%sampleEvery===0),totalReadings:parsed.length,sampleEvery};
 }

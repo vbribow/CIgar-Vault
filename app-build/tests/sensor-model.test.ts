@@ -14,3 +14,10 @@ test("signed-in collectors import climate readings without a founder key",()=>{
   assert.match(route,/kind: "sensors"/);
   assert.ok(route.indexOf('accountDataMode() === "supabase"')<route.indexOf("authorizeWrite(request)"));
 });
+test("moving an owned sensor atomically follows its existing readings",()=>{
+  const route=readFileSync(new URL("../app/api/sensors/route.ts",import.meta.url),"utf8");
+  assert.match(route,/export async function PATCH/);
+  assert.match(route,/reading\.sensorId===sensor\.sensorId/);
+  assert.match(route,/humidorId:sensor\.humidorId/);
+  assert.match(route,/saveOwnedRecordsAtomically/);
+});
