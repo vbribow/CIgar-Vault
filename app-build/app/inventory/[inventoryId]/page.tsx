@@ -25,6 +25,7 @@ import Link from "next/link";
 import { BuyAgainPanel } from "@/components/buy-again-panel";
 import { RatingLeafMark } from "@/components/rating-leaf-mark";
 import { InventoryRecordActions } from "@/components/inventory-record-actions";
+import { InventoryManager } from "@/components/inventory-manager";
 import { safeRecordedPurchaseUrl } from "@/lib/buy-again";
 import { loadCatalog } from "@/lib/catalog";
 import { cigarReferencePhoto } from "@/lib/cigar-reference-photo";
@@ -43,10 +44,7 @@ export default async function CigarPage({
   const focusedVaultHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}#inventory-records`;
   const backHref = searchReturn || focusedVaultHref;
   const backLabel = searchReturn ? "← Back to search results" : "← Back to Vault";
-  const storyEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=provenance#inventory-editor`;
-  const allEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=all#inventory-editor`;
-  const quantityEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=quantity#inventory-editor`;
-  const ratingEditHref=`/inventory?vaultSearch=${encodeURIComponent(inventoryId)}&edit=${encodeURIComponent(inventoryId)}&focus=rating#inventory-editor`;
+  const inlineEditHref="#inventory-editor";
   const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
   if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
     return <main className="shell"><nav className="nav"><Link className="brand" href="/">{brand.name}</Link><Link className="backLink" href={backHref}>{backLabel}</Link></nav><Link className="button secondary detailReturnLink" href={backHref}>{backLabel}</Link><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><Link className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</Link></section></main>;
@@ -122,7 +120,7 @@ export default async function CigarPage({
         {backLabel}
       </Link>
       {query.saved==="inventory"&&<section className="inventorySavedConfirmation" role="status" aria-live="polite" aria-atomic="true"><div><div className="eyebrow">Save complete</div><strong>Saved to your private Vault</strong><p>{item.brand} {item.line} is ready below. This is the exact record that was saved.</p></div><div className="inventorySavedActions"><Link href="/inventory#mobile-intake">Add another cigar</Link><Link href={backHref}>Return to Vault</Link></div></section>}
-      <section className="detailHero">
+      <section className="detailHero" id="record-top">
         <div>
           <div className="eyebrow">
             {item.inventoryId} · {item.status || "Review"}
@@ -134,13 +132,14 @@ export default async function CigarPage({
             {item.vintage ? ` · ${item.vintage}` : ""}
           </span>
           <CollectionRelationshipTag relationship={collectionRelationship}/>
-          <div className="ctaRow detailHeroActions"><Link className="button secondary" href={quantityEditHref}>Edit box or cigar quantity</Link><Link className="button secondary" href="#record-photos">Add photos</Link><Link className="button secondary" href={storyEditHref}>Edit story</Link><InventoryRecordActions item={item} editHref={allEditHref}/></div>
+          <div className="ctaRow detailHeroActions"><Link className="button secondary" href={inlineEditHref}>Edit box or cigar quantity</Link><Link className="button secondary" href="#record-photos">Add photos</Link><Link className="button secondary" href={inlineEditHref}>Edit story</Link><InventoryRecordActions item={item} editHref={inlineEditHref}/></div>
         </div>
         <div className="scoreCard">
           <RatingLeafMark value={item.score ?? "—"} label="Personal collection score" detail={item.priority || "Unrated priority"}/>
-          {!isPresentationAsset&&<Link className="button secondary" href={ratingEditHref}>{item.score===undefined?"Rate this cigar":"Update rating"}</Link>}
+          {!isPresentationAsset&&<Link className="button secondary" href={inlineEditHref}>{item.score===undefined?"Rate this cigar":"Update rating"}</Link>}
         </div>
       </section>
+      <InventoryManager initialItems={items} catalog={catalog} ratings={ratings} collections={collections} humidors={humidors} mode={mode} initialEditId={item.inventoryId} initialEditMode="all" editorOnly saveReturnHref={`/inventory/${encodeURIComponent(item.inventoryId)}?saved=inventory#inventory-editor`}/>
       {!isPresentationAsset&&<CigarReferencePhoto item={item} photo={referencePhoto} catalogReady={catalogReady}/>}
       {!isPresentationAsset && <BuyAgainPanel inventoryId={item.inventoryId} identity={`${item.brand} · ${item.line} · ${item.vitola}${item.vintage ? ` · ${item.vintage}` : ""}`} seller={item.acquisitionSeller} purchaseDate={item.acquisitionDate} jurisdiction={item.purchaseJurisdiction} sourceUrl={safeRecordedPurchaseUrl(item.acquisitionSourceUrl)} positiveJournalCount={history.filter((entry) => entry.buyAgain).length} />}
       <section className="cigarStory">

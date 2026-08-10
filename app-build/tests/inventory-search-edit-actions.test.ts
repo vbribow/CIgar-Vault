@@ -20,7 +20,7 @@ test("same-page edit navigation synchronizes the selected exact record into the 
   assert.match(manager,/\[initialEditId, initialEditMode, initialItems\]/);
 });
 
-test("every saved lot returns directly to its exact record instead of a blank add-lot form",()=>{
-  assert.match(manager, /window\.location\.assign\(`\/inventory\/\$\{encodeURIComponent\(savedId\)\}\?saved=inventory`\)/);
-  assert.doesNotMatch(manager, /if\(isEdit\)window\.location\.assign/);
+test("a saved edit returns directly to the exact record instead of a blank add-lot form",()=>{
+  assert.match(manager, /if\(isEdit\)window\.location\.assign\(saveReturnHref\|\|`\/inventory\/\$\{encodeURIComponent\(savedId\)\}\?saved=inventory`\)/);
+  assert.match(manager, /else window\.location\.assign\(`\/inventory\/\$\{encodeURIComponent\(savedId\)\}\?saved=inventory`\)/);
 });

@@ -44,7 +44,7 @@ type EditMode="quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"rati
 const inventoryBatchSize = 30;
 const vaultViewStorageKey = "hojavia:vault-view:v1";
 
-export function InventoryManager({ initialItems, catalog, ratings, collections, humidors, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all",initialIntakeQuery }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; humidors:Humidor[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode;initialIntakeQuery?:string }) {
+export function InventoryManager({ initialItems, catalog, ratings, collections, humidors, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all",initialIntakeQuery,editorOnly=false,saveReturnHref }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; humidors:Humidor[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode;initialIntakeQuery?:string;editorOnly?:boolean;saveReturnHref?:string }) {
   const [items, setItems] = useState(initialItems);
   const requestedItem=initialEditId?initialItems.find(item=>item.inventoryId===initialEditId):undefined;
   const [query, setQuery] = useState(initialQuery||requestedItem?.inventoryId||"");
@@ -142,13 +142,14 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
 
   useEffect(() => {
     const url = new URL(window.location.href);
+    if(editorOnly)return;
     const values = { vaultSearch: query, status, missing, storage };
     for (const [key, value] of Object.entries(values)) {
       if (value && value !== "all") url.searchParams.set(key, value);
       else url.searchParams.delete(key);
     }
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [query, status, missing, storage]);
+  }, [query, status, missing, storage,editorOnly]);
 
   useEffect(()=>{
     if(editing||draft||saving||bulkSaving)return;
@@ -181,6 +182,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
 
   useEffect(()=>{
     if(!initialEditId||!editing)return;
+    if(editorOnly&&window.location.hash!=="#inventory-editor")return;
     const frame=window.requestAnimationFrame(()=>{
       document.getElementById("inventory-editor")?.scrollIntoView({behavior:"auto",block:"start"});
       if(initialEditMode==="provenance")(document.querySelector('#inventory-editor textarea[name="provenanceNotes"]') as HTMLTextAreaElement|null)?.focus({preventScroll:true});
@@ -188,7 +190,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       if(initialEditMode==="rating")(document.querySelector('#inventory-editor input[name="score"]') as HTMLInputElement|null)?.focus({preventScroll:true});
     });
     return()=>window.cancelAnimationFrame(frame);
-  },[initialEditId,initialEditMode,editing]);
+  },[initialEditId,initialEditMode,editing,editorOnly]);
 
   const scopedItems = useMemo(() => cigarInventoryRecords(items, collections), [items, collections]);
   const statuses = useMemo(() => [...new Set(scopedItems.map((item) => item.status).filter(Boolean))].sort(), [scopedItems]);
@@ -268,7 +270,8 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       setRecentlySaved({inventoryId:savedId,token:Date.now()});
       if(!isEdit)setLastCreated(savedItem);
       formElement.reset();
-      window.location.assign(`/inventory/${encodeURIComponent(savedId)}?saved=inventory`);
+      if(isEdit)window.location.assign(saveReturnHref||`/inventory/${encodeURIComponent(savedId)}?saved=inventory`);
+      else window.location.assign(`/inventory/${encodeURIComponent(savedId)}?saved=inventory`);
     } catch (error) { void captureOperationalFailure("inventory-save",failureStatus);setMessage(error instanceof RequestTimeoutError ? "Saving is taking longer than expected. Your form is still here—try again when you’re ready." : error instanceof Error ? error.message : "Save failed"); }
     finally { setSaving(false); }
   }
@@ -397,7 +400,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     ?? humidors.find(humidor => humidor.name.trim().toLowerCase() === formItem.storageLocationId?.trim().toLowerCase());
   const storageDefaultValue = registeredStorage?.humidorId ?? formItem.storageLocationId ?? "";
   return <>
-    <div className="inventoryBrowseWorkspace" hidden={Boolean(editing||draft)}>
+    <div className="inventoryBrowseWorkspace" hidden={editorOnly||Boolean(editing||draft)}>
     {photoIntakeOpen?<PhotoInventoryIntake catalog={catalogData} inventory={items} mode={mode} initialQuery={initialIntakeQuery} onDraft={(item)=>{setEditing(null);setDraft(item);setMessage("");setLastCreated(null)}} onApproved={(approved)=>{setItems(current=>[...current,...approved.filter(item=>!current.some(existing=>existing.inventoryId===item.inventoryId))]);setDraft(null);const saved=approved.at(-1);if(!saved)return;if(approved.length===1){window.location.assign(`/inventory/${encodeURIComponent(saved.inventoryId)}?saved=inventory`);return}setLastCreated(saved);setRecentlySaved({inventoryId:saved.inventoryId,token:Date.now()});setMessage(`${approved.length} cigar records were saved to your private Vault. Choose what to do next below.`)}} />:<section className="card deferredIntakeLauncher" id="mobile-intake"><div><div className="eyebrow">Camera documentation</div><h2>Add a cigar when you’re ready.</h2><p>The camera and catalog stay unloaded until you open this private workspace.</p></div><button type="button" className="button" onClick={()=>{setPhotoIntakeOpen(true);void loadSupport("catalog")}}>Open camera documentation</button></section>}
     {lastCreated&&<section className="card firstRecordSuccess" aria-live="polite"><div><div className="eyebrow">Saved to your private Vault</div><h2>{lastCreated.brand} {lastCreated.line}</h2><p>Your first useful record is complete. You can stop here with confidence or add the next piece of its story.</p></div><div className="firstRecordActions"><a className="button" href={`/inventory/${encodeURIComponent(lastCreated.inventoryId)}`}>Open saved record</a><button type="button" className="button secondary" onClick={()=>startEditing(lastCreated,"storage")}>Assign storage</button>{isCubanInventory(lastCreated)&&<a className="button secondary" href="/verification">Review Habanos evidence</a>}<a className="button secondary" href="/">See my first collection insight</a><button type="button" className="textLink" onClick={()=>setLastCreated(null)}>I’m done for now</button></div></section>}
     <section className="toolbar" id="inventory-records" aria-label="Inventory records and filters">
@@ -425,7 +428,7 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     {visibleItems.length < filtered.length && <div className="inventoryLoadMore" role="status" aria-live="polite"><span>Showing {visibleItems.length} of {filtered.length} matching lots.</span><button type="button" className="button secondary" onClick={() => setVisibleLimit(current => current + inventoryBatchSize)}>Show {Math.min(inventoryBatchSize, filtered.length - visibleItems.length)} more</button></div>}
     </div>
 
-    <section id="inventory-editor" className={`section editor ${editing?"editingEditor":""}`}><div className="sectionHead"><div><div className="eyebrow">{editing&&editMode==="quantity"?"Quantity correction":editing&&editMode==="year"?"Production information":editing&&editMode==="packaging"?"Packaging information":editing&&editMode==="price"?"Retail price correction":editing&&editMode==="provenance"?"Story and provenance":"Inventory editor"}</div><h2>{editing ? `${editMode==="quantity"?"Correct quantity":editMode==="year"?"Add production / release year":editMode==="packaging"?"Document packaging":editMode==="price"?"Set retail price":editMode==="provenance"?"Edit story":"Edit all details"} · ${editing.brand} ${editing.line}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{editing&&editMode==="quantity"?"Enter full boxes, cigars per box, and loose sticks. Total owned recalculates automatically when saved.":editing&&editMode==="year"?"Enter the exact cigar’s four-digit production or release year. Leave it blank when the year is not verified.":editing&&editMode==="packaging"?"Choose how this exact physical lot is packaged. Other record fields remain unchanged.":editing&&editMode==="price"?"Enter the current replacement price for one cigar. Saving returns you to this inventory record; market research remains a separate workflow.":editing&&editMode==="provenance"?"Update the known story for this exact lot, then save. Other record fields remain unchanged.":mode === "mock" ? "Private preview: existing-record edits save on this computer. New lots require a connected private vault." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && <button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>}</div>
+    <section id="inventory-editor" className={`section editor ${editing?"editingEditor":""} ${editorOnly?"detailInlineEditor":""}`}><div className="sectionHead"><div><div className="eyebrow">{editing&&editMode==="quantity"?"Quantity correction":editing&&editMode==="year"?"Production information":editing&&editMode==="packaging"?"Packaging information":editing&&editMode==="price"?"Retail price correction":editing&&editMode==="provenance"?"Story and provenance":"Inventory editor"}</div><h2>{editing ? `${editMode==="quantity"?"Correct quantity":editMode==="year"?"Add production / release year":editMode==="packaging"?"Document packaging":editMode==="price"?"Set retail price":editMode==="provenance"?"Edit story":"Edit all details"} · ${editing.brand} ${editing.line}` : draft ? "Review photo-assisted draft" : "Add inventory lot"}</h2><div className="small">{editing&&editMode==="quantity"?"Enter full boxes, cigars per box, and loose sticks. Total owned recalculates automatically when saved.":editing&&editMode==="year"?"Enter the exact cigar’s four-digit production or release year. Leave it blank when the year is not verified.":editing&&editMode==="packaging"?"Choose how this exact physical lot is packaged. Other record fields remain unchanged.":editing&&editMode==="price"?"Enter the current replacement price for one cigar. Saving returns you to this inventory record; market research remains a separate workflow.":editing&&editMode==="provenance"?"Update the known story for this exact lot, then save. Other record fields remain unchanged.":mode === "mock" ? "Private preview: existing-record edits save on this computer. New lots require a connected private vault." : mode === "supabase" ? "Changes save to your private vault." : "Changes save directly to Smartsheet."}</div></div>{(editing||draft) && (editorOnly?<a className="button secondary" href="#record-top">Close editor</a>:<button className="button secondary" onClick={() => {setEditing(null);setDraft(null)}}>Cancel</button>)}</div>
       {inventoryDraft.restoredFields&&<p className="deviceDraftNotice" role="status">Your unfinished inventory details were restored from this browser profile. Review them before saving.</p>}
       <form ref={inventoryDraft.formRef} key={formItem.inventoryId || "new"} className={`inventoryForm ${focusedQuantity||focusedYear||focusedPackaging||focusedPrice||focusedStorage||focusedProvenance||focusedRating?"focusedInventoryForm":""}`} onSubmit={submit} onChange={(event)=>{editSafety.markDirty();inventoryDraft.capture(event)}} onFocusCapture={()=>{if(showAll)void loadSupport("catalog")}}>
         {showAll&&<>

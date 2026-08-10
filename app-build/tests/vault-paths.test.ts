@@ -55,13 +55,13 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(detail,/className="button secondary detailReturnLink"/);
  assert.match(detail,/Back to search results/);
  assert.match(detail,/Back to Vault/);
- assert.match(detail,/>Edit story<\/Link>/);
+ assert.doesNotMatch(detail,/>Edit story<\/Link>/);
  assert.match(detail,/InventoryRecordActions/);
- assert.match(detail,/focus=provenance#inventory-editor/);
+ assert.match(detail,/const inlineEditHref="#inventory-editor"/);
  assert.match(detail,/vaultSearch=\$\{encodeURIComponent\(inventoryId\)\}/);
  assert.match(manager,/id="inventory-editor"/);
  assert.match(detail,/item\.score===undefined\?"Rate this cigar":"Update rating"/);
- assert.match(detail,/focus=rating#inventory-editor/);
+ assert.match(detail,/href=\{inlineEditHref\}/);
  assert.match(manager,/focusedRating/);
  assert.match(smokingScorecard,/separate from the Personal Vault score above/);
  assert.match(smokingScorecard,/No smoking-log rating yet/);
