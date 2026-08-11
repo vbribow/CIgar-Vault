@@ -48,11 +48,11 @@ test("Log a Smoke welcomes cigars outside inventory and is globally accessible",
   assert.match(navigation,/<small>Log Smoke<\/small>/);
 });
 
-test("Log a Smoke supports typed Vault search and a full inventory picker",()=>{
+test("Log a Smoke supports typed Vault search and a bounded inventory picker",()=>{
   const manager=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
   assert.match(manager,/id="smoke-inventory-search"/);
   assert.match(manager,/Type brand, line, vitola, or inventory ID/);
-  assert.match(manager,/smokeInventoryMatches\.map/);
+  assert.match(manager,/visibleSmokeInventoryMatches\.map/);
   assert.match(manager,/Do not remove from my Vault/);
   const tauros={inventoryId:"INV-PD-C10",brand:"Arturo Fuente",line:"OpusX Heaven and Earth",vitola:"Tauros the Bull Maduro",currentQty:10,status:"Preserve",priority:"High"} as const;
   assert.equal(matchesSmokeInventory(tauros,"Fuente Taurus maduro"),true);

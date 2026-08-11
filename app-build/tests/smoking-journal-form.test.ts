@@ -80,3 +80,12 @@ test("outside-Vault choice survives app updates and draft restoration", () => {
   assert.match(source, /restoredFields\?\.inventoryId/);
   assert.match(source, /setSmokeSource\(restoredSource\)/);
 });
+
+test("starting another smoke defers the Vault picker until the collector chooses it", () => {
+  assert.match(source, /"UNDECIDED" \| "VAULT" \| "MANUAL"/);
+  assert.match(source, /setSmokeSourceMode\("VAULT"\)/);
+  assert.match(source, /smokeSourceMode === "VAULT" && <div className="smokeInventoryFinder">/);
+  assert.match(source, /focus\(\{ preventScroll: true \}\)/);
+  assert.match(source, /smokeInventoryMatches\.slice\(0, smokeInventoryQuery \? 100 : 40\)/);
+  assert.match(source, /Showing the first \{visibleSmokeInventoryMatches\.length\}/);
+});
