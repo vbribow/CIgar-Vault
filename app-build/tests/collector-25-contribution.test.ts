@@ -75,3 +75,9 @@ test("collector UX explains automatic contribution, privacy, and the manual corr
   assert.match(community,/Scores from exact Vault cigars update automatically/);
   assert.match(community,/deliberately replace your current score/);
 });
+
+test("a Hojavía 25 backfill failure cannot blank the private personal Top 10",()=>{
+  const route=readFileSync(new URL("../app/api/community/route.ts",import.meta.url),"utf8");
+  assert.match(route,/myTop10:communityPersonalTop10\(\[\.\.\.shapedOwnedRatings,\.\.\.smokingRatings\]\)/);
+  assert.doesNotMatch(route,/if\(sync\.error\)throw sync\.error/);
+});

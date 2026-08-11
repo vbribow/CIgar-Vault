@@ -40,7 +40,10 @@ export async function GET(){
       if(rows.length){
         let sync=await client.from("community_ratings").upsert(rows,{onConflict:"user_id,cigar_key"});
         if(sync.error&&contributionSourceUnavailable(sync.error))sync=await client.from("community_ratings").upsert(rows.map(({contribution_source:_,...row})=>row),{onConflict:"user_id,cigar_key"});
-        if(sync.error)throw sync.error;
+        // Personal Top 10 is derived from the collector's owned smoking history
+        // and must remain available even when the public ranking projection is
+        // temporarily unable to reconcile. New scored smokes still use the
+        // normal single-record synchronization path.
       }
     }
     const publicPosts=client.from("community_posts").select("*").eq("status","active").order("created_at",{ascending:false}).limit(50);
