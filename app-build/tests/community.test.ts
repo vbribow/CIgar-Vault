@@ -134,3 +134,11 @@ test("rating submission keeps plain confirmation or recovery feedback beside the
  assert.match(component,/await response\.json\(\)\.catch/);
  assert.match(component,/setRatingFeedback\(\{state:"error"/);
 });
+test("an already-open Personal Top 10 refreshes when the app is reopened",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.match(component,/window\.addEventListener\("focus", refreshVisibleCommunity\)/);
+ assert.match(component,/window\.addEventListener\("pageshow", refreshVisibleCommunity\)/);
+ assert.match(component,/document\.addEventListener\("visibilitychange", refreshVisibleCommunity\)/);
+ assert.match(component,/Refresh my rankings/);
+ assert.match(component,/newest score determines its position/);
+});
