@@ -142,3 +142,10 @@ test("an already-open Personal Top 10 refreshes when the app is reopened",()=>{
  assert.match(component,/Refresh my rankings/);
  assert.match(component,/newest score determines its position/);
 });
+test("Personal Top 10 appears directly after the Hojavía 25",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ const top25=component.indexOf('id="top-25"');
+ const personal=component.indexOf('id="my-top-10"');
+ const ratingForm=component.indexOf('id="rate-a-cigar"');
+ assert.ok(top25>0&&personal>top25&&ratingForm>personal);
+});

@@ -232,23 +232,6 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <small>AI Administrator screens submissions. No sales, trades, personal contact details, or illegal activity.</small>
 </form>
     </div> : <div className="communityRatingsWorkspace">
-      <section id="my-top-10">
-<div className="sectionHead">
-<div>
-<div className="eyebrow">Your palate</div>
-<h2>My Top 10</h2>
-<p>Your current score for each exact cigar, ranked highest to lowest. When you score the same cigar again, its newest score determines its position. Exact cigar identity and numeric score contribute anonymously to the {brand.labels.communityRanking}; your notes and Vault details remain private.</p>
-</div>
-<button type="button" className="button secondary" disabled={loading} onClick={() => void load(true)}>{loading ? "Refreshing…" : "Refresh my rankings"}</button>
-</div>
-<div className="rankingList personalRanking">{data.myTop10.map(item => <article key={item.cigarKey}>
-<strong>#{item.rank}</strong>
-<div>
-<h3>{item.brand} {item.line}</h3>
-<span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
-</div>
-<RatingLeafMark value={item.averageScore} label="Your score" compact/>
-</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Add a 1–100 score to a smoking experience with an exact cigar identity. Your list will update automatically.</p></div>}</section>
       <div className="communityLayout">
       <section id="top-25">
 <div className="sectionHead">
@@ -268,6 +251,23 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </div>
 <RatingLeafMark value={item.weightedScore} label={`${brand.name} score`} detail={`${item.averageScore} average · ${item.ratingCount} rating${item.ratingCount === 1 ? "" : "s"} · ${item.confidence}`} compact/>
 </article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the {brand.labels.communityRanking} without invented scores or promotional placement.</p></div>}</section>
+      <section id="my-top-10">
+<div className="sectionHead">
+<div>
+<div className="eyebrow">Your palate</div>
+<h2>My Top 10</h2>
+<p>Your current score for each exact cigar, ranked highest to lowest. When you score the same cigar again, its newest score determines its position. Exact cigar identity and numeric score contribute anonymously to the {brand.labels.communityRanking}; your notes and Vault details remain private.</p>
+</div>
+<button type="button" className="button secondary" disabled={loading} onClick={() => void load(true)}>{loading ? "Refreshing…" : "Refresh my rankings"}</button>
+</div>
+<div className="rankingList personalRanking">{data.myTop10.map(item => <article key={item.cigarKey}>
+<strong>#{item.rank}</strong>
+<div>
+<h3>{item.brand} {item.line}</h3>
+<span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
+</div>
+<RatingLeafMark value={item.averageScore} label="Your score" compact/>
+</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Add a 1–100 score to a smoking experience with an exact cigar identity. Your list will update automatically.</p></div>}</section>
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating} aria-busy={ratingMutation.pending}>
 <div className="eyebrow">Rate a cigar</div>
 <h2>Document your experience</h2>
