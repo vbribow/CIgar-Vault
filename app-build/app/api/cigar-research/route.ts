@@ -15,6 +15,7 @@ import {
   requestCigarResearch,
   writeCachedCigarResearch,
 } from "@/lib/cigar-research-service";
+import { AiCreditError, finishAiCreditUsage, reserveAiCredits } from "@/lib/ai-credits";
 
 export const maxDuration = 120;
 const Input = z.object({ query: z.string().trim().min(3).max(300), submissionId: z.string().uuid() });
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Sign in before researching a cigar" }, { status: 401, headers: privateHeaders });
   let submissionId = "";
   let started = false;
+  let creditsReserved = false;
   try {
     const input = Input.parse(await request.json());
     submissionId = input.submissionId;
@@ -41,6 +43,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ data: cached, meta: { cached: true } }, { headers: privateHeaders });
     }
     const model = process.env.OPENAI_RESEARCH_MODEL?.trim() || "gpt-5.6-terra";
+    await reserveAiCredits(user.id, input.submissionId, "exact-research");
+    creditsReserved = true;
     await beginCigarResearch(user.id, input.submissionId, input.query, model);
     started = true;
     const prompt = `Today is ${new Date().toISOString()}. Research this exact premium cigar or manufacturer presentation: ${JSON.stringify(input.query)}. Resolve common spacing variants such as Opus6 and Opus 6, but do not broaden the identity. First determine whether the query names one cigar, an assortment, a travel humidor, a numbered presentation, or an ambiguous family term. For a presentation, identify the presentation itself and document its exact component cigars when a direct source supports them. Resolve the exact brand, line or release, named vitola, dimensions, compatible release timing, and packaging. Do not substitute a nearby vitola, sampler, collection, later edition, or family-name match. Document dimensions, country, actual factory, blender, wrapper, binder, filler, stated strength, packaging, release year, and edition only when a direct product-level source supports each detail. Use empty strings for facts that remain unknown. Prefer official manufacturer/importer pages, then established cigar trade publications. Clearly state uncertainty and conflicts. Also find up to eight current direct retailer or auction listings for this exact identity. ${FOX_CIGAR_VERIFICATION_POLICY} Mark a listing in stock only when the direct page proves it; distinguish asking prices from completed sales; normalize per-cigar price only when package quantity is known. Exclude search pages, social posts, stale snippets, and nearby products. Every returned source and listing URL must be a direct page actually visited during this research. Return concise collector-friendly language.`;
@@ -72,9 +76,12 @@ export async function POST(request: Request) {
     });
     await writeCachedCigarResearch(input.query, result);
     await finishCigarResearch(input.submissionId, { status: "completed", ...researched.usage });
+    await finishAiCreditUsage(input.submissionId, { status: "completed", inputTokens: researched.usage.inputTokens, outputTokens: researched.usage.outputTokens });
     return NextResponse.json({ data: result, meta: { cached: false } }, { headers: privateHeaders });
   } catch (error) {
-    const serviceError = error instanceof CigarResearchServiceError
+    const serviceError = error instanceof AiCreditError
+      ? new CigarResearchServiceError(error.code, error.message, error.status)
+      : error instanceof CigarResearchServiceError
       ? error
       : error instanceof z.ZodError
         ? new CigarResearchServiceError("invalid_request", "Enter a valid cigar name and try again.", 422)
@@ -82,6 +89,7 @@ export async function POST(request: Request) {
     if (started && submissionId) {
       await finishCigarResearch(submissionId, { status: "failed", errorCode: serviceError.code }).catch(() => undefined);
     }
+    if (creditsReserved && submissionId) await finishAiCreditUsage(submissionId, { status: "failed" }).catch(() => undefined);
     return NextResponse.json(
       { error: serviceError.message, code: serviceError.code, retryable: serviceError.retryable },
       { status: serviceError.status, headers: privateHeaders },

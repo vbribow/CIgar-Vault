@@ -58,7 +58,7 @@ test("Cigar Somm requires explicit confirmation when a linked cigar belongs to a
 
 test("Cigar Somm uses the fast source-aware search path for pairing requests",()=>{
   const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
-  assert.match(service,/gpt-4\.1-mini/);
+  assert.match(service,/gpt-5\.6-luna/);
   assert.match(service,/search_context_size:"low"/);
   assert.match(service,/tool_choice:"required"/);
   assert.match(service,/AbortSignal\.timeout\(60_000\)/);

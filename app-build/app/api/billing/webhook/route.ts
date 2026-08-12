@@ -28,7 +28,8 @@ export async function POST(request: Request) {
       const { error: updateError } = await admin
         .from("profiles")
         .update({
-          billing_plan: profileChange.billingPlan,
+          ...(profileChange.billingPlan ? { billing_plan: profileChange.billingPlan } : {}),
+          ...(profileChange.billingInterval ? { billing_interval: profileChange.billingInterval } : {}),
           billing_status: profileChange.billingStatus,
           ...(profileChange.subscriptionId ? { stripe_subscription_id: profileChange.subscriptionId } : {}),
           updated_at: new Date().toISOString(),

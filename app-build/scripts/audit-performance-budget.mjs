@@ -14,7 +14,7 @@ if (!existsSync(hero) || statSync(hero).size > 425 * 1024) {
 
 requireText("components/inventory-manager.tsx", /dynamic\([\s\S]*photo-inventory-intake/, "Camera intake must remain a deferred client chunk.");
 requireText("components/inventory-manager.tsx", /dynamic\([\s\S]*photo-manager/, "Private photo management must remain a deferred client chunk.");
-requireText("app/page.tsx", /<Link className="button" href="\/inventory" prefetch>/, "The primary Vault journey must retain a prefetched client transition.");
+requireText("app/page.tsx", /<Link className="button" href="\/login\?mode=signup">Create free account<\/Link>/, "The primary welcome journey must retain a Next.js client transition.");
 requireText("components/connection-status.tsx", /window\.addEventListener\("offline"/, "The app must retain a global interruption boundary.");
 requireText("app/page.tsx", /<Suspense fallback=\{<DashboardLoading\/>\}><PrivateDashboard\/><\/Suspense>/, "The private dashboard must stream behind the immediate homepage.");
 requireText("components/app-navigation.tsx", /<DeferredGlobalSearch\/>/, "Global search must remain interaction or idle loaded.");

@@ -4,7 +4,7 @@ import { responseOutputText } from "./cigar-vision";
 import { loadKnowledge, relevantKnowledge } from "./sommelier-knowledge";
 import type { CigarSommCollectorContext } from "./cigar-somm-context";
 
-export const CigarSommQuestionSchema=z.object({question:z.string().trim().min(3).max(1000),inventoryId:z.string().trim().max(100).optional(),cigarName:z.string().trim().min(3).max(300).optional(),pairingDirection:z.enum(["cigar-to-beverage","occasion-to-cigar"]).default("cigar-to-beverage"),pairingContext:z.string().trim().max(500).optional(),occasion:z.string().trim().max(120).optional(),includeAlcohol:z.boolean().default(true),collectionChoiceConfirmed:z.boolean().default(false)}).strict().refine(value=>value.pairingDirection==="occasion-to-cigar"?Boolean(value.pairingContext&&value.pairingContext.length>=3):Boolean(value.inventoryId||value.cigarName),{message:"Choose a cigar, or describe the drink, meal, time, or occasion you want to pair"});
+export const CigarSommQuestionSchema=z.object({submissionId:z.string().uuid().optional().default(()=>crypto.randomUUID()),question:z.string().trim().min(3).max(1000),inventoryId:z.string().trim().max(100).optional(),cigarName:z.string().trim().min(3).max(300).optional(),pairingDirection:z.enum(["cigar-to-beverage","occasion-to-cigar"]).default("cigar-to-beverage"),pairingContext:z.string().trim().max(500).optional(),occasion:z.string().trim().max(120).optional(),includeAlcohol:z.boolean().default(true),collectionChoiceConfirmed:z.boolean().default(false)}).strict().refine(value=>value.pairingDirection==="occasion-to-cigar"?Boolean(value.pairingContext&&value.pairingContext.length>=3):Boolean(value.inventoryId||value.cigarName),{message:"Choose a cigar, or describe the drink, meal, time, or occasion you want to pair"});
 const Pairing=z.object({name:z.string(),style:z.string(),why:z.string(),service:z.string()});
 const SpiritPairing=Pairing.extend({producer:z.string().trim().min(2),label:z.string().trim().min(2),verificationUrl:z.string().url()});
 const ResearchSource=z.object({title:z.string(),url:z.string().url(),publisher:z.string(),supports:z.string()});
@@ -82,7 +82,7 @@ Include alcoholic pairings: ${input.includeAlcohol}
 Selected cigar context: ${JSON.stringify(context)}
 Private collector summary: ${JSON.stringify(collectorContext||null)}
 Founder-approved Master Somm Library: ${JSON.stringify(library.map(record=>({subject:record.subject,factType:record.factType,statement:record.statement,pairingImplications:record.pairingImplications,sourceTitle:record.sourceTitle,sourceUrl:record.sourceUrl,evidenceDate:record.evidenceDate,confidence:record.confidence})))}`;
-const model=process.env.OPENAI_SOMM_MODEL?.trim()||"gpt-4.1-mini";
+const model=process.env.OPENAI_SOMM_MODEL?.trim()||"gpt-5.6-luna";
 const response=await fetch("https://api.openai.com/v1/responses",{
  method:"POST",
  headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},

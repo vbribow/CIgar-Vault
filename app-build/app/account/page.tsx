@@ -4,7 +4,7 @@ import { recordBetaConsent, saveProfile } from "./actions";
 import "./account.css";
 import "./device-drafts.css";
 import { FounderImport } from "@/components/founder-import";
-import { billingConfigured, billingLabel } from "@/lib/billing";
+import { billingLabel, stripeConfigured } from "@/lib/billing";
 import { accountPreferencesFromRow } from "@/lib/account-preferences";
 import { AccountPreferencesPanel } from "@/components/account-preferences-panel";
 import { buildAccountChecklist } from "@/lib/account-checklist";
@@ -16,6 +16,8 @@ import { DeviceAwareSignOut } from "@/components/device-aware-sign-out";
 import { DeviceDraftManager } from "@/components/device-draft-manager";
 import { CreateRecoveryPoint } from "@/components/create-recovery-point";
 import { loadAccountPreferenceRow } from "@/lib/account-preferences-store";
+import { loadAiCreditSummary } from "@/lib/ai-credits";
+import { normalizePlan, plans } from "@/lib/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +27,16 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const [profileResult, preferencesResult, vaultResult, consentResult] = await Promise.all([
+  const [profileResult, preferencesResult, vaultResult, consentResult, creditSummary] = await Promise.all([
     supabase.from("profiles").select("display_name, collection_name, experience_level, onboarding_completed, billing_plan, billing_status, stripe_customer_id").eq("user_id", user.id).maybeSingle(),
     loadAccountPreferenceRow(supabase,user.id),
     supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id", user.id),
     supabase.from("account_consents").select("age_confirmed_at,terms_version,terms_accepted_at,privacy_version,privacy_accepted_at,beta_version,beta_accepted_at").eq("user_id", user.id).maybeSingle(),
+    loadAiCreditSummary(user.id),
   ]);
   if (profileResult.error || preferencesResult.error || vaultResult.error || consentResult.error) return <main className="shell accountShell"><section className="section card"><div className="eyebrow">Account records protected</div><h1>Your account controls are temporarily paused.</h1><p className="lede">{brand.name} could not verify profile, preferences, private Vault records, and consent together. Nothing is being shown as missing, expired, or reset.</p><a className="button secondary" href="/account">Try again</a></section></main>;
   const profile = profileResult.data, preferences = preferencesResult.data, vaultRecords = vaultResult.data, consent = consentResult.data;
+  const activePlan = plans[normalizePlan(profile?.billing_plan)];
   const founder = profile?.billing_plan === "founder" && ["active", "trialing"].includes(profile?.billing_status || "");
   const records = (vaultRecords || []) as AccountVaultRecord[];
   const checklist = buildAccountChecklist(Boolean(profile?.onboarding_completed), records);
@@ -40,7 +44,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   return <main className="shell accountShell">
     <section className="accountHero"><div><div className="eyebrow">Private collector profile</div><h1>{profile?.collection_name || "Set up your vault."}</h1><p className="lede">Personalize the collection attached to {user.email}.</p></div><DeviceAwareSignOut /></section>
     {params.saved && <div className="loginMessage">{params.saved === "consent" ? "Consent record saved." : "Profile saved."}</div>}
-    {params.checkout === "success" && <div className="loginMessage">Founder membership activated. Welcome to {brand.name}.</div>}
+    {params.checkout === "success" && <div className="loginMessage">Membership activated. Welcome to {brand.name}.</div>}
     {params.error && <div className="loginMessage error">{params.error}</div>}
     <section className="accountGrid">
       <form action={saveProfile} className="card accountForm"><div><div className="eyebrow">Account setup</div><h2>Collector details</h2></div><label><span>Your name</span><input name="displayName" defaultValue={profile?.display_name || String(user.user_metadata.full_name || "")} required /></label><label><span>Collection name</span><input name="collectionName" defaultValue={profile?.collection_name || "My "} required /></label><label><span>Experience</span><select name="experienceLevel" defaultValue={profile?.experience_level || "Collector"}><option>New collector</option><option>Collector</option><option>Advanced collector</option><option>Industry professional</option></select></label><button className="button">Save profile</button></form>
@@ -49,7 +53,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     <AccountPreferencesPanel initial={accountPreferencesFromRow(preferences)} collector25Available={preferencesResult.collector25Available} />
     <section className="card consentCard"><div><div className="eyebrow">Private beta consent</div><h2>{consent ? "Recorded and visible" : "Confirm beta participation"}</h2><p>{consent ? `Beta agreement ${consent.beta_version} accepted ${new Date(consent.beta_accepted_at).toLocaleDateString()}.` : "Review the current notices and create the same auditable consent record required for every beta collector."}</p></div>{consent ? <div><a href="/privacy">Privacy Notice</a><a href="/terms">Terms</a><a href="/beta-agreement">Beta Agreement</a></div> : <form action={recordBetaConsent} className="consentForm"><label><input name="ageConfirmation" type="checkbox" required />I am of legal age where I live and at least 21.</label><label><input name="termsAcceptance" type="checkbox" required />I accept the <a href="/terms">Terms</a> and <a href="/beta-agreement">Beta Agreement</a>.</label><label><input name="privacyAcceptance" type="checkbox" required />I accept the <a href="/privacy">Privacy Notice</a>.</label><button className="button">Record consent</button></form>}</section>
     <section className="card securityCard"><div className="securityHead"><div><div className="eyebrow">Security & data</div><h2>Control access. Keep a recoverable copy.</h2><p>Your account export contains every private Vault record plus a profile and preference snapshot. It does not include your password, consent history, or billing credentials, and downloading it changes nothing.</p></div><span className={user.email_confirmed_at ? "secure" : "attention"}>{user.email_confirmed_at ? "Email verified" : "Verify email"}</span></div><div className="securityMetrics"><article><span>Private records</span><strong>{security.recordCount}</strong><small>Across inventory, collections, climate, values, and history</small></article><article><span>Last inventory backup</span><strong>{security.lastBackupAt ? new Date(security.lastBackupAt).toLocaleDateString() : "Not yet"}</strong><small>{security.lastBackupCount === undefined ? "Download a backup to establish a recovery point" : `${security.lastBackupCount} inventory lots preserved`}</small></article><article><span>Last sign-in</span><strong>{user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : "Current session"}</strong><small>{user.email}</small></article></div><CreateRecoveryPoint /><div className="securityActions"><a className="button secondary" href="/inventory-integrity">Backup & integrity center</a><a className="textLink" href="/login?mode=forgot">Reset password →</a></div><div className="deviceContinuity"><strong>Moving to another device?</strong><p>Sign in with the same verified email to load account-backed Vault records. Unsubmitted browser drafts and selected photos stay on the original device; download an account data copy before changing devices.</p></div><DeviceDraftManager ownerKey={user.id} /><VaultRecoveryPanel /></section>
-    <section className="card billingCard"><div><div className="eyebrow">Membership</div><h2>{billingLabel(profile?.billing_plan, profile?.billing_status)}</h2><p>{founder ? "Your annual Founder membership includes the complete collector platform." : "Upgrade to preserve the complete vault with founder-priority onboarding."}</p></div>{profile?.stripe_customer_id && billingConfigured() ? <form action="/api/billing/portal" method="post"><button className="button secondary">Manage billing</button></form> : <a className="button" href="/pricing">View Founder plan</a>}</section>
+    <section className="card billingCard"><div><div className="eyebrow">Membership</div><h2>{billingLabel(profile?.billing_plan, profile?.billing_status)}</h2><p>{founder ? "Your Founder membership includes grandfathered Reserve-level platform access." : activePlan.positioning}</p><p><strong>{creditSummary.remaining} of {creditSummary.allowance}</strong> intelligence credits remain this month. Cached and local results remain free.</p>{!creditSummary.available && <small>The usage meter will appear after the protected credit ledger is activated.</small>}</div>{profile?.stripe_customer_id && stripeConfigured() ? <form action="/api/billing/portal" method="post"><button className="button secondary">Manage billing</button></form> : <a className="button" href="/pricing">Review membership levels</a>}</section>
     <FounderImport />
   </main>;
 }

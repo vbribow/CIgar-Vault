@@ -1,9 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { isBillablePlan, isBillingInterval, type BillablePlanId, type BillingInterval } from "./billing";
 
 export type BillingProfileChange = {
   customerId: string;
   subscriptionId?: string;
-  billingPlan: "founder";
+  billingPlan?: BillablePlanId;
+  billingInterval?: BillingInterval;
   billingStatus: string;
 };
 
@@ -41,6 +43,13 @@ function stringField(object: Record<string, unknown>, key: string) {
   return typeof object[key] === "string" ? object[key] as string : undefined;
 }
 
+function membershipMetadata(object: Record<string, unknown>) {
+  const metadata = object.metadata && typeof object.metadata === "object" ? object.metadata as Record<string, unknown> : {};
+  const plan = metadata.plan_id;
+  const interval = metadata.billing_interval;
+  return { plan: isBillablePlan(plan) ? plan : undefined, interval: isBillingInterval(interval) ? interval : undefined };
+}
+
 export function billingProfileChangeForEvent(
   eventType: string,
   object: Record<string, unknown>,
@@ -53,10 +62,12 @@ export function billingProfileChangeForEvent(
       ? "canceled"
       : stringField(object, "status");
     if (!status || !subscriptionStatuses.has(status)) return undefined;
+    const membership = membershipMetadata(object);
     return {
       customerId,
       subscriptionId: stringField(object, "id"),
-      billingPlan: "founder",
+      billingPlan: membership.plan ?? "founder",
+      billingInterval: membership.interval ?? "annual",
       billingStatus: status,
     };
   }
@@ -67,7 +78,6 @@ export function billingProfileChangeForEvent(
     return {
       customerId,
       subscriptionId,
-      billingPlan: "founder",
       billingStatus: "past_due",
     };
   }
@@ -78,7 +88,6 @@ export function billingProfileChangeForEvent(
     return {
       customerId,
       subscriptionId,
-      billingPlan: "founder",
       billingStatus: "active",
     };
   }

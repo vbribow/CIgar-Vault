@@ -14,3 +14,10 @@
 - Keep the public website separate from the private collector application.
 - Preserve collector inventory, exact cigar identity, physical-lot distinctions, provenance, and evidence-led valuation rules.
 - Do not launch partner campaigns, especially anything involving Fox Cigars, without Brian’s explicit approval.
+
+## Membership boundary
+
+- The prepared membership ladder is Free, Collector, Reserve, Concierge, plus grandfathered Founder. Legacy `pro` records normalize to Reserve.
+- Paid provider work uses a server-only monthly intelligence-credit ledger with no automatic overages; cached and local results cost no credits.
+- Prices, benefits, unit economics, adoption assumptions, and the activation checklist are archived in `app-build/SUBSCRIPTION_PRICING_AND_UNIT_ECONOMICS_2026-08-12.md`.
+- Stripe products, the database migration, paid API activation, and deployment remain separately authorized launch actions.

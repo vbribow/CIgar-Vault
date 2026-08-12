@@ -14,7 +14,8 @@ test("heavy Vault tools are split from the initial manager experience", () => {
 
 test("core home journeys use prefetched client transitions", () => {
   const home = read("app/page.tsx");
-  assert.match(home, /<Link className="button" href="\/inventory" prefetch>/);
+  assert.match(home, /<Link className="button" href="\/login\?mode=signup">Create free account<\/Link>/);
+  assert.match(home, /<Link className="button secondary" href="\/login">Sign in<\/Link>/);
   assert.match(home, /href="\/collector-walkthrough" prefetch/);
   assert.match(home, /href="\/discover" prefetch/);
 });

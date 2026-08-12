@@ -25,6 +25,7 @@ test("subscription lifecycle events produce authoritative account status changes
       customerId: "cus_1",
       subscriptionId: "sub_1",
       billingPlan: "founder",
+      billingInterval: "annual",
       billingStatus: "trialing",
     },
   );

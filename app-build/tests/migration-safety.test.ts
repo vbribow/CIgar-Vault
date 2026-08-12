@@ -23,7 +23,7 @@ test("current local migrations use unique versions after schema-level reconcilia
     filename,
     sql: await readFile(new URL(filename, root), "utf8"),
   }))));
-  assert.equal(audit.migrationCount, 35);
+  assert.equal(audit.migrationCount, 36);
   assert.deepEqual(audit.duplicateVersions, []);
   assert.deepEqual(audit.destructiveStatements, []);
   assert.deepEqual(audit.runtimeDataMutationFunctions, [
@@ -33,6 +33,7 @@ test("current local migrations use unique versions after schema-level reconcilia
     "202607300002_trusted_retailer_market.sql",
     "202607300004_retailer_verification_atomicity.sql",
     "202608050001_collector_25_smoke_contributions.sql",
+    "202608120001_subscription_plans_and_ai_credits.sql",
   ]);
   assert.equal(audit.releaseDecision, "pass");
   assert.equal(audit.manifestSha256.length, 64);
