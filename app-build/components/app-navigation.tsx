@@ -72,7 +72,7 @@ export function AppNavigation() {
     ["/places","Cigar Places","Find lounges, cigar bars, and retailers with transparent ratings"],
     ["/partner-platform","Partner Network","Manage attribution, commissions, and industry relationships"],
     ["/launch-readiness","Launch Readiness","Track the baseline, active gates, and deferred decisions"],
-    ["/founder-onboarding","Founder Console","Open the private beta queue, invitations, and tester setup"],
+    ["/founder-onboarding","Beta Desk","Open tester feedback, invitations, and setup progress"],
     ["/partner-workspace","Partner Workspace","Collaborate inside your organization’s private workspace"],
     ["/feedback","Beta Feedback","Report bugs, confusion, trust concerns, and ideas"],
     ["/pricing","Reserve","Explore deeper intelligence and service"],
@@ -80,6 +80,7 @@ export function AppNavigation() {
   ] as const;
   const moreActive=moreLinks.some(([href])=>matches(pathname,href));
   const mobileFeaturedLinks=[
+    ["/founder-onboarding","Beta Desk","Review tester feedback and beta operations","β"],
     ["/community","Collectors’ Lounge","Connect with collectors and trusted places","◎"],
     ["/cigar-somm","Cigar Somm","Explore collection-aware guidance","◒"],
     ["/learn","Learn","Build knowledge through sourced education","◇"],

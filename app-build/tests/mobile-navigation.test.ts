@@ -35,6 +35,11 @@ test("mobile navigation exposes a focused five-item bar and complete More sheet"
   assert.match(deviceAwareSignOut, /saved account records stay unchanged/);
 });
 
+test("mobile More keeps the protected Beta Desk prominent",()=>{
+  assert.match(navigation, /\["\/founder-onboarding","Beta Desk","Review tester feedback and beta operations","β"\]/);
+  assert.match(navigation, /\["\/founder-onboarding","Beta Desk","Open tester feedback, invitations, and setup progress"\]/);
+});
+
 test("mobile account safeguards prevent repeat actions and announce their outcome",()=>{
   assert.match(recoveryPoint, /if \(busy\) return/);
   assert.match(recoveryPoint, /aria-busy=\{busy\}/);
