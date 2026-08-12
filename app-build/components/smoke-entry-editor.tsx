@@ -31,7 +31,7 @@ export function SmokeEntryEditor({ smoke, mode, onSaved, onCancel }: { smoke:Smo
       <label><span>What did you smoke? *</span><input name="cigarName" required minLength={3} maxLength={300} defaultValue={smoke.cigarName||""}/></label>
       <label className="check"><input name="outsideInventory" type="checkbox" checked={outsideInventory} onChange={event=>setOutsideInventory(event.target.checked)}/> I smoked this cigar outside my Vault and confirm the identity below is exact.</label>
       {outsideInventory&&<div className="outsideVaultIdentityFields"><label><span>Brand *</span><input name="cigarBrand" required defaultValue={smoke.cigarBrand||""}/></label><label><span>Line or blend *</span><input name="cigarLine" required defaultValue={smoke.cigarLine||""}/></label><label><span>Exact vitola *</span><input name="cigarVitola" required defaultValue={smoke.cigarVitola||""}/></label></div>}
-      <small>When anonymous Hojavía 25 sharing is enabled, only this exact identity and the numeric score may contribute.</small>
+      <small>When scored, only this exact identity and the numeric score contribute anonymously to the Hojavía 25.</small>
     </fieldset>}
     <label><span>Date</span><input name="dateSmoked" type="date" required defaultValue={smoke.dateSmoked}/></label>
     <label><span>Score · 0–100</span><select name="overall" defaultValue={smoke.overall??""}><option value="">No score</option>{scores.map(score=><option key={score}>{score}</option>)}</select><small>Choose “No score” to remove a mistaken rating.</small></label>

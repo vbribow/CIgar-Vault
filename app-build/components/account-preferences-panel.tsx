@@ -8,11 +8,10 @@ const options: [keyof AccountPreferences, string, string][] = [
   ["wishlistAlerts", "Wishlist price alerts", "Email me when monitored listings meet a target price."],
   ["valuationResearch", "Valuation research", "Periodically research stale or missing replacement values."],
   ["ratingResearch", "Professional rating research", "Periodically look for sourced published ratings."],
-  ["collector25Contributions", "Anonymous Collector 25 contribution", "When you score an exact cigar from your Vault, share only its identity and your current numeric score. Your name, tasting notes, inventory, and purchase details remain private."],
   ["productAnalytics", "Private product analytics", "Share privacy-safe feature events without inventory details or identity."],
   ["upgradeRecommendations", "Membership recommendations", "Show discreet plan suggestions based on features I use."],
 ];
-export function AccountPreferencesPanel({initial,collector25Available=true}:{initial:AccountPreferences;collector25Available?:boolean}){
+export function AccountPreferencesPanel({initial,collector25Available:_collector25Available=true}:{initial:AccountPreferences;collector25Available?:boolean}){
   const[values,setValues]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[failed,setFailed]=useState(false);
   async function submit(event:FormEvent){
     event.preventDefault();
@@ -39,8 +38,8 @@ export function AccountPreferencesPanel({initial,collector25Available=true}:{ini
   return <>
     <form id="collector-25-preference" className="card preferencesCard" onSubmit={submit} aria-busy={busy}>
       <div><div className="eyebrow">Control center</div><h2>Privacy & notifications</h2><p>Choose how the platform works for you. Inventory records remain private regardless of these settings.</p></div>
-      {!collector25Available&&<p className="deviceDraftNotice" role="status">Anonymous Hojavía 25 sharing is temporarily unavailable and remains safely off. Your other account controls are fully available.</p>}
-      <div className="preferenceList">{options.filter(([key])=>key!=="collector25Contributions"||collector25Available).map(([key,title,detail])=><label className="preferenceRow" key={key}><span><strong>{title}</strong><small>{detail}</small></span><input type="checkbox" checked={values[key]} onChange={event=>setValues(current=>({...current,[key]:event.target.checked}))}/></label>)}</div>
+      <p className="deviceDraftNotice">Scored smoking experiences contribute only the exact cigar identity and numeric score to the Hojavía 25. Your name, notes, inventory, purchase details, and location remain private.</p>
+      <div className="preferenceList">{options.map(([key,title,detail])=><label className="preferenceRow" key={key}><span><strong>{title}</strong><small>{detail}</small></span><input type="checkbox" checked={values[key]} onChange={event=>setValues(current=>({...current,[key]:event.target.checked}))}/></label>)}</div>
       <div className="preferenceFooter"><button className="button" disabled={busy}>{busy?"Saving…":"Save preferences"}</button>{message&&<output role={failed ? "alert" : "status"} aria-atomic="true">{message}</output>}</div>
     </form>
     <section className="card dataRequestCard">

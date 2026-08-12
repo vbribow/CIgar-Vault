@@ -81,7 +81,7 @@ test("community destinations lead to substantive, distinct content",()=>{
  assert.match(component,/id="recent-discussions"/);
  assert.match(component,/Questions, experience, stewardship, and cultural knowledge/);
  assert.match(component,/id="rate-a-cigar"/);
- assert.match(component,/No re-entry is needed/);
+ assert.match(component,/Scores from exact Vault cigars update automatically/);
  assert.match(component,/id="top-25"/);
  assert.match(component,/Rated by smokers\. Updated by experience\./);
  assert.match(component,/living ranking shaped by what/);
@@ -133,4 +133,19 @@ test("rating submission keeps plain confirmation or recovery feedback beside the
  assert.match(component,/role=\{ratingFeedback\.state==="error"\?"alert":"status"\}/);
  assert.match(component,/await response\.json\(\)\.catch/);
  assert.match(component,/setRatingFeedback\(\{state:"error"/);
+});
+test("an already-open Personal Top 10 refreshes when the app is reopened",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.match(component,/window\.addEventListener\("focus", refreshVisibleCommunity\)/);
+ assert.match(component,/window\.addEventListener\("pageshow", refreshVisibleCommunity\)/);
+ assert.match(component,/document\.addEventListener\("visibilitychange", refreshVisibleCommunity\)/);
+ assert.match(component,/Refresh my rankings/);
+ assert.match(component,/newest score determines its position/);
+});
+test("Personal Top 10 appears directly after the Hojavía 25",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ const top25=component.indexOf('id="top-25"');
+ const personal=component.indexOf('id="my-top-10"');
+ const ratingForm=component.indexOf('id="rate-a-cigar"');
+ assert.ok(top25>0&&personal>top25&&ratingForm>personal);
 });

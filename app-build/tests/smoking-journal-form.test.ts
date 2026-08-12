@@ -13,8 +13,8 @@ test("smoking journal supports manual cigars without consuming inventory", () =>
   assert.match(source, /Do not remove from my Vault/);
   assert.match(source, /name="cigarName"/);
   assert.match(source, /no Vault record and no quantity change/);
-  assert.match(source, /Optional · Share this score with the Hojavía 25/);
-  assert.match(source, /Leave this unchecked to save only to your private journal/);
+  assert.match(source, /Confirm the cigar identity/);
+  assert.match(source, /numeric score anonymously/);
 });
 
 test("mobile smoke saves explain missing required fields instead of appearing unresponsive", () => {
@@ -24,7 +24,7 @@ test("mobile smoke saves explain missing required fields instead of appearing un
   assert.match(source, /setAttribute\("aria-invalid", "true"\)/);
   assert.match(source, /smokeRequiredFieldMessage\(invalid\?\.name/);
   assert.match(source, /Choose ‘Remove from my Vault’ and select the exact lot/);
-  assert.match(source, /To share this score with the Hojavía 25, enter the exact vitola/);
+  assert.match(source, /Enter the exact vitola so this scored smoke has an exact identity/);
   assert.match(source, /invalid\?\.scrollIntoView/);
   assert.match(source, /invalid\?\.reportValidity\(\)/);
   assert.ok(source.indexOf("ref={smokeSaveFeedback}") < source.indexOf('idle:"Save smoke"'), "save guidance must remain above the sticky mobile save button");
@@ -79,4 +79,13 @@ test("outside-Vault choice survives app updates and draft restoration", () => {
   assert.match(source, /name="inventoryId" value="MANUAL" data-draft-safe="true"/);
   assert.match(source, /restoredFields\?\.inventoryId/);
   assert.match(source, /setSmokeSource\(restoredSource\)/);
+});
+
+test("starting another smoke defers the Vault picker until the collector chooses it", () => {
+  assert.match(source, /"UNDECIDED" \| "VAULT" \| "MANUAL"/);
+  assert.match(source, /setSmokeSourceMode\("VAULT"\)/);
+  assert.match(source, /smokeSourceMode === "VAULT" && <div className="smokeInventoryFinder">/);
+  assert.match(source, /focus\(\{ preventScroll: true \}\)/);
+  assert.match(source, /smokeInventoryMatches\.slice\(0, smokeInventoryQuery \? 100 : 40\)/);
+  assert.match(source, /Showing the first \{visibleSmokeInventoryMatches\.length\}/);
 });

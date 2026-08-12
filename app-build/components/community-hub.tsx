@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { communityStatusLabel, type CommunityPost, type CommunityRanking, type CommunityRating } from "@/lib/community";
 import type { CommunityRatingInventoryOption } from "@/lib/community-rating-options";
@@ -26,6 +26,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
   const [entryMode, setEntryMode] = useState<"vault" | "manual">(inventoryOptions.length ? "vault" : "manual");
   const [post, setPost] = useState({ displayName: "", category: "General", title: "", body: "" });
   const [rating, setRating] = useState(blankRating);
+  const lastCommunityLoad = useRef(0);
   const postMutation = useMutationGuard();
   const ratingMutation = useMutationGuard();
   const brands = useMemo(() => [...new Set(inventoryOptions.map(item => item.brand))], [inventoryOptions]);
@@ -41,7 +42,8 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
     setTab(next);
     window.requestAnimationFrame(()=>document.querySelector(".communityTabs")?.scrollIntoView({behavior:"smooth",block:"start"}));
   }
-  async function load() {
+  async function load(force = false) {
+    if (!force && Date.now() - lastCommunityLoad.current < 5_000) return;
     setLoading(true);
     try {
       const response = await fetch("/api/community", { cache: "no-store" });
@@ -51,10 +53,22 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Community unavailable");
     } finally {
+      lastCommunityLoad.current = Date.now();
       setLoading(false);
     }
   }
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load(true);
+    const refreshVisibleCommunity = () => { if (document.visibilityState === "visible") void load(); };
+    window.addEventListener("focus", refreshVisibleCommunity);
+    window.addEventListener("pageshow", refreshVisibleCommunity);
+    document.addEventListener("visibilitychange", refreshVisibleCommunity);
+    return () => {
+      window.removeEventListener("focus", refreshVisibleCommunity);
+      window.removeEventListener("pageshow", refreshVisibleCommunity);
+      document.removeEventListener("visibilitychange", refreshVisibleCommunity);
+    };
+  }, []);
   async function submit(type: "post" | "rating", value: unknown) {
     setMessage("");
     const response = await fetch("/api/community", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type, data: value }) });
@@ -218,22 +232,6 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <small>AI Administrator screens submissions. No sales, trades, personal contact details, or illegal activity.</small>
 </form>
     </div> : <div className="communityRatingsWorkspace">
-      <section id="my-top-10">
-<div className="sectionHead">
-<div>
-<div className="eyebrow">Your palate</div>
-<h2>My Top 10</h2>
-<p>Your ten highest published scores, ordered by your ratings. This personal list contributes a preference signal to the {brand.labels.communityRanking}.</p>
-</div>
-</div>
-<div className="rankingList personalRanking">{data.myTop10.map(item => <article key={item.cigarKey}>
-<strong>#{item.rank}</strong>
-<div>
-<h3>{item.brand} {item.line}</h3>
-<span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
-</div>
-<RatingLeafMark value={item.averageScore} label="Your score" compact/>
-</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Publish your first cigar rating, then keep scoring the cigars you experience. Your list will update automatically.</p></div>}</section>
       <div className="communityLayout">
       <section id="top-25">
 <div className="sectionHead">
@@ -253,10 +251,27 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 </div>
 <RatingLeafMark value={item.weightedScore} label={`${brand.name} score`} detail={`${item.averageScore} average · ${item.ratingCount} rating${item.ratingCount === 1 ? "" : "s"} · ${item.confidence}`} compact/>
 </article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the {brand.labels.communityRanking} without invented scores or promotional placement.</p></div>}</section>
+      <section id="my-top-10">
+<div className="sectionHead">
+<div>
+<div className="eyebrow">Your palate</div>
+<h2>My Top 10</h2>
+<p>Your current score for each exact cigar, ranked highest to lowest. When you score the same cigar again, its newest score determines its position. Exact cigar identity and numeric score contribute anonymously to the {brand.labels.communityRanking}; your notes and Vault details remain private.</p>
+</div>
+<button type="button" className="button secondary" disabled={loading} onClick={() => void load(true)}>{loading ? "Refreshing…" : "Refresh my rankings"}</button>
+</div>
+<div className="rankingList personalRanking">{data.myTop10.map(item => <article key={item.cigarKey}>
+<strong>#{item.rank}</strong>
+<div>
+<h3>{item.brand} {item.line}</h3>
+<span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
+</div>
+<RatingLeafMark value={item.averageScore} label="Your score" compact/>
+</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Add a 1–100 score to a smoking experience with an exact cigar identity. Your list will update automatically.</p></div>}</section>
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating} aria-busy={ratingMutation.pending}>
 <div className="eyebrow">Rate a cigar</div>
 <h2>Document your experience</h2>
-<p>Scores from exact Vault cigars can update automatically when anonymous sharing is enabled in <a href="/account#collector-25-preference">Account preferences</a>. No re-entry is needed. Use this form for a cigar outside your Vault or to deliberately replace your current score.</p>
+<p>Scores from exact Vault cigars update automatically. Only cigar identity and numeric score contribute; private notes and Vault details never do. Use this form for a cigar outside your Vault or to deliberately replace your current score.</p>
 <div className="ratingEntryMode" role="group" aria-label="Choose cigar entry method">
 <button type="button" className={entryMode === "vault" ? "active" : ""} disabled={!inventoryOptions.length} onClick={() => chooseMode("vault")}>Choose from my Vault</button>
 <button type="button" className={entryMode === "manual" ? "active" : ""} onClick={() => chooseMode("manual")}>Enter manually</button>

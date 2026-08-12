@@ -37,7 +37,6 @@ export function compareSmokeInventory(left: InventoryItem, right: InventoryItem)
 function smokeSaveMessage(result: { collector25?: { status?: string } }, manual: boolean, quantitySmoked: number) {
   const deduction = manual ? "No Vault quantity changed." : `${quantitySmoked} cigar${quantitySmoked === 1 ? "" : "s"} removed from the selected Vault lot.`;
   if (result.collector25?.status === "contributed") return `Smoking experience saved. ${deduction} Your anonymous score updated the Hojavía 25.`;
-  if (result.collector25?.status === "disabled") return `Smoking experience saved. ${deduction} Anonymous Hojavía 25 sharing is off in Account preferences.`;
   if (result.collector25?.status === "ineligible") return `Smoking experience saved. ${deduction} An exact Vault identity and a 1–100 score are required for the Hojavía 25.`;
   if (result.collector25?.status === "unavailable") return `Smoking experience saved safely. ${deduction} The Hojavía 25 could not update right now.`;
   return `Smoking experience saved to your private journal. ${deduction}`;
@@ -47,9 +46,9 @@ export const flavorOptions = ["Cedar", "Earth", "Leather", "Pepper", "Cream", "C
 export function smokeRequiredFieldMessage(name: string) {
   if (name === "inventoryId") return "Choose ‘Remove from my Vault’ and select the exact lot, or choose ‘Do not remove from my Vault’ for a cigar outside your inventory.";
   if (name === "cigarName") return "Enter the cigar’s brand, line, and exact vitola before saving.";
-  if (name === "cigarBrand") return "To share this score with the Hojavía 25, enter the cigar brand—or turn off optional Hojavía 25 sharing.";
-  if (name === "cigarLine") return "To share this score with the Hojavía 25, enter the exact line or blend—or turn off optional Hojavía 25 sharing.";
-  if (name === "cigarVitola") return "To share this score with the Hojavía 25, enter the exact vitola—or turn off optional Hojavía 25 sharing.";
+  if (name === "cigarBrand") return "Enter the cigar brand so this scored smoke has an exact identity.";
+  if (name === "cigarLine") return "Enter the exact line or blend so this scored smoke has an exact identity.";
+  if (name === "cigarVitola") return "Enter the exact vitola so this scored smoke has an exact identity.";
   if (name === "quantitySmoked") return "Enter how many cigars were smoked from this lot.";
   if (name === "dateSmoked") return "Choose the date smoked before saving.";
   if (name === "writeKey") return "Enter the founder write key before saving.";
@@ -67,6 +66,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [smokes, setSmokes] = useState(initialSmokes);
   const [valuations, setValuations] = useState(initialValuations);
   const [message, setMessage] = useState("");
+  const [smokeSourceMode, setSmokeSourceMode] = useState<"UNDECIDED" | "VAULT" | "MANUAL">(initialManualName ? "MANUAL" : selectedInventoryId ? "VAULT" : "UNDECIDED");
   const [smokeSource, setSmokeSource] = useState(initialManualName?"MANUAL":selectedInventoryId || "");
   const [smokeInventoryQuery, setSmokeInventoryQuery] = useState("");
   const [smokeCigarName, setSmokeCigarName] = useState(initialManualName||"");
@@ -93,6 +93,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const valuationFormDraft = useDeviceFormDraft("hojavia:form-draft:valuation:v1");
   const smokePhotoPreviews = useMemo(() => smokePhotos.map(file => ({ name: file.name, url: URL.createObjectURL(file) })), [smokePhotos]);
   const smokeInventoryMatches = useMemo(() => inventory.filter(item => matchesSmokeInventory(item, smokeInventoryQuery)).sort(compareSmokeInventory), [inventory, smokeInventoryQuery]);
+  const visibleSmokeInventoryMatches = useMemo(() => smokeInventoryMatches.slice(0, smokeInventoryQuery ? 100 : 40), [smokeInventoryMatches, smokeInventoryQuery]);
   const selectedSmokeInventory = useMemo(() => inventory.find(item => item.inventoryId === smokeSource), [inventory, smokeSource]);
   const smokeQuantityBlocked = Boolean(selectedSmokeInventory && (!selectedSmokeInventory.currentQty || selectedSmokeInventory.currentQty < 1));
 
@@ -100,7 +101,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
 
   useEffect(() => {
     const restoredSource = smokeDraft.restoredFields?.inventoryId?.[0];
-    if (restoredSource) setSmokeSource(restoredSource);
+    if (restoredSource) { setSmokeSource(restoredSource); setSmokeSourceMode(restoredSource === "MANUAL" ? "MANUAL" : "VAULT"); }
     const restoredName = smokeDraft.restoredFields?.cigarName?.[0];
     if (restoredName) setSmokeCigarName(restoredName);
     setOutsideIdentity(current=>({confirmed:Boolean(smokeDraft.restoredFields?.outsideInventory?.length),brand:smokeDraft.restoredFields?.cigarBrand?.[0]||current.brand,line:smokeDraft.restoredFields?.cigarLine?.[0]||current.line,vitola:smokeDraft.restoredFields?.cigarVitola?.[0]||current.vitola}));
@@ -209,6 +210,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     setNewSmokeConfirmed(true);
     setSmokeSubmissionId(createClientUuid());
     setSmokeSource(reuseIdentity ? lastSmokeIdentity?.source || selectedInventoryId || "" : selectedInventoryId || "");
+    setSmokeSourceMode(reuseIdentity ? (lastSmokeIdentity?.source === "MANUAL" ? "MANUAL" : "VAULT") : selectedInventoryId ? "VAULT" : "UNDECIDED");
     setSmokeCigarName(reuseIdentity ? lastSmokeIdentity?.cigarName || "" : "");
     setOutsideIdentity(reuseIdentity ? lastSmokeIdentity?.outsideIdentity || {confirmed:false,brand:"",line:"",vitola:""} : {confirmed:false,brand:"",line:"",vitola:""});
     setSmokePhotos([]);
@@ -301,25 +303,26 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       <h2>Log a smoke</h2>
       <p className="small">Record any cigar you smoke—whether it came from your Vault, a lounge, a friend, or somewhere new. There are no wrong tasting notes.</p>
       <div className="smokeStartChoices" aria-label="Should this smoke reduce your Vault inventory?">
-        <button type="button" className={smokeSource === "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource("MANUAL"); setSmokeInventoryQuery(""); setSmokePhotoMessage(""); }}><strong>Do not remove from my Vault</strong><small>For a gift, lounge cigar, or separate purchase. Identify it by photo or type its name; Vault quantities stay unchanged.</small></button>
-        <button type="button" className={smokeSource && smokeSource !== "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource(selectedInventoryId || ""); setSmokePhotoMessage(""); document.querySelector<HTMLInputElement>('#smoke-inventory-search')?.focus(); }}><strong>Remove from my Vault</strong><small>Select the exact owned lot and choose how many cigars to remove.</small></button>
+        <button type="button" className={smokeSourceMode === "MANUAL" ? "active" : ""} onClick={() => { setSmokeSourceMode("MANUAL"); setSmokeSource("MANUAL"); setSmokeInventoryQuery(""); setSmokePhotoMessage(""); }}><strong>Do not remove from my Vault</strong><small>For a gift, lounge cigar, or separate purchase. Identify it by photo or type its name; Vault quantities stay unchanged.</small></button>
+        <button type="button" className={smokeSourceMode === "VAULT" ? "active" : ""} onClick={() => { setSmokeSourceMode("VAULT"); setSmokeSource(selectedInventoryId || ""); setSmokePhotoMessage(""); window.setTimeout(() => document.querySelector<HTMLInputElement>('#smoke-inventory-search')?.focus({ preventScroll: true }), 0); }}><strong>Remove from my Vault</strong><small>Select the exact owned lot and choose how many cigars to remove.</small></button>
         <a href="/inventory#mobile-intake"><strong>Add to Vault first</strong><small>Create and verify the inventory lot before logging its smoke.</small></a>
       </div>
       {smokeDraft.restoredFields && <p className="deviceDraftNotice" role="status">Unfinished tasting details were restored from this browser profile. Review them before saving.</p>}
       <form ref={smokeDraft.formRef} className="recordForm" noValidate onSubmit={event => send(event, "smoke")} onChange={smokeDraft.capture} aria-busy={smokeMutation.pending}>
         <fieldset disabled={smokeMutation.pending || smokeMutation.complete}>
-        {smokeSource !== "MANUAL" && <div className="smokeInventoryFinder">
+        {smokeSourceMode === "VAULT" && <div className="smokeInventoryFinder">
           <label htmlFor="smoke-inventory-search"><span>Search my Vault</span><input id="smoke-inventory-search" type="search" value={smokeInventoryQuery} onChange={event => setSmokeInventoryQuery(event.target.value)} placeholder="Type brand, line, vitola, or inventory ID" autoComplete="off" /></label>
           <small role="status" aria-live="polite">{smokeInventoryQuery ? `${smokeInventoryMatches.length} matching lot${smokeInventoryMatches.length === 1 ? "" : "s"}` : `${inventory.length} owned lots available`}</small>
         </div>}
-        {smokeSource !== "MANUAL" && <label><span>{smokeInventoryQuery ? "Choose the matching Vault lot *" : "Choose the Vault lot *"}</span><select id="smoke-inventory-source" name="inventoryId" required value={smokeSource} onChange={event => { setSmokeSource(event.target.value); setSmokePhotoMessage(""); }}>
+        {smokeSourceMode === "VAULT" && <label><span>{smokeInventoryQuery ? "Choose the matching Vault lot *" : "Choose the Vault lot *"}</span><select id="smoke-inventory-source" name="inventoryId" required value={smokeSource} onChange={event => { setSmokeSource(event.target.value); setSmokePhotoMessage(""); }}>
           <option value="">Select the exact inventory lot</option>
-          {smokeInventoryMatches.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}{item.currentQty !== undefined ? ` · ${item.currentQty} remaining` : " · quantity required"}</option>)}
+          {visibleSmokeInventoryMatches.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}{item.currentQty !== undefined ? ` · ${item.currentQty} remaining` : " · quantity required"}</option>)}
         </select></label>}
-        {smokeInventoryQuery && smokeInventoryMatches.length === 0 && <p className="deviceDraftNotice" role="status">No Vault match found. Check the spelling, clear the search to browse every lot, or choose “Do not remove from my Vault” above.</p>}
+        {smokeSourceMode === "VAULT" && smokeInventoryMatches.length > visibleSmokeInventoryMatches.length && <p className="deviceDraftNotice" role="status">Showing the first {visibleSmokeInventoryMatches.length} of {smokeInventoryMatches.length} lots. Type more of the brand, line, vitola, or inventory ID to narrow the list.</p>}
+        {smokeSourceMode === "VAULT" && smokeInventoryQuery && smokeInventoryMatches.length === 0 && <p className="deviceDraftNotice" role="status">No Vault match found. Check the spelling, clear the search to browse every lot, or choose “Do not remove from my Vault” above.</p>}
         {selectedSmokeInventory && selectedSmokeInventory.currentQty !== undefined && selectedSmokeInventory.currentQty > 0 && <label><span>Cigars smoked from this lot *</span><input name="quantitySmoked" type="number" min="1" max={selectedSmokeInventory.currentQty} step="1" defaultValue="1" required /><small>{selectedSmokeInventory.currentQty} remaining before this entry. Saving removes exactly the number entered; original quantity stays unchanged.</small></label>}
         {selectedSmokeInventory && smokeQuantityBlocked && <p className="deviceDraftNotice" role="alert">{selectedSmokeInventory.currentQty === 0 ? "This lot has no cigars remaining." : "Record this lot’s remaining quantity before logging a smoke."} <a href={`/inventory?edit=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&vaultSearch=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&focus=quantity#inventory-editor`}>Correct this exact record →</a></p>}
-        {smokeSource === "MANUAL" && <div className="manualSmokeIdentity">
+        {smokeSourceMode === "MANUAL" && <div className="manualSmokeIdentity">
           <input type="hidden" name="inventoryId" value="MANUAL" data-draft-safe="true" />
           <div className="smokePhotoIdentify"><div><strong>Identify by photo</strong><small>Photograph the cigar or band. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos}/><span>Take a photo</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos}/><span>Choose photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button></div>
           {smokePhotoPreviews.length > 0 && <section className="smokePhotoProgress" aria-label={`${smokePhotoPreviews.length} selected cigar photo${smokePhotoPreviews.length === 1 ? "" : "s"}`} aria-busy={smokePhotoBusy}>
@@ -329,9 +332,9 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
           {smokePhotoMessage && <output className="smokePhotoMessage" aria-live="polite">{smokePhotoMessage}</output>}
           {smokePhotoAnalysis && <div className={`visionEvidence confidence-${smokePhotoAnalysis.confidence}`}><strong>{smokePhotoAnalysis.confidence} confidence · review required</strong><p>{smokePhotoAnalysis.evidenceSummary}</p>{smokePhotoAnalysis.uncertainties.length > 0 && <small><b>Confirm:</b> {smokePhotoAnalysis.uncertainties.join(" · ")}</small>}</div>}
           <label className="manualSmokeCigar"><span>What did you smoke? *</span><input name="cigarName" required minLength={3} maxLength={300} value={smokeCigarName} onChange={event => setSmokeCigarName(event.target.value)} placeholder="Brand, line, exact vitola, and year if known" /><small>Review and correct photo suggestions. Saving creates only a private smoking review—no Vault record and no quantity change.</small></label>
-          <fieldset className="outsideVaultIdentity"><legend>Optional · Share this score with the Hojavía 25</legend>
-            <label className="check"><input name="outsideInventory" type="checkbox" checked={outsideIdentity.confirmed} onChange={event=>setOutsideIdentity(current=>({...current,confirmed:event.target.checked}))}/> Share my numeric score using the exact cigar identity below.</label>
-            <small>Leave this unchecked to save only to your private journal. If you opt in, Hojavía needs the exact brand, line, and vitola; notes, purchase details, and inventory are never shared.</small>
+          <fieldset className="outsideVaultIdentity"><legend>Confirm the cigar identity</legend>
+            <label className="check"><input name="outsideInventory" type="checkbox" checked={outsideIdentity.confirmed} onChange={event=>setOutsideIdentity(current=>({...current,confirmed:event.target.checked}))}/> I can confirm the exact brand, line, and vitola.</label>
+            <small>A scored smoke contributes its exact identity and numeric score anonymously. Notes, purchase details, inventory, and location are never shared.</small>
             {outsideIdentity.confirmed&&<div className="outsideVaultIdentityFields">
               <label><span>Brand *</span><input name="cigarBrand" required value={outsideIdentity.brand} onChange={event=>setOutsideIdentity(current=>({...current,brand:event.target.value}))}/></label>
               <label><span>Line or blend *</span><input name="cigarLine" required value={outsideIdentity.line} onChange={event=>setOutsideIdentity(current=>({...current,line:event.target.value}))}/></label>
@@ -340,7 +343,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
           </fieldset>
         </div>}
         <label><span>Date</span><input name="dateSmoked" type="date" required defaultValue={today()} /></label>
-        <label><span>Score · 0–100</span><select name="overall" defaultValue=""><option value="">Choose a score</option>{scoreOptions.map(score => <option value={score} key={score}>{score}</option>)}</select><small>With anonymous Collector 25 sharing enabled in <a href="/account#collector-25-preference">Account preferences</a>, an exact Vault cigar—or a confirmed outside-Vault identity—and 1–100 score update your one current contribution. Notes and inventory stay private.</small></label>
+        <label><span>Score · 0–100</span><select name="overall" defaultValue=""><option value="">Choose a score</option>{scoreOptions.map(score => <option value={score} key={score}>{score}</option>)}</select><small>An exact Vault cigar—or a confirmed outside-Vault identity—and 1–100 score update your anonymous Hojavía 25 contribution. Notes and inventory stay private.</small></label>
         <label><span>Strength</span><select name="strength" defaultValue=""><option value="">Choose perceived strength</option>{strengthOptions.map(value => <option key={value}>{value}</option>)}</select><small>How the nicotine intensity felt—not the depth of flavor.</small></label>
         <label><span>Construction Quality</span><select name="construction" defaultValue=""><option value="">Optional</option>{constructionQualityOptions.map(value => <option key={value}>{value}</option>)}</select><small>How well the cigar was physically made—not its flavor or strength.</small></label>
         <label><span>Burn</span><select name="burn" defaultValue=""><option value="">Optional</option>{burnQualityOptions.map(value => <option key={value}>{value}</option>)}</select><small>How evenly the cigar burned and whether it needed correction.</small></label>

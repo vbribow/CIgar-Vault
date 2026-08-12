@@ -46,3 +46,8 @@ test("mobile account safeguards prevent repeat actions and announce their outcom
   assert.match(recoveryPoint, /role=\{failed \? "alert" : "status"\}/);
   assert.match(recoveryPoint, /aria-atomic="true"/);
 });
+
+test("mobile More destinations close the overlay even when choosing the current page",()=>{
+  assert.match(navigation,/mobileFeaturedLinks\.map[\s\S]*?<Link href=\{href\} onClick=\{\(\)=>closeMobileMore\(\)\}/);
+  assert.match(navigation,/moreLinks\.map[\s\S]*?<Link href=\{href\} onClick=\{\(\)=>closeMobileMore\(\)\}/);
+});
