@@ -3,10 +3,12 @@ import { isBillablePlan, isBillingInterval, type BillablePlanId, type BillingInt
 
 export type BillingProfileChange = {
   customerId: string;
+  userId?: string;
   subscriptionId?: string;
   billingPlan?: BillablePlanId;
   billingInterval?: BillingInterval;
   billingStatus: string;
+  reserveTrialRedeemed?: boolean;
 };
 
 const subscriptionStatuses = new Set([
@@ -63,12 +65,16 @@ export function billingProfileChangeForEvent(
       : stringField(object, "status");
     if (!status || !subscriptionStatuses.has(status)) return undefined;
     const membership = membershipMetadata(object);
+    const metadata = object.metadata && typeof object.metadata === "object" ? object.metadata as Record<string, unknown> : {};
+    const userId = typeof metadata.user_id === "string" && /^[0-9a-f-]{36}$/i.test(metadata.user_id) ? metadata.user_id : undefined;
     return {
       customerId,
+      ...(userId ? { userId } : {}),
       subscriptionId: stringField(object, "id"),
       billingPlan: membership.plan ?? "founder",
       billingInterval: membership.interval ?? "annual",
       billingStatus: status,
+      ...(metadata.offer === "earned-reserve-21" ? { reserveTrialRedeemed: true } : {}),
     };
   }
 

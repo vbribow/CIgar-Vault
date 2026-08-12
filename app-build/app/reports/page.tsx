@@ -8,6 +8,7 @@ import { ProductEvent } from "@/components/product-event";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { WorkspaceGuide } from "@/components/workspace-guide";
+import { hasEntitlement } from "@/lib/entitlements";
 import {
   insuranceQuestions,
   insuranceResources,
@@ -114,7 +115,7 @@ export default async function ReportsPage() {
           </p>
         </div>
         <div>
-          <ReportActions rows={report.rows} generatedAt={report.generatedAt} />
+          <ReportActions rows={report.rows} generatedAt={report.generatedAt} insurancePdfAvailable={Boolean(plan && hasEntitlement(plan,"insurance-reports"))} />
           <div className="reportValue">
             <span>Scheduled replacement value</span>
             <strong>

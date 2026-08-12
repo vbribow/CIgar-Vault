@@ -18,13 +18,13 @@ export async function POST(request: Request) {
     if (profileChange) {
       const admin = partnerAdmin();
       if (!admin) throw new Error("Billing profile storage is not configured");
-      const { data: profile, error: profileError } = await admin
-        .from("profiles")
-        .select("user_id")
-        .eq("stripe_customer_id", profileChange.customerId)
-        .maybeSingle();
-      if (profileError) throw profileError;
-      if (!profile?.user_id) throw new Error("Billing customer is not linked to an account");
+      let userId = profileChange.userId;
+      if (!userId) {
+        const { data: profile, error: profileError } = await admin.from("profiles").select("user_id").eq("stripe_customer_id", profileChange.customerId).maybeSingle();
+        if (profileError) throw profileError;
+        userId = profile?.user_id;
+      }
+      if (!userId) throw new Error("Billing customer is not linked to an account");
       const { error: updateError } = await admin
         .from("profiles")
         .update({
@@ -32,9 +32,11 @@ export async function POST(request: Request) {
           ...(profileChange.billingInterval ? { billing_interval: profileChange.billingInterval } : {}),
           billing_status: profileChange.billingStatus,
           ...(profileChange.subscriptionId ? { stripe_subscription_id: profileChange.subscriptionId } : {}),
+          stripe_customer_id: profileChange.customerId,
+          ...(profileChange.reserveTrialRedeemed ? { reserve_trial_redeemed_at: new Date().toISOString() } : {}),
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", profile.user_id);
+        .eq("user_id", userId);
       if (updateError) throw updateError;
     }
 

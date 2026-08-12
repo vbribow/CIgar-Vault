@@ -1,7 +1,7 @@
 import { createClient as createAdminClient, type SupabaseClient } from "@supabase/supabase-js";
 import { effectivePlan, plans, type PlanId } from "./entitlements";
 
-export const AI_CREDIT_COSTS = { "cigar-somm": 1, "exact-research": 5, "valuation-refresh": 5, "deep-research": 10 } as const;
+export const AI_CREDIT_COSTS = { "cigar-somm": 1, "exact-research": 5, "valuation-refresh": 5, "rating-refresh": 5, "deep-research": 10 } as const;
 export type AiCreditFeature = keyof typeof AI_CREDIT_COSTS;
 export type AiCreditSummary = { available: boolean; plan: PlanId; allowance: number; used: number; remaining: number };
 export class AiCreditError extends Error { constructor(public code: string, message: string, public status = 503) { super(message); } }

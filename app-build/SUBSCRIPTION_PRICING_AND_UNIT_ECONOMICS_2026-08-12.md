@@ -25,7 +25,7 @@ Founder does not mean unlimited future human labor. Material appraisal, catalogi
 - Cached or local application result: 0 credits.
 - Cigar Somm answer: 1 credit.
 - Exact live cigar research: 5 credits.
-- Live valuation or rating refresh: 5 credits.
+- Live valuation or professional-rating refresh: 5 credits.
 - Founder-approved deep multi-source research: 10 credits.
 - Optional future research pack: 100 credits for $15, activated only after measured demand and margin validation.
 
@@ -87,6 +87,21 @@ The home page presents two unmistakable welcome actions: **Create free account**
 
 Pricing language explains the outcome of each level, not just feature names. The account screen shows the active membership, monthly intelligence allowance, usage, and remaining balance.
 
+## RevenueCat 2026 benchmark decision
+
+RevenueCat’s public 2026 analysis covers more than 115,000 subscription apps and $16 billion in tracked revenue. It reports materially faster conversion for hard-paywall apps, nearly equal one-year retention between hard paywalls and freemium, better conversion for longer trials, an early annual-cancellation spike, and stronger initial monetization but weaker retention for AI-led apps. Source: https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026
+
+Hojavía will use an **earned paywall**, not a whole-app hard paywall:
+
+- Free remains a useful hospitality and trust experience with no payment card.
+- Reserve is the visually recommended membership for serious collectors.
+- Paid capabilities are hard-gated at the moment their value is clear: inventory scale, insurance-ready PDF schedules, sensors, source-backed live research, advanced ratings, and automation.
+- Complete owner-controlled data export, education, community participation, and existing collector records are never placed behind a paywall.
+- An eligible Free collector unlocks one 21-day Reserve trial only after documenting at least three lots and recording either a smoke or a supported valuation. The server verifies eligibility, the trial requires a payment method, renews monthly at the disclosed Reserve price, and records redemption only after Stripe confirms the trialing subscription.
+- Hojavía is positioned as collection stewardship supported by AI—not as an AI novelty product.
+
+The launch experiment should compare this earned-paywall flow against the same Free experience without a trial. Measure signup-to-first-lot, three-lot activation, trial start, trial-to-paid conversion, Day-0 cancellation, 30/90-day paid retention, provider cost per payer, and data contribution. Do not switch the entire product to a hard paywall based only on cross-category benchmarks.
+
 ## Technical implementation prepared in this bundle
 
 - Central tier definitions, prices, limits, benefits, credit allowances, and provider-cost ceilings.
@@ -97,6 +112,7 @@ Pricing language explains the outcome of each level, not just feature names. The
 - Cigar Somm costs 1 credit and defaults to the cost-efficient Luna route.
 - Exact live cigar research costs 5 credits; cache hits cost 0.
 - Public home-page Sign in and Create free account welcome path.
+- RevenueCat-informed earned Reserve trial and contextual premium gates.
 
 ## Activation checklist — founder approval required
 

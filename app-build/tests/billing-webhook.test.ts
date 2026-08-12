@@ -47,6 +47,13 @@ test("subscription lifecycle events produce authoritative account status changes
   );
 });
 
+test("subscription metadata can safely recover an earned trial when the success redirect is missed", () => {
+  const change = billingProfileChangeForEvent("customer.subscription.created", { id: "sub_trial", customer: "cus_trial", status: "trialing", metadata: { user_id: "123e4567-e89b-12d3-a456-426614174000", plan_id: "reserve", billing_interval: "monthly", offer: "earned-reserve-21" } });
+  assert.equal(change?.userId, "123e4567-e89b-12d3-a456-426614174000");
+  assert.equal(change?.billingPlan, "reserve");
+  assert.equal(change?.reserveTrialRedeemed, true);
+});
+
 test("invoice success and failure reconcile billing status without inventing a customer", () => {
   assert.equal(
     billingProfileChangeForEvent("invoice.payment_failed", {

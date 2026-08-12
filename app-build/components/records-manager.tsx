@@ -275,7 +275,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
     setValuationResearching(true);
     setValuationResearchMessage("");
     try {
-      const response = await fetch("/api/valuation-research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ inventoryId: valuationSource }) });
+      const response = await fetch("/api/valuation-research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ inventoryId: valuationSource, submissionId: createClientUuid() }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Valuation research could not be completed");
       setValuationProposal(result.data);

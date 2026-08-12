@@ -21,3 +21,4 @@
 - Paid provider work uses a server-only monthly intelligence-credit ledger with no automatic overages; cached and local results cost no credits.
 - Prices, benefits, unit economics, adoption assumptions, and the activation checklist are archived in `app-build/SUBSCRIPTION_PRICING_AND_UNIT_ECONOMICS_2026-08-12.md`.
 - Stripe products, the database migration, paid API activation, and deployment remain separately authorized launch actions.
+- Monetization uses an earned paywall: Free stays useful; Reserve is the recommended serious-collector tier; eligible Free accounts may unlock one server-verified 21-day Reserve trial after three lots plus a smoke or supported valuation. Existing records and complete owner-controlled exports are never paywalled.

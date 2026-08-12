@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { checkoutSessionGrantsAccess, isBillablePlan, isBillingInterval, stripeHeaders } from "@/lib/billing";
 import { NextResponse } from "next/server";
 import { recordPaidPartnerConversion } from "@/lib/partner-platform";
+import { RESERVE_TRIAL_OFFER } from "@/lib/reserve-trial";
 
 export async function GET(request: Request) {
   const url = new URL(request.url), sessionId = url.searchParams.get("session_id");
@@ -14,8 +15,9 @@ export async function GET(request: Request) {
     const subscription = session.subscription as { id: string; status: string; metadata?: Record<string, string> };
     const plan = subscription.metadata?.plan_id || session.metadata?.plan_id;
     const interval = subscription.metadata?.billing_interval || session.metadata?.billing_interval;
+    const offer = subscription.metadata?.offer || session.metadata?.offer;
     if (!isBillablePlan(plan) || !isBillingInterval(interval)) throw new Error("Membership details could not be verified");
-    const { error } = await supabase.from("profiles").upsert({ user_id: user.id, billing_plan: plan, billing_interval: interval, billing_status: subscription.status, stripe_customer_id: session.customer, stripe_subscription_id: subscription.id, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+    const { error } = await supabase.from("profiles").upsert({ user_id: user.id, billing_plan: plan, billing_interval: interval, billing_status: subscription.status, stripe_customer_id: session.customer, stripe_subscription_id: subscription.id, ...(offer === RESERVE_TRIAL_OFFER ? { reserve_trial_redeemed_at: new Date().toISOString() } : {}), updated_at: new Date().toISOString() }, { onConflict: "user_id" });
     if (error) throw error;
     await recordPaidPartnerConversion({ userId: user.id, externalEventId: `checkout:${session.id}`, kind: "subscription_started", grossRevenueCents: Number(session.amount_total || 0), netRevenueCents: Number(session.amount_subtotal || session.amount_total || 0), currency: session.currency || "usd" });
     return NextResponse.redirect(new URL("/account?checkout=success", url.origin));

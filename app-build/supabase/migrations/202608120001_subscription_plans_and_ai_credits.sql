@@ -1,6 +1,7 @@
 -- Prepared subscription tiers and a server-only, atomic AI credit ledger.
 -- This migration is intentionally safe for existing Free, Founder, and legacy Pro profiles.
 alter table public.profiles add column if not exists billing_interval text;
+alter table public.profiles add column if not exists reserve_trial_redeemed_at timestamptz;
 
 -- Enforce creation limits at the database boundary so simultaneous requests cannot
 -- exceed a membership allowance. Updates and existing records are never deleted.

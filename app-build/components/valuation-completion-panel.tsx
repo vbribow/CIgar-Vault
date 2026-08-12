@@ -21,7 +21,7 @@ export function ValuationCompletionPanel({items,mode,deferredCount=0}:{items:Inv
       const submissionId=submissionIds.current.get(item.inventoryId)||createClientUuid();
       submissionIds.current.set(item.inventoryId,submissionId);
       const headers={"Content-Type":"application/json",...(key?{"x-founder-key":key}:{})};
-      const researched=await json(await fetch("/api/valuation-research",{method:"POST",headers,body:JSON.stringify({inventoryId:item.inventoryId})}));
+      const researched=await json(await fetch("/api/valuation-research",{method:"POST",headers,body:JSON.stringify({inventoryId:item.inventoryId,submissionId})}));
       const draft=researched.data;
       if(!draft.automaticSaveEligible){
         await json(await fetch("/api/valuations",{method:"POST",headers,body:JSON.stringify({

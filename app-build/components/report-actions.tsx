@@ -5,7 +5,7 @@ import type { InsuranceScheduleRow } from "@/lib/insurance-report";
 
 const csvCell = (value: string | number | undefined) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 
-export function ReportActions({ rows, generatedAt }: { rows: InsuranceScheduleRow[]; generatedAt: string }) {
+export function ReportActions({ rows, generatedAt, insurancePdfAvailable = true }: { rows: InsuranceScheduleRow[]; generatedAt: string; insurancePdfAvailable?: boolean }) {
   const[message,setMessage]=useState(""),[downloading,setDownloading]=useState(false);
   function deliver(bytes:BlobPart,type:string,filename:string){
     const url=URL.createObjectURL(new Blob([bytes],{type})),anchor=document.createElement("a");
@@ -37,5 +37,5 @@ export function ReportActions({ rows, generatedAt }: { rows: InsuranceScheduleRo
     deliver(csv,"text/csv;charset=utf-8",`hojavia-insurance-schedule-${generatedAt.slice(0,10)}.csv`);
   }
 
-  return <div className="reportActions" aria-busy={downloading}><button className="button" disabled={downloading} onClick={downloadPdf}>{downloading?"Preparing secure PDF…":"Download insurance PDF"}</button><button className="button secondary" disabled={downloading} onClick={downloadCsv}>Download schedule CSV</button><button className="textLink" disabled={downloading} onClick={()=>window.print()}>Print this page</button>{message&&<output aria-live="polite" aria-atomic="true">{message}</output>}</div>;
+  return <div className="reportActions" aria-busy={downloading}>{insurancePdfAvailable?<button className="button" disabled={downloading} onClick={downloadPdf}>{downloading?"Preparing secure PDF…":"Download insurance PDF"}</button>:<a className="button" href="/pricing?recommended=collector">Unlock insurance-ready PDF</a>}<button className="button secondary" disabled={downloading} onClick={downloadCsv}>Download my data CSV</button><button className="textLink" disabled={downloading} onClick={()=>window.print()}>Print this page</button>{!insurancePdfAvailable&&<small>Your owner-controlled CSV remains free.</small>}{message&&<output aria-live="polite" aria-atomic="true">{message}</output>}</div>;
 }

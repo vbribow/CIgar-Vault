@@ -4,6 +4,7 @@ import { buildInsuranceReport } from "@/lib/insurance-report";
 import { normalizeInventory } from "@/lib/inventory-model";
 import { createClient } from "@/lib/supabase/server";
 import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
+import { effectivePlan, hasEntitlement, plans } from "@/lib/entitlements";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,6 +19,10 @@ export async function GET() {
     if (authError || !user) {
       return NextResponse.json({ error: "Sign in before downloading your private insurance schedule." }, { status: 401 });
     }
+    const { data: profile, error: profileError } = await supabase.from("profiles").select("billing_plan,billing_status").eq("user_id", user.id).maybeSingle();
+    if (profileError) return NextResponse.json({ error: "Hojavía could not verify membership access. No report was generated." }, { status: 503 });
+    const plan = effectivePlan(profile?.billing_plan, profile?.billing_status);
+    if (!hasEntitlement(plan, "insurance-reports")) return NextResponse.json({ error: `Insurance-ready PDF schedules begin with Collector. Your ${plans[plan].name} account and owner-controlled data export remain available.`, upgradeUrl: "/pricing?recommended=collector" }, { status: 403 });
     const { data, error } = await supabase
       .from("vault_records")
       .select("kind,payload")
