@@ -8,9 +8,9 @@ import { LoungeLeafRating } from "@/components/lounge-leaf-rating";
 import { RatingLeafMark } from "@/components/rating-leaf-mark";
 
 type Result=GooglePlaceResult&{
- cedrivaScore?:number;
- cedrivaReviewCount:number;
- cedrivaScoreStatus:"Established"|"Developing";
+ communityScore?:number;
+ communityReviewCount:number;
+ communityScoreStatus:"Established"|"Developing";
  vibes:Array<{vibe:string;count:number}>;
  certification?:PlaceCertification;
 };
@@ -53,15 +53,15 @@ export function PlaceDirectory(){
   </section>
   {message&&<output className="placeMessage">{message}</output>}
   {meta&&<aside className="placeMethod"><strong>Community-first ranking</strong><span>{meta.methodology}</span><small>Google data retrieved {new Date(meta.retrievedAt).toLocaleString()} · Google ratings are never converted into {brand.name} ratings.</small></aside>}
-  {results.length>0&&<div className="placeResultsHeading"><div><div className="eyebrow">Nearby results</div><h2>{results.some(place=>place.cedrivaReviewCount>=5)?"Top community-rated lounges":"A ranking taking shape"}</h2></div><p>Five unique {brand.name} ratings are required before a lounge is ranked as established.</p></div>}
+  {results.length>0&&<div className="placeResultsHeading"><div><div className="eyebrow">Nearby results</div><h2>{results.some(place=>place.communityReviewCount>=5)?"Top community-rated lounges":"A ranking taking shape"}</h2></div><p>Five unique {brand.name} ratings are required before a lounge is ranked as established.</p></div>}
   <section className="placeResults">{results.map((place,index)=>{
-   const rankingScore=communityPlaceRankingScore(place.cedrivaScore,place.cedrivaReviewCount);
+   const rankingScore=communityPlaceRankingScore(place.communityScore,place.communityReviewCount);
    return <article key={place.googlePlaceId}>
-    <header><span>{place.cedrivaReviewCount>=5?`#${index+1} community ranked`:"Community score developing"}</span>{place.certification&&<b>{certificationDisplayLabels[place.certification.level]}</b>}</header>
+    <header><span>{place.communityReviewCount>=5?`#${index+1} community ranked`:"Community score developing"}</span>{place.certification&&<b>{certificationDisplayLabels[place.certification.level]}</b>}</header>
     <h2>{place.name}</h2><p>{place.address}</p>
     <div className="dualScores">
      <div><span>Google rating</span><strong>{place.googleRating??"—"}</strong><small>{place.googleReviewCount??0} Google reviews</small></div>
-     <div><span>{brand.name} Community</span><RatingLeafMark value={place.cedrivaScore??"—"} label="Community score" detail={`${place.cedrivaReviewCount} visit rating${place.cedrivaReviewCount===1?"":"s"} · ${place.cedrivaScoreStatus}`} compact/></div>
+     <div><span>{brand.name} Community</span><RatingLeafMark value={place.communityScore??"—"} label="Community score" detail={`${place.communityReviewCount} visit rating${place.communityReviewCount===1?"":"s"} · ${place.communityScoreStatus}`} compact/></div>
      {rankingScore!==undefined&&<div><span>Confidence score</span><strong>{rankingScore}</strong><small>Sample-size adjusted</small></div>}
      {place.certification&&<div><span>Independent critic</span><LoungeLeafRating level={place.certification.level} compact/><small>Critic score {place.certification.score} · visited {place.certification.visitMonth}</small></div>}
     </div>

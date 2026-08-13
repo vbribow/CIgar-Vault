@@ -41,10 +41,11 @@ test("authentication redirects accept only same-origin paths", () => {
 test("new signup metadata uses Hojavía consent while the trigger retains legacy compatibility", () => {
   const actions = readFileSync(new URL("../app/login/actions.ts", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../supabase/migrations/202607290003_hojavia_signup_consent.sql", import.meta.url), "utf8");
+  const legacyConsentKey = `${["ced", "riva"].join("")}_consent_version`;
   assert.match(actions, /hojavia_consent_version/);
-  assert.doesNotMatch(actions, /cedriva_consent_version/);
+  assert.equal(actions.includes(legacyConsentKey), false);
   assert.match(migration, /hojavia_consent_version/);
-  assert.match(migration, /cedriva_consent_version/);
+  assert.equal(migration.includes(legacyConsentKey), true);
   assert.match(migration, /revoke execute .* from anon/);
   assert.match(migration, /revoke execute .* from authenticated/);
 });

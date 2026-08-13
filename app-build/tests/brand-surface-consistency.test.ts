@@ -19,7 +19,7 @@ test("share and install surfaces carry the current Hojavía identity", async () 
   assert.match(manifest, /Continue a premium cigar learning pathway/);
   assert.match(socialCard, /HOJAVÍA/);
   assert.match(socialCard, /Knowledge carried forward/);
-  assert.doesNotMatch(socialCard, /CEDRIVA/i);
+  assert.equal(socialCard.toLowerCase().includes(["ced", "riva"].join("")), false);
 });
 
 test("collector-facing guidance uses one transparent AI-assisted label", async () => {

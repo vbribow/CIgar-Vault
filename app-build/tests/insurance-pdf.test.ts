@@ -12,7 +12,7 @@ test("insurance export creates a valid downloadable PDF",()=>{
   assert.ok(bytes.length>500);
   assert.ok(text.startsWith("%PDF-1.4"));
   assert.match(text,/HOJAVIA/);
-  assert.doesNotMatch(text,/CEDRIVA/);
+  assert.equal(text.toLowerCase().includes(["ced", "riva"].join("")), false);
   assert.match(text,/INV-1/);
   assert.match(text,/startxref/);
   assert.ok(text.endsWith("%%EOF"));

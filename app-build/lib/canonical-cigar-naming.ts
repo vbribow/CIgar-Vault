@@ -1,5 +1,6 @@
 import { canonicalBrand } from "./brand-directory";
 import type { CatalogCigar, InventoryItem } from "./types";
+import { exactCatalogMatch } from "./inventory-origin";
 
 type NamingReference = Pick<CatalogCigar, "catalogId" | "brand" | "line" | "vitola">;
 
@@ -57,7 +58,7 @@ export function canonicalizeInventoryNaming<T extends InventoryItem>(item: T, ca
   const line = canonicalValue(item.line, brandReferences.map(reference => reference.line));
   const lineReferences = brandReferences.filter(reference => key(reference.line) === key(line));
   const vitola = canonicalValue(item.vitola, lineReferences.map(reference => reference.vitola));
-  const exact = catalog.find(reference => canonicalBrand(reference.brand) === brand && key(reference.line) === key(line) && key(reference.vitola) === key(vitola));
+  const exact = exactCatalogMatch({ ...item, brand, line, vitola }, catalog);
   const { catalogId: _previousCatalogId, ...withoutCatalogIdentity } = item;
   return { ...withoutCatalogIdentity, brand, line, vitola, ...(exact?.catalogId ? { catalogId: exact.catalogId } : {}) } as T;
 }

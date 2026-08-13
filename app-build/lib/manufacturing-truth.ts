@@ -622,6 +622,25 @@ export const manufacturingTruthRecords: ManufacturingTruthRecord[] = [
     checkedAt: "2026-07-23",
   },
   {
+    id: "hda-cigars",
+    brand: "Hermanos de Armas (HDA Cigars)",
+    owner: "Andray F. McCuien and Zack Van Ginkel",
+    blender: "HDA founders with the applicable partner-factory team; Lee Marsh supported the 2026 production transition",
+    relationship: "Directed contract production",
+    factories: ["Rojas Cigars (current core production)", "Fábrica Oveja Negra (historical core production)"],
+    factoryCountries: ["Nicaragua"],
+    tobaccoRegions: ["Estelí", "Condega", "Jalapa", "Ometepe", "origins vary by blend"],
+    examples: ["Cataclysm", "Descending Shadows", "Veiled Mutiny", "Phantom Fury (2025 limited edition)"],
+    truth: "Hermanos de Armas is a veteran-owned independent brand founded by Andray F. McCuien and Zack Van Ginkel. Its official lineup documents Nicaraguan binder and filler tobaccos with wrappers sourced by blend. Trade reporting records the 2026 move of the three core lines from Fábrica Oveja Negra to Rojas Cigars.",
+    releaseRule: "Attach the factory to the production period. Do not rewrite Oveja Negra-made inventory as Rojas production, and preserve the exact wrapper and vitola stated for each line.",
+    history: "HDA developed its identity around its founders’ military service, cigar fellowship, and veteran community. Core production moved to Rojas Cigars in 2026 while the company stated that Cataclysm, Descending Shadows, and Veiled Mutiny would retain their established profiles.",
+    trustLevel: "Verified Historical",
+    confidence: "High",
+    sourceName: "HDA official brand and lineup records; halfwheel production-change report",
+    sourceUrl: "https://hdacigars.com/hda-cigars-our-cigars/",
+    checkedAt: "2026-08-12",
+  },
+  {
     id: "patina",
     brand: "Patina Cigars",
     owner: "Mo Maali",
@@ -657,6 +676,7 @@ export const manufacturingFactories = [
   { name: "Manufactura Rivas", country: "Dominican Republic", brands: ["Caminos", "Dos Jotas", "outside contract projects"], record: "manufactura-rivas" },
   { name: "Plasencia factories", country: "Nicaragua and Honduras", brands: ["Plasencia", "outside contract brands"], record: "plasencia" },
   { name: "Fábrica Oveja Negra", country: "Nicaragua", brands: ["Black Label Trading Co.", "Black Works Studio", "outside projects"], record: "ovejanegracigars" },
+  { name: "Rojas Cigars", country: "Nicaragua", brands: ["Hermanos de Armas core lines", "outside projects"], record: "hda-cigars" },
   { name: "TABSA / Aganorsa Leaf", country: "Nicaragua", brands: ["Aganorsa portfolio", "Warped lines", "Illusione lines", "outside contract brands"], record: "illusione" },
   { name: "Tabacalera Mina del Rey", country: "Dominican Republic", brands: ["ADVentura"], record: "adventura" },
   { name: "Tabacalera Villa Cuba S.A. (TAVICUSA)", country: "Nicaragua", brands: ["All Saints", "Rocky Patel projects"], record: "all-saints" },
@@ -711,6 +731,8 @@ const houseRecordMap: [string, string][] = [
   ["Casdagli", "casdagli"],
   ["Cavalier Genève", "cavalier-geneve"],
   ["Patina", "patina"],
+  ["Hermanos de Armas", "hda-cigars"],
+  ["HDA Cigars", "hda-cigars"],
 ];
 
 export function manufacturingTruthHrefForHouse(house: string) {
@@ -767,6 +789,7 @@ const brandRecordIds: Record<string, string> = {
   "casdagli": "casdagli",
   "cavalier genève": "cavalier-geneve",
   "patina": "patina",
+  "hermanos de armas (hda cigars)": "hda-cigars",
 };
 
 function normalizedBrand(value: string) {

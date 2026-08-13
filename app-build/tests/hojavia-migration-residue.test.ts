@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { siteUrl } from "../lib/seo";
-import { legacyReferralCookieName, referralCookieName } from "../lib/partner-platform";
+import { referralCookieName } from "../lib/partner-platform";
 import { PREVIOUS_RECOVERY_COOLDOWN_KEY, RECOVERY_COOLDOWN_KEY } from "../lib/recovery-cooldown";
 
 test("new public metadata defaults to the canonical Hojavía domain", () => {
@@ -17,9 +17,8 @@ test("new public metadata defaults to the canonical Hojavía domain", () => {
   else process.env.VERCEL_PROJECT_PRODUCTION_URL = vercel;
 });
 
-test("new browser state uses Hojavía keys while retaining legacy reads", () => {
+test("new browser state uses Hojavía keys", () => {
   assert.equal(referralCookieName, "hojavia_partner_referral");
-  assert.equal(legacyReferralCookieName, "cedriva_partner_referral");
   assert.match(RECOVERY_COOLDOWN_KEY, /^hojavia:/);
   assert.equal(PREVIOUS_RECOVERY_COOLDOWN_KEY, "cigar-vault:recovery-cooldown-v2");
 });

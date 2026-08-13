@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { canonicalBrand, cigarBrands } from "@/lib/brand-directory";
+import { brandIdentityEvidence, canonicalBrand, cigarBrands } from "@/lib/brand-directory";
 import type { CatalogCigar, InventoryItem } from "@/lib/types";
 import { VitolaField } from "@/components/vitola-field";
 
@@ -18,6 +18,7 @@ export function CatalogFields({ item, catalog }: { item: InventoryItem; catalog:
   const lines = useMemo(() => [...new Set(brandCatalog.map((entry) => entry.line).filter(Boolean))].sort(), [brandCatalog]);
   const vitolas = useMemo(() => [...new Set([...brandCatalog.filter((entry) => !line || entry.line.toLocaleLowerCase() === line.toLocaleLowerCase()).map((entry) => entry.vitola),...researched.map(entry=>entry.value)].filter(Boolean))].sort(), [brandCatalog, line,researched]);
   const match = brandCatalog.find((entry) => entry.line.toLocaleLowerCase() === line.toLocaleLowerCase() && entry.vitola.toLocaleLowerCase() === vitola.toLocaleLowerCase());
+  const identityEvidence = brandIdentityEvidence(brand);
   async function researchVitolas(){
     if(!brand.trim()||!line.trim())return;
     setResearching(true);setResearchMessage("");setResearched([]);
@@ -33,7 +34,7 @@ export function CatalogFields({ item, catalog }: { item: InventoryItem; catalog:
 
   return <>
     <div className="manufacturerEntryField">
-      <label><span>Brand / manufacturer *</span><input name="brand" required list={manualBrand?undefined:"cigar-brand-options"} value={brand} onChange={(event) => { setBrand(event.target.value); setLine(""); setVitola("");setResearched([]); }} placeholder={manualBrand?"Enter the name exactly as shown on the cigar":"Search known brands and manufacturers"} autoComplete="organization" /><datalist id="cigar-brand-options">{brands.map((value) => <option key={value} value={value} />)}</datalist><small>{manualBrand?"This name will be preserved on your private record. Hojavía will not treat it as verified catalog information until it is researched.":`${brands.length} known names available. If yours is missing, add it manually.`}</small></label>
+      <label><span>Brand / manufacturer *</span><input name="brand" required list={manualBrand?undefined:"cigar-brand-options"} value={brand} onChange={(event) => { setBrand(event.target.value); setLine(""); setVitola("");setResearched([]); }} placeholder={manualBrand?"Enter the name exactly as shown on the cigar":"Search known brands and manufacturers"} autoComplete="organization" /><datalist id="cigar-brand-options">{brands.map((value) => <option key={value} value={value} />)}</datalist><small>{manualBrand?"This name will be preserved on your private record. Hojavía will not treat it as verified catalog information until it is researched.":identityEvidence?"Brand identity documented. Enter the exact line and vitola to research cigar-level details on demand.":`${brands.length} known names available. If yours is missing, add it manually.`}</small></label>
       <button type="button" className="textLink" aria-pressed={manualBrand} onClick={()=>{setManualBrand(current=>!current);setBrand("");setLine("");setVitola("");setResearched([])}}>{manualBrand?"Search known manufacturers":"Manufacturer not listed? Enter it manually"}</button>
     </div>
     <label><span>Line / Series</span><input name="line" list="cigar-line-options" value={line} onChange={(event) => { setLine(event.target.value); setVitola("");setResearched([]); }} placeholder={brand ? "Choose or enter a line" : "Select a brand first"} /><datalist id="cigar-line-options">{lines.map((value) => <option key={value} value={value} />)}</datalist><small>{brand && lines.length ? `${lines.length} known line${lines.length === 1 ? "" : "s"}` : "Enter the line name exactly as shown."}</small></label>

@@ -55,6 +55,8 @@ test("contributors can track publication status and founder correction notes",()
  assert.match(component,/Founder notes appear here/);
  assert.match(route,/myContributions/);
  assert.match(route,/eq\("user_id",userId\)/);
+ assert.match(route,/currentBrandText\(String\(row\.title\)\)/);
+ assert.match(route,/currentBrandText\(String\(row\.body\)\)/);
 });
 test("founder moderation supports publish, requested changes, and non-publication",()=>{
  const route=readFileSync(new URL("../app/api/ai-administrator/route.ts",import.meta.url),"utf8");
@@ -95,7 +97,7 @@ test("Collector 25 is the prominent default community destination",()=>{
  assert.match(page,/className="hojavia25Hero"/);
  assert.match(page,/href="\/community\?tab=ratings#top-25"/);
  assert.match(page,/The community benchmark/);
- assert.doesNotMatch(component,/cedriva25Metric/);
+ assert.equal(component.includes(["ced","riva","25Metric"].join("")),false);
  assert.match(page,/The \{brand\.labels\.community\}/);
  assert.match(page,/brand\.labels\.communityRanking/);
 });

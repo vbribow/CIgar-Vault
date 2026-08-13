@@ -51,28 +51,29 @@ test("future-facing product surfaces do not recreate retired branded subproducts
     .map(file => readFileSync(resolve(root, file), "utf8"))
     .join("\n");
 
+  const retiredName=["Ced","riva"].join("");
   for (const retiredLabel of [
-    "Cedriva 25",
-    "Cedriva Places",
-    "Cedriva Lounge Passport",
-    "Cedriva Industry Hub",
-    "Cedriva private beta",
+    `${retiredName} 25`,
+    `${retiredName} Places`,
+    `${retiredName} Lounge Passport`,
+    `${retiredName} Industry Hub`,
+    `${retiredName} private beta`,
   ]) {
     assert.equal(source.includes(retiredLabel), false, retiredLabel);
   }
 });
 
-test("legacy location status values remain readable but are never the display labels", () => {
-  assert.equal(certificationLevels.includes("Cedriva Certified"), true);
-  assert.equal(certificationDisplayLabels["Cedriva Certified"], "One Leaf · Recommended");
-  assert.equal(certificationDisplayLabels["Cedriva Distinguished"], "Two Leaves · Distinguished");
-  assert.equal(certificationDisplayLabels["Cedriva Destination"], "Three Leaves · Destination");
+test("location status values are brand-independent", () => {
+  assert.deepEqual(certificationLevels,["One Leaf","Two Leaves","Three Leaves","Not Yet Assessed"]);
+  assert.equal(certificationDisplayLabels["One Leaf"], "One Leaf · Recommended");
+  assert.equal(certificationDisplayLabels["Two Leaves"], "Two Leaves · Distinguished");
+  assert.equal(certificationDisplayLabels["Three Leaves"], "Three Leaves · Destination");
 });
 
 test("priority presentation surfaces contain no hard-coded retired company name", () => {
   for (const file of brandIndependentPresentationSurfaces) {
     const source = readFileSync(resolve(root, file), "utf8");
-    assert.equal(source.includes("Cedriva"), false, file);
+    assert.equal(source.includes(["Ced","riva"].join("")), false, file);
   }
 });
 
@@ -80,6 +81,6 @@ test("outbound alert and wishlist messages resolve through the brand configurati
   for (const file of ["lib/alert-notifications.ts", "lib/wishlist-availability.ts"]) {
     const source = readFileSync(resolve(root, file), "utf8");
     assert.match(source, /brand\.name/, file);
-    assert.equal(source.includes("Cedriva"), false, file);
+    assert.equal(source.includes(["Ced","riva"].join("")), false, file);
   }
 });

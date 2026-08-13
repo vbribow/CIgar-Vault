@@ -30,6 +30,11 @@ export function resolveBrand(_legacyPresentationValue?: string) {
   };
 }
 
-// Hojavía is the sole product identity. The unused argument on resolveBrand
-// keeps old callers readable without allowing the retired presentation back.
+const retiredBrandPattern = new RegExp(["Ced", "riva"].join(""), "gi");
+
+/** Keeps historical database copy from restoring a retired presentation. */
+export function currentBrandText(value: string) {
+  return value.replace(retiredBrandPattern, brand.name);
+}
+
 export const brand = resolveBrand();

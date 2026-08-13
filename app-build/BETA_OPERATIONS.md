@@ -4,9 +4,9 @@ Version: 1.3
 Updated: July 30, 2026
 Owner: Brian Bowers
 
-Cedriva is retired as a brand and remains only in unchanged legacy technical
-surfaces. These procedures govern the platform independently of the eventual
-cleared and explicitly adopted replacement name.
+Hojavía is the sole presentation identity. These procedures remain subject to
+the outstanding clearance, legal, and launch approvals and do not authorize a
+public release.
 
 ## Purpose
 

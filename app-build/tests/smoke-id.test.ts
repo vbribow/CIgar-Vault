@@ -52,7 +52,7 @@ test("Log a Smoke supports typed Vault search and a full inventory picker",()=>{
   const manager=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
   assert.match(manager,/id="smoke-inventory-search"/);
   assert.match(manager,/Type brand, line, vitola, or inventory ID/);
-  assert.match(manager,/smokeInventoryMatches\.map/);
+  assert.match(manager,/visibleSmokeInventoryMatches\.map/);
   assert.match(manager,/Do not remove from my Vault/);
   const tauros={inventoryId:"INV-PD-C10",brand:"Arturo Fuente",line:"OpusX Heaven and Earth",vitola:"Tauros the Bull Maduro",currentQty:10,status:"Preserve",priority:"High"} as const;
   assert.equal(matchesSmokeInventory(tauros,"Fuente Taurus maduro"),true);
@@ -95,7 +95,7 @@ test("identical second smoke is blocked unless a new entry was explicitly confir
 test("completed smoke form requires Log another before a second creation",()=>{
   const manager=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
   assert.match(manager,/if \(!mutation\.begin\(\)\) return/);
-  assert.match(manager,/disabled=\{smokeMutation\.pending \|\| smokeMutation\.complete\}/);
+  assert.match(manager,/disabled=\{mode === "mock" \|\| smokeQuantityBlocked \|\| smokePhotoBusy \|\| smokeMutation\.pending \|\| smokeMutation\.complete\}/);
   assert.match(manager,/>Log another</);
   assert.match(manager,/aria-busy=\{smokeMutation\.pending\}/);
   assert.match(manager,/aria-live="polite"/);

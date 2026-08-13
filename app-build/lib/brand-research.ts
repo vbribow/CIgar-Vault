@@ -42,6 +42,20 @@ export const brandResearchSources = [
     href: "https://premiumcigars.org/",
   },
   {
+    name: "Cigar Coop · PCA Big Board",
+    kind: "Industry directory",
+    cadence: "Show season + quarterly review",
+    use: "Document exhibitor and boutique-brand identity before deeper product-level research",
+    href: "https://cigar-coop.com/pca-2026-the-big-board",
+  },
+  {
+    name: "Boutique Cigar Association",
+    kind: "Industry directory",
+    cadence: "Quarterly review",
+    use: "Surface small and emerging premium-cigar companies; independently verify every product-level fact",
+    href: "https://boutiquecigarassociation.com/",
+  },
+  {
     name: "Tobacco Plus Expo",
     kind: "Industry signal",
     cadence: "Weekly + show season",

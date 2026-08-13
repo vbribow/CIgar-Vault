@@ -47,7 +47,7 @@ type DiscoveryCandidate = {
   evidenceDate: string; confidence: "High" | "Medium" | "Low";
 } & Partial<Record<CigarKnowledgeField, string>>;
 
-export function knowledgeProposalFromDiscovery(item: DiscoveryCandidate): CigarKnowledgeProposal {
+export function knowledgeProposalFromDiscovery(item: DiscoveryCandidate, options?: { sourceWorkflow?: string; acquisition?: Record<string, unknown> }): CigarKnowledgeProposal {
   const identity = canonicalCigarIdentity({ ...item, vintage: item.releaseYear });
   const facts = CigarKnowledgeField.options.flatMap(field => {
     const value = item[field]?.trim();
@@ -67,8 +67,8 @@ export function knowledgeProposalFromDiscovery(item: DiscoveryCandidate): CigarK
     brand: item.brand,
     line: item.line,
     vitola: item.vitola,
-    sourceWorkflow: "catalog-discovery",
-    candidate: item,
+    sourceWorkflow: options?.sourceWorkflow || "catalog-discovery",
+    candidate: { ...item, ...(options?.acquisition || {}) },
     facts,
   });
 }

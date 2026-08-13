@@ -7,6 +7,6 @@ import { createHash, randomUUID } from "node:crypto";
  * making ordinary retries idempotent.
  */
 export function createSmokeId(submissionId: string = randomUUID()) {
-  const digest = createHash("sha256").update(`cedriva-smoke:${submissionId}`).digest("hex").slice(0, 20);
+  const digest = createHash("sha256").update(`hojavia-smoke:${submissionId}`).digest("hex").slice(0, 20);
   return `SMK-${digest.toUpperCase()}`;
 }

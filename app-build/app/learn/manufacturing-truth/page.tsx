@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ManufacturingCoverageIndex, ManufacturingTruthDirectory } from "@/components/manufacturing-truth-directory";
+import { FactoryConnectedRecords, ManufacturingCoverageIndex, ManufacturingTruthDirectory } from "@/components/manufacturing-truth-directory";
 import { allBrandManufacturingCoverage, manufacturingFactories, manufacturingRegions, manufacturingTruthRecords } from "@/lib/manufacturing-truth";
 import { brandCoverageWithCatalog } from "@/lib/brand-research";
 import { getCatalog } from "@/lib/smartsheet";
@@ -50,7 +50,7 @@ export default async function ManufacturingTruthPage() {
     </section>
 
     <section className="coverageSection" id="all-brands">
-      <div className="truthSectionHead"><div><div className="eyebrow">Complete {brand.name} brand universe · {coverage.length} records</div><h2>No cigar disappears because its factory is unknown.</h2></div><p>Every premium brand currently represented in {brand.name} has a manufacturing record. Founder-approved discoveries join this index automatically. Verified factories are named; unresolved factories remain visible as research work—not empty space and never a guess.</p></div>
+      <div className="truthSectionHead"><div><div className="eyebrow">Complete {brand.name} brand universe · {coverage.length} records</div><h2>No cigar disappears because its factory is unknown.</h2></div><p>Every premium brand currently represented in {brand.name} has a manufacturing record. Cuban and New World companies sharing a historic name remain separate identities. Verified factories are named; unresolved factories remain visible as research work—not empty space and never a guess.</p></div>
       <ManufacturingCoverageIndex records={coverage} />
     </section>
 
@@ -61,7 +61,7 @@ export default async function ManufacturingTruthPage() {
 
     <section className="factoryAtlas" id="factories">
       <div className="truthSectionHead"><div><div className="eyebrow">Factory index</div><h2>Factories are authors, not invisible vendors.</h2></div><p>A factory contributes its people, leaf library, fermentation practice, construction systems, quality standards, and institutional memory.</p></div>
-      <div>{manufacturingFactories.map((factory) => <a href={`#${factory.record}`} key={factory.name}><span>{factory.country}</span><h3>{factory.name}</h3><p>{factory.brands.join(" · ")}</p><strong>Open connected record ↓</strong></a>)}</div>
+      <FactoryConnectedRecords factories={manufacturingFactories} />
     </section>
 
     <section className="regionAtlas" id="regions">

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { BrandManufacturingCoverage, BrandManufacturingStatus, ManufacturingTruthRecord } from "@/lib/manufacturing-truth";
 import { brand } from "@/lib/brand";
+import { sharedBrandBoundary } from "@/lib/brand-entity-boundaries";
 
 const relationships = ["All relationships", "Vertically integrated", "Company-owned factory", "Partner-owned factory", "Directed contract production", "Mixed production"] as const;
 
@@ -24,7 +25,7 @@ export function ManufacturingTruthDirectory({ records }: { records: Manufacturin
       <output aria-live="polite"><strong>{filtered.length}</strong><span>verified record{filtered.length === 1 ? "" : "s"}</span></output>
     </div>
     <div className="truthDirectory">
-      {filtered.map((record) => <article id={record.id} key={record.id}>
+      {filtered.map((record) => <article id={record.id} key={record.id} tabIndex={-1}>
         <header>
           <div><span className="truthRelationship">{record.relationship}</span><h2>{record.brand}</h2><p>{record.owner}</p></div>
           <div className="truthBadge" data-level={record.trustLevel}><strong>{record.trustLevel}</strong><span>{record.confidence} confidence</span></div>
@@ -50,6 +51,17 @@ export function ManufacturingTruthDirectory({ records }: { records: Manufacturin
       {!filtered.length && <div className="truthEmpty"><strong>No record matches those terms yet.</strong><p>Try a factory, country, blender, or broader brand name. The directory will grow as evidence is verified.</p></div>}
     </div>
   </>;
+}
+
+export function FactoryConnectedRecords({ factories }: { factories: ReadonlyArray<{ name: string; country: string; brands: readonly string[]; record: string }> }) {
+  function open(record: string) {
+    const target = document.getElementById(record);
+    if (!target) { window.location.assign(`/learn/manufacturing-truth#${encodeURIComponent(record)}`); return; }
+    window.history.replaceState(null, "", `#${encodeURIComponent(record)}`);
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => target.focus({ preventScroll: true }), 350);
+  }
+  return <div>{factories.map((factory) => <article key={factory.name}><span>{factory.country}</span><h3>{factory.name}</h3><p>{factory.brands.join(" · ")}</p><button type="button" onClick={() => open(factory.record)}>Open connected record ↓</button></article>)}</div>;
 }
 
 const coverageStatuses: ("All statuses" | BrandManufacturingStatus)[] = ["All statuses", "Factory verified", "Country verified", "Research needed"];
@@ -81,6 +93,7 @@ export function ManufacturingCoverageIndex({ records }: { records: BrandManufact
     <div className="coverageIndex">
       {filtered.map((record) => {
         const expanded = expandedBrand === record.brand;
+        const boundary = sharedBrandBoundary(record.brand);
         const gapId = `coverage-gap-${record.brand.toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
         const missing = record.status === "Country verified"
           ? ["Exact factory", "Release period", "Product-level source"]
@@ -89,6 +102,7 @@ export function ManufacturingCoverageIndex({ records }: { records: BrandManufact
           <div><span>{record.primaryRegion} · {record.segment}</span><h3>{record.brand}</h3></div>
           <div className="coverageStatus"><strong>{record.status}</strong><span>{record.evidence}</span></div>
           <p>{record.manufacturing}</p>
+          {boundary&&<div className="coverageGap sharedBrandBoundary"><strong>Shared name · different companies</strong><p>Choose the exact market identity before assigning origin, factory, ratings, or catalog records.</p><div>{boundary.entities.map(entity=><span key={entity.label}><b>{entity.label}</b> · {entity.market}</span>)}</div></div>}
           {!record.recordId && expanded && <div className="coverageGap" id={gapId}>
             <strong>{record.status === "Country verified" ? "What remains unverified" : "Evidence still required"}</strong>
             <div>{missing.map((item) => <span key={item}>{item}</span>)}</div>

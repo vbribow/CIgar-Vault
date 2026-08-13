@@ -16,6 +16,8 @@ test("research backlog puts unresolved boutique brands first and names missing e
   assert.equal(backlog[0].priority, "Boutique priority");
   assert.ok(backlog.every((item) => item.missing.length >= 3));
   assert.ok(brandResearchSources.some((source) => source.name.includes("Tobacco Plus Expo")));
+  assert.ok(brandResearchSources.some((source) => source.name === "Boutique Cigar Association"));
+  assert.ok(brandResearchSources.some((source) => source.name.includes("PCA Big Board")));
   const lateSmoke = brandResearchSources.find((source) => source.name === "The Late Smoke");
   assert.equal(lateSmoke?.href, "https://www.thelatesmoke.com/");
   assert.match(lateSmoke?.use || "", /image rights/i);

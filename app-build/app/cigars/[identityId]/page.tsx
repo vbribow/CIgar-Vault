@@ -9,6 +9,7 @@ import { canonicalCatalogHref } from "@/lib/canonical-cigar-record";
 import { inventoryCollectionRelationships, isPresentationInventoryRecord } from "@/lib/collection-presentation";
 import { SmokingExperienceScorecardView } from "@/components/smoking-experience-scorecard";
 import { buildSmokingExperienceScorecards } from "@/lib/smoking-scorecard";
+import { exactMarketMovement } from "@/lib/market-movement";
 import "./story.css";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
   if (!story) notFound();
   const representative = story.lots[0];
   const smokingScorecards = buildSmokingExperienceScorecards(representative, inventory, smokes);
+  const movement=exactMarketMovement(story.valuations);
   const relationship=inventoryCollectionRelationships(inventory,collections).get(representative.inventoryId);
   if(relationship?.kind==="presentation"&&relationship.collection){
     redirect(`/collections/${encodeURIComponent(relationship.collection.collectionId)}`);
@@ -50,6 +52,7 @@ export default async function UnifiedCigarStoryPage({ params }: { params: Promis
       <article><span>Your experience</span><strong>{story.personalAverage ?? "—"}</strong><small>{story.smokes.length} journal entr{story.smokes.length === 1 ? "y" : "ies"}</small></article>
       <article><span>Published reviews</span><strong>{story.publishedAverage ?? "—"}</strong><small>{story.ratings.length} sourced score{story.ratings.length === 1 ? "" : "s"}</small></article>
     </section>
+    <section className="marketMovementSummary" data-direction={movement.direction}><div><div className="eyebrow">Exact-identity market movement</div><h2>{movement.direction==="Developing"?"A trend is still developing.":`${movement.direction}${movement.changePercent===undefined?"":` · ${Math.abs(movement.changePercent)}%`}`}</h2><p>{movement.summary}</p></div><aside><strong>{movement.confidence}</strong><span>{movement.observationCount} dated observation{movement.observationCount===1?"":"s"}</span><small>{movement.sourceCount} linked source{movement.sourceCount===1?"":"s"} · asking prices and completed sales remain separate</small></aside></section>
 
     <section className="section card storyChapter"><div><div className="eyebrow">The cigar in your collection</div><h2>One identity, every connected chapter.</h2><p>{representative.provenanceNotes || representative.notes || `This ${story.identity.vitola} is preserved as part of your private collector record. Add the people, place, acquisition, or occasion behind it to preserve why it matters.`}</p></div><div className="storyActions"><Link href={canonicalCatalogHref(representative.catalogId || story.identity.identityId)}>Open canonical record <b>→</b></Link><Link href={`/inventory/${representative.inventoryId}`}>Document provenance <b>→</b></Link><Link href={`/valuations?inventoryId=${representative.inventoryId}`}>Research value <b>→</b></Link><Link href={`/learn`}>Learn with context <b>→</b></Link></div></section>
 

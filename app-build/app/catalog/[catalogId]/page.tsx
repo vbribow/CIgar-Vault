@@ -6,6 +6,7 @@ import { loadCatalog } from "@/lib/catalog";
 import { canonicalCigarIdentity } from "@/lib/cigar-identity";
 import { loadInventory } from "@/lib/inventory";
 import type { CanonicalRecordField } from "@/lib/canonical-cigar-record";
+import { buildCigarLineage } from "@/lib/cigar-lineage";
 import "./record.css";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,7 @@ export default async function CanonicalCigarRecordPage({ params }: { params: Pro
   const { catalogId } = await params;
   const record = await recordFor(catalogId);
   if (!record) notFound();
+  const inventory=await loadInventory(),catalog=await loadCatalog(inventory),selected=catalog.find(value=>value.catalogId===record.catalogId)||catalog.find(value=>canonicalCigarIdentity({...value,vintage:value.releaseYear}).identityId===record.identityId),lineage=selected?buildCigarLineage(selected,catalog):undefined;
   const ownedQuantity = record.ownedLots.reduce((sum, lot) => sum + (lot.currentQty ?? 0), 0);
 
   return <main className="shell canonicalRecordPage">
@@ -121,6 +123,7 @@ export default async function CanonicalCigarRecordPage({ params }: { params: Pro
       </div>
       <ol>{record.researchGaps.map((gap, index) => <li key={gap}><span>{String(index + 1).padStart(2, "0")}</span><strong>{gap}</strong></li>)}</ol>
     </section>
+    {lineage&&<section className="canonicalSection lineageSection" id="lineage"><div className="canonicalSectionHead"><div><div className="eyebrow">06 · Lineage map</div><h2>Related, never merged.</h2></div><p>{lineage.identityRule}</p></div><aside className="lineageMethod"><strong>{lineage.tradition}</strong><span>{lineage.family}</span><small>Relationships are discovery paths—not proof that two cigars share a blend, factory, vintage, value, or smoking experience.</small></aside><div className="lineageGrid">{lineage.nodes.map(node=><Link href={`/catalog/${encodeURIComponent(node.catalogId)}`} key={node.catalogId}><header><span>{node.relationship}</span><b>{node.label}</b></header><h3>{node.line}</h3><p>{node.vitola}{node.releaseYear?` · ${node.releaseYear}`:""}</p><small>{node.tradition} · open canonical record →</small></Link>)}</div>{!lineage.nodes.length&&<div className="emptyState"><strong>No related canonical records are documented yet.</strong><p>The map remains empty rather than inventing a family relationship.</p></div>}</section>}
 
     <section className="canonicalCollector">
       <div><div className="eyebrow">Private collector connection</div><h2>{record.ownedLots.length ? `${ownedQuantity} owned cigar${ownedQuantity === 1 ? "" : "s"}` : "Not currently in your vault"}</h2><p>The canonical product is shared knowledge. Acquisition, quantity, storage, journal, provenance, valuation, and legacy remain private collector records.</p></div>

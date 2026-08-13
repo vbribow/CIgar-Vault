@@ -17,7 +17,7 @@ type StageId = typeof stages[number]["id"];
 
 export function CollectorJourney() {
   const [selected,setSelected]=useState<StageId>("explorer");
-  useEffect(()=>{const saved=(window.localStorage.getItem("hojavia:collector-stage")||window.localStorage.getItem("cedriva-collector-stage")) as StageId|null;if(saved&&stages.some(stage=>stage.id===saved))setSelected(saved)},[]);
+  useEffect(()=>{const saved=window.localStorage.getItem("hojavia:collector-stage") as StageId|null;if(saved&&stages.some(stage=>stage.id===saved))setSelected(saved)},[]);
   const stage=stages.find(item=>item.id===selected)!;
   function choose(id:StageId){setSelected(id);window.localStorage.setItem("hojavia:collector-stage",id)}
   return <section className="collectorJourney" aria-labelledby="collector-journey-heading">

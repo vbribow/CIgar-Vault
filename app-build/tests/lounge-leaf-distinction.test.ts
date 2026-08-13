@@ -5,12 +5,12 @@ import { certificationDisplayLabels, loungeLeafCount } from "../lib/places";
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("legacy assessment values map to a stable one-to-three leaf distinction", () => {
-  assert.equal(loungeLeafCount("Cedriva Certified"), 1);
-  assert.equal(loungeLeafCount("Cedriva Distinguished"), 2);
-  assert.equal(loungeLeafCount("Cedriva Destination"), 3);
-  assert.equal(loungeLeafCount("Not Yet Certified"), 0);
-  assert.match(certificationDisplayLabels["Cedriva Destination"], /Three Leaves/);
+test("assessment values map to a stable one-to-three leaf distinction", () => {
+  assert.equal(loungeLeafCount("One Leaf"), 1);
+  assert.equal(loungeLeafCount("Two Leaves"), 2);
+  assert.equal(loungeLeafCount("Three Leaves"), 3);
+  assert.equal(loungeLeafCount("Not Yet Assessed"), 0);
+  assert.match(certificationDisplayLabels["Three Leaves"], /Three Leaves/);
 });
 
 test("lounge leaves are visible, evidence-led, and commercially independent", () => {

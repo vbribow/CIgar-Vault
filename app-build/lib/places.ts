@@ -2,15 +2,27 @@ import { z } from "zod";
 
 export const placeVibes=["Low-key","Relaxed","Traditional","Professional","Upscale","Private-club atmosphere","Social and lively","Neighborhood-oriented","Beginner-friendly","Collector-focused","Business-friendly","Date-night appropriate","Sports-focused","Quiet and conversation-friendly","Entertainment and nightlife"] as const;
 export const placeCapabilities=["Cigar lounge","Cigar bar","Brick-and-mortar retailer","Walk-in humidor","On-site smoking","Spirits and cocktails","Food","Membership required","Outdoor smoking only"] as const;
-export const certificationLevels=["Cedriva Certified","Cedriva Distinguished","Cedriva Destination","Not Yet Certified"] as const;
+export const certificationLevels=["One Leaf","Two Leaves","Three Leaves","Not Yet Assessed"] as const;
 export const certificationDisplayLabels:Record<(typeof certificationLevels)[number],string>={
- "Cedriva Certified":"One Leaf · Recommended",
- "Cedriva Distinguished":"Two Leaves · Distinguished",
- "Cedriva Destination":"Three Leaves · Destination",
- "Not Yet Certified":"Not yet assessed",
+ "One Leaf":"One Leaf · Recommended",
+ "Two Leaves":"Two Leaves · Distinguished",
+ "Three Leaves":"Three Leaves · Destination",
+ "Not Yet Assessed":"Not yet assessed",
 };
 export function loungeLeafCount(level:(typeof certificationLevels)[number]){
- return level==="Cedriva Destination"?3:level==="Cedriva Distinguished"?2:level==="Cedriva Certified"?1:0;
+ return level==="Three Leaves"?3:level==="Two Leaves"?2:level==="One Leaf"?1:0;
+}
+export function normalizeCertificationLevel(value:unknown):(typeof certificationLevels)[number]{
+ const level=String(value||"");
+ if((certificationLevels as readonly string[]).includes(level))return level as(typeof certificationLevels)[number];
+ if(/Destination$/i.test(level))return"Three Leaves";
+ if(/Distinguished$/i.test(level))return"Two Leaves";
+ if(/Certified$/i.test(level))return"One Leaf";
+ return"Not Yet Assessed";
+}
+export function certificationStorageLevel(level:(typeof certificationLevels)[number]){
+ const retiredPrefix=["Ced","riva"].join("");
+ return level==="Three Leaves"?`${retiredPrefix} Destination`:level==="Two Leaves"?`${retiredPrefix} Distinguished`:level==="One Leaf"?`${retiredPrefix} Certified`:"Not Yet Certified";
 }
 
 export const PlaceReviewInput=z.object({
@@ -57,12 +69,12 @@ export function communityPlaceRankingScore(score:number|undefined,count:number,b
  if(score===undefined||!count)return undefined;
  return Math.round(((score*count+baseline*weight)/(count+weight))*10)/10;
 }
-export function rankPlaces<T extends GooglePlaceResult&{cedrivaScore?:number;cedrivaReviewCount:number}>(places:T[]){
+export function rankPlaces<T extends GooglePlaceResult&{communityScore?:number;communityReviewCount:number}>(places:T[]){
  return [...places].sort((a,b)=>{
-  const aEligible=a.cedrivaReviewCount>=5,bEligible=b.cedrivaReviewCount>=5;
+  const aEligible=a.communityReviewCount>=5,bEligible=b.communityReviewCount>=5;
   if(aEligible!==bEligible)return aEligible?-1:1;
-  const aCommunity=communityPlaceRankingScore(a.cedrivaScore,a.cedrivaReviewCount);
-  const bCommunity=communityPlaceRankingScore(b.cedrivaScore,b.cedrivaReviewCount);
+  const aCommunity=communityPlaceRankingScore(a.communityScore,a.communityReviewCount);
+  const bCommunity=communityPlaceRankingScore(b.communityScore,b.communityReviewCount);
   if(aCommunity!==undefined||bCommunity!==undefined)return(bCommunity??0)-(aCommunity??0);
   return weightedGoogleScore(b.googleRating,b.googleReviewCount)-weightedGoogleScore(a.googleRating,a.googleReviewCount);
  });

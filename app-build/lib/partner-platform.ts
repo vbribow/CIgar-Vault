@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { commissionAmountCents } from "@/lib/partner-model";
 
 export const referralCookieName = "hojavia_partner_referral";
-export const legacyReferralCookieName = "cedriva_partner_referral";
 
 export function partnerAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -14,7 +13,7 @@ export function partnerAdmin() {
 
 export async function claimPartnerReferral(userId: string) {
   const cookieStore = await cookies();
-  const token = cookieStore.get(referralCookieName)?.value || cookieStore.get(legacyReferralCookieName)?.value;
+  const token = cookieStore.get(referralCookieName)?.value;
   const admin = partnerAdmin();
   if (!token || !admin) return;
   const { data: click } = await admin

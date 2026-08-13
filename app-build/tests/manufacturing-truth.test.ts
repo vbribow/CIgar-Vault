@@ -9,7 +9,7 @@ const manufacturingPage = readFileSync(new URL("../app/learn/manufacturing-truth
 const manufacturingDirectory = readFileSync(new URL("../components/manufacturing-truth-directory.tsx", import.meta.url), "utf8");
 
 test("manufacturing truth records separate ownership, authorship, factories, and evidence", () => {
-  assert.equal(manufacturingTruthRecords.length, 32);
+  assert.equal(manufacturingTruthRecords.length, 33);
   assert.equal(new Set(manufacturingTruthRecords.map((record) => record.id)).size, manufacturingTruthRecords.length);
   for (const record of manufacturingTruthRecords) {
     assert.ok(record.brand);
@@ -31,7 +31,7 @@ test("the first directory represents major owned, partner, mixed, and contract s
   for (const relationship of ["Vertically integrated", "Company-owned factory", "Partner-owned factory", "Directed contract production", "Mixed production"]) {
     assert.ok(manufacturingTruthRecords.some((record) => record.relationship === relationship));
   }
-  for (const id of ["my-father", "arturo-fuente", "padron", "perdomo", "espinosa", "aj-fernandez", "dunbarton", "warped", "manufactura-rivas", "plasencia", "foundation", "tatuaje", "illusione", "ovejanegracigars", "crowned-heads", "adventura", "aging-room", "all-saints", "apostate", "artista", "avowed", "caldwell", "casdagli", "cavalier-geneve", "patina"]) {
+  for (const id of ["my-father", "arturo-fuente", "padron", "perdomo", "espinosa", "aj-fernandez", "dunbarton", "warped", "manufactura-rivas", "plasencia", "foundation", "tatuaje", "illusione", "ovejanegracigars", "crowned-heads", "adventura", "aging-room", "all-saints", "apostate", "artista", "avowed", "caldwell", "casdagli", "cavalier-geneve", "patina", "hda-cigars"]) {
     assert.ok(manufacturingTruthRecords.some((record) => record.id === id));
   }
 });
@@ -46,15 +46,17 @@ test("factory and regional learning connect back to evidence records", () => {
 });
 
 test("every brand in Hojavía receives a manufacturing coverage record", () => {
-  assert.equal(cigarBrands.length, 162);
+  assert.equal(cigarBrands.length, 194);
   assert.equal(allBrandManufacturingCoverage.length, cigarBrands.length);
   assert.equal(new Set(allBrandManufacturingCoverage.map((record) => record.brand)).size, cigarBrands.length);
-  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Factory verified").length, 35);
+  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Factory verified").length, 36);
   assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Country verified").length, 27);
-  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Research needed").length, 100);
+  assert.equal(allBrandManufacturingCoverage.filter((record) => record.status === "Research needed").length, 131);
   assert.equal(manufacturingCoverageForBrand("Perdomo").recordId, "perdomo");
   assert.equal(manufacturingCoverageForBrand("Adventura").recordId, "adventura");
   assert.equal(manufacturingCoverageForBrand("Patina").recordId, "patina");
+  assert.equal(manufacturingCoverageForBrand("Hermanos de Armas (HDA Cigars)").recordId, "hda-cigars");
+  assert.equal(manufacturingCoverageForBrand("Micallef Cigars").status, "Research needed");
   assert.equal(manufacturingCoverageForBrand("Cohiba").status, "Country verified");
   assert.equal(manufacturingCoverageForBrand("Unknown future brand").status, "Research needed");
 });

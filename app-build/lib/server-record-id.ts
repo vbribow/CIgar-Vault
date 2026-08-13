@@ -21,7 +21,7 @@ export type ServerRecordKind = keyof typeof prefixes;
  */
 export function createServerRecordId(kind: ServerRecordKind, submissionId: string = randomUUID()) {
   const digest = createHash("sha256")
-    .update(`cedriva:${kind}:${submissionId}`)
+    .update(`hojavia:${kind}:${submissionId}`)
     .digest("hex")
     .slice(0, 20)
     .toUpperCase();

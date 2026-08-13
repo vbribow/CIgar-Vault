@@ -2,11 +2,13 @@ import { z } from "zod";
 import { cigarIdentityKey } from "./cigar-identity";
 
 export const CommunityPostInput=z.object({displayName:z.string().trim().min(2).max(40),category:z.enum(["General","Cigar discussion","Collection care","Humidors","Events"]),title:z.string().trim().min(4).max(120),body:z.string().trim().min(10).max(4000)}).strict();
-export const CommunityRatingInput=z.object({displayName:z.string().trim().min(2).max(40),brand:z.string().trim().min(2).max(100),line:z.string().trim().min(1).max(150),vitola:z.string().trim().min(1).max(120),vintage:z.union([z.string().trim().max(20),z.number()]).optional(),score:z.coerce.number().int().min(1).max(100),review:z.string().trim().max(1200).optional()}).strict();
+const experienceScore=z.coerce.number().int().min(1).max(100).optional();
+export const CommunityRatingInput=z.object({displayName:z.string().trim().min(2).max(40),brand:z.string().trim().min(2).max(100),line:z.string().trim().min(1).max(150),vitola:z.string().trim().min(1).max(120),vintage:z.union([z.string().trim().max(20),z.number()]).optional(),tradition:z.enum(["Habanos","New World","Unresolved"]).optional(),releaseContext:z.string().trim().max(120).optional(),score:z.coerce.number().int().min(1).max(100),flavorScore:experienceScore,constructionScore:experienceScore,drawScore:experienceScore,burnScore:experienceScore,consistencyScore:experienceScore,valueScore:experienceScore,buyAgain:z.boolean().optional(),review:z.string().trim().max(1200).optional()}).strict();
 export type CommunityContributionStatus="active"|"review"|"changes"|"hidden";
 export type CommunityPost=z.infer<typeof CommunityPostInput>&{id:string;createdAt:string;status:CommunityContributionStatus;moderationReason?:string};
 export type CommunityRating=z.infer<typeof CommunityRatingInput>&{id:string;createdAt:string;status:CommunityContributionStatus;cigarKey:string;userId?:string;moderationReason?:string};
 export type CommunityRanking={rank:number;cigarKey:string;brand:string;line:string;vitola:string;vintage?:string|number;averageScore:number;weightedScore:number;ratingCount:number;confidence:"provisional"|"developing"|"established"};
+export type CommunityExperienceProfile={cigarKey:string;brand:string;line:string;vitola:string;vintage?:string|number;tradition:"Habanos"|"New World"|"Unresolved";releaseContext?:string;ratingCount:number;confidence:"provisional"|"developing"|"established";overall:number;dimensions:{flavor?:number;construction?:number;draw?:number;burn?:number;consistency?:number;value?:number};buyAgainRate?:number;buyAgainCount:number};
 
 export function communityCigarKey(value:Pick<CommunityRating,"brand"|"line"|"vitola"|"vintage">){return cigarIdentityKey(value)}
 const roundScore=(value:number)=>Math.round(value*10)/10;
@@ -89,6 +91,12 @@ export function communityTop25(ratings:CommunityRating[]):CommunityRanking[]{
     ...value,
     weightedScore:roundScore((value.contributions.reduce((sum,score)=>sum+score,0)+communityMean*priorWeight)/(value.ratingCount+priorWeight))
   })).sort((a,b)=>b.weightedScore-a.weightedScore||b.averageScore-a.averageScore||b.ratingCount-a.ratingCount||a.brand.localeCompare(b.brand)).slice(0,25).map(({contributions:_,...value},index)=>({...value,rank:index+1}));
+}
+const average=(values:number[])=>values.length?roundScore(values.reduce((sum,value)=>sum+value,0)/values.length):undefined;
+export function communityExperienceProfiles(ratings:CommunityRating[]):CommunityExperienceProfile[]{
+  const groups=new Map<string,CommunityRating[]>();
+  for(const rating of latestCollectorRatings(ratings)){const key=communityCigarKey(rating);groups.set(key,[...(groups.get(key)||[]),rating])}
+  return [...groups.entries()].map(([cigarKey,values])=>{const first=values[0];const scores=<K extends keyof CommunityRating>(key:K)=>values.flatMap(value=>typeof value[key]==="number"?[value[key] as number]:[]);const buyAgain=values.flatMap(value=>typeof value.buyAgain==="boolean"?[value.buyAgain]:[]);const confidence:CommunityExperienceProfile["confidence"]=values.length>=10?"established":values.length>=3?"developing":"provisional";return{cigarKey,brand:first.brand,line:first.line,vitola:first.vitola,vintage:first.vintage,tradition:first.tradition||"Unresolved",releaseContext:first.releaseContext,ratingCount:values.length,confidence,overall:average(scores("score"))!,dimensions:{flavor:average(scores("flavorScore")),construction:average(scores("constructionScore")),draw:average(scores("drawScore")),burn:average(scores("burnScore")),consistency:average(scores("consistencyScore")),value:average(scores("valueScore"))},buyAgainRate:buyAgain.length?Math.round(buyAgain.filter(Boolean).length/buyAgain.length*100):undefined,buyAgainCount:buyAgain.length}}).sort((a,b)=>b.ratingCount-a.ratingCount||b.overall-a.overall||a.brand.localeCompare(b.brand));
 }
 export function communityStatusLabel(status:CommunityContributionStatus){return status==="active"?"Published":status==="review"?"Under Review":status==="changes"?"Needs Changes":"Not Published"}
 

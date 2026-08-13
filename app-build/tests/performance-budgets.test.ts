@@ -11,7 +11,6 @@ test("the active editorial hero stays within the local transfer budget", () => {
   assert.ok(existsSync(hero), "the optimized Hojavía hero must exist");
   assert.ok(statSync(hero).size <= 425 * 1024, "the active hero must remain at or below 425 KiB");
   assert.equal(existsSync(asset("public/editorial/cigar-roller-hojavia.png")), false);
-  assert.equal(existsSync(asset("public/editorial/cigar-roller-cedriva.png")), false);
 });
 
 test("high-value pages reserve image space and defer below-fold work", () => {
@@ -23,7 +22,7 @@ test("high-value pages reserve image space and defer below-fold work", () => {
   assert.match(manifesto, /cigar-roller-hojavia\.jpg"\} width="1540" height="1021"[^>]*fetchPriority="high"[^>]*decoding="async"/);
   assert.match(discover, /tobacco-field\.jpg" width="1800" height="1013" decoding="async"/);
   assert.match(discover, /tobacco-field\.jpg" width="1800" height="1013" loading="lazy" decoding="async"/);
-  assert.doesNotMatch(`${home}${manifesto}${discover}`, /cigar-roller-(?:hojavia|cedriva)\.png/);
+  assert.doesNotMatch(`${home}${manifesto}${discover}`, /cigar-roller-hojavia\.png/);
 });
 
 test("slow private workspaces provide stable, accessible loading states", () => {

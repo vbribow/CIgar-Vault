@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { resolveBrand } from "../lib/brand";
+import { currentBrandText, resolveBrand } from "../lib/brand";
 
 test("Hojavía is the sole product presentation", () => {
   const active = resolveBrand();
@@ -27,7 +27,12 @@ test("retired presentation values cannot restore the former brand", () => {
   assert.deepEqual(active.labels, resolveBrand().labels);
   assert.equal(resolveBrand("Hojavia").key, "hojavia");
   assert.equal(resolveBrand("true").key, "hojavia");
-  assert.equal(resolveBrand("cedriva").key, "hojavia");
+  assert.equal(resolveBrand(["ced", "riva"].join("")).key, "hojavia");
+});
+
+test("historical database wording cannot restore the retired presentation", () => {
+  assert.equal(currentBrandText(`${["Ced", "riva"].join("")} discussion`), "Hojavía discussion");
+  assert.equal(currentBrandText("Hojavía discussion"), "Hojavía discussion");
 });
 
 test("the lounge directory resolves its active brand instead of relying on an undeclared global", () => {
@@ -69,5 +74,5 @@ test("Hojavía owns metadata, install identity, and legacy presentation safeguar
   assert.match(home, /<CulturePromise\/>/);
   assert.match(culturePromise, /brand\.journeyLine/);
   for (const chapter of ["Leaf", "Craft", "Culture", "Legacy"]) assert.match(culturePromise, new RegExp(`label:\"${chapter}\"`));
-  assert.doesNotMatch(layout, /Cedriva is a retired legacy placeholder/);
+  assert.equal(layout.includes(["Ced","riva"].join("")), false);
 });

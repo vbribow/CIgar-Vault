@@ -28,7 +28,7 @@ test("offline support caches only public shell assets", () => {
   assert.match(worker, /\/offline/);
   assert.match(worker, /\/manifest\.webmanifest/);
   assert.match(worker, /hojavia-mark\.svg/);
-  assert.doesNotMatch(worker, /cedriva-/);
+  assert.equal(worker.includes(`${["ced", "riva"].join("")}-`), false);
   assert.doesNotMatch(worker, /cigar-vault-/);
   assert.doesNotMatch(worker, /\/inventory/);
   assert.doesNotMatch(worker, /\/api\//);

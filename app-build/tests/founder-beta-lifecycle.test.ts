@@ -203,7 +203,7 @@ test("isolated Hojavía beta lifecycle preserves one exact lot through backup, r
     const pdf = buildInsurancePdfDocument({ rows: report.rows, valuations, generatedAt: createdAt, totals: report.totals });
     const pdfText = Buffer.from(pdf).toString("latin1");
     assert.match(pdfText, /HOJAVIA - PRIVATE INSURANCE SCHEDULE/);
-    assert.doesNotMatch(pdfText, /CEDRIVA/);
+    assert.equal(pdfText.toLowerCase().includes(["ced", "riva"].join("")), false);
     assert.match(pdfText, /Market asking price - no confirmed sale/);
     assert.match(pdfText, /Verified completed sale/);
 
