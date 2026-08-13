@@ -16,6 +16,8 @@ test("physical lot labels are separated from exact vitola identity", () => {
   });
   assert.equal(canonicalVitolaName("Box Pressed Toro"), "Box Pressed Toro");
   assert.equal(canonicalVitolaName("Assorted / box"), "Assorted / box");
+  assert.equal(canonicalVitolaName(46), "46");
+  assert.equal(physicalLotDesignation(undefined), undefined);
   assert.equal(canonicalCigarIdentity(lots[0]).productKey, canonicalCigarIdentity(lots[1]).productKey);
   assert.notEqual(canonicalCigarIdentity(lots[0]).identityKey, canonicalCigarIdentity(lots[1]).identityKey);
 });

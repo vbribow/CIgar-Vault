@@ -14,18 +14,21 @@ export type PhysicalLotDesignation = {
  * Only an explicit trailing numeric designation is removed; names such as
  * "Box Pressed" and unresolved descriptions such as "Assorted / box" remain.
  */
-export function physicalLotDesignation(vitola: string): PhysicalLotDesignation | undefined {
-  const match = vitola.match(trailingLotDesignation);
+export function physicalLotDesignation(vitola: unknown): PhysicalLotDesignation | undefined {
+  const value = String(vitola ?? "").trim();
+  if (!value) return undefined;
+  const match = value.match(trailingLotDesignation);
   if (!match || match.index === undefined) return undefined;
-  const canonicalVitola = vitola.slice(0, match.index).trim();
+  const canonicalVitola = value.slice(0, match.index).trim();
   if (!canonicalVitola) return undefined;
   const kind = match[1].toLowerCase() === "box" ? "Box" : "Lot";
   const number = Number(match[2]);
   return { canonicalVitola, kind, number, label: `${kind} ${number}` };
 }
 
-export function canonicalVitolaName(vitola: string) {
-  return physicalLotDesignation(vitola)?.canonicalVitola ?? vitola.trim();
+export function canonicalVitolaName(vitola: unknown) {
+  const value = String(vitola ?? "").trim();
+  return physicalLotDesignation(value)?.canonicalVitola ?? value;
 }
 
 const normalized = (value: unknown) => String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
