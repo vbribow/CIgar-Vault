@@ -66,6 +66,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [smokes, setSmokes] = useState(initialSmokes);
   const [valuations, setValuations] = useState(initialValuations);
   const [message, setMessage] = useState("");
+  const [smokeSourceMode, setSmokeSourceMode] = useState<"UNDECIDED" | "VAULT" | "MANUAL">(initialManualName ? "MANUAL" : selectedInventoryId ? "VAULT" : "UNDECIDED");
   const [smokeSource, setSmokeSource] = useState(initialManualName?"MANUAL":selectedInventoryId || "");
   const [smokeInventoryQuery, setSmokeInventoryQuery] = useState("");
   const [smokeCigarName, setSmokeCigarName] = useState(initialManualName||"");
@@ -74,6 +75,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const [smokePhotoAnalysis, setSmokePhotoAnalysis] = useState<CigarVisionResult>();
   const [smokePhotoBusy, setSmokePhotoBusy] = useState(false);
   const [smokePhotoMessage, setSmokePhotoMessage] = useState("");
+  const [smokeCameraSession, setSmokeCameraSession] = useState(0);
   const smokePhotoRequest = useRef(0);
   const smokeSaveFeedback = useRef<HTMLOutputElement>(null);
   const [smokeSubmissionId, setSmokeSubmissionId] = useState(createClientUuid);
@@ -92,6 +94,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const valuationFormDraft = useDeviceFormDraft("hojavia:form-draft:valuation:v1");
   const smokePhotoPreviews = useMemo(() => smokePhotos.map(file => ({ name: file.name, url: URL.createObjectURL(file) })), [smokePhotos]);
   const smokeInventoryMatches = useMemo(() => inventory.filter(item => matchesSmokeInventory(item, smokeInventoryQuery)).sort(compareSmokeInventory), [inventory, smokeInventoryQuery]);
+  const visibleSmokeInventoryMatches = useMemo(() => smokeInventoryMatches.slice(0, smokeInventoryQuery ? 100 : 40), [smokeInventoryMatches, smokeInventoryQuery]);
   const selectedSmokeInventory = useMemo(() => inventory.find(item => item.inventoryId === smokeSource), [inventory, smokeSource]);
   const smokeQuantityBlocked = Boolean(selectedSmokeInventory && (!selectedSmokeInventory.currentQty || selectedSmokeInventory.currentQty < 1));
 
@@ -99,7 +102,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
 
   useEffect(() => {
     const restoredSource = smokeDraft.restoredFields?.inventoryId?.[0];
-    if (restoredSource) setSmokeSource(restoredSource);
+    if (restoredSource) { setSmokeSource(restoredSource); setSmokeSourceMode(restoredSource === "MANUAL" ? "MANUAL" : "VAULT"); }
     const restoredName = smokeDraft.restoredFields?.cigarName?.[0];
     if (restoredName) setSmokeCigarName(restoredName);
     setOutsideIdentity(current=>({confirmed:Boolean(smokeDraft.restoredFields?.outsideInventory?.length),brand:smokeDraft.restoredFields?.cigarBrand?.[0]||current.brand,line:smokeDraft.restoredFields?.cigarLine?.[0]||current.line,vitola:smokeDraft.restoredFields?.cigarVitola?.[0]||current.vitola}));
@@ -139,6 +142,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       if (flavors.length) payload.flavor = flavors.join(", ");
     } else payload.submissionId = valuationSubmissionId;
     const finishSmokeSave = (result: { data: SmokingLog; collector25?: { status?: string } }, status: number) => {
+      smokePhotoRequest.current += 1;
       void captureOperationalSuccess("smoke-save",status);
       setSmokes(values => values.some(value => value.smokeId === result.data.smokeId) ? values : [result.data, ...values]);
       setLastSmokeIdentity({ source: smokeSource, cigarName: smokeCigarName, outsideIdentity });
@@ -155,6 +159,8 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       setSmokePhotos([]);
       setSmokePhotoAnalysis(undefined);
       setSmokePhotoMessage("");
+      setSmokePhotoBusy(false);
+      setSmokeCameraSession(current=>current+1);
     };
     let failureStatus=0;
     try {
@@ -204,15 +210,19 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   }
 
   function startAnotherSmoke(reuseIdentity = false) {
+    smokePhotoRequest.current += 1;
     smokeMutation.reset();
     setNewSmokeConfirmed(true);
     setSmokeSubmissionId(createClientUuid());
     setSmokeSource(reuseIdentity ? lastSmokeIdentity?.source || selectedInventoryId || "" : selectedInventoryId || "");
+    setSmokeSourceMode(reuseIdentity ? (lastSmokeIdentity?.source === "MANUAL" ? "MANUAL" : "VAULT") : selectedInventoryId ? "VAULT" : "UNDECIDED");
     setSmokeCigarName(reuseIdentity ? lastSmokeIdentity?.cigarName || "" : "");
     setOutsideIdentity(reuseIdentity ? lastSmokeIdentity?.outsideIdentity || {confirmed:false,brand:"",line:"",vitola:""} : {confirmed:false,brand:"",line:"",vitola:""});
     setSmokePhotos([]);
     setSmokePhotoAnalysis(undefined);
     setSmokePhotoMessage("");
+    setSmokePhotoBusy(false);
+    setSmokeCameraSession(current=>current+1);
     setMessage("");
     window.setTimeout(() => document.querySelector<HTMLSelectElement>('#smoke-inventory-source')?.focus(), 0);
   }
@@ -237,7 +247,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error(photoPreparationError(file.name))), "image/jpeg", .72));
       return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
-    } finally { URL.revokeObjectURL(source); }
+    } finally { image.onload=null;image.onerror=null;image.src="";URL.revokeObjectURL(source); }
   }
 
   async function identifySmokePhotos() {
@@ -300,27 +310,28 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       <h2>Log a smoke</h2>
       <p className="small">Record any cigar you smoke—whether it came from your Vault, a lounge, a friend, or somewhere new. There are no wrong tasting notes.</p>
       <div className="smokeStartChoices" aria-label="Should this smoke reduce your Vault inventory?">
-        <button type="button" className={smokeSource === "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource("MANUAL"); setSmokeInventoryQuery(""); setSmokePhotoMessage(""); }}><strong>Do not remove from my Vault</strong><small>For a gift, lounge cigar, or separate purchase. Identify it by photo or type its name; Vault quantities stay unchanged.</small></button>
-        <button type="button" className={smokeSource && smokeSource !== "MANUAL" ? "active" : ""} onClick={() => { setSmokeSource(selectedInventoryId || ""); setSmokePhotoMessage(""); document.querySelector<HTMLInputElement>('#smoke-inventory-search')?.focus(); }}><strong>Remove from my Vault</strong><small>Select the exact owned lot and choose how many cigars to remove.</small></button>
+        <button type="button" className={smokeSourceMode === "MANUAL" ? "active" : ""} onClick={() => { setSmokeSourceMode("MANUAL"); setSmokeSource("MANUAL"); setSmokeInventoryQuery(""); setSmokePhotoMessage(""); }}><strong>Do not remove from my Vault</strong><small>For a gift, lounge cigar, or separate purchase. Identify it by photo or type its name; Vault quantities stay unchanged.</small></button>
+        <button type="button" className={smokeSourceMode === "VAULT" ? "active" : ""} onClick={() => { setSmokeSourceMode("VAULT"); setSmokeSource(selectedInventoryId || ""); setSmokePhotoMessage(""); window.setTimeout(() => document.querySelector<HTMLInputElement>('#smoke-inventory-search')?.focus({ preventScroll: true }), 0); }}><strong>Remove from my Vault</strong><small>Select the exact owned lot and choose how many cigars to remove.</small></button>
         <a href="/inventory#mobile-intake"><strong>Add to Vault first</strong><small>Create and verify the inventory lot before logging its smoke.</small></a>
       </div>
       {smokeDraft.restoredFields && <p className="deviceDraftNotice" role="status">Unfinished tasting details were restored from this browser profile. Review them before saving.</p>}
       <form ref={smokeDraft.formRef} className="recordForm" noValidate onSubmit={event => send(event, "smoke")} onChange={smokeDraft.capture} aria-busy={smokeMutation.pending}>
-        <fieldset disabled={smokeMutation.pending || smokeMutation.complete}>
-        {smokeSource !== "MANUAL" && <div className="smokeInventoryFinder">
+        <fieldset disabled={smokeMutation.pending || smokeMutation.complete || smokePhotoBusy}>
+        {smokeSourceMode === "VAULT" && <div className="smokeInventoryFinder">
           <label htmlFor="smoke-inventory-search"><span>Search my Vault</span><input id="smoke-inventory-search" type="search" value={smokeInventoryQuery} onChange={event => setSmokeInventoryQuery(event.target.value)} placeholder="Type brand, line, vitola, or inventory ID" autoComplete="off" /></label>
           <small role="status" aria-live="polite">{smokeInventoryQuery ? `${smokeInventoryMatches.length} matching lot${smokeInventoryMatches.length === 1 ? "" : "s"}` : `${inventory.length} owned lots available`}</small>
         </div>}
-        {smokeSource !== "MANUAL" && <label><span>{smokeInventoryQuery ? "Choose the matching Vault lot *" : "Choose the Vault lot *"}</span><select id="smoke-inventory-source" name="inventoryId" required value={smokeSource} onChange={event => { setSmokeSource(event.target.value); setSmokePhotoMessage(""); }}>
+        {smokeSourceMode === "VAULT" && <label><span>{smokeInventoryQuery ? "Choose the matching Vault lot *" : "Choose the Vault lot *"}</span><select id="smoke-inventory-source" name="inventoryId" required value={smokeSource} onChange={event => { setSmokeSource(event.target.value); setSmokePhotoMessage(""); }}>
           <option value="">Select the exact inventory lot</option>
-          {smokeInventoryMatches.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}{item.currentQty !== undefined ? ` · ${item.currentQty} remaining` : " · quantity required"}</option>)}
+          {visibleSmokeInventoryMatches.map(item => <option key={item.inventoryId} value={item.inventoryId}>{item.inventoryId} · {item.brand} {item.line} · {item.vitola}{item.currentQty !== undefined ? ` · ${item.currentQty} remaining` : " · quantity required"}</option>)}
         </select></label>}
-        {smokeInventoryQuery && smokeInventoryMatches.length === 0 && <p className="deviceDraftNotice" role="status">No Vault match found. Check the spelling, clear the search to browse every lot, or choose “Do not remove from my Vault” above.</p>}
+        {smokeSourceMode === "VAULT" && smokeInventoryMatches.length > visibleSmokeInventoryMatches.length && <p className="deviceDraftNotice" role="status">Showing the first {visibleSmokeInventoryMatches.length} of {smokeInventoryMatches.length} lots. Type more of the brand, line, vitola, or inventory ID to narrow the list.</p>}
+        {smokeSourceMode === "VAULT" && smokeInventoryQuery && smokeInventoryMatches.length === 0 && <p className="deviceDraftNotice" role="status">No Vault match found. Check the spelling, clear the search to browse every lot, or choose “Do not remove from my Vault” above.</p>}
         {selectedSmokeInventory && selectedSmokeInventory.currentQty !== undefined && selectedSmokeInventory.currentQty > 0 && <label><span>Cigars smoked from this lot *</span><input name="quantitySmoked" type="number" min="1" max={selectedSmokeInventory.currentQty} step="1" defaultValue="1" required /><small>{selectedSmokeInventory.currentQty} remaining before this entry. Saving removes exactly the number entered; original quantity stays unchanged.</small></label>}
         {selectedSmokeInventory && smokeQuantityBlocked && <p className="deviceDraftNotice" role="alert">{selectedSmokeInventory.currentQty === 0 ? "This lot has no cigars remaining." : "Record this lot’s remaining quantity before logging a smoke."} <a href={`/inventory?edit=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&vaultSearch=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&focus=quantity#inventory-editor`}>Correct this exact record →</a></p>}
-        {smokeSource === "MANUAL" && <div className="manualSmokeIdentity">
+        {smokeSourceMode === "MANUAL" && <div className="manualSmokeIdentity">
           <input type="hidden" name="inventoryId" value="MANUAL" data-draft-safe="true" />
-          <div className="smokePhotoIdentify"><div><strong>Identify by photo</strong><small>Photograph the cigar or band. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos}/><span>Take a photo</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos}/><span>Choose photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button></div>
+          <div className="smokePhotoIdentify" key={`smoke-camera-${smokeCameraSession}`}><div><strong>Identify by photo</strong><small>Photograph the cigar or band. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos}/><span>Take a photo</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos}/><span>Choose photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button></div>
           {smokePhotoPreviews.length > 0 && <section className="smokePhotoProgress" aria-label={`${smokePhotoPreviews.length} selected cigar photo${smokePhotoPreviews.length === 1 ? "" : "s"}`} aria-busy={smokePhotoBusy}>
             <div>{smokePhotoPreviews.map(photo => <img key={photo.url} src={photo.url} alt={`Selected cigar evidence: ${photo.name}`} />)}</div>
             <p role="status" aria-live="polite"><strong>{smokePhotoBusy ? "Comparing visible details…" : "Photos ready for review"}</strong><span>{smokePhotoBusy ? "Hojavía is looking for brand, line, vitola, packaging, and date clues." : "You can identify these photos now or replace them before continuing."}</span></p>
@@ -348,7 +359,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         <label className="check"><input name="buyAgain" type="checkbox" /> Buy again</label>
         {mode === "smartsheet" && <label><span>Founder write key</span><input name="writeKey" type="password" required /></label>}
         {message && smokeMutation.status !== "idle" && <output ref={smokeSaveFeedback} className="wideMessage deviceDraftNotice" tabIndex={-1} role={smokeMutation.status === "error" ? "alert" : "status"} aria-live="polite" aria-atomic="true">{message}</output>}
-        <button type="submit" className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Check save status"})}</button>
+        <button type="submit" className="button" disabled={mode === "mock" || smokeQuantityBlocked || smokePhotoBusy || smokeMutation.pending || smokeMutation.complete}>{mutationButtonText(smokeMutation.status,{idle:"Save smoke",pending:"Saving smoke…",success:"Smoke saved",error:"Check save status"})}</button>
         </fieldset>
       </form>
       {smokeMutation.complete && <section className="mutationCompletion" role="status" aria-live="polite" aria-labelledby="smoke-saved-title"><strong id="smoke-saved-title">Smoke saved.</strong><p>Continue without refreshing or searching for this journal again.</p><div><button type="button" className="button" onClick={() => startAnotherSmoke(true)}>Log this cigar again</button><button type="button" className="button secondary" onClick={() => startAnotherSmoke(false)}>Log another</button>{lastSmokeIdentity?.source&&lastSmokeIdentity.source!=="MANUAL"&&<a className="button secondary" href={`/inventory/${encodeURIComponent(lastSmokeIdentity.source)}`}>Open cigar record</a>}<a className="textLink" href="/inventory">Return to Vault</a></div></section>}
