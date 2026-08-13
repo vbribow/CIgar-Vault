@@ -6,10 +6,11 @@ import { createClient,supabaseConfigured } from "@/lib/supabase/server";
 import { loadInventory } from "@/lib/inventory";
 import { loadSmokingLogs } from "@/lib/data";
 import { privateRatingsFromSmokingHistory } from "@/lib/collector-25-contribution";
+import { currentBrandText } from "@/lib/brand";
 
 function admin(){const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),key=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();if(!url||!key)throw new Error("Community database is not configured");return createAdmin(url,key,{auth:{persistSession:false,autoRefreshToken:false}})}
 function contributionSourceUnavailable(error:unknown){const value=error as{code?:string;message?:string}|null;return value?.code==="42703"||/contribution_source.*does not exist/i.test(value?.message||"")}
-const postShape=(row:Record<string,unknown>):CommunityPost=>({id:String(row.id),displayName:String(row.display_name),category:row.category as CommunityPost["category"],title:String(row.title),body:String(row.body),status:row.status as CommunityPost["status"],moderationReason:row.moderation_reason?String(row.moderation_reason):undefined,createdAt:String(row.created_at)});
+const postShape=(row:Record<string,unknown>):CommunityPost=>({id:String(row.id),displayName:String(row.display_name),category:row.category as CommunityPost["category"],title:currentBrandText(String(row.title)),body:currentBrandText(String(row.body)),status:row.status as CommunityPost["status"],moderationReason:row.moderation_reason?currentBrandText(String(row.moderation_reason)):undefined,createdAt:String(row.created_at)});
 const ratingShape=(row:Record<string,unknown>):CommunityRating=>({id:String(row.id),userId:String(row.user_id),displayName:String(row.display_name),cigarKey:String(row.cigar_key),brand:String(row.brand),line:String(row.line),vitola:String(row.vitola),vintage:row.vintage?String(row.vintage):undefined,score:Number(row.score),review:row.review?String(row.review):undefined,status:row.status as CommunityRating["status"],moderationReason:row.moderation_reason?String(row.moderation_reason):undefined,createdAt:String(row.created_at)});
 async function loadAllActiveRatings(client:ReturnType<typeof admin>){const rows:Record<string,unknown>[]=[];const pageSize=1000;for(let from=0;;from+=pageSize){const{data,error}=await client.from("community_ratings").select("*").eq("status","active").order("created_at",{ascending:true}).range(from,from+pageSize-1);if(error)throw error;const page=(data||[]) as Record<string,unknown>[];rows.push(...page);if(page.length<pageSize)break}return rows}
 
