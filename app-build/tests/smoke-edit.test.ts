@@ -39,6 +39,13 @@ test("journal exposes an Edit smoke action and an explicit No score correction",
   assert.match(editor,/"If-Match":recordRevision\(smoke\)/);
 });
 
+test("new and edited smoke records share the Wood flavor option",()=>{
+  const records=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
+  const editor=readFileSync(new URL("../components/smoke-entry-editor.tsx",import.meta.url),"utf8");
+  assert.match(records,/flavorOptions = \[[^\]]*"Wood"/);
+  assert.match(editor,/import \{ flavorOptions, strengthOptions \} from "@\/components\/records-manager"/);
+});
+
 test("journal leads with five newest entries and expands only on request",()=>{
   const journal=readFileSync(new URL("../components/smoke-journal-browser.tsx",import.meta.url),"utf8");
   const results=journal.indexOf('<section className="journalResults"');

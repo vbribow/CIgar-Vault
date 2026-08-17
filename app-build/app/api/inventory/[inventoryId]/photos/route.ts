@@ -6,6 +6,7 @@ import{recordRevision}from"@/lib/record-revision";
 import{updateInventoryRow}from"@/lib/smartsheet";
 import{createClient,supabaseConfigured}from"@/lib/supabase/server";
 import{saveOwnedRecordIfUnchanged}from"@/lib/user-data";
+import{normalizeInventory}from"@/lib/inventory-model";
 const MAX_BYTES=12*1024*1024,allowedTypes=new Set(["image/jpeg","image/png","image/webp","application/pdf"]);
 export async function POST(request:Request,{params}:{params:Promise<{inventoryId:string}>}){
  const user=supabaseConfigured()?(await(await createClient()).auth.getUser()).data.user:null,founder=authorizeWrite(request);
@@ -28,7 +29,7 @@ export async function POST(request:Request,{params}:{params:Promise<{inventoryId
   try{
    const url=new URL(`/api/photos/${key.split("/").map(encodeURIComponent).join("/")}`,request.url).toString(),updated={...item,[photoFields[kind]]:url};
    if(user){
-    const saveResult=await saveOwnedRecordIfUnchanged("inventory",inventoryId,updated,expectedRevision);
+    const saveResult=await saveOwnedRecordIfUnchanged("inventory",inventoryId,updated,expectedRevision,normalizeInventory);
     if(saveResult==="conflict")throw new Error("This record changed on another device during the upload. The newer record was preserved; refresh and attach the photo again.");
     if(saveResult!=="saved")throw new Error("The photo could not be linked to your inventory record");
    }else await updateInventoryRow(inventoryId,updated);

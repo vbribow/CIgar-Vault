@@ -51,6 +51,7 @@ export const learningPages = [
   { path: "/learn/resting-and-aging", name: "Resting & Aging Cigars", description: "Understand arrival rest, acclimation, and deliberate long-term cigar aging." },
   { path: "/learn/humidor-climate", name: "Humidor Temperature & Humidity", description: "Protect premium cigars through stable, evidence-aware storage." },
   { path: "/learn/manufacturing-truth", name: "Who Actually Makes the Cigar?", description: "Connect brands, blenders, factories, tobacco regions, releases, and evidence." },
+  { path: "/learn/factory-map-reading", name: "How to Read a Cigar Factory Map", description: "Understand brand ownership, factory authorship, contract production, geography, and release-level evidence." },
 ] as const;
 
 export const publicStaticPages = [

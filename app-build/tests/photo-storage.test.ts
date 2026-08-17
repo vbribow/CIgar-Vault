@@ -18,7 +18,7 @@ test("native Vercel photo storage does not import Cloudflare workers",()=>{
 
 test("a photo is removed when its inventory relationship cannot be saved",()=>{
  const route=readFileSync(new URL("../app/api/inventory/[inventoryId]/photos/route.ts",import.meta.url),"utf8");
- assert.match(route,/saveOwnedRecordIfUnchanged\("inventory",inventoryId,updated,expectedRevision\)/);
+ assert.match(route,/saveOwnedRecordIfUnchanged\("inventory",inventoryId,updated,expectedRevision,normalizeInventory\)/);
  assert.match(route,/if\(saveResult!=="saved"\)throw/);
  assert.match(route,/await bucket\.remove\(key\)\.catch/);
  assert.match(route,/throw error/);

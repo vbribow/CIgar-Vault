@@ -57,11 +57,12 @@ export async function saveOwnedRecord(kind: VaultRecordKind, recordId: string, p
   return true;
 }
 
-export async function saveOwnedRecordIfUnchanged(
+export async function saveOwnedRecordIfUnchanged<T = unknown>(
   kind: VaultRecordKind,
   recordId: string,
   payload: unknown,
   expectedRevision: string,
+  normalizeForRevision: (value: T) => unknown = ((value: unknown) => value) as (value: T) => unknown,
 ): Promise<"saved" | "conflict" | false> {
   const context = await accountContext();
   if (!context) return false;
@@ -73,7 +74,7 @@ export async function saveOwnedRecordIfUnchanged(
     .eq("record_id", recordId)
     .maybeSingle();
   if (loadError) throw loadError;
-  if (!current || recordRevision(current.payload) !== expectedRevision) return "conflict";
+  if (!current || recordRevision(normalizeForRevision(current.payload as T)) !== expectedRevision) return "conflict";
   const { data: saved, error: saveError } = await context.supabase
     .from("vault_records")
     .update({ payload, updated_at: new Date().toISOString() })

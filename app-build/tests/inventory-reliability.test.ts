@@ -17,6 +17,7 @@ test("inventory updates cannot silently create a missing record",()=>{
   const route=readFileSync(new URL("../app/api/inventory/[inventoryId]/route.ts",import.meta.url),"utf8");
   assert.match(route,/if \(!existing\).*status: 404/);
   assert.match(route,/Refresh your Vault before trying again/);
+  assert.match(route,/saveOwnedRecordIfUnchanged\("inventory", inventoryId, item, expectedRevision, normalizeInventory\)/);
 });
 
 test("manual intake generates references and offers verified collection choices",()=>{

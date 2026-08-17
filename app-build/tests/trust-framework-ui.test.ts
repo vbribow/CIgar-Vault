@@ -18,4 +18,6 @@ test("the Trust Center explains evidence beyond the label",()=>{
   const page=readFileSync(new URL("../app/trust/page.tsx",import.meta.url),"utf8");
   assert.match(page,/A label is the beginning—not the proof/);
   assert.match(page,/Uncertainty belongs in the record/);
+  assert.match(page,/A retailer may report availability\. It cannot verify the cigar/);
+  assert.match(page,/Utility before network effects/);
 });

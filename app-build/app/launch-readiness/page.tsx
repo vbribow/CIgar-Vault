@@ -1,4 +1,4 @@
-import { founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary } from "@/lib/launch-readiness";
+import { betaValueJourney, founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary } from "@/lib/launch-readiness";
 import { immediateIncidentActions, incidentSeverityStandard } from "@/lib/incident-response";
 import { currentStabilityCandidate, launchStabilityObservations } from "@/data/launch-stability";
 import { assessStabilityWindow } from "@/lib/stability-window";
@@ -95,6 +95,12 @@ export default function LaunchReadinessPage() {
         </article>
       </div>
       <footer><strong>Evidence required for each session</strong><span>Date · environment · account · device and browser · record IDs · before/after screenshots · recovery point · cleanup result · PASS, FAIL, or NOT RUN</span></footer>
+    </section>
+
+    <section className="acceptanceWorkspace betaValueAcceptance" aria-labelledby="beta-value-title">
+      <header><div><div className="eyebrow">Beta value acceptance</div><h2 id="beta-value-title">Five tasks prove whether Hojavía is genuinely useful.</h2></div><p>Run these in order with an approved test identity. Record hesitation, confusion, and recovery—not only whether a button eventually worked. A task remains NOT RUN until a real collector completes it.</p></header>
+      <div>{betaValueJourney.map((item,index)=><article key={item.id}><span>Task {index+1}</span><h3>{item.task}</h3><p><strong>Success:</strong> {item.success}</p><small>{item.evidence}</small><a className="button secondary" href={item.route}>Open task →</a></article>)}</div>
+      <footer><strong>One session record</strong><span>Tester identity type · device · browser or installed app · start and finish time · assistance required · PASS, FAIL, or NOT RUN · exact defect if blocked</span></footer>
     </section>
 
     <section className="incidentCommand" aria-labelledby="incident-command-title">

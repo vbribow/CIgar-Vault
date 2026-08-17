@@ -42,7 +42,7 @@ function smokeSaveMessage(result: { collector25?: { status?: string } }, manual:
   return `Smoking experience saved to your private journal. ${deduction}`;
 }
 export const strengthOptions = ["Mild", "Mild–medium", "Medium", "Medium–full", "Full"] as const;
-export const flavorOptions = ["Cedar", "Earth", "Leather", "Pepper", "Cream", "Coffee", "Cocoa / chocolate", "Nuts", "Sweetness", "Baking spice", "Fruit", "Floral", "Toast", "Mineral", "Other"] as const;
+export const flavorOptions = ["Cedar", "Wood", "Earth", "Leather", "Pepper", "Cream", "Coffee", "Cocoa / chocolate", "Nuts", "Sweetness", "Baking spice", "Fruit", "Floral", "Toast", "Mineral", "Other"] as const;
 export function smokeRequiredFieldMessage(name: string) {
   if (name === "inventoryId") return "Choose ‘Remove from my Vault’ and select the exact lot, or choose ‘Do not remove from my Vault’ for a cigar outside your inventory.";
   if (name === "cigarName") return "Enter the cigar’s brand, line, and exact vitola before saving.";

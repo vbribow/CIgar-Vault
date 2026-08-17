@@ -1,9 +1,10 @@
 # Next private code-release batch
 
 **Status:** the original disabled-research foundation shipped privately in
-version 60. The outside-Vault rating and legacy community-rating compatibility
-increment described below is queued; it is not committed, pushed, deployed,
-activated, or published.
+version 60. The outside-Vault rating, legacy community-rating compatibility,
+controlled signature, and August 13 collector-intelligence differentiation
+increments described below are queued; they are not committed, pushed,
+deployed, activated, or published.
 
 **Release boundary:** private application code only. Database and paid-service
 activation remain held.
@@ -39,8 +40,14 @@ activation remain held.
 - Do not create or fund an OpenAI Platform project, establish billing, add an
   API key, or set `OPENAI_RESEARCH_ENABLED=true`.
 - Do not execute paid research requests or the paid founder evaluation.
-- Do not widen beta access, publish the feature, alter the public website,
+- Do not widen beta access, deploy or publish the public website source changes,
   launch affiliate or partner activity, or perform Fox Cigars outreach.
+- Do not activate a retailer offer, tracking link, marketplace, storefront,
+  social feed, trading board, live-video feature, or peer-to-peer transaction
+  path.
+- Do not treat retailer-submitted information as provenance, authenticity,
+  completed-sale evidence, appraisal, valuation authority, or editorial
+  influence.
 - Do not treat the private signature as public approval, commercial adoption,
   or completion of the linguistic gate.
 
@@ -60,6 +67,14 @@ activation remain held.
 7. An outside-Vault score qualifies only after the collector checks the explicit
    confirmation and supplies exact brand, line, and vitola; unchecked legacy
    manual records remain private and ineligible.
+8. The private app and separate website source use the collector-intelligence
+   position without suggesting that community size, transactions, or retailer
+   participation determine product usefulness.
+9. Retailer observations fail closed unless their origin, evidence URL,
+   observation date, review date, disclosure, and every existing legal,
+   privacy, adult/jurisdiction, agreement, and founder-approval field are valid.
+10. Privacy and terms preserve the separation between private collector records
+    and future commercial datasets.
 
 ## Later activation checkpoint
 

@@ -77,8 +77,11 @@ export async function PUT(request: Request, context: Context) {
           { status: 422 },
         );
     }
-    const result = await saveOwnedRecordIfUnchanged("inventory", inventoryId, item, expectedRevision);
-    if (result === "saved") return NextResponse.json({ data: {...item,addedAt:existing.addedAt}, revision: recordRevision({...item,addedAt:existing.addedAt}) });
+    const result = await saveOwnedRecordIfUnchanged("inventory", inventoryId, item, expectedRevision, normalizeInventory);
+    if (result === "saved") {
+      const savedItem = { ...item, addedAt: existing.addedAt };
+      return NextResponse.json({ data: savedItem, revision: recordRevision(savedItem) });
+    }
     if (result === "conflict")
       return NextResponse.json(
         { error: "This record changed while you were saving. Refresh your Vault, review the newer information, and try again." },

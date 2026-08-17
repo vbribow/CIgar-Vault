@@ -5,6 +5,7 @@ import{loadInventory}from"@/lib/inventory";
 import{updateInventoryRow}from"@/lib/smartsheet";
 import{saveOwnedRecordIfUnchanged}from"@/lib/user-data";
 import{recordRevision}from"@/lib/record-revision";
+import{normalizeInventory}from"@/lib/inventory-model";
 const Body=z.object({inventoryId:z.string().trim().min(1).max(100)}).strict();
 export async function DELETE(request:Request,{params}:{params:Promise<{collectionId:string}>}){
  try{const{collectionId}=await params,{inventoryId}=Body.parse(await request.json()),item=(await loadInventory()).find(value=>value.inventoryId===inventoryId);
@@ -14,7 +15,7 @@ export async function DELETE(request:Request,{params}:{params:Promise<{collectio
   if(!expectedRevision)return NextResponse.json({error:"Refresh this collection before changing its membership."},{status:428});
   if(expectedRevision!==recordRevision(item))return NextResponse.json({error:"This cigar changed on another device. Refresh the collection and review the newer record before removing its link."},{status:409});
   const corrected={...item,collectionId:undefined};
-  const saveResult=await saveOwnedRecordIfUnchanged("inventory",inventoryId,corrected,expectedRevision);
+  const saveResult=await saveOwnedRecordIfUnchanged("inventory",inventoryId,corrected,expectedRevision,normalizeInventory);
   if(saveResult==="saved")return NextResponse.json({data:corrected,revision:recordRevision(corrected)});
   if(saveResult==="conflict")return NextResponse.json({error:"This cigar changed while the collection link was being removed. The newer record was preserved."},{status:409});
   if(!authorizeWrite(request))return NextResponse.json({error:"Unauthorized"},{status:401});

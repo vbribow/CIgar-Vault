@@ -150,6 +150,44 @@ export const launchDeviceMatrix = [
   { platform: "Android", browser: "Chrome", installedApp: "Install app", status: "Not run", next: "Complete the same journey on a physical Android phone; emulator evidence cannot replace it." },
 ] as const;
 
+export const betaValueJourney = [
+  {
+    id: "photo-intake",
+    task: "Add one cigar by photo",
+    success: "The collector reviews the proposed identity, saves exactly one physical lot, sees a clear confirmation, and opens that exact saved record.",
+    route: "/inventory?add=new#mobile-intake",
+    evidence: "Record ID, before/after quantity, saved-record screenshot, and confirmation that no duplicate lot was created.",
+  },
+  {
+    id: "correct-details",
+    task: "Correct the cigar's details",
+    success: "Edit all details opens the exact row directly, preserves unrelated fields, saves once, and returns to the corrected record without a navigation loop.",
+    route: "/inventory#inventory-records",
+    evidence: "Changed field, unchanged comparison fields, revision result, and corrected-record screenshot.",
+  },
+  {
+    id: "log-smoke",
+    task: "Log one smoking experience",
+    success: "The collector chooses whether the cigar came from the Vault, receives one persistent success message, and inventory changes only when explicitly selected.",
+    route: "/records#log-smoke",
+    evidence: "Smoke entry ID, selected source mode, exact quantity before/after, and confirmation that a repeated tap created no duplicate.",
+  },
+  {
+    id: "find-entry",
+    task: "Find the cigar and smoke afterward",
+    success: "Vault search and the Smoke Journal both find the expected record, preserve the return path, and agree on identity, quantity, and score.",
+    route: "/smoke-journal",
+    evidence: "Search terms, matched record IDs, journal result, and return-navigation result.",
+  },
+  {
+    id: "learn-and-decide",
+    task: "Use education or Cigar Somm to make a decision",
+    success: "The collector reaches useful, source-aware guidance from the cigar record without exposing private notes or mistaking research leads for verified facts.",
+    route: "/cigar-somm",
+    evidence: "Starting record, selected learning or decision path, usefulness note, source visibility, and any uncertainty the collector noticed.",
+  },
+] as const;
+
 export const founderGoNoGoChecklist = [
   { gate: "Release candidate", status: "Hold", detail: "Resolve the production migration ledger and complete physical-device recovery acceptance before freezing the verified artifact and starting day one." },
   { gate: "Database migrations", status: "Hold", detail: "The local collision is resolved. Create a reviewed production migration baseline only after backup and explicit approval; the production project currently has no Supabase migration ledger." },
