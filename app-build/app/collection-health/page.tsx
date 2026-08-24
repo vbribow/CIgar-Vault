@@ -5,6 +5,9 @@ import { auditCollectionMembership } from "@/lib/collection-membership-audit";
 import { brand } from "@/lib/brand";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
 import { auditCollectionTemplateLibrary, collectionTemplates } from "@/lib/collection-templates";
+import { FinishVaultReview } from "@/components/finish-vault-review";
+import { buildVaultReviewTasks } from "@/lib/vault-review";
+import { loadCatalog } from "@/lib/catalog";
 import "./health.css";
 
 export const dynamic = "force-dynamic";
@@ -34,9 +37,12 @@ export default async function CollectionHealth() {
   const items = itemsResult.value;
   const collections = collectionsResult.value;
   const activeItems = items.filter((item) => (item.currentQty ?? 0) > 0);
+  const catalogResult = await loadCatalog(activeItems).then(value => ({ ready: true as const, value })).catch(() => ({ ready: false as const, value: [] }));
   const membership = auditCollectionMembership(activeItems, collections);
   const library = auditCollectionTemplateLibrary(collectionTemplates);
   const reviews = membership.rows.filter((row) => row.classification === "Review");
+  const collectionIssues = new Map(reviews.map(row => [row.inventoryId, row.issues]));
+  const reviewTasks = buildVaultReviewTasks(activeItems, catalogResult.ready ? catalogResult.value : undefined, collectionIssues);
   const hasActiveInventory = activeItems.length > 0;
   const checks = [
     {
@@ -104,8 +110,8 @@ export default async function CollectionHealth() {
     <section className="healthHero">
       <div>
         <div className="eyebrow">Inventory integrity · Guided review</div>
-        <h1>Audit my inventory.</h1>
-        <p className="lede">Work through physical quantities, production years, replacement values, storage, provenance, and exact collection relationships. Every result opens the records that need that specific correction.</p>
+        <h1>Finish My Vault.</h1>
+        <p className="lede">Review one cigar and one useful next step at a time. Confirm physical quantities, identity, storage, provenance, photos, values, ratings, and exact collection relationships without inventing unknown facts.</p>
         <div className="heroActions">
           <a className="button secondary" href="/inventory#inventory-records">Browse all records</a>
           <a className="button secondary" href="/inventory-count">Reconcile physical count</a>
@@ -128,6 +134,8 @@ export default async function CollectionHealth() {
         <small>No completeness score is calculated until an active cigar is documented.</small>
       </div>}
     </section>
+
+    {hasActiveInventory && <FinishVaultReview tasks={reviewTasks} activeLots={activeItems.length}/>}
 
     {hasActiveInventory ? <section className="healthGrid" aria-label="Inventory audit categories">
       {checks.map((check) => <a className="healthCard" href={`/inventory?missing=${check.key}&active=1#inventory-records`} key={check.key}>

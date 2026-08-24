@@ -39,7 +39,7 @@ export default async function CigarPage({
   searchParams,
 }: {
   params: Promise<{ inventoryId: string }>;
-  searchParams: Promise<{ searchReturn?: string; saved?: string }>;
+  searchParams: Promise<{ searchReturn?: string; saved?: string; focus?: string }>;
 }) {
   const [{ inventoryId }, query] = await Promise.all([params, searchParams]);
   const searchReturn = safeInternalHref(query.searchReturn);
@@ -47,6 +47,9 @@ export default async function CigarPage({
   const backHref = searchReturn || focusedVaultHref;
   const backLabel = searchReturn ? "← Back to search results" : "← Back to Vault";
   const inlineEditHref="#inventory-editor";
+  const editFocus = ["quantity", "year", "packaging", "price", "storage", "provenance", "rating", "all"].includes(query.focus || "")
+    ? query.focus as "quantity" | "year" | "packaging" | "price" | "storage" | "provenance" | "rating" | "all"
+    : "all";
   const [inventoryResult, modeResult] = await Promise.allSettled([loadInventory(), accountDataMode()]);
   if (inventoryResult.status === "rejected" || modeResult.status === "rejected") {
     return <main className="shell"><nav className="nav"><Link className="brand" href="/">{brand.name}</Link><Link className="backLink" href={backHref}>{backLabel}</Link></nav><Link className="button secondary detailReturnLink" href={backHref}>{backLabel}</Link><section className="section card cigarRecordUnavailable"><div className="eyebrow">Inventory record protected</div><h1>This cigar is temporarily unavailable.</h1><p>The platform could not safely verify the account and inventory record together. It has not been classified as missing or deleted.</p><Link className="button secondary" href={`/inventory/${encodeURIComponent(inventoryId)}`}>Try again</Link></section></main>;
@@ -142,7 +145,7 @@ export default async function CigarPage({
           {!isPresentationAsset&&<Link className="button secondary" href={inlineEditHref}>{item.score===undefined?"Rate this cigar":"Update rating"}</Link>}
         </div>
       </section>
-      <InventoryManager initialItems={items} catalog={catalog} ratings={ratings} collections={collections} humidors={humidors} mode={mode} initialEditId={item.inventoryId} initialEditMode="all" editorOnly saveReturnHref={`/inventory/${encodeURIComponent(item.inventoryId)}?saved=inventory#inventory-editor`}/>
+      <InventoryManager initialItems={items} catalog={catalog} ratings={ratings} collections={collections} humidors={humidors} mode={mode} initialEditId={item.inventoryId} initialEditMode={editFocus} editorOnly saveReturnHref={`/inventory/${encodeURIComponent(item.inventoryId)}?saved=inventory&focus=${editFocus}&searchReturn=${encodeURIComponent(backHref)}#inventory-editor`}/>
       {!isPresentationAsset&&<CigarReferencePhoto item={item} photo={referencePhoto} catalogReady={catalogReady}/>}
       {!isPresentationAsset && <BuyAgainPanel inventoryId={item.inventoryId} identity={`${item.brand} · ${item.line} · ${item.vitola}${item.vintage ? ` · ${item.vintage}` : ""}`} seller={item.acquisitionSeller} purchaseDate={item.acquisitionDate} jurisdiction={item.purchaseJurisdiction} sourceUrl={safeRecordedPurchaseUrl(item.acquisitionSourceUrl)} positiveJournalCount={history.filter((entry) => entry.buyAgain).length} />}
       <section className="cigarStory">

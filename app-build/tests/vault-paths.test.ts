@@ -21,8 +21,8 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(manager,/setItems\(cigarInventoryRecords\(result\.data,collections\)\)/);
  assert.match(page,/href="\/inventory#inventory-records"/);
  assert.match(page,/<a href="\/inventory#inventory-records"><span>Individual inventory<\/span><strong>Browse Vault<\/strong>/);
- assert.match(page,/Audit My Inventory/);
- assert.match(page,/href="\/collection-health"/);
+ assert.match(page,/Finish My Vault/);
+ assert.match(page,/href="\/collection-health#finish-my-vault"/);
  assert.match(page,/href="\/collections"/);
  assert.match(page,/Valuable Collections/);
  assert.match(page,/href="\/humidors"/);
@@ -31,7 +31,7 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(manager,/Humidor \/ storage/);
  assert.match(manager,/storageOptions\.map/);
  assert.match(manager,/aria-label="Inventory records and filters"/);
- assert.match(audit,/Audit my inventory/);
+ assert.match(audit,/Finish My Vault/);
  assert.match(audit,/Physical quantity/);
  assert.match(audit,/Production year/);
  assert.match(audit,/Replacement value/);
@@ -66,6 +66,8 @@ test("Vault presents separate workspaces and preserves the global-search return 
  assert.match(manager,/id="inventory-editor"/);
  assert.match(detail,/item\.score===undefined\?"Rate this cigar":"Update rating"/);
  assert.match(detail,/href=\{inlineEditHref\}/);
+ assert.match(detail,/initialEditMode=\{editFocus\}/);
+ assert.match(detail,/query\.focus/);
  assert.match(manager,/focusedRating/);
  assert.match(smokingScorecard,/separate from the Personal Vault score above/);
  assert.match(smokingScorecard,/No smoking-log rating yet/);

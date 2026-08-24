@@ -8,6 +8,7 @@ const read=(path:string)=>readFileSync(new URL(`../${path}`,import.meta.url),"ut
 test("one release command gates typecheck, complete tests, navigation, performance, and build",()=>{
   const packageSource=JSON.parse(read("package.json")) as {scripts:Record<string,string>};
   const command=packageSource.scripts["verify:release"];
+  assert.match(command,/audit-mobile-reliability\.mjs/);
   assert.match(command,/tsc --noEmit/);
   assert.match(command,/tsx --test tests\/\*\.test\.ts/);
   assert.match(command,/scripts\/build-app\.mjs/);

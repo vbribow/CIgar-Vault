@@ -10,7 +10,7 @@ test("every inventory detail exposes explicit edit and delete actions",()=>{
   assert.match(detail,/InventoryRecordActions/);
   assert.match(detail,/const inlineEditHref="#inventory-editor"/);
   assert.match(detail,/<InventoryRecordActions item=\{item\} editHref=\{inlineEditHref\}\/>/);
-  assert.match(detail,/<InventoryManager initialItems=\{items\} catalog=\{catalog\} ratings=\{ratings\} collections=\{collections\} humidors=\{humidors\} mode=\{mode\} initialEditId=\{item\.inventoryId\} initialEditMode="all" editorOnly/);
+  assert.match(detail,/<InventoryManager initialItems=\{items\} catalog=\{catalog\} ratings=\{ratings\} collections=\{collections\} humidors=\{humidors\} mode=\{mode\} initialEditId=\{item\.inventoryId\} initialEditMode=\{editFocus\} editorOnly/);
   assert.doesNotMatch(detail,/allEditHref|focus=all#inventory-editor/);
   assert.match(actions,/>Edit all details</);
   assert.match(actions,/Delete record/);
@@ -19,7 +19,7 @@ test("every inventory detail exposes explicit edit and delete actions",()=>{
 });
 
 test("detail editing stays on the individual record and exposes every field",()=>{
-  assert.match(detail,/saveReturnHref=\{`\/inventory\/\$\{encodeURIComponent\(item\.inventoryId\)\}\?saved=inventory#inventory-editor`\}/);
+  assert.match(detail,/saveReturnHref=\{`\/inventory\/\$\{encodeURIComponent\(item\.inventoryId\)\}\?saved=inventory&focus=\$\{editFocus\}&searchReturn=\$\{encodeURIComponent\(backHref\)\}#inventory-editor`\}/);
   assert.match(actions,/href=\{editHref\}/);
 });
 
