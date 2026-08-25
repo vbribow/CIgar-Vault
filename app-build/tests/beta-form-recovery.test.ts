@@ -20,7 +20,7 @@ test("six beta-critical flows show progress and prevent repeat actions", () => {
   assert.match(somm, /disabled=\{busy\|\|!ready\}/);
   assert.match(somm, /Researching · \$\{elapsed\}s/);
   assert.match(collections, /disabled=\{saving\}/);
-  assert.match(collections, /Saving…/);
+  assert.match(collections, /Saving collection…/);
   assert.match(recovery, /disabled=\{busy \|\| secondsRemaining > 0\}/);
   assert.match(recovery, /Sending…/);
   assert.match(reports, /aria-busy=\{downloading\}/);

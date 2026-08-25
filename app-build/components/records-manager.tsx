@@ -305,8 +305,8 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const value = <T,>(researched: T | null | undefined, existing: T | undefined) => researched ?? existing ?? "";
 
   return <div className="recordsGrid" onChange={recordSafety.markDirty}>
-    <section className="card smokeJournal" id="log-smoke">
-      <div className="eyebrow">Private tasting journal</div>
+    <section className="card smokeJournal coreJourney" id="log-smoke">
+      <div className="eyebrow">Private tasting journal · one clear save</div>
       <h2>Log a smoke</h2>
       <p className="small">Record any cigar you smoke—whether it came from your Vault, a lounge, a friend, or somewhere new. There are no wrong tasting notes.</p>
       <div className="smokeStartChoices" aria-label="Should this smoke reduce your Vault inventory?">

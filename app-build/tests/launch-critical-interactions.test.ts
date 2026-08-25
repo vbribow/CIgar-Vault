@@ -16,7 +16,7 @@ test("inventory deletion reports network and non-JSON failures without changing 
 test("collection saving always releases its loading state and reports failures", () => {
   assert.match(collectionsManager, /response\.json\(\)\.catch\(\(\)=>\(\{\}\)\)/);
   assert.match(collectionsManager, /Collection save failed\. Check your connection and try again\./);
-  assert.match(collectionsManager, /finally\{\s*setSaving\(false\);\s*\}/);
+  assert.match(collectionsManager, /finally\{\s*setSaving\(false\);\s*saveInFlight\.current=false;\s*\}/);
 });
 
 test("discovery stays request-scoped so private catalog configuration is not required during deployment", () => {

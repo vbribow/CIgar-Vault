@@ -195,7 +195,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
   }
 
   const pending = queue.filter((entry) => entry.selected).length;
-  return <section className="photoIntake card" id="mobile-intake">
+  return <section className="photoIntake card coreJourney" id="mobile-intake">
     <header className="intakeHeader"><div className="eyebrow">Add a cigar</div><h2>Start with a photo or what you know.</h2><p>Hojavía can suggest details. You review them before anything is added to your private Vault.</p></header>
     <ol className="intakeProgress" aria-label="Documentation progress">
       {(["identify", "review", "saved"] as IntakeStage[]).map((value, index) => <li key={value} aria-current={stage === value ? "step" : undefined} className={stage === value ? "active" : (["review", "saved"].includes(stage) && index === 0) || (stage === "saved" && index === 1) ? "complete" : ""}><span>{index + 1}</span><strong>{value === "identify" ? "Identify" : value === "review" ? "Review" : "Saved"}</strong></li>)}
