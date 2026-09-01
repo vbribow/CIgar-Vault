@@ -19,7 +19,7 @@ import { forgetFounderSessionKey, readFounderSessionKey, rememberFounderSessionK
 import { FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
 
 const stages: BetaStage[] = ["Prospect", "Invited", "Signed up", "Imported", "Activated"];
-type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; backedUp:number; openFeedback:number; blockingFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
+type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; openFeedback:number; blockingFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
 type InvitationResult = { kind:"accepted"; providerId:string } | { kind:"prepared" } | { kind:"cancelled" };
 
 export function FounderOnboarding() {
@@ -105,8 +105,8 @@ export function FounderOnboarding() {
     }
   }
 
-  async function sendInvitation(item: BetaCollector): Promise<InvitationResult> {
-    if (!window.confirm(`Send the private beta invitation to ${item.email}?`)) return { kind:"cancelled" };
+  async function sendInvitation(item: BetaCollector, confirmSend = true): Promise<InvitationResult> {
+    if (confirmSend && !window.confirm(`Send the private beta invitation to ${item.email}?`)) return { kind:"cancelled" };
     const response = await fetch("/api/founder-onboarding/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-founder-key": key },
@@ -142,8 +142,8 @@ export function FounderOnboarding() {
       const collector = result.data as BetaCollector;
       setItems(current => [collector, ...(current || [])]);
       event.currentTarget.reset();
-      const sent = await sendInvitation(collector);
-      if (sent.kind === "accepted") setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed.`);
+      const sent = await sendInvitation(collector, false);
+      if (sent.kind === "accepted") setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed. No Gmail action is required.`);
       else if (sent.kind === "prepared") setMessage(`Automated email is not configured. ${collector.name}'s invitation is ready below—use Open Gmail to send it now.`);
       else setMessage(`${collector.name} was added without access. Send the invitation from their card when ready.`);
     } catch (error) {
@@ -167,16 +167,28 @@ export function FounderOnboarding() {
       setItems(current => (current || []).map(value => value.id === item.id ? { ...result.data, progress:item.progress } : value));
       await fetchReadiness();
       setMessage(`${item.name} is now ${betaStageLabel(stage)}.`);
+      return true;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to update collector stage");
+      return false;
     } finally {
       setBusy(false);
     }
   }
 
   function prepare(item: BetaCollector) {
-    if (item.stage !== "Invited") { setMessage("Send the invitation before preparing a copy."); return; }
-    setPrepared(item); setCopied(false); setMessage(`Invitation copy prepared for ${item.name}.`);
+    setPrepared(item);
+    setCopied(false);
+    setMessage(item.stage === "Prospect" ? `Gmail backup prepared for ${item.name}. Sending it does not enable access until you confirm the manual send.` : `Invitation copy prepared for ${item.name}.`);
+  }
+
+  async function confirmManualInvitation() {
+    if (!prepared || prepared.stage !== "Prospect") return;
+    if (!window.confirm(`Confirm that you sent the Gmail invitation to ${prepared.email} and enable their beta access?`)) return;
+    const updated = await update(prepared, "Invited");
+    if (!updated) return;
+    setPrepared({ ...prepared, stage:"Invited" });
+    setMessage(`Manual invitation recorded for ${prepared.email}. Their beta signup access is now enabled.`);
   }
 
   async function copyInvitation() {
@@ -234,20 +246,21 @@ export function FounderOnboarding() {
     <section className="betaLayout"><div className="betaList">
       {items.map(item => {
         const next = betaNextAction(item.progress);
+        const progressSteps = betaProgressSteps(item.progress);
         return <article key={item.id}>
           <div><small>{item.email}</small><h3>{item.name}</h3><p>{item.notes || "No follow-up notes yet."}</p></div>
           <label><span>Stage</span><select value={item.stage} disabled={busy} onChange={event => update(item, event.target.value as BetaStage)}>{stages.map(stage => <option value={stage} key={stage}>{betaStageLabel(stage)}</option>)}</select></label>
           <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Sending invitation…");try{const sent=await sendInvitation(item);if(sent.kind === "accepted")setMessage(`A fresh invitation was accepted for ${item.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed.`);else if(sent.kind === "prepared")setMessage(`Automated email is not configured. ${item.name}'s invitation is ready below—use Open Gmail to send it now.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to send invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Send invitation" : "Resend invitation"}</button>
-          <button type="button" className="textButton" disabled={busy || item.stage !== "Invited"} onClick={() => prepare(item)}>View invitation / Gmail</button>
+          <button type="button" className="textButton" disabled={busy} onClick={() => prepare(item)}>{item.stage === "Prospect" ? "Open Gmail backup" : "View invitation / Gmail"}</button>
           <button type="button" className="button secondary" disabled={busy || item.stage === "Prospect"} onClick={() => sendReinstall(item)}>Send app update</button>
           <section className="betaCollectorProgress" aria-label={`${item.name} beta progress`}>
-            <header><div><span>Next required action</span><strong>{next.label}</strong><small>{next.detail}</small></div><b>{betaProgressSteps(item.progress).filter(step => step.complete).length}/7</b></header>
-            <div>{betaProgressSteps(item.progress).map(step => <a href={step.href} target="_blank" rel="noreferrer" className={step.complete ? "complete" : undefined} key={step.key}><span>{step.complete ? "✓" : "→"}</span><b>{step.label}</b><small>{step.detail}</small></a>)}</div>
+            <header><div><span>Next required action</span><strong>{next.label}</strong><small>{next.detail}</small></div><b>{progressSteps.filter(step => step.complete).length}/{progressSteps.length}</b></header>
+            <div>{progressSteps.map(step => <a href={step.href} target="_blank" rel="noreferrer" className={step.complete ? "complete" : undefined} key={step.key}><span>{step.complete ? "✓" : "→"}</span><b>{step.label}</b><small>{step.detail}</small></a>)}</div>
           </section>
         </article>;
       })}
       {!items.length && <div className="emptyState">No beta collectors tracked yet.</div>}
-      {prepared && preparedEmail && webmailLinks && <section className="betaEmailPreview card" aria-label={`Invitation for ${prepared.name}`}><header><div><div className="eyebrow">Invitation ready</div><h2>{prepared.name}</h2><small>{preparedEmail.recipient}</small></div><button type="button" className="button secondary" onClick={() => setPrepared(undefined)}>Close</button></header><label><span>Subject</span><input readOnly value={preparedEmail.subject}/></label><label><span>Message</span><textarea readOnly rows={15} value={preparedEmail.body}/></label><div className="betaEmailActions"><button type="button" className="button" onClick={copyInvitation}>{copied ? "Copied ✓" : "Copy invitation"}</button><a className="button secondary" href={webmailLinks.gmail} target="_blank" rel="noreferrer">Open Gmail</a><a className="button secondary" href={webmailLinks.outlook} target="_blank" rel="noreferrer">Open Outlook</a><a className="button secondary" href={webmailLinks.yahoo} target="_blank" rel="noreferrer">Open Yahoo Mail</a></div></section>}
+      {prepared && preparedEmail && webmailLinks && <section className="betaEmailPreview card" aria-label={`Invitation for ${prepared.name}`}><header><div><div className="eyebrow">Invitation ready</div><h2>{prepared.name}</h2><small>{preparedEmail.recipient}</small></div><button type="button" className="button secondary" onClick={() => setPrepared(undefined)}>Close</button></header>{prepared.stage === "Prospect" ? <p><strong>Gmail backup required.</strong> Open Gmail, review and send the prepared message, return here, then select “I sent it — enable access.” Access remains disabled until that final confirmation.</p> : <p className="small">System invitation access is active. Gmail is available only as a backup copy.</p>}<label><span>Subject</span><input readOnly value={preparedEmail.subject}/></label><label><span>Message</span><textarea readOnly rows={15} value={preparedEmail.body}/></label><div className="betaEmailActions"><button type="button" className="button" onClick={copyInvitation}>{copied ? "Copied ✓" : "Copy invitation"}</button><a className="button secondary" href={webmailLinks.gmail} target="_blank" rel="noreferrer">Open Gmail</a><a className="button secondary" href={webmailLinks.outlook} target="_blank" rel="noreferrer">Open Outlook</a><a className="button secondary" href={webmailLinks.yahoo} target="_blank" rel="noreferrer">Open Yahoo Mail</a>{prepared.stage === "Prospect" && <button type="button" className="button" disabled={busy} onClick={confirmManualInvitation}>I sent it — enable access</button>}</div></section>}
     </div><aside className="card"><div className="eyebrow">Private beta</div><h2>Add and invite a tester</h2><p className="small">One action adds the tester and sends their invitation after your confirmation. Their access remains disabled if the email provider cannot accept the message.</p><form className="betaForm" onSubmit={create} aria-busy={busy}><label><span>Name</span><input name="name" required/></label><label><span>Email</span><input name="email" type="email" required/></label><label><span>Notes</span><textarea name="notes" rows={4}/></label><button className="button" disabled={busy}>{busy?"Adding and sending…":"Add & send invitation"}</button></form></aside></section>
     <FounderBetaFeedback writeKey={key} onFeedbackUpdated={() => fetchReadiness()}/>
   </>;

@@ -5,7 +5,6 @@ export type BetaReadinessInput = {
   invited: number;
   signedUp: number;
   consented: number;
-  backedUp: number;
   openFeedback: number;
   blockingFeedback: number;
 };
@@ -35,12 +34,6 @@ export function buildBetaReadiness(input: BetaReadinessInput) {
       label: "Age, privacy, and beta consent",
       ready: input.signedUp === 0 || input.consented === input.signedUp,
       detail: `${input.consented} of ${input.signedUp} signed-up testers have recorded consent.`,
-    },
-    {
-      key: "backup",
-      label: "Collector recovery points",
-      ready: input.signedUp === 0 || input.backedUp === input.signedUp,
-      detail: `${input.backedUp} of ${input.signedUp} signed-up testers have a recorded inventory backup.`,
     },
     {
       key: "blocking-feedback",

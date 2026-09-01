@@ -12,11 +12,11 @@ test("beta invitation recovery sends testers only to the permanent Hojavía sign
 });
 
 test("phone acceptance covers both platforms and the essential private journey", () => {
-  assert.equal(betaDeviceAcceptanceSteps.length, 7);
+  assert.equal(betaDeviceAcceptanceSteps.length, 6);
   const copy = betaDeviceAcceptanceSteps.map(step => `${step.label} ${step.detail}`).join(" ");
-  for (const phrase of ["iPhone", "Android", "Log a Smoke", "Cigar Somm", "Sign out", "backup"])
+  for (const phrase of ["iPhone", "Android", "Log a Smoke", "Cigar Somm", "Sign out"])
     assert.match(copy, new RegExp(phrase, "i"));
-  assert.match(copy, /do not replace/i);
+  assert.doesNotMatch(copy, /backup|recovery preview/i);
 });
 
 test("founder dashboard exposes recovery and acceptance guidance without bypassing controls", () => {

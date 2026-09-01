@@ -52,6 +52,7 @@ test("founder onboarding offers one add-and-send invitation action with visible 
   const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
   assert.match(component, /Add & send invitation/);
   assert.match(component, /Adding and sending…/);
+  assert.match(component, /sendInvitation\(collector, false\)/);
   assert.match(component, /submissionId:createClientUuid\(\)/);
   assert.match(component, /provider reference/);
   assert.match(component, /View invitation \/ Gmail/);
@@ -60,6 +61,15 @@ test("founder onboarding offers one add-and-send invitation action with visible 
   assert.match(component, /EMAIL_PROVIDER_NOT_CONFIGURED/);
   assert.match(component, /\/api\/founder-onboarding\/invite/);
   assert.doesNotMatch(component, /Add to queue/);
+});
+
+test("automatic invitation failure exposes Gmail recovery without silently enabling access", () => {
+  const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
+  assert.match(component, /Open Gmail backup/);
+  assert.match(component, /I sent it — enable access/);
+  assert.match(component, /confirmManualInvitation/);
+  assert.match(component, /update\(prepared, "Invited"\)/);
+  assert.doesNotMatch(component, /Send the invitation before preparing a copy/);
 });
 
 test("founder can update a collector stage while readiness evidence remains advisory", () => {
