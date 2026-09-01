@@ -24,7 +24,7 @@ export function buildCigarStory(input: {
   const identity = canonicalCigarIdentity(anchor);
   const lots = input.inventory.filter(item => cigarIdentityKey(item) === identity.identityKey);
   const lotIds = new Set(lots.map(item => item.inventoryId));
-  const valuations = input.valuations.filter(item => lotIds.has(item.inventoryId)).sort((a, b) => b.valuationDate.localeCompare(a.valuationDate));
+  const valuations = input.valuations.filter(item => lotIds.has(item.inventoryId) && !item.invalidatedAt).sort((a, b) => b.valuationDate.localeCompare(a.valuationDate));
   const smokes = input.smokes.filter(item => lotIds.has(item.inventoryId)).sort((a, b) => b.dateSmoked.localeCompare(a.dateSmoked));
   const ratings = input.ratings.filter(item => lotIds.has(item.inventoryId)).sort((a, b) => b.score - a.score);
   const collectionIds = new Set(lots.flatMap(item => item.collectionId ? [item.collectionId] : []));
@@ -41,7 +41,7 @@ export function buildCigarStory(input: {
   const personalScores = smokes.flatMap(item => item.overall === undefined ? [] : [item.overall]);
   const publishedScores = ratings.map(item => item.score);
   const sources = new Set([
-    ...valuations.flatMap(item => item.sourceUrl ? [item.sourceUrl] : []),
+    ...valuations.flatMap(item => [item.sourceUrl, item.askingPriceSourceUrl, item.lastSaleSourceUrl].filter((value): value is string => Boolean(value))),
     ...ratings.map(item => item.sourceUrl),
     ...lots.flatMap(item => item.boxFormatSourceUrl ? [item.boxFormatSourceUrl] : []),
   ]);
@@ -61,6 +61,7 @@ export function buildCigarStory(input: {
     retailLotValue: retailUnit === undefined ? undefined : retailUnit * quantity,
     marketUnit: latestMarketValuation?.marketValue,
     personalAverage: personalScores.length ? Math.round(personalScores.reduce((sum, value) => sum + value, 0) / personalScores.length * 10) / 10 : undefined,
+    personalScoreCount: personalScores.length,
     publishedAverage: publishedScores.length ? Math.round(publishedScores.reduce((sum, value) => sum + value, 0) / publishedScores.length * 10) / 10 : undefined,
     sourceCount: sources.size,
     confidence: identity.complete && sources.size >= 2 ? "High" : identity.complete && sources.size ? "Medium" : "Developing",
