@@ -128,6 +128,7 @@ export function FounderOnboarding() {
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") || "");
     const email = String(form.get("email") || "");
+    const submissionId = createClientUuid();
     if (!window.confirm(`Add ${name} and send the private beta invitation to ${email}?`)) return;
     setBusy(true);
     setMessage("Adding tester…");
@@ -135,17 +136,29 @@ export function FounderOnboarding() {
       const response = await fetch("/api/founder-onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-founder-key": key },
-        body: JSON.stringify({ name, email, stage:"Prospect", notes:form.get("notes") }),
+        body: JSON.stringify({ name, email, stage:"Prospect", notes:form.get("notes"), sendInvitation:true, submissionId }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Unable to add tester");
+      if (!response.ok) {
+        if (result.recoverable && result.data) {
+          const collector = result.data as BetaCollector;
+          setItems(current => [collector, ...(current || []).filter(item => item.id !== collector.id)]);
+          event.currentTarget.reset();
+          if (result.recovery === "manual-email") {
+            setPrepared(collector);
+            setCopied(false);
+            setMessage(`${result.error || "Automatic delivery was not accepted"} No invitation access was enabled. The Gmail backup is ready below; send it, then confirm the manual send.`);
+          } else {
+            setMessage(`${result.error || "The invitation requires a status retry."} Provider reference ${result.providerId || "retained"}.`);
+          }
+          return;
+        }
+        throw new Error(result.error || "Unable to add and invite tester");
+      }
       const collector = result.data as BetaCollector;
       setItems(current => [collector, ...(current || [])]);
       event.currentTarget.reset();
-      const sent = await sendInvitation(collector, false);
-      if (sent.kind === "accepted") setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed. No Gmail action is required.`);
-      else if (sent.kind === "prepared") setMessage(`Automated email is not configured. ${collector.name}'s invitation is ready below—use Open Gmail to send it now.`);
-      else setMessage(`${collector.name} was added without access. Send the invitation from their card when ready.`);
+      setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${result.delivery.providerId}. Delivery is not yet confirmed. No Gmail action is required.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to add tester");
     } finally {

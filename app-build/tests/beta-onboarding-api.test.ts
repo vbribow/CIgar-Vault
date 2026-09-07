@@ -50,10 +50,13 @@ test("founder onboarding never describes provider acceptance as confirmed delive
 
 test("founder onboarding offers one add-and-send invitation action with visible progress", () => {
   const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
+  const route = readFileSync(new URL("../app/api/founder-onboarding/route.ts", import.meta.url), "utf8");
   assert.match(component, /Add & send invitation/);
   assert.match(component, /Adding and sending…/);
-  assert.match(component, /sendInvitation\(collector, false\)/);
-  assert.match(component, /submissionId:createClientUuid\(\)/);
+  assert.match(component, /sendInvitation:true/);
+  assert.doesNotMatch(component, /sendInvitation\(collector, false\)/);
+  assert.match(component, /const submissionId = createClientUuid\(\)/);
+  assert.match(component, /sendInvitation:true, submissionId/);
   assert.match(component, /provider reference/);
   assert.match(component, /View invitation \/ Gmail/);
   assert.match(component, /use Open Gmail to send it now/);
@@ -61,6 +64,11 @@ test("founder onboarding offers one add-and-send invitation action with visible 
   assert.match(component, /EMAIL_PROVIDER_NOT_CONFIGURED/);
   assert.match(component, /\/api\/founder-onboarding\/invite/);
   assert.doesNotMatch(component, /Add to queue/);
+  assert.match(route, /wantsInvitation/);
+  assert.match(route, /submitAccountEmail/);
+  assert.match(route, /recovery:"manual-email"/);
+  assert.match(route, /recovery:"retry-status"/);
+  assert.match(component, /result\.recovery === "manual-email"/);
 });
 
 test("automatic invitation failure exposes Gmail recovery without silently enabling access", () => {

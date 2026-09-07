@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { authorizeWrite } from "@/lib/config";
-import { BetaCollectorInput, type BetaProgress } from "@/lib/beta-onboarding";
+import { BetaCollectorInput, betaInvitationEmail, type BetaProgress } from "@/lib/beta-onboarding";
 import { assertBetaSeatAvailable, FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
+import { accountEmailConfiguration, submitAccountEmail } from "@/lib/alert-notifications";
 
 function admin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -61,11 +63,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   if (!authorizeWrite(request)) return NextResponse.json({ error: "Founder authorization required" }, { status: 401 });
   try {
-    const input = BetaCollectorInput.parse(await request.json());
+    const input = BetaCollectorInput.extend({ sendInvitation:z.boolean().optional().default(false), submissionId:z.string().uuid().optional() }).parse(await request.json());
+    const wantsInvitation = input.sendInvitation;
+    if (wantsInvitation && input.stage !== "Prospect") throw new Error("New invitations must begin as a Prospect until the email provider accepts them.");
+    if (wantsInvitation && !input.submissionId) throw new Error("A stable invitation submission ID is required.");
     const client = admin();
     const { data: collectors, error: readError } = await client.from("beta_collectors").select("id,stage");
     if (readError) throw readError;
-    assertBetaSeatAvailable(collectors || [], input);
+    assertBetaSeatAvailable(collectors || [], wantsInvitation ? { ...input, stage:"Invited" } : input);
     const now = new Date().toISOString();
     const { data, error } = await client.from("beta_collectors").insert({
       name: input.name,
@@ -79,7 +84,42 @@ export async function POST(request: Request) {
     if (error?.code === "23505") throw new Error("That email address is already in the onboarding queue.");
     if (error?.code === "23514") throw new Error(`The ${FOUNDER_BETA_SEAT_LIMIT}-collector founder cohort is full. Keep this collector as a Prospect until a seat is available.`);
     if (error) throw error;
-    return NextResponse.json({ data: shape(data) }, { status: 201 });
+    if (!wantsInvitation) return NextResponse.json({ data: shape(data) }, { status: 201 });
+
+    const configuration = accountEmailConfiguration();
+    if (!configuration.configured) return NextResponse.json({
+      code:"EMAIL_PROVIDER_NOT_CONFIGURED",
+      error:"Automated Hojavía email is not configured.",
+      data:shape(data),
+      recoverable:true,
+      recovery:"manual-email",
+    }, { status:503 });
+    const email = betaInvitationEmail({ name:String(data.name), email:String(data.email) });
+    let submission: Awaited<ReturnType<typeof submitAccountEmail>>;
+    try {
+      submission = await submitAccountEmail(email.recipient, email.subject, email.body, `beta-invitation-${data.id}-${input.submissionId}`);
+    } catch (deliveryError) {
+      return NextResponse.json({
+        error:deliveryError instanceof Error ? deliveryError.message : "The email provider did not accept the invitation.",
+        data:shape(data),
+        recoverable:true,
+        recovery:"manual-email",
+      }, { status:502 });
+    }
+    if (!submission?.accepted) return NextResponse.json({ error:"The email provider did not accept the invitation.", data:shape(data), recoverable:true, recovery:"manual-email" }, { status:502 });
+
+    const acceptedAt = new Date().toISOString();
+    const invitationUpdate = { stage:"Invited", invited_at:acceptedAt, last_contact_at:acceptedAt, updated_at:acceptedAt };
+    let update = await client.from("beta_collectors").update(invitationUpdate).eq("id", data.id).select().single();
+    if (update.error && update.error.code !== "23514") update = await client.from("beta_collectors").update(invitationUpdate).eq("id", data.id).select().single();
+    if (update.error) return NextResponse.json({
+      error:"The provider accepted the invitation, but Hojavía could not record access. Do not send a manual duplicate; use the tester card after reviewing the provider reference.",
+      data:shape(data),
+      providerId:submission.providerId,
+      recoverable:true,
+      recovery:"retry-status",
+    }, { status:502 });
+    return NextResponse.json({ data:shape(update.data), delivery:{ accepted:true, providerId:submission.providerId } }, { status:201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid collector" }, { status: 422 });
   }
