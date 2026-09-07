@@ -14,7 +14,7 @@ test("invite-only mode honors explicit values and fails closed in production", (
   assert.equal(privateBetaEnabled(undefined, "production"), true);
 });
 
-test("inventory backups are optional and do not block invitations", () => {
+test("inventory backups are required before the controlled cohort is ready", () => {
   const readiness = buildBetaReadiness({
     inviteOnly: true,
     serviceCredentials: true,
@@ -22,12 +22,13 @@ test("inventory backups are optional and do not block invitations", () => {
     invited: 4,
     signedUp: 2,
     consented: 2,
+    backedUp: 1,
     openFeedback: 1,
-    blockingFeedback: 0,
+    criticalFeedback: 0,
   });
-  assert.equal(readiness.ready, true);
+  assert.equal(readiness.ready, false);
   assert.equal(readiness.readyCount, 5);
-  assert.equal(readiness.gates.some(gate => gate.key === "backup"), false);
+  assert.equal(readiness.gates.find(gate => gate.key === "backup")?.ready, false);
 });
 
 test("beta readiness passes when every mandatory safeguard passes", () => {
@@ -38,17 +39,24 @@ test("beta readiness passes when every mandatory safeguard passes", () => {
     invited: 5,
     signedUp: 5,
     consented: 5,
+    backedUp: 5,
     openFeedback: 2,
-    blockingFeedback: 0,
+    criticalFeedback: 0,
   });
   assert.equal(readiness.ready, true);
   assert.equal(readiness.readyCount, readiness.totalGates);
 });
 
-test("founder readiness does not query or gate on backup records",()=>{
-  assert.match(route,/serviceCredentials = !auth\.error && !collectors\.error/);
-  assert.doesNotMatch(route,/serviceCredentials = !auth\.error && !collectors\.error && !audits\.error/);
-  assert.doesNotMatch(route,/inventory-backup|vault_records|backedUp/);
+test("founder readiness fails closed when cohort or backup records are unavailable",()=>{
+  assert.match(route,/serviceCredentials = !auth\.error && !collectors\.error && !audits\.error/);
+  assert.match(route,/inventory-backup|vault_records|backedUp/);
   assert.match(route,/serviceCredentials,/);
   assert.doesNotMatch(route,/serviceCredentials: true/);
+});
+
+test("unresolved severity-1 and severity-2 feedback both hold readiness",()=>{
+  const readiness=buildBetaReadiness({inviteOnly:true,serviceCredentials:true,migrationsReady:true,invited:4,signedUp:2,consented:2,backedUp:2,openFeedback:1,criticalFeedback:1});
+  assert.equal(readiness.ready,false);
+  assert.equal(readiness.gates.find(gate=>gate.key==="critical-feedback")?.ready,false);
+  assert.match(readiness.gates.find(gate=>gate.key==="critical-feedback")?.label||"",/severity-1 or severity-2/);
 });

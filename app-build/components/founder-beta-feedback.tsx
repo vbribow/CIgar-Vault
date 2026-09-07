@@ -77,7 +77,7 @@ export function FounderBetaFeedback({
   }
 
   return <><FounderRetailerVerification writeKey={writeKey}/><section className="founderFeedback">
-    <header><div><div className="eyebrow">Beta issue desk</div><h2>Review every report before launch.</h2><p>Blocking and trust-related issues remain visible until deliberately resolved.</p></div><strong>{items.filter(item => item.status === "Open" || item.status === "Reviewing").length} open</strong></header>
+    <header><div><div className="eyebrow">Beta issue desk</div><h2>Review every report before launch.</h2><p>Blocking, high-impact, and trust-related issues remain visible until deliberately resolved.</p></div><strong>{items.filter(item => item.status === "Open" || item.status === "Reviewing").length} open</strong></header>
     <section className="betaEvidenceMetrics" aria-label="Private beta evidence">
       <article><span>Session reviews</span><strong>{evidence.sessionReviews}</strong><small>{evidence.independentCompletions} independent</small></article>
       <article><span>Trust</span><strong>{evidence.trustAverage === undefined ? "—" : evidence.trustAverage.toFixed(1)}</strong><small>target 4.0 / 5</small></article>

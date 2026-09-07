@@ -5,8 +5,9 @@ export type BetaReadinessInput = {
   invited: number;
   signedUp: number;
   consented: number;
+  backedUp: number;
   openFeedback: number;
-  blockingFeedback: number;
+  criticalFeedback: number;
 };
 
 export function buildBetaReadiness(input: BetaReadinessInput) {
@@ -36,10 +37,16 @@ export function buildBetaReadiness(input: BetaReadinessInput) {
       detail: `${input.consented} of ${input.signedUp} signed-up testers have recorded consent.`,
     },
     {
-      key: "blocking-feedback",
-      label: "No unresolved blocking feedback",
-      ready: input.blockingFeedback === 0,
-      detail: input.blockingFeedback ? `${input.blockingFeedback} blocking issue(s) require resolution.` : "No blocking beta issues are open.",
+      key: "backup",
+      label: "Collector recovery points",
+      ready: input.signedUp === 0 || input.backedUp === input.signedUp,
+      detail: `${input.backedUp} of ${input.signedUp} signed-up testers have a recorded inventory backup.`,
+    },
+    {
+      key: "critical-feedback",
+      label: "No unresolved severity-1 or severity-2 feedback",
+      ready: input.criticalFeedback === 0,
+      detail: input.criticalFeedback ? `${input.criticalFeedback} blocking or high-impact issue(s) require resolution.` : "No blocking or high-impact beta issues are open.",
     },
   ];
   const readyCount = gates.filter(gate => gate.ready).length;

@@ -95,7 +95,7 @@ test("launch incidents become valid severity-mapped private reports without auto
   assert.equal(launchIncidentReportTemplate("severity-0"), undefined);
 });
 
-test("evidence summary passes only with complete cohort signals and no blocking issue", () => {
+test("evidence summary passes only with complete cohort signals and no severity-1 or severity-2 issue", () => {
   const records: BetaEvidenceRecord[] = [
     session(),
     session(),
@@ -114,6 +114,14 @@ test("evidence summary passes only with complete cohort signals and no blocking 
   ]);
   assert.equal(blocked.ready, false);
   assert.equal(blocked.blocking, 1);
+
+  const highImpact = buildBetaEvidenceSummary([
+    ...records,
+    { mode: "Issue report", status: "Reviewing", severity: "High" },
+  ]);
+  assert.equal(highImpact.ready, false);
+  assert.equal(highImpact.blocking, 0);
+  assert.equal(highImpact.critical, 1);
 });
 
 test("clearly marked founder acceptance records never count as beta evidence", () => {

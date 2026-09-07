@@ -17,18 +17,20 @@ export async function GET(request: Request) {
       invited: 0,
       signedUp: 0,
       consented: 0,
+      backedUp: 0,
       openFeedback: 0,
-      blockingFeedback: 0,
+      criticalFeedback: 0,
     }) });
   }
   const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const [auth, collectors, consents, feedback] = await Promise.all([
+  const [auth, collectors, consents, feedback, audits] = await Promise.all([
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     admin.from("beta_collectors").select("email,stage"),
     admin.from("account_consents").select("user_id"),
     admin.from("beta_feedback").select("status,severity,summary,page_url"),
+    admin.from("vault_records").select("user_id,payload").eq("kind", "integrity").limit(10000),
   ]);
-  const serviceCredentials = !auth.error && !collectors.error;
+  const serviceCredentials = !auth.error && !collectors.error && !audits.error;
   const migrationsReady = !consents.error && !feedback.error;
   const users = auth.data?.users || [];
   const invitedRows = (collectors.data || []).filter(row => row.stage !== "Prospect");
@@ -36,6 +38,10 @@ export async function GET(request: Request) {
   const signedUpUsers = users.filter(user => user.email && invitedEmails.has(user.email.toLowerCase()));
   const signedUpIds = new Set(signedUpUsers.map(user => user.id));
   const consented = new Set((consents.data || []).filter(row => signedUpIds.has(row.user_id)).map(row => row.user_id)).size;
+  const backedUp = new Set((audits.data || []).filter(row => {
+    const payload = row.payload as { action?: string } | null;
+    return signedUpIds.has(row.user_id) && payload?.action === "inventory-backup";
+  }).map(row => row.user_id)).size;
   const readinessFeedback = (feedback.data || []).filter(row => !isFounderAcceptanceTestRecord(row));
   const openRows = readinessFeedback.filter(row => row.status === "Open" || row.status === "Reviewing");
   return NextResponse.json({ data: buildBetaReadiness({
@@ -45,7 +51,8 @@ export async function GET(request: Request) {
     invited: invitedRows.length,
     signedUp: signedUpUsers.length,
     consented,
+    backedUp,
     openFeedback: openRows.length,
-    blockingFeedback: openRows.filter(row => row.severity === "Blocking").length,
+    criticalFeedback: openRows.filter(row => row.severity === "Blocking" || row.severity === "High").length,
   }) });
 }

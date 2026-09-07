@@ -125,6 +125,7 @@ export function buildBetaEvidenceSummary(records: BetaEvidenceRecord[]) {
   const recommendationAverage = average(sessions.map(record => record.recommendation_score));
   const culturalConcern = cultural.some(record => record.cultural_fit === "Forced" || record.cultural_fit === "Concerning");
   const blocking = active.filter(record => record.severity === "Blocking").length;
+  const critical = active.filter(record => record.severity === "Blocking" || record.severity === "High").length;
 
   const gates = [
     { key: "critical-path", label: "Four independent critical-path completions", ready: independentCompletions >= 4, detail: `${independentCompletions} recorded` },
@@ -132,7 +133,7 @@ export function buildBetaEvidenceSummary(records: BetaEvidenceRecord[]) {
     { key: "learning", label: "Average learning-depth score of at least 4/5", ready: learningAverage !== undefined && learningAverage >= 4, detail: learningAverage === undefined ? "No session scores" : `${learningAverage.toFixed(1)}/5` },
     { key: "recommendation", label: "Average recommendation score of at least 8/10", ready: recommendationAverage !== undefined && recommendationAverage >= 8, detail: recommendationAverage === undefined ? "No session scores" : `${recommendationAverage.toFixed(1)}/10` },
     { key: "culture", label: "At least two cultural responses with no material concern", ready: cultural.length >= 2 && !culturalConcern, detail: culturalConcern ? "Material concern requires review" : `${cultural.length} response(s)` },
-    { key: "blocking", label: "No unresolved blocking feedback", ready: blocking === 0, detail: blocking ? `${blocking} unresolved` : "Clear" },
+    { key: "critical", label: "No unresolved severity-1 or severity-2 feedback", ready: critical === 0, detail: critical ? `${critical} unresolved blocking or high-impact issue(s)` : "Clear" },
   ];
 
   return {
@@ -145,6 +146,7 @@ export function buildBetaEvidenceSummary(records: BetaEvidenceRecord[]) {
     learningAverage,
     recommendationAverage,
     blocking,
+    critical,
     gates,
     readyCount: gates.filter(gate => gate.ready).length,
     ready: gates.every(gate => gate.ready),

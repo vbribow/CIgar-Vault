@@ -42,6 +42,7 @@ export const betaDeviceAcceptanceSteps=[
  {key:"install",label:"Install the phone app",detail:"Use Add to Home Screen on iPhone or Install app on Android, then confirm the Hojavía icon opens the permanent address."},
  {key:"navigate",label:"Check essential navigation",detail:"Open Vault, Log a Smoke, Cigar Somm, Collections, Lounge, Account, and Sign out without hidden or covered controls."},
  {key:"save",label:"Complete one controlled save",detail:"Add or edit one agreed test record, confirm one success message and no duplicate, then verify it on a second page."},
+ {key:"recover",label:"Verify recovery",detail:"Download a private backup and confirm the recovery preview can read it. Do not replace live data during this check."},
 ] as const;
 export function betaInvitationWebmailLinks(collector:Pick<BetaCollector,"name"|"email">){
  const{recipient,subject,body}=betaInvitationEmail(collector);
@@ -93,6 +94,7 @@ export function betaProgressSteps(progress?:BetaProgress):BetaProgressStep[]{
   {key:"account",label:"Account created",complete:value.accountCreated,href:betaSignupUrl,detail:value.accountCreated?"Confirmed":"Create and confirm the beta account"},
   {key:"consent",label:"Beta consent recorded",complete:value.consentRecorded,href:"/account",detail:value.consentRecorded?"Confirmed":"Complete the Account consent form"},
   {key:"inventory",label:"First cigar saved",complete:value.inventoryLots>0,href:"/inventory#mobile-intake",detail:value.inventoryLots>0?`${value.inventoryLots} inventory lot${value.inventoryLots===1?"":"s"}`:"Add the first inventory lot"},
+  {key:"backup",label:"Inventory backup downloaded",complete:value.backupRecorded,href:"/account",detail:value.backupRecorded?"Recovery point recorded":"Use Download inventory backup"},
   {key:"inventory-depth",label:"20 inventory lots",complete:value.inventoryLots>=20,href:"/inventory#mobile-intake",detail:`${Math.min(value.inventoryLots,20)} of 20 lots`},
   {key:"smoke",label:"Smoke logged",complete:value.smokeLogged,href:"/records",detail:value.smokeLogged?"Confirmed":"One engagement option"},
   {key:"insurance",label:"Insurance report viewed",complete:value.insuranceViewed,href:"/reports",detail:value.insuranceViewed?"Confirmed":"Alternative engagement option"},
@@ -100,7 +102,7 @@ export function betaProgressSteps(progress?:BetaProgress):BetaProgressStep[]{
 }
 export function betaNextAction(progress?:BetaProgress){
  const steps=betaProgressSteps(progress);
- const required=steps.find(step=>["account","consent","inventory","inventory-depth"].includes(step.key)&&!step.complete);
+ const required=steps.find(step=>["account","consent","inventory","backup","inventory-depth"].includes(step.key)&&!step.complete);
  if(required)return required;
  const engagement=steps.find(step=>(step.key==="smoke"||step.key==="insurance")&&!step.complete);
  return engagement||{key:"complete",label:"Product milestone reached",complete:true,href:"/",detail:"Core beta journey complete"};

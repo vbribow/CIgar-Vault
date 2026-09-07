@@ -19,7 +19,7 @@ import { forgetFounderSessionKey, readFounderSessionKey, rememberFounderSessionK
 import { FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
 
 const stages: BetaStage[] = ["Prospect", "Invited", "Signed up", "Imported", "Activated"];
-type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; openFeedback:number; blockingFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
+type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; backedUp:number; openFeedback:number; criticalFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
 type InvitationResult = { kind:"accepted"; providerId:string } | { kind:"prepared" } | { kind:"cancelled" };
 
 export function FounderOnboarding() {
