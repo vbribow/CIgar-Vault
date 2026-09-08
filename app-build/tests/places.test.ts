@@ -1,4 +1,4 @@
-import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,filterPlacesByRadius,isConfirmedCigarLoungeCandidate,placeDistanceMiles,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,filterPlacesByRadius,isConfirmedCigarLoungeCandidate,mergeOfficialLoungeLocations,placeDistanceMiles,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
 import{normalizePlaceSearch}from"../lib/place-search";
 import{placeSearchDailyLimit,placeSearchQueryHash,placeSearchReservationDecision}from"../lib/place-search-guard";
 test("quick community ratings require only identity, visit, and score",()=>{const value=PlaceReviewInput.parse({googlePlaceId:"PLACE-1",displayName:"Brian",score:94,visitDate:"2026-07-24"});assert.deepEqual(value.vibes,[]);assert.equal(value.review,"");assert.throws(()=>PlaceReviewInput.parse({...value,vibes:["Relaxed","Upscale","Traditional","Professional"]}))});
@@ -45,6 +45,14 @@ test("confirmed smoke-shop-only venues are excluded without hiding legitimate lo
  assert.equal(isConfirmedCigarLoungeCandidate({name:"SHEA Smoke & Cigar",address:"8764 E Shea Blvd #115, Scottsdale, AZ 85260"}),false);
  assert.equal(isConfirmedCigarLoungeCandidate({name:"Fox Cigar",address:"7443 E 6th Ave, Scottsdale, AZ 85251"}),true);
  assert.equal(isConfirmedCigarLoungeCandidate({name:"Ambassador Fine Cigars",address:"10810 N Tatum Blvd, Phoenix, AZ 85028"}),true);
+});
+test("official lounge branches fill Google result-limit omissions without duplicates",()=>{
+ const fox={googlePlaceId:"FOX",name:"Fox Cigar",address:"7443 E 6th Ave, Scottsdale, AZ 85251",googleMapsUri:"https://maps.example/fox",latitude:33.4942,longitude:-111.9261};
+ const supplemented=mergeOfficialLoungeLocations([fox]);
+ assert.equal(supplemented.some(place=>place.address.includes("10810 N Tatum")),true);
+ const withAmbassador=mergeOfficialLoungeLocations([...supplemented]);
+ assert.equal(withAmbassador.filter(place=>place.address.includes("10810 N Tatum")).length,1);
+ assert.equal(filterPlacesByRadius(supplemented,10).some(place=>place.address.includes("10810 N Tatum")),true);
 });
 test("live discovery survives intentionally unprovisioned optional community tables",()=>{
  const route=readFileSync(new URL("../app/api/places/search/route.ts",import.meta.url),"utf8");

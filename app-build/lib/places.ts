@@ -60,6 +60,13 @@ export function isConfirmedCigarLoungeCandidate(place:Pick<GooglePlaceResult,"na
  const name=normalizedPlaceText(place.name),address=normalizedPlaceText(place.address);
  return !confirmedNonLoungeLocations.some(excluded=>name===normalizedPlaceText(excluded.name)&&address.includes(normalizedPlaceText(excluded.address)));
 }
+const officialLoungeLocations:GooglePlaceResult[]=[
+ {googlePlaceId:"official-ambassador-tatum-10810",name:"Ambassador Fine Cigars",address:"10810 N Tatum Blvd #140, Phoenix, AZ 85028",googleMapsUri:"https://www.google.com/maps/search/?api=1&query=Ambassador+Fine+Cigars+10810+N+Tatum+Blvd+Phoenix+AZ+85028",websiteUri:"https://ambassadorcigars.com/locations/",businessStatus:"OPERATIONAL",latitude:33.5852,longitude:-111.9788},
+];
+export function mergeOfficialLoungeLocations<T extends GooglePlaceResult>(places:T[]){
+ const addresses=new Set(places.map(place=>normalizedPlaceText(place.address)));
+ return [...places,...officialLoungeLocations.filter(place=>!addresses.has(normalizedPlaceText(place.address)))] as Array<T|GooglePlaceResult>;
+}
 
 const earthRadiusMiles=3958.8;
 export function placeDistanceMiles(a:Pick<GooglePlaceResult,"latitude"|"longitude">,b:Pick<GooglePlaceResult,"latitude"|"longitude">){
