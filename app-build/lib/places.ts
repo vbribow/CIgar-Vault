@@ -52,6 +52,15 @@ export type PlaceReview=z.infer<typeof PlaceReviewInput>&{id:string;userId:strin
 export type PlaceCertification=z.infer<typeof PlaceCertificationInput>&{id:string;active:boolean;createdAt:string};
 export type GooglePlaceResult={googlePlaceId:string;name:string;address:string;googleRating?:number;googleReviewCount?:number;googleMapsUri:string;websiteUri?:string;businessStatus?:string;latitude?:number;longitude?:number};
 
+const confirmedNonLoungeLocations=[
+ {name:"shea smoke & cigar",address:"8764 e shea blvd"},
+] as const;
+function normalizedPlaceText(value:string){return value.trim().toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
+export function isConfirmedCigarLoungeCandidate(place:Pick<GooglePlaceResult,"name"|"address">){
+ const name=normalizedPlaceText(place.name),address=normalizedPlaceText(place.address);
+ return !confirmedNonLoungeLocations.some(excluded=>name===normalizedPlaceText(excluded.name)&&address.includes(normalizedPlaceText(excluded.address)));
+}
+
 const earthRadiusMiles=3958.8;
 export function placeDistanceMiles(a:Pick<GooglePlaceResult,"latitude"|"longitude">,b:Pick<GooglePlaceResult,"latitude"|"longitude">){
  if(a.latitude===undefined||a.longitude===undefined||b.latitude===undefined||b.longitude===undefined)return undefined;

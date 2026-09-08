@@ -1,4 +1,4 @@
-import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,filterPlacesByRadius,placeDistanceMiles,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,filterPlacesByRadius,isConfirmedCigarLoungeCandidate,placeDistanceMiles,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
 import{normalizePlaceSearch}from"../lib/place-search";
 import{placeSearchDailyLimit,placeSearchQueryHash,placeSearchReservationDecision}from"../lib/place-search-guard";
 test("quick community ratings require only identity, visit, and score",()=>{const value=PlaceReviewInput.parse({googlePlaceId:"PLACE-1",displayName:"Brian",score:94,visitDate:"2026-07-24"});assert.deepEqual(value.vibes,[]);assert.equal(value.review,"");assert.throws(()=>PlaceReviewInput.parse({...value,vibes:["Relaxed","Upscale","Traditional","Professional"]}))});
@@ -26,7 +26,8 @@ test("live lounge discovery is explicitly activated, bounded, and one-call per s
  const route=readFileSync(new URL("../app/api/places/search/route.ts",import.meta.url),"utf8");
  assert.match(route,/GOOGLE_PLACES_SEARCH_ENABLED!=="true"/);
  assert.match(route,/reservePlaceSearch\(db,user\.id,`\$\{location\}\|\$\{radiusMiles\}`\)/);
- assert.match(route,/cigar lounge, cigar bar, or cigar shop near/);
+ assert.match(route,/cigar lounge or cigar bar near/);
+ assert.doesNotMatch(route,/cigar shop near/);
  assert.match(route,/pageSize:20/);
  assert.doesNotMatch(route,/Promise\.all\(\["cigar lounge","cigar bar","cigar shop"\]/);
  assert.equal(placeSearchDailyLimit({} as NodeJS.ProcessEnv),20);
@@ -39,6 +40,11 @@ test("lounge results enforce the chosen perimeter and reject distant cities",()=
  const tucson={googlePlaceId:"TUCSON",name:"Tucson",address:"",googleMapsUri:"https://maps.example/tucson",latitude:32.2226,longitude:-110.9747};
  assert.ok(placeDistanceMiles(scottsdale,ambassador)!<10);
  assert.deepEqual(filterPlacesByRadius([scottsdale,ambassador,tucson],25).map(place=>place.googlePlaceId),["SCOTTSDALE","AMBASSADOR"]);
+});
+test("confirmed smoke-shop-only venues are excluded without hiding legitimate lounge names",()=>{
+ assert.equal(isConfirmedCigarLoungeCandidate({name:"SHEA Smoke & Cigar",address:"8764 E Shea Blvd #115, Scottsdale, AZ 85260"}),false);
+ assert.equal(isConfirmedCigarLoungeCandidate({name:"Fox Cigar",address:"7443 E 6th Ave, Scottsdale, AZ 85251"}),true);
+ assert.equal(isConfirmedCigarLoungeCandidate({name:"Ambassador Fine Cigars",address:"10810 N Tatum Blvd, Phoenix, AZ 85028"}),true);
 });
 test("live discovery survives intentionally unprovisioned optional community tables",()=>{
  const route=readFileSync(new URL("../app/api/places/search/route.ts",import.meta.url),"utf8");

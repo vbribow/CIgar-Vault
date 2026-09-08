@@ -49,7 +49,7 @@ export function PlaceDirectory(){
 
  return <>
   <section className="placeSearch card">
-   <div><div className="eyebrow">Top lounges near you</div><h2>Find a room worth visiting.</h2><p>Search nearby cigar lounges and retailers. {brand.name} community ratings stay separate from Google reviews.</p></div>
+   <div><div className="eyebrow">Top lounges near you</div><h2>Find a room worth visiting.</h2><p>Search nearby cigar lounges and cigar bars. {brand.name} community ratings stay separate from Google reviews.</p></div>
    <form onSubmit={search}><label><span>Street address, ZIP code, or city and state</span><input value={location} onChange={event=>setLocation(event.target.value)} inputMode="search" autoComplete="street-address" maxLength={120} placeholder="10810 N Tatum Blvd, Phoenix, AZ" aria-describedby="place-search-hint" required/><small id="place-search-hint">A full address gives the most precise nearby results.</small></label><label><span>Search radius</span><select value={radius} onChange={event=>setRadius(Number(event.target.value))}><option value={10}>10 miles</option><option value={25}>25 miles</option><option value={50}>50 miles</option></select></label><button className="button" disabled={busy}>{busy?"Searching…":"Find lounges"}</button></form>
   </section>
   {message&&<output className="placeMessage">{message}</output>}
