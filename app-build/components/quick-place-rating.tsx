@@ -23,7 +23,8 @@ export function QuickPlaceRating({googlePlaceId,name,onSuccess}:{googlePlaceId:s
  async function submit(event:FormEvent<HTMLFormElement>){
   event.preventDefault();
   if(!score){setMessage("Choose the experience that best fits your visit.");return}
-  const form=new FormData(event.currentTarget);
+  const formElement=event.currentTarget;
+  const form=new FormData(formElement);
   setBusy(true);setMessage("");setNeedsSignIn(false);
   try{
    const response=await fetch("/api/places/reviews",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
@@ -39,7 +40,7 @@ export function QuickPlaceRating({googlePlaceId,name,onSuccess}:{googlePlaceId:s
    if(response.status===401){setNeedsSignIn(true);throw new Error("Sign in to finish your rating.")}
    if(!response.ok)throw new Error(result.error||"Rating could not be submitted");
    setMessage("Thank you—your visit now helps the collector community.");
-   event.currentTarget.reset();setScore(undefined);setSelectedVibes([]);onSuccess?.();
+   formElement.reset();setScore(undefined);setSelectedVibes([]);onSuccess?.();
   }catch(error){setMessage(error instanceof Error?error.message:"Rating could not be submitted")}finally{setBusy(false)}
  }
  return <form className="quickPlaceRating card" onSubmit={submit}>
