@@ -17,16 +17,17 @@ type Result=GooglePlaceResult&{
 
 export function PlaceDirectory(){
  const[location,setLocation]=useState("");
+ const[radius,setRadius]=useState(25);
  const[results,setResults]=useState<Result[]>([]);
  const[selected,setSelected]=useState<Result>();
  const[busy,setBusy]=useState(false);
  const[message,setMessage]=useState("");
- const[meta,setMeta]=useState<{retrievedAt:string;methodology:string;dailyLimit:number;searchesUsedToday:number}>();
+ const[meta,setMeta]=useState<{retrievedAt:string;methodology:string;dailyLimit:number;searchesUsedToday:number;radiusMiles:number}>();
 
  async function search(event:FormEvent){
   event.preventDefault();setBusy(true);setMessage("");
   try{
-   const response=await fetch(`/api/places/search?location=${encodeURIComponent(location)}`,{cache:"no-store"});
+   const response=await fetch(`/api/places/search?location=${encodeURIComponent(location)}&radius=${radius}`,{cache:"no-store"});
    const body=await response.json();
    if(!response.ok)throw new Error(body.error||"Search failed");
    setResults(body.data);setMeta(body.meta);
@@ -49,7 +50,7 @@ export function PlaceDirectory(){
  return <>
   <section className="placeSearch card">
    <div><div className="eyebrow">Top lounges near you</div><h2>Find a room worth visiting.</h2><p>Search nearby cigar lounges and retailers. {brand.name} community ratings stay separate from Google reviews.</p></div>
-   <form onSubmit={search}><label><span>U.S. ZIP code or city and state</span><input value={location} onChange={event=>setLocation(event.target.value)} inputMode="search" autoComplete="postal-code" maxLength={120} placeholder="90210 or Anchorage, AK" aria-describedby="place-search-hint" required/><small id="place-search-hint">Use a ZIP code or include both city and state.</small></label><button className="button" disabled={busy}>{busy?"Searching…":"Find lounges"}</button></form>
+   <form onSubmit={search}><label><span>Street address, ZIP code, or city and state</span><input value={location} onChange={event=>setLocation(event.target.value)} inputMode="search" autoComplete="street-address" maxLength={120} placeholder="10810 N Tatum Blvd, Phoenix, AZ" aria-describedby="place-search-hint" required/><small id="place-search-hint">A full address gives the most precise nearby results.</small></label><label><span>Search radius</span><select value={radius} onChange={event=>setRadius(Number(event.target.value))}><option value={10}>10 miles</option><option value={25}>25 miles</option><option value={50}>50 miles</option></select></label><button className="button" disabled={busy}>{busy?"Searching…":"Find lounges"}</button></form>
   </section>
   {message&&<output className="placeMessage">{message}</output>}
   {meta&&<aside className="placeMethod"><strong>Community-first ranking</strong><span>{meta.methodology}</span><small>Google data retrieved {new Date(meta.retrievedAt).toLocaleString()} · Protected search {meta.searchesUsedToday} of {meta.dailyLimit} today · Google ratings are never converted into {brand.name} ratings.</small></aside>}

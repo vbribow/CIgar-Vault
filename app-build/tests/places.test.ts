@@ -1,4 +1,4 @@
-import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,filterPlacesByRadius,placeDistanceMiles,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
 import{normalizePlaceSearch}from"../lib/place-search";
 import{placeSearchDailyLimit,placeSearchQueryHash,placeSearchReservationDecision}from"../lib/place-search-guard";
 test("quick community ratings require only identity, visit, and score",()=>{const value=PlaceReviewInput.parse({googlePlaceId:"PLACE-1",displayName:"Brian",score:94,visitDate:"2026-07-24"});assert.deepEqual(value.vibes,[]);assert.equal(value.review,"");assert.throws(()=>PlaceReviewInput.parse({...value,vibes:["Relaxed","Upscale","Traditional","Professional"]}))});
@@ -17,18 +17,28 @@ test("lounge discovery accepts ZIP codes and explicit city-state searches",()=>{
  assert.equal(normalizePlaceSearch("99501"),"99501");
  assert.equal(normalizePlaceSearch("St. Louis, MO"),"St. Louis, MO");
  assert.equal(normalizePlaceSearch("Anchorage, Alaska"),"Anchorage, Alaska");
+ assert.equal(normalizePlaceSearch("10810 N Tatum Blvd Unit 140 Phoenix"),"10810 N Tatum Blvd Unit 140 Phoenix");
+ assert.equal(normalizePlaceSearch("10810 N Tatum Blvd #140, Phoenix, AZ 85028"),"10810 N Tatum Blvd #140, Phoenix, AZ 85028");
  assert.equal(normalizePlaceSearch("Anchorage"),undefined);
  assert.equal(normalizePlaceSearch("995"),undefined);
 });
 test("live lounge discovery is explicitly activated, bounded, and one-call per search",()=>{
  const route=readFileSync(new URL("../app/api/places/search/route.ts",import.meta.url),"utf8");
  assert.match(route,/GOOGLE_PLACES_SEARCH_ENABLED!=="true"/);
- assert.match(route,/reservePlaceSearch\(db,user\.id,location\)/);
+ assert.match(route,/reservePlaceSearch\(db,user\.id,`\$\{location\}\|\$\{radiusMiles\}`\)/);
  assert.match(route,/cigar lounge, cigar bar, or cigar shop near/);
+ assert.match(route,/pageSize:20/);
  assert.doesNotMatch(route,/Promise\.all\(\["cigar lounge","cigar bar","cigar shop"\]/);
  assert.equal(placeSearchDailyLimit({} as NodeJS.ProcessEnv),20);
  assert.equal(placeSearchDailyLimit({GOOGLE_PLACES_DAILY_USER_LIMIT:"500"} as unknown as NodeJS.ProcessEnv),100);
  assert.equal(placeSearchQueryHash(" Anchorage,  AK "),placeSearchQueryHash("anchorage, ak"));
+});
+test("lounge results enforce the chosen perimeter and reject distant cities",()=>{
+ const scottsdale={googlePlaceId:"SCOTTSDALE",name:"Scottsdale",address:"",googleMapsUri:"https://maps.example/scottsdale",latitude:33.4942,longitude:-111.9261};
+ const ambassador={googlePlaceId:"AMBASSADOR",name:"Ambassador Fine Cigars",address:"10810 N Tatum Blvd",googleMapsUri:"https://maps.example/ambassador",latitude:33.5852,longitude:-111.9788};
+ const tucson={googlePlaceId:"TUCSON",name:"Tucson",address:"",googleMapsUri:"https://maps.example/tucson",latitude:32.2226,longitude:-110.9747};
+ assert.ok(placeDistanceMiles(scottsdale,ambassador)!<10);
+ assert.deepEqual(filterPlacesByRadius([scottsdale,ambassador,tucson],25).map(place=>place.googlePlaceId),["SCOTTSDALE","AMBASSADOR"]);
 });
 test("live discovery survives intentionally unprovisioned optional community tables",()=>{
  const route=readFileSync(new URL("../app/api/places/search/route.ts",import.meta.url),"utf8");

@@ -52,6 +52,20 @@ export type PlaceReview=z.infer<typeof PlaceReviewInput>&{id:string;userId:strin
 export type PlaceCertification=z.infer<typeof PlaceCertificationInput>&{id:string;active:boolean;createdAt:string};
 export type GooglePlaceResult={googlePlaceId:string;name:string;address:string;googleRating?:number;googleReviewCount?:number;googleMapsUri:string;websiteUri?:string;businessStatus?:string;latitude?:number;longitude?:number};
 
+const earthRadiusMiles=3958.8;
+export function placeDistanceMiles(a:Pick<GooglePlaceResult,"latitude"|"longitude">,b:Pick<GooglePlaceResult,"latitude"|"longitude">){
+ if(a.latitude===undefined||a.longitude===undefined||b.latitude===undefined||b.longitude===undefined)return undefined;
+ const radians=(degrees:number)=>degrees*Math.PI/180;
+ const latitudeDelta=radians(b.latitude-a.latitude),longitudeDelta=radians(b.longitude-a.longitude);
+ const value=Math.sin(latitudeDelta/2)**2+Math.cos(radians(a.latitude))*Math.cos(radians(b.latitude))*Math.sin(longitudeDelta/2)**2;
+ return 2*earthRadiusMiles*Math.asin(Math.sqrt(value));
+}
+export function filterPlacesByRadius<T extends GooglePlaceResult>(places:T[],radiusMiles:number){
+ const anchor=places.find(place=>place.latitude!==undefined&&place.longitude!==undefined);
+ if(!anchor)return places;
+ return places.filter(place=>{const distance=placeDistanceMiles(anchor,place);return distance===undefined||distance<=radiusMiles});
+}
+
 export function communityPlaceScore(reviews:Pick<PlaceReview,"score">[]){
  if(!reviews.length)return undefined;
  return Math.round(reviews.reduce((sum,review)=>sum+review.score,0)/reviews.length*10)/10;
