@@ -21,6 +21,8 @@ export function PlaceDirectory(){
  const[results,setResults]=useState<Result[]>([]);
  const[selected,setSelected]=useState<Result>();
  const[busy,setBusy]=useState(false);
+ const[reportingId,setReportingId]=useState("");
+ const[reported,setReported]=useState<Set<string>>(()=>new Set());
  const[message,setMessage]=useState("");
  const[meta,setMeta]=useState<{retrievedAt:string;methodology:string;dailyLimit:number;searchesUsedToday:number;radiusMiles:number}>();
 
@@ -46,6 +48,16 @@ export function PlaceDirectory(){
    setMessage("Independent location assessment saved.");setSelected(undefined);
   }catch(error){setMessage(error instanceof Error?error.message:"Assessment failed")}finally{setBusy(false)}
  }
+ async function reportNotLounge(place:Result){
+  if(reportingId||reported.has(place.googlePlaceId))return;
+  setReportingId(place.googlePlaceId);setMessage("");
+  try{
+   const response=await fetch("/api/places/report",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({googlePlaceId:place.googlePlaceId,reason:"not_a_lounge"})});
+   const body=await response.json();
+   if(!response.ok)throw new Error(body.error||"The location could not be reported.");
+   setReported(current=>new Set(current).add(place.googlePlaceId));
+  }catch(error){setMessage(error instanceof Error?error.message:"The location could not be reported.")}finally{setReportingId("")}
+ }
 
  return <>
   <section className="placeSearch card">
@@ -68,7 +80,7 @@ export function PlaceDirectory(){
     </div>
     {place.vibes.length>0&&<div className="placeVibes">{place.vibes.map(value=><span key={value.vibe}>{value.vibe} · {value.count}</span>)}</div>}
     {place.certification&&<blockquote>{place.certification.summary}</blockquote>}
-    <footer><a href={place.googleMapsUri} target="_blank" rel="noreferrer">Google Maps ↗</a>{place.websiteUri&&<a href={place.websiteUri} target="_blank" rel="noreferrer">Website ↗</a>}<button className="button" onClick={()=>setSelected(place)}>Rate this lounge</button></footer>
+    <footer><a href={place.googleMapsUri} target="_blank" rel="noreferrer">Google Maps ↗</a>{place.websiteUri&&<a href={place.websiteUri} target="_blank" rel="noreferrer">Website ↗</a>}<button className="button" onClick={()=>setSelected(place)}>Rate this lounge</button><button type="button" className="button secondary" disabled={reportingId===place.googlePlaceId||reported.has(place.googlePlaceId)} aria-busy={reportingId===place.googlePlaceId} onClick={()=>reportNotLounge(place)}>{reported.has(place.googlePlaceId)?"Reported":reportingId===place.googlePlaceId?"Reporting…":"Not actually a lounge"}</button>{reported.has(place.googlePlaceId)&&<small role="status">Sent for verification. One report does not automatically remove a location.</small>}</footer>
    </article>;
   })}</section>
   {selected&&<section className="placeContribution">

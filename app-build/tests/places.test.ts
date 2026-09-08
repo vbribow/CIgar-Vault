@@ -82,3 +82,14 @@ test("failed and blocked lounge searches never consume the daily allowance",()=>
  assert.equal(placeSearchReservationDecision(rows,11,hash,10,now),"allowed");
  assert.equal(placeSearchReservationDecision([...rows,{id:12,created_at:now.toISOString(),properties:{queryHash:hash,status:"failed"}}],11,hash,10,now),"allowed");
 });
+test("signed-in collectors can flag a result for verification without auto-removal",()=>{
+ const route=readFileSync(new URL("../app/api/places/report/route.ts",import.meta.url),"utf8");
+ const component=readFileSync(new URL("../components/place-directory.tsx",import.meta.url),"utf8");
+ assert.match(route,/auth\.getUser\(\)/);
+ assert.match(route,/location_verification_events/);
+ assert.match(route,/outcome:"attention"/);
+ assert.match(route,/may not offer an on-site cigar lounge/);
+ assert.match(component,/Not actually a lounge/);
+ assert.match(component,/One report does not automatically remove a location/);
+ assert.match(component,/aria-busy=\{reportingId===place\.googlePlaceId\}/);
+});

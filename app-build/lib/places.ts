@@ -36,6 +36,11 @@ export const PlaceReviewInput=z.object({
  conflictDisclosure:z.string().trim().max(500).optional(),
 }).strict();
 
+export const PlaceReportInput=z.object({
+ googlePlaceId:z.string().trim().min(3).max(300),
+ reason:z.literal("not_a_lounge"),
+}).strict();
+
 export const PlaceCertificationInput=z.object({
  googlePlaceId:z.string().trim().min(3).max(300),
  level:z.enum(certificationLevels),
