@@ -57,3 +57,14 @@ test("concurrent duplicate and over-limit lounge searches fail closed",()=>{
  assert.equal(placeSearchReservationDecision(unique,20,"19",20,now),"allowed");
  assert.equal(placeSearchReservationDecision(unique,21,"20",20,now),"daily_limit");
 });
+test("failed and blocked lounge searches never consume the daily allowance",()=>{
+ const now=new Date("2026-09-08T12:00:00Z"),hash=placeSearchQueryHash("Scottsdale, AZ");
+ const rows=[
+  ...Array.from({length:8},(_,index)=>({id:index+1,created_at:"2026-09-08T10:00:00Z",properties:{queryHash:String(index),status:"failed"}})),
+  {id:9,created_at:"2026-09-08T11:00:00Z",properties:{queryHash:"completed-1",status:"completed"}},
+  {id:10,created_at:"2026-09-08T11:30:00Z",properties:{queryHash:"completed-2",status:"completed"}},
+  {id:11,created_at:now.toISOString(),properties:{queryHash:hash,status:"reserved"}},
+ ];
+ assert.equal(placeSearchReservationDecision(rows,11,hash,10,now),"allowed");
+ assert.equal(placeSearchReservationDecision([...rows,{id:12,created_at:now.toISOString(),properties:{queryHash:hash,status:"failed"}}],11,hash,10,now),"allowed");
+});

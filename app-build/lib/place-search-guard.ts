@@ -21,6 +21,9 @@ export function placeSearchQueryHash(location: string) {
 }
 
 export type PlaceSearchEventRow = { id: number; created_at: string; properties?: { queryHash?: string; status?: string } };
+function countsTowardPlaceSearchLimit(row: PlaceSearchEventRow) {
+  return row.properties?.status === "completed" || row.properties?.status === "reserved";
+}
 type GuardDb = {
   from(table: string): any;
 };
@@ -45,13 +48,13 @@ export async function reservePlaceSearch(db: GuardDb, userId: string, location: 
     if (decision === "duplicate") throw new PlaceSearchGuardError("duplicate_search", "That lounge search was just requested. Please wait a moment before searching the same location again.", 429);
     throw new PlaceSearchGuardError("daily_limit", `Today’s protected lounge-search limit has been reached. Try again tomorrow.`, 429);
   }
-  return { eventId: reservation.id as number, queryHash, dailyLimit: placeSearchDailyLimit(), usedToday: rows.filter(row => row.properties?.status !== "blocked" && row.id <= reservation.id).length };
+  return { eventId: reservation.id as number, queryHash, dailyLimit: placeSearchDailyLimit(), usedToday: rows.filter(row => countsTowardPlaceSearchLimit(row) && row.id <= reservation.id).length };
 }
 
 export function placeSearchReservationDecision(rows:PlaceSearchEventRow[],reservationId:number,queryHash:string,dailyLimit:number,now=new Date()):"allowed"|"duplicate"|"daily_limit"{
- const duplicate=rows.some(row=>row.id!==reservationId&&row.properties?.queryHash===queryHash&&row.properties?.status!=="blocked"&&now.getTime()-new Date(row.created_at).getTime()<=DUPLICATE_WINDOW_MS);
+ const duplicate=rows.some(row=>row.id!==reservationId&&row.properties?.queryHash===queryHash&&countsTowardPlaceSearchLimit(row)&&now.getTime()-new Date(row.created_at).getTime()<=DUPLICATE_WINDOW_MS);
  if(duplicate)return"duplicate";
- return rows.filter(row=>row.properties?.status!=="blocked").slice(0,dailyLimit).some(row=>row.id===reservationId)?"allowed":"daily_limit";
+ return rows.filter(countsTowardPlaceSearchLimit).slice(0,dailyLimit).some(row=>row.id===reservationId)?"allowed":"daily_limit";
 }
 
 export async function finishPlaceSearch(db: GuardDb, eventId: number, queryHash: string, status: "completed" | "failed") {
