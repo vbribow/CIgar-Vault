@@ -14,6 +14,13 @@ server route. The credential must never be sent to the browser.
 The current route uses the required field mask and requests only the fields
 Hojavía displays.
 
+The displayed Google rating, review count, and website fields currently place
+the request in Google's **Text Search Enterprise** tier. Confirm Google's live
+pricing in Cloud Console before activation. Hojavía sends one Google Text
+Search request per collector search, records a private hashed usage event,
+blocks immediate duplicate requests, and defaults to 20 searches per collector
+per UTC day.
+
 ## Application restriction
 
 Google recommends IP restrictions for server-side API keys. Vercel Functions
@@ -32,6 +39,14 @@ Add this encrypted Production environment variable:
 
 `GOOGLE_PLACES_API_KEY`
 
+Add the explicit activation gate:
+
+`GOOGLE_PLACES_SEARCH_ENABLED=true`
+
+Optional conservative per-collector limit (default 20, maximum 100):
+
+`GOOGLE_PLACES_DAILY_USER_LIMIT=20`
+
 Never use a `NEXT_PUBLIC_` prefix. Redeploy after adding or rotating it.
 
 ## Acceptance check
@@ -42,3 +57,5 @@ Never use a `NEXT_PUBLIC_` prefix. Redeploy after adding or rotating it.
 4. Confirm permanently closed locations are excluded.
 5. Confirm an anonymous request receives a sign-in response.
 6. Review Google usage, quota, and billing dashboards after the test.
+7. Confirm one collector search produces one Text Search request and a repeated
+   immediate search receives a friendly wait message.

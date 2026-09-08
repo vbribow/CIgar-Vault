@@ -21,7 +21,7 @@ export function PlaceDirectory(){
  const[selected,setSelected]=useState<Result>();
  const[busy,setBusy]=useState(false);
  const[message,setMessage]=useState("");
- const[meta,setMeta]=useState<{retrievedAt:string;methodology:string}>();
+ const[meta,setMeta]=useState<{retrievedAt:string;methodology:string;dailyLimit:number;searchesUsedToday:number}>();
 
  async function search(event:FormEvent){
   event.preventDefault();setBusy(true);setMessage("");
@@ -52,7 +52,7 @@ export function PlaceDirectory(){
    <form onSubmit={search}><label><span>U.S. ZIP code or city and state</span><input value={location} onChange={event=>setLocation(event.target.value)} inputMode="search" autoComplete="postal-code" maxLength={120} placeholder="90210 or Anchorage, AK" aria-describedby="place-search-hint" required/><small id="place-search-hint">Use a ZIP code or include both city and state.</small></label><button className="button" disabled={busy}>{busy?"Searching…":"Find lounges"}</button></form>
   </section>
   {message&&<output className="placeMessage">{message}</output>}
-  {meta&&<aside className="placeMethod"><strong>Community-first ranking</strong><span>{meta.methodology}</span><small>Google data retrieved {new Date(meta.retrievedAt).toLocaleString()} · Google ratings are never converted into {brand.name} ratings.</small></aside>}
+  {meta&&<aside className="placeMethod"><strong>Community-first ranking</strong><span>{meta.methodology}</span><small>Google data retrieved {new Date(meta.retrievedAt).toLocaleString()} · Protected search {meta.searchesUsedToday} of {meta.dailyLimit} today · Google ratings are never converted into {brand.name} ratings.</small></aside>}
   {results.length>0&&<div className="placeResultsHeading"><div><div className="eyebrow">Nearby results</div><h2>{results.some(place=>place.communityReviewCount>=5)?"Top community-rated lounges":"A ranking taking shape"}</h2></div><p>Five unique {brand.name} ratings are required before a lounge is ranked as established.</p></div>}
   <section className="placeResults">{results.map((place,index)=>{
    const rankingScore=communityPlaceRankingScore(place.communityScore,place.communityReviewCount);

@@ -3,6 +3,7 @@ import { createClient as createAdmin } from "@supabase/supabase-js";
 import { rankPlaces,type GooglePlaceResult,type PlaceCertification,type PlaceReview,vibeConsensus,communityPlaceScore,normalizeCertificationLevel } from "@/lib/places";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePlaceSearch,placeSearchHint } from "@/lib/place-search";
+import { finishPlaceSearch, PlaceSearchGuardError, reservePlaceSearch } from "@/lib/place-search-guard";
 
 export const dynamic="force-dynamic";
 const fieldMask="places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.businessStatus,places.websiteUri,places.googleMapsUri";
@@ -20,18 +21,24 @@ export async function GET(request:Request){
  const{data:{user}}=await(await createClient()).auth.getUser();
  if(!user)return NextResponse.json({error:"Sign in to search nearby cigar places."},{status:401});
  const key=process.env.GOOGLE_PLACES_API_KEY?.trim();
- if(!key)return NextResponse.json({
+ if(process.env.GOOGLE_PLACES_SEARCH_ENABLED!=="true"||!key)return NextResponse.json({
   error:"Live location discovery is temporarily unavailable. Saved Places and community ratings remain available while this service is being prepared.",
   code:"LIVE_DISCOVERY_UNAVAILABLE",
  },{status:503});
+ const db=admin();
+ if(!db)return NextResponse.json({error:"Live location discovery is temporarily unavailable. Saved Places and community ratings remain available.",code:"LIVE_DISCOVERY_UNAVAILABLE"},{status:503});
+ let reservation:Awaited<ReturnType<typeof reservePlaceSearch>>|undefined;
  try{
-  const searches=await Promise.all(["cigar lounge","cigar bar","cigar shop"].map(term=>googleSearch(`${term} near ${location}`,key)));
-  const unique=[...new Map(searches.flat().map(place=>[place.googlePlaceId,place])).values()].filter(place=>place.businessStatus!=="CLOSED_PERMANENTLY");
-  const db=admin();let reviews:PlaceReview[]=[];let certifications:PlaceCertification[]=[];
-  if(db&&unique.length){const ids=unique.map(place=>place.googlePlaceId);const[reviewRows,certRows]=await Promise.all([db.from("place_reviews").select("*").in("google_place_id",ids).eq("status","active"),db.from("place_certifications").select("*").in("google_place_id",ids).eq("active",true)]);if(reviewRows.error)throw reviewRows.error;if(certRows.error)throw certRows.error;reviews=(reviewRows.data||[]).map(row=>({id:row.id,userId:row.user_id,googlePlaceId:row.google_place_id,displayName:row.display_name,score:row.score,visitDate:row.visit_date,vibes:row.vibes,capabilities:row.capabilities,review:row.review,conflictDisclosure:row.conflict_disclosure||undefined,status:row.status,createdAt:row.created_at}));certifications=(certRows.data||[]).map(row=>({id:row.id,googlePlaceId:row.google_place_id,level:normalizeCertificationLevel(row.level),score:row.score,visitMonth:row.visit_month,summary:row.summary,strengths:row.strengths,opportunities:row.opportunities||undefined,complimentaryDisclosure:row.complimentary_disclosure||undefined,nextReviewDate:row.next_review_date,active:row.active,createdAt:row.created_at}))}
+  reservation=await reservePlaceSearch(db,user.id,location);
+  const unique=(await googleSearch(`cigar lounge, cigar bar, or cigar shop near ${location}`,key)).filter(place=>place.businessStatus!=="CLOSED_PERMANENTLY");
+  let reviews:PlaceReview[]=[];let certifications:PlaceCertification[]=[];
+  if(unique.length){const ids=unique.map(place=>place.googlePlaceId);const[reviewRows,certRows]=await Promise.all([db.from("place_reviews").select("*").in("google_place_id",ids).eq("status","active"),db.from("place_certifications").select("*").in("google_place_id",ids).eq("active",true)]);if(reviewRows.error)throw reviewRows.error;if(certRows.error)throw certRows.error;reviews=(reviewRows.data||[]).map(row=>({id:row.id,userId:row.user_id,googlePlaceId:row.google_place_id,displayName:row.display_name,score:row.score,visitDate:row.visit_date,vibes:row.vibes,capabilities:row.capabilities,review:row.review,conflictDisclosure:row.conflict_disclosure||undefined,status:row.status,createdAt:row.created_at}));certifications=(certRows.data||[]).map(row=>({id:row.id,googlePlaceId:row.google_place_id,level:normalizeCertificationLevel(row.level),score:row.score,visitMonth:row.visit_month,summary:row.summary,strengths:row.strengths,opportunities:row.opportunities||undefined,complimentaryDisclosure:row.complimentary_disclosure||undefined,nextReviewDate:row.next_review_date,active:row.active,createdAt:row.created_at}))}
   const data=rankPlaces(unique.map(place=>{const placeReviews=reviews.filter(review=>review.googlePlaceId===place.googlePlaceId);return{...place,communityScore:communityPlaceScore(placeReviews),communityReviewCount:placeReviews.length,communityScoreStatus:placeReviews.length>=5?"Established":"Developing",vibes:vibeConsensus(placeReviews),certification:certifications.find(value=>value.googlePlaceId===place.googlePlaceId)}}));
-  return NextResponse.json({data,meta:{location,googleAttributionRequired:true,retrievedAt:new Date().toISOString(),methodology:"Lounges with at least five community ratings rank first using a sample-size-adjusted community score. Developing locations follow, while Google remains a separate discovery signal."}},{headers:{"Cache-Control":"private, no-store, max-age=0"}});
+  await finishPlaceSearch(db,reservation.eventId,reservation.queryHash,"completed");
+  return NextResponse.json({data,meta:{location,googleAttributionRequired:true,retrievedAt:new Date().toISOString(),dailyLimit:reservation.dailyLimit,searchesUsedToday:reservation.usedToday,methodology:"Lounges with at least five community ratings rank first using a sample-size-adjusted community score. Developing locations follow, while Google remains a separate discovery signal."}},{headers:{"Cache-Control":"private, no-store, max-age=0"}});
  }catch(error){
+  if(reservation)try{await finishPlaceSearch(db,reservation.eventId,reservation.queryHash,"failed")}catch{}
+  if(error instanceof PlaceSearchGuardError)return NextResponse.json({error:error.message,code:error.code},{status:error.status,headers:{"Cache-Control":"private, no-store, max-age=0"}});
   console.error("Places search failed",error);
   return NextResponse.json({
    error:"Live location discovery is temporarily unavailable. Please try again later.",
