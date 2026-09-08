@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, requireCompletePairings, sommLeadSummary, uniqueSommItems } from "../lib/cigar-somm";
+import { CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, enforceSommRecommendationPurity, parseSommCandidateConstraints, requireCompletePairings, sommLeadSummary, strictSommCandidates, uniqueSommItems } from "../lib/cigar-somm";
 
 test("Cigar Somm accepts an inventory-grounded pairing question",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I pair with this after dinner?",inventoryId:"INV-1",occasion:"After dinner",includeAlcohol:true});assert.equal(value.inventoryId,"INV-1");assert.equal(value.includeAlcohol,true)});
 test("Cigar Somm accepts a manually entered cigar without adding inventory",()=>{const value=CigarSommQuestionSchema.parse({question:"Analyze this cigar",cigarName:"Arturo Fuente OpusX Lost City Double Robusto",includeAlcohol:true});assert.equal(value.cigarName,"Arturo Fuente OpusX Lost City Double Robusto");assert.equal(value.inventoryId,undefined)});
@@ -91,4 +91,25 @@ test("Cigar Somm supports pairing from a drink, meal, time, or occasion back to 
  assert.match(component,/source==="inventory"&&collectionChoiceRequired/);
  assert.match(service,/beverage to cigar, meal to cigar, time of day to cigar, and occasion to cigar/);
  assert.match(service,/Never invent ownership/);
+});
+
+test("country and intensity requests become strict catalog filters",()=>{
+ const constraints=parseSommCandidateConstraints("Show me medium body cigars from Nicaragua");
+ assert.deepEqual(constraints,{country:"Nicaragua",strength:"Medium"});
+ assert.deepEqual(parseSommCandidateConstraints("A medium-bodied Costa Rican cigar"),{country:"Costa Rica",strength:"Medium"});
+ const inventory=[
+  {inventoryId:"INV-NI",brand:"Example",line:"Nica",vitola:"Toro",currentQty:2},
+  {inventoryId:"INV-DR",brand:"Example",line:"Dominican",vitola:"Toro",currentQty:3},
+  {inventoryId:"INV-UNKNOWN",brand:"Example",line:"Unknown",vitola:"Toro",currentQty:1},
+ ];
+ const catalog=[
+  {catalogId:"CAT-NI",brand:"Example",line:"Nica",vitola:"Toro",country:"Nicaragua",strength:"Medium"},
+  {catalogId:"CAT-DR",brand:"Example",line:"Dominican",vitola:"Toro",country:"Dominican Republic",strength:"Medium"},
+ ];
+ assert.deepEqual(strictSommCandidates(inventory,catalog,constraints).map(item=>item.inventoryId),["INV-NI"]);
+});
+
+test("strict recommendations fail closed if a model returns an out-of-filter cigar",()=>{
+ const answer=CigarSommAnswerSchema.parse({answer:"One choice.",cigarContext:"Example Nica Toro",cigarRecommendations:[{inventoryId:"INV-DR",cigarName:"Example Dominican Toro",why:"Nearby option",serviceMoment:"Now"}],confidence:"Medium",personalization:{used:false,signals:[],explanation:"General guidance."},tastingProfile:{body:"Medium",strength:"Medium",coreNotes:["cedar"],development:["cedar"],evidence:"Conservative expectation."},basis:[],coffee:[],spirits:[],cocktails:[],nonAlcoholic:[],sources:[],cautions:[]});
+ assert.throws(()=>enforceSommRecommendationPurity(answer,new Set(["INV-NI"]),{country:"Nicaragua",strength:"Medium"}),/withheld mixed results/);
 });
