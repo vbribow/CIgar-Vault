@@ -30,6 +30,15 @@ test("live lounge discovery is explicitly activated, bounded, and one-call per s
  assert.equal(placeSearchDailyLimit({GOOGLE_PLACES_DAILY_USER_LIMIT:"500"} as unknown as NodeJS.ProcessEnv),100);
  assert.equal(placeSearchQueryHash(" Anchorage,  AK "),placeSearchQueryHash("anchorage, ak"));
 });
+test("live discovery survives intentionally unprovisioned optional community tables",()=>{
+ const route=readFileSync(new URL("../app/api/places/search/route.ts",import.meta.url),"utf8");
+ assert.match(route,/optionalPlaceTableMissing/);
+ assert.match(route,/PGRST205/);
+ assert.match(route,/place_reviews/);
+ assert.match(route,/place_certifications/);
+ assert.match(route,/reviewRows\.error&&!optionalPlaceTableMissing/);
+ assert.match(route,/certRows\.error&&!optionalPlaceTableMissing/);
+});
 test("concurrent duplicate and over-limit lounge searches fail closed",()=>{
  const now=new Date("2026-09-08T12:00:00Z"),hash=placeSearchQueryHash("99501");
  const rows=[{id:1,created_at:"2026-09-08T11:59:40Z",properties:{queryHash:hash,status:"reserved"}},{id:2,created_at:"2026-09-08T12:00:00Z",properties:{queryHash:hash,status:"reserved"}}];
