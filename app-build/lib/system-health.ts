@@ -1,4 +1,4 @@
-export type SystemJobId="sensor-sync"|"catalog-discovery"|"wishlist-monitor"|"valuation-monitor"|"rating-monitor"|"sommelier-research";
+export type SystemJobId="sensor-sync"|"catalog-discovery"|"industry-content"|"wishlist-monitor"|"valuation-monitor"|"rating-monitor"|"sommelier-research";
 export type SystemRun={runId:string;jobId:SystemJobId;status:"Succeeded"|"Failed";startedAt:string;completedAt:string;summary:string;error?:string};
 type AutomationOutcome={status?:string;inventoryId?:string;error?:string};
 type AutomationData={checked?:number;batchSize?:number;remainingEligible?:number;researched?:number;cached?:number;estimatedSpendThisMonth?:number;monthlyBudget?:number;pauseAt?:number;budgetPaused?:boolean;outcomes?:AutomationOutcome[]};
@@ -6,6 +6,7 @@ export type HealthCheck={id:string;name:string;description:string;status:"Ready"
 export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:string;nextDescription:string}>=[
   {id:"sensor-sync",name:"Sensor synchronization",path:"/api/sensor-sync",schedule:"0 * * * *",nextDescription:"Hourly at minute 0"},
   {id:"catalog-discovery",name:"Catalog discovery",path:"/api/catalog-discovery/run",schedule:"0 12 * * 1",nextDescription:"Monday at 12:00 UTC"},
+  {id:"industry-content",name:"Industry content",path:"/api/industry-content-monitor",schedule:"30 12 * * 1",nextDescription:"Monday at 12:30 UTC · up to 12 qualified stories · automatic source-labeled publication"},
   {id:"wishlist-monitor",name:"Wishlist monitoring",path:"/api/wishlist-monitor",schedule:"30 13 * * *",nextDescription:"Daily at 13:30 UTC"},
   {id:"valuation-monitor",name:"Valuation monitoring",path:"/api/valuation-monitor",schedule:"15 13 1 * *",nextDescription:"Monthly on the 1st · new uploads first · up to 6 due lots"},
   {id:"rating-monitor",name:"Professional rating coverage",path:"/api/rating-monitor",schedule:"30 14 * * 0",nextDescription:"Sunday at 14:30 UTC"},

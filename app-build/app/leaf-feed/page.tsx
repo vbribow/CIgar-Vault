@@ -2,6 +2,7 @@ import { loadCommunityPostSummaries } from "@/lib/community-pulse-store";
 import { loadCollections, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { buildLeafFeed } from "@/lib/leaf-feed";
+import { loadPublishedIndustryContent } from "@/lib/industry-content";
 import "./leaf-feed.css";
 
 export const dynamic = "force-dynamic";
@@ -16,12 +17,26 @@ const groupFallbacks: Record<(typeof groups)[number], { title:string; detail:str
 };
 
 export default async function LeafFeedPage() {
-  const results = await Promise.allSettled([loadInventory(), loadSmokingLogs(), loadValuations(), loadCollections(), loadCommunityPostSummaries()] as const);
+  const results = await Promise.allSettled([
+    loadInventory(),
+    loadSmokingLogs(),
+    loadValuations(),
+    loadCollections(),
+    loadCommunityPostSummaries(),
+    loadPublishedIndustryContent(8),
+  ] as const);
   const ready = results.slice(0, 4).every(result => result.status === "fulfilled");
   if (!ready) return <main className="shell leafFeedPage"><section className="leafFeedHero"><div className="eyebrow">Leaf Feed protected</div><h1>Your connected view is temporarily paused.</h1><p className="lede">Hojavía could not verify every private source needed to personalize this feed. Partial data is not being presented as a complete collection view.</p><a className="button secondary" href="/leaf-feed">Check again</a></section></main>;
 
-  const [inventory, smokes, valuations, collections, posts] = results.map(result => result.status === "fulfilled" ? result.value : []) as [Awaited<ReturnType<typeof loadInventory>>, Awaited<ReturnType<typeof loadSmokingLogs>>, Awaited<ReturnType<typeof loadValuations>>, Awaited<ReturnType<typeof loadCollections>>, Awaited<ReturnType<typeof loadCommunityPostSummaries>>];
-  const items = buildLeafFeed({ inventory, smokes, valuations, collections, communityPosts:posts });
+  const [inventory, smokes, valuations, collections, posts, industryContent] = results.map(result => result.status === "fulfilled" ? result.value : []) as [
+    Awaited<ReturnType<typeof loadInventory>>,
+    Awaited<ReturnType<typeof loadSmokingLogs>>,
+    Awaited<ReturnType<typeof loadValuations>>,
+    Awaited<ReturnType<typeof loadCollections>>,
+    Awaited<ReturnType<typeof loadCommunityPostSummaries>>,
+    Awaited<ReturnType<typeof loadPublishedIndustryContent>>,
+  ];
+  const items = buildLeafFeed({ inventory, smokes, valuations, collections, communityPosts:posts, industryContent });
 
   return <main className="shell wideShell leafFeedPage">
     <section className="leafFeedHero"><div><div className="eyebrow">Your Leaf Feed</div><h1>Everything meaningful, brought into context.</h1><p className="lede">A private, evidence-aware view of journal history, collection progress, market movement, learning, and collector culture—without turning activity into noise.</p></div><aside><strong>{items.length}</strong><span>relevant signals</span><small>Private collection context · community facts labeled separately</small></aside></section>

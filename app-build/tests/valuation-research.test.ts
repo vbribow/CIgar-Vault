@@ -90,7 +90,8 @@ test("valuation research never treats owned quantity as original packaging", () 
   assert.match(source,/current owned quantity is inventory balance only/);
   assert.match(source,/Never treat it as an original box count/);
   assert.match(source,/residual humidor value separately/);
-  assert.match(source,/completed-result archives from established European auction houses/);
+  assert.match(source,/completed-result archives from established auction houses/);
+  assert.match(source,/Check Bond Roberts for an exact completed lot for both Cuban and New World/);
   assert.match(source,/Confirm whether buyer's premium is included/);
   assert.match(source,/For New World cigars/);
   assert.match(source,/never treat it as a sale/i);
