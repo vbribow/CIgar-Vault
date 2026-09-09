@@ -15,7 +15,7 @@ export type AuctionHouse = {
 };
 
 export const auctionHouses: AuctionHouse[] = [
-  { id:"bond-roberts", name:"Bond Roberts", specialty:"Rare, aged, and vintage Cuban cigars", homeUrl:"https://www.bondroberts.com/", status:"Partner feed required", currency:"USD", evidenceNote:"Use only closed lots with a documented result, exact packaging, and sale date." },
+  { id:"bond-roberts", name:"Bond Roberts", specialty:"Cuban and New World collectible cigars", homeUrl:"https://www.bondroberts.com/", resultsUrl:"https://www.bondroberts.com/", status:"Research link", currency:"USD", evidenceNote:"Monthly research source. Use only a direct lot page that states Sold Price or otherwise proves a completed sale, with exact identity, quantity, packaging, sale date, currency, and buyer-premium treatment. Closed, reserve-not-met, open-bid, and asking-price lots are not sales." },
   { id:"online-cigar-auctions", name:"Online Cigar Auctions · C.Gars", specialty:"Vintage cigars, limited editions, and collectible presentations", homeUrl:"https://www.onlinecigarauctions.com/", resultsUrl:"https://www.onlinecigarauctions.com/sold_lots.php?display=all", status:"Research link", currency:"GBP", evidenceNote:"Sold-lot archive is available for manual research; conversion and buyer premium must be documented." },
   { id:"cigarbid", name:"CigarBid", specialty:"Current-production cigars, samplers, and accessories", homeUrl:"https://www.cigarbid.com/", status:"Partner feed required", currency:"USD", evidenceNote:"Active bids are not completed sales. A licensed result feed is required before automatic ingestion." },
 ];
