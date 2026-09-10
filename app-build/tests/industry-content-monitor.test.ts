@@ -32,3 +32,19 @@ test("Cigar Press is a required credited media source",()=>{
   assert.match(source?.creditRule||"",/original summary/);
   assert.match(requiredIndustryMediaChecks(),/Cigar Press/);
 });
+
+test("The Late Smoke, halfwheel, and Cigar Aficionado are required credited sources",()=>{
+  const expected=[
+    ["The Late Smoke","https://www.thelatesmoke.com/"],
+    ["halfwheel","https://halfwheel.com/"],
+    ["Cigar Aficionado","https://www.cigaraficionado.com/news"],
+  ];
+  for(const[name,url]of expected){
+    const source=industryMediaSources.find(item=>item.name===name);
+    assert.equal(source?.newsUrl,url);
+    assert.match(source?.creditRule||"",/named author/);
+    assert.match(source?.creditRule||"",/direct article/);
+    assert.match(source?.creditRule||"",/original summary/);
+    assert.match(requiredIndustryMediaChecks(),new RegExp(name!.replace("halfwheel","halfwheel"),"i"));
+  }
+});
