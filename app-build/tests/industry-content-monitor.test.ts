@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { industryContentKey, IndustryContentItemSchema, ukPlainPackagingBrief } from "../lib/industry-content";
+import { industryMediaSources, requiredIndustryMediaChecks } from "../lib/industry-media-sources";
 
 test("industry briefs preserve source type, stance, jurisdiction, and direct evidence",()=>{
   assert.equal(IndustryContentItemSchema.parse(ukPlainPackagingBrief).sourceType,"Government");
@@ -21,4 +22,13 @@ test("weekly monitor auto-publishes only qualified sourced stories",()=>{
   assert.match(route,/Exclude social posts, forums, rumors/);
   assert.match(route,/status:"published"/);
   assert.match(route,/ignoreDuplicates:true/);
+});
+
+test("Cigar Press is a required credited media source",()=>{
+  const source=industryMediaSources.find(item=>item.name==="Cigar Press");
+  assert.equal(source?.newsUrl,"https://cigarpress.com/cigar-news/");
+  assert.match(source?.creditRule||"",/named author/);
+  assert.match(source?.creditRule||"",/direct article/);
+  assert.match(source?.creditRule||"",/original summary/);
+  assert.match(requiredIndustryMediaChecks(),/Cigar Press/);
 });
