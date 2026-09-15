@@ -4,7 +4,8 @@ import { FormEvent, useDeferredValue, useEffect, useMemo, useRef, useState } fro
 import dynamic from "next/dynamic";
 import { applyTotalQuantityCorrection, hasDocumentedCurrentQuantity, inventoryCompleteness } from "@/lib/inventory-model";
 import type { DataMode } from "@/lib/config";
-import type { CigarCollection, Humidor, InventoryItem, ProfessionalRating } from "@/lib/types";
+import type { CigarCollection, Humidor, InventoryItem, ProfessionalRating, SmokingLog } from "@/lib/types";
+import { matchesCollectionExplorer } from "@/lib/collection-explorer";
 import { lotRetailValue, retailBoxValue } from "@/lib/valuation";
 import { cubanVerificationStatus, isCubanInventory } from "@/lib/cuban-verification";
 import { findBoxFormat } from "@/lib/box-formats";
@@ -44,7 +45,7 @@ type EditMode="quantity"|"year"|"packaging"|"price"|"storage"|"provenance"|"rati
 const inventoryBatchSize = 30;
 const vaultViewStorageKey = "hojavia:vault-view:v1";
 
-export function InventoryManager({ initialItems, catalog, ratings, collections, humidors, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all",initialIntakeQuery,initialIntakeOpen=false,editorOnly=false,saveReturnHref }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; collections:CigarCollection[]; humidors:Humidor[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode;initialIntakeQuery?:string;initialIntakeOpen?:boolean;editorOnly?:boolean;saveReturnHref?:string }) {
+export function InventoryManager({ initialItems, catalog, ratings, smokes = [], collections, humidors, mode, initialMissing = "all", initialStorage = "all", initialStatus = "all", initialCollectionId, initialActiveOnly = false, initialQuery = "", initialEditId, initialEditMode = "all",initialIntakeQuery,initialIntakeOpen=false,editorOnly=false,saveReturnHref }: { initialItems: InventoryItem[]; catalog: CatalogCigar[]; ratings:ProfessionalRating[]; smokes?:SmokingLog[]; collections:CigarCollection[]; humidors:Humidor[]; mode: DataMode; initialMissing?: string; initialStorage?: string; initialStatus?: string; initialCollectionId?: string; initialActiveOnly?: boolean; initialQuery?:string; initialEditId?:string; initialEditMode?:EditMode;initialIntakeQuery?:string;initialIntakeOpen?:boolean;editorOnly?:boolean;saveReturnHref?:string }) {
   const [items, setItems] = useState(initialItems);
   const requestedItem=initialEditId?initialItems.find(item=>item.inventoryId===initialEditId):undefined;
   const [query, setQuery] = useState(initialQuery||requestedItem?.inventoryId||"");
@@ -52,6 +53,11 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const [status, setStatus] = useState(initialStatus);
   const [missing, setMissing] = useState(initialMissing);
   const [storage, setStorage] = useState(initialStorage);
+  const [strength, setStrength] = useState("all");
+  const [experience, setExperience] = useState("");
+  const [vitolaFilter, setVitolaFilter] = useState("all");
+  const [minimumRating, setMinimumRating] = useState("all");
+  const [buyAgain, setBuyAgain] = useState<"all"|"yes"|"no">("all");
   const [editing, setEditing] = useState<InventoryItem | null>(requestedItem||null);
   const [editMode, setEditMode] = useState<EditMode>(initialEditMode);
   const [draft, setDraft] = useState<InventoryItem | null>(null);
@@ -110,6 +116,11 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     setStatus("all");
     setMissing("all");
     setStorage("all");
+    setStrength("all");
+    setExperience("");
+    setVitolaFilter("all");
+    setMinimumRating("all");
+    setBuyAgain("all");
     setSelected(new Set());
     setVisibleLimit(inventoryBatchSize);
     setSearchFeedback({ message: "Search and filters cleared. Showing all Vault lots.", token: Date.now() });
@@ -196,6 +207,8 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
   const scopedItems = useMemo(() => cigarInventoryRecords(items, collections), [items, collections]);
   const statuses = useMemo(() => [...new Set(scopedItems.map((item) => item.status).filter(Boolean))].sort(), [scopedItems]);
   const locations = useMemo(() => [...new Set(scopedItems.map((item) => item.storageLocationId).filter(Boolean) as string[])].sort(), [scopedItems]);
+  const vitolas = useMemo(() => [...new Set(scopedItems.map(item => item.vitola).filter(Boolean))].sort((a,b)=>a.localeCompare(b)), [scopedItems]);
+  const strengths = useMemo(() => [...new Set(smokes.filter(smoke=>!smoke.outsideInventory&&scopedItems.some(item=>item.inventoryId===smoke.inventoryId)).map(smoke=>smoke.strength).filter(Boolean) as string[])].sort((a,b)=>a.localeCompare(b)), [smokes,scopedItems]);
   const storageOptions = useMemo(() => {
     const registered = humidors.map(humidor => ({ value: humidor.humidorId, label: humidor.name }));
     const recognized = new Set(humidors.flatMap(humidor => [humidor.humidorId, humidor.name]).map(value => value.trim().toLowerCase()));
@@ -220,11 +233,12 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
       ? [selectedHumidor.humidorId, selectedHumidor.name].some(value => value.trim().toLowerCase() === item.storageLocationId?.trim().toLowerCase())
       : item.storageLocationId === storage);
     const collectionMatch = !initialCollectionId || item.collectionId === initialCollectionId;
-    return haystack.includes(deferredQuery.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && (!initialActiveOnly || (item.currentQty ?? 0) > 0);
-  }), [scopedItems, deferredQuery, status, missing, storage, initialCollectionId, initialActiveOnly, releaseLotIssueIds, humidors]);
+    const experienceMatch=matchesCollectionExplorer(item,smokes,{strength,experience,vitola:vitolaFilter,minimumRating,buyAgain});
+    return haystack.includes(deferredQuery.toLowerCase()) && (status === "all" || item.status === status) && missingMatch && storageMatch && collectionMatch && experienceMatch && (!initialActiveOnly || (item.currentQty ?? 0) > 0);
+  }), [scopedItems, deferredQuery, status, missing, storage, initialCollectionId, initialActiveOnly, releaseLotIssueIds, humidors,smokes,strength,experience,vitolaFilter,minimumRating,buyAgain]);
   const visibleItems = useMemo(() => filtered.slice(0, visibleLimit), [filtered, visibleLimit]);
 
-  useEffect(() => setVisibleLimit(inventoryBatchSize), [deferredQuery, status, missing, storage, initialCollectionId, initialActiveOnly]);
+  useEffect(() => setVisibleLimit(inventoryBatchSize), [deferredQuery, status, missing, storage, initialCollectionId, initialActiveOnly,strength,experience,vitolaFilter,minimumRating,buyAgain]);
   useEffect(() => {
     try {
       const saved = JSON.parse(window.sessionStorage.getItem(vaultViewStorageKey) || "null") as { href?: string; visibleLimit?: number; scrollY?: number } | null;
@@ -416,10 +430,11 @@ export function InventoryManager({ initialItems, catalog, ratings, collections, 
     <section className="toolbar" id="inventory-records" aria-label="Inventory records and filters">
       <form className="inventorySearchForm" role="search" onSubmit={searchInventory}><label><span>Search existing inventory</span><input type="search" value={queryInput} onChange={(event) => { setQueryInput(event.target.value); setSearchFeedback(undefined); }} placeholder="Brand, line, vitola, or ID" /></label><button type="submit" className="button">{queryInput.trim() ? "Search Vault" : "Browse all lots"}</button></form>
       {searchFeedback&&<output key={searchFeedback.token} className="inventorySearchFeedback" role="status" aria-live="polite" aria-atomic="true">{searchFeedback.message}</output>}
+      <fieldset className="collectionExplorer"><legend>Explore my collection</legend><p>Combine what you own with only the strength, flavors, notes, and ratings you recorded for that exact Vault lot.</p><label><span>Vitola</span><select value={vitolaFilter} onChange={event=>setVitolaFilter(event.target.value)}><option value="all">All vitolas</option>{vitolas.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Recorded strength</span><select value={strength} onChange={event=>setStrength(event.target.value)}><option value="all">Any recorded strength</option>{strengths.map(value=><option key={value}>{value}</option>)}</select></label><label><span>Flavor or tasting note</span><input type="search" value={experience} onChange={event=>setExperience(event.target.value)} placeholder="e.g. cocoa cedar" /></label><label><span>Personal rating</span><select value={minimumRating} onChange={event=>setMinimumRating(event.target.value)}><option value="all">Any recorded rating</option><option value="90">90 or higher</option><option value="85">85 or higher</option><option value="80">80 or higher</option></select></label><label><span>Buy again</span><select value={buyAgain} onChange={event=>setBuyAgain(event.target.value as "all"|"yes"|"no")}><option value="all">Either</option><option value="yes">Marked buy again</option><option value="no">Marked do not buy again</option></select></label></fieldset>
       <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
       <label><span>Data quality</span><select value={missing} onChange={(event) => setMissing(event.target.value)}><option value="all">All records</option><option value="release-lot">Release / lot integrity ({releaseLotIssueIds.size})</option><option value="quantity">Missing quantity</option><option value="value">Missing value</option><option value="vintage">Missing vintage</option><option value="storage">Missing storage</option><option value="provenance">Missing provenance</option></select></label>
       <label><span>Humidor / storage</span><select value={storage} onChange={(event) => setStorage(event.target.value)}><option value="all">All humidors and locations</option><option value="unassigned">Unassigned</option>{storageOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-      <button type="button" className="button secondary clearInventoryFilters" onClick={clearInventorySearch} disabled={!queryInput&&!query&&status==="all"&&missing==="all"&&storage==="all"&&!initialCollectionId&&!initialActiveOnly}>Clear search and filters</button>
+      <button type="button" className="button secondary clearInventoryFilters" onClick={clearInventorySearch} disabled={!queryInput&&!query&&status==="all"&&missing==="all"&&storage==="all"&&strength==="all"&&!experience&&vitolaFilter==="all"&&minimumRating==="all"&&buyAgain==="all"&&!initialCollectionId&&!initialActiveOnly}>Clear search and filters</button>
       <div className="filterCount">{filtered.length} of {scopedItems.length} lots{lastSynced&&<small> · synced {lastSynced.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}</small>}</div>
       {!ratingsLoaded&&<button type="button" className="button secondary" disabled={supportBusy==="ratings"} onClick={()=>void loadSupport("ratings")}>{supportBusy==="ratings"?"Loading ratings…":"Load published ratings"}</button>}
     </section>
