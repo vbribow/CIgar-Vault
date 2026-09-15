@@ -1,10 +1,11 @@
 import { SensorManager } from "@/components/sensor-manager";
 import { SensorSyncPanel } from "@/components/sensor-sync-panel";
 import { accountDataMode } from "@/lib/user-data";
-import { loadHumidors, loadSensors } from "@/lib/data";
+import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./sensors.css";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
+import { SensorDashboard } from "@/components/sensor-dashboard";
 export const dynamic = "force-dynamic";
 
 const providers = [
@@ -21,7 +22,7 @@ const providers = [
   {
     name: "SensorPush",
     monogram: "SP",
-    status: "Cloud API next",
+    status: "Cloud API connected",
     description:
       "Compact humidor sensors with Bluetooth, optional Wi-Fi gateway, remote alerts, and a documented cloud API.",
     href: "https://www.sensorpush.com/",
@@ -41,10 +42,10 @@ const providers = [
 export default async function SensorsPage() {
   const mode = await accountDataMode();
   const plan = await loadAccountPlan();
-  const [humidors, sensors] =
+  const [humidors, sensors, readings] =
     mode === "mock"
-      ? [[], []]
-      : await Promise.all([loadHumidors(), loadSensors()]);
+      ? [[], [], []]
+      : await Promise.all([loadHumidors(), loadSensors(), loadHumidorReadings()]);
   const sensorPushConfigured = Boolean(
     process.env.SENSORPUSH_EMAIL && process.env.SENSORPUSH_PASSWORD,
   );
@@ -59,8 +60,8 @@ export default async function SensorsPage() {
           <div className="eyebrow">Connected climate</div>
           <h1>Your humidor climate, together.</h1>
           <p className="lede">
-            Register Tempi now and preserve one clean reading format for every
-            future Bluetooth, gateway, and cloud provider.
+            See every connected sensor in one dashboard, with the latest
+            temperature, humidity, status, and update time in view.
           </p>
         </div>
         <div className="tempiCallout">
@@ -75,6 +76,7 @@ export default async function SensorsPage() {
         </div>
       </section>
       <UpgradeNudge plan={plan} context="sensors" usage={sensors.length} signals={{humidorCount:humidors.length}}/>
+      <SensorDashboard sensors={sensors} humidors={humidors} readings={readings}/>
       <section className="providerSection" aria-labelledby="provider-heading">
         <div className="providerHeading">
           <div>

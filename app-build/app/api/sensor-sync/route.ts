@@ -18,7 +18,8 @@ async function sync(request:Request){
     if(!result.linked)return NextResponse.json({error:"Register a SensorPush device and add its external device ID first"},{status:422});
     let ingested:{imported:number;duplicates:number};
     const syncedAt=new Date().toISOString();
-    const updatedSensors=sensorPush.map(sensor=>{
+    const resolvedById=new Map((result.resolvedSensors||sensorPush).map(sensor=>[sensor.sensorId,sensor]));
+    const updatedSensors=sensorPush.map(original=>{const sensor=resolvedById.get(original.sensorId)||original;
       const cursor=result.cursors.get(sensor.sensorId);
       return{...sensor,lastSyncAt:cursor||sensor.lastSyncAt,connectionStatus:cursor?(result.truncated?"Stale" as const:"Connected" as const):"Stale" as const,syncMethod:"Cloud API" as const};
     });

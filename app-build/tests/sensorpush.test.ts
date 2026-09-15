@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { latestSensorPushCursors,normalizeSensorPushSamples,sensorPushStartTime } from "../lib/sensorpush";
+import { latestSensorPushCursors,normalizeSensorPushSamples,resolveSensorPushDevices,sensorPushStartTime } from "../lib/sensorpush";
 import type { EnvironmentalSensor } from "../lib/types";
 const sensor:EnvironmentalSensor={sensorId:"SP-1",humidorId:"H1",provider:"SensorPush",name:"Cabinet",externalDeviceId:"123.456",syncMethod:"Cloud API",connectionStatus:"Ready"};
 test("SensorPush samples normalize into provider-independent readings",()=>{const rows=normalizeSensorPushSamples({sensors:{"123.456":[{observed:"2026-07-21T12:00:00Z",temperature:68.2,humidity:66.4}]}},[sensor]);assert.equal(rows.length,1);assert.equal(rows[0].humidorId,"H1");assert.equal(rows[0].externalReadingId,"sensorpush:123.456:2026-07-21T12:00:00Z");});
@@ -9,3 +9,6 @@ test("eight-sensor initial synchronization stays within a bounded twelve-hour wi
 test("a newly added sensor keeps the shared query from skipping its initial history",()=>{const start=sensorPushStartTime([{...sensor,lastSyncAt:"2026-07-28T11:00:00Z"},{...sensor,sensorId:"SP-2",externalDeviceId:"789"}],Date.parse("2026-07-28T12:00:00Z"));assert.equal(start,"2026-07-28T00:00:00.000Z");});
 test("sync cursors advance only to the newest reading actually received",()=>{const rows=normalizeSensorPushSamples({sensors:{"123.456":[{observed:"2026-07-21T12:00:00Z",temperature:68,humidity:67},{observed:"2026-07-21T12:01:00Z",temperature:68.1,humidity:66.9}]}},[sensor]);assert.equal(latestSensorPushCursors(rows).get("SP-1"),"2026-07-21T12:01:00.000Z");});
 test("malformed or physically invalid samples never enter climate history",()=>{const rows=normalizeSensorPushSamples({sensors:{"123.456":[{observed:"not-a-date",temperature:68,humidity:67},{observed:"2026-07-21T12:00:00Z",temperature:68,humidity:120}]}},[sensor]);assert.equal(rows.length,0);});
+test("short SensorPush device IDs resolve to the cloud sample ID",()=>{const [resolved]=resolveSensorPushDevices([{...sensor,externalDeviceId:"17051729",name:"Cuban Drawer"}],{"01234.0123456789012345":{id:"01234.0123456789012345",deviceId:"17051729",name:"Cuban Drawer",type:"HT.w"}});assert.equal(resolved.externalDeviceId,"01234.0123456789012345");assert.equal(resolved.model,"HT.w");});
+test("sensor names resolve safely when a short ID was not supplied",()=>{const [resolved]=resolveSensorPushDevices([{...sensor,externalDeviceId:undefined,name:"Opus Drawer"}],{"09876.123":{deviceId:"17048918",name:"Opus Drawer",type:"HTP.xw"}});assert.equal(resolved.externalDeviceId,"09876.123");});
+test("ambiguous sensor names are never guessed",()=>{const [resolved]=resolveSensorPushDevices([{...sensor,externalDeviceId:"unknown",name:"Shelf"}],{"one.long":{name:"Shelf"},"two.long":{name:"Shelf"}});assert.equal(resolved.externalDeviceId,"unknown");});
