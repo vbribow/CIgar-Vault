@@ -14,9 +14,12 @@ export type Collector25Contribution = {
   cigarKey: string;
 };
 
-function contributionSourceUnavailable(error: unknown) {
+export function contributionSourceUnavailable(error: unknown) {
   const value = error as { code?: string; message?: string } | null;
-  return value?.code === "42703" || /contribution_source.*does not exist/i.test(value?.message || "");
+  const message = value?.message || "";
+  return value?.code === "42703"
+    || (value?.code === "PGRST204" && /contribution_source/i.test(message))
+    || /contribution_source.*does not exist|could not find.*contribution_source|contribution_source.*schema cache/i.test(message);
 }
 
 function exactSmokeIdentity(smoke: SmokingLog, inventory?: InventoryItem, requireOutsideConfirmation = false) {

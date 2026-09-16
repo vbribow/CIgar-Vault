@@ -1,11 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { collector25ContributionFromSmoke, privateRatingsFromSmokingHistory } from "../lib/collector-25-contribution";
+import { collector25ContributionFromSmoke, contributionSourceUnavailable, privateRatingsFromSmokingHistory } from "../lib/collector-25-contribution";
 import type { InventoryItem, SmokingLog } from "../lib/types";
 
 const inventory:InventoryItem={inventoryId:"INV-1",brand:"H. Upmann",line:"Magnum 46",vitola:"Corona Gorda",vintage:2021};
 const smoke:SmokingLog={smokeId:"SMOKE-1",inventoryId:"INV-1",dateSmoked:"2026-08-05",overall:94,tastingNotes:"Private notes",buyAgain:true};
+
+test("production schema-cache errors activate the legacy Collector 25 write path",()=>{
+  assert.equal(contributionSourceUnavailable({code:"PGRST204",message:"Could not find the 'contribution_source' column of 'community_ratings' in the schema cache"}),true);
+  assert.equal(contributionSourceUnavailable({code:"42703",message:"column contribution_source does not exist"}),true);
+  assert.equal(contributionSourceUnavailable({code:"PGRST204",message:"Could not find a different column"}),false);
+});
 
 test("an eligible smoke contributes only exact identity and a numeric score",()=>{
   const contribution=collector25ContributionFromSmoke(smoke,inventory);
