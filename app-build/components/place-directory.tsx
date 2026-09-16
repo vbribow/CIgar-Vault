@@ -58,6 +58,10 @@ export function PlaceDirectory(){
    setReported(current=>new Set(current).add(place.googlePlaceId));
   }catch(error){setMessage(error instanceof Error?error.message:"The location could not be reported.")}finally{setReportingId("")}
  }
+ function ratingSaved(){
+  setSelected(undefined);
+  setMessage("Thank you—your lounge rating was submitted.");
+ }
 
  return <>
   <section className="placeSearch card">
@@ -86,7 +90,7 @@ export function PlaceDirectory(){
   {selected&&<section className="placeContribution">
    <header><div><div className="eyebrow">{brand.name} Lounge Passport</div><h2>Document this visit</h2></div><button onClick={()=>setSelected(undefined)}>Close</button></header>
    <div className="placeContributionForms">
-    <QuickPlaceRating googlePlaceId={selected.googlePlaceId} name={selected.name} onSuccess={()=>setMessage("Thank you—your lounge rating was submitted.")}/>
+    <QuickPlaceRating googlePlaceId={selected.googlePlaceId} name={selected.name} onSuccess={ratingSaved}/>
     <details className="founderCertification"><summary>Founder-only independent assessment</summary><form className="card" onSubmit={certify}><p>The assessment cannot be purchased and remains separate from community ratings.</p><label><span>Designation</span><select name="level">{certificationLevels.map(value=><option key={value} value={value}>{certificationDisplayLabels[value]}</option>)}</select></label><label><span>Critic score</span><input name="score" type="number" min="1" max="100" required/></label><label><span>Visit month</span><input name="visitMonth" type="month" required/></label><label><span>Assessment</span><textarea name="summary" minLength={40} rows={5} required/></label><label><span>Strengths</span><textarea name="strengths" minLength={10} rows={3} required/></label><label><span>Opportunities</span><textarea name="opportunities" rows={3}/></label><label><span>Complimentary items / relationship</span><input name="complimentaryDisclosure"/></label><label><span>Next review</span><input name="nextReviewDate" type="date" required/></label><label><span>Founder write key</span><input name="writeKey" type="password" required/></label><button className="button" disabled={busy}>Save independent assessment</button></form></details>
    </div>
   </section>}

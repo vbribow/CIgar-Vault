@@ -100,3 +100,8 @@ test("signed-in collectors can clearly report a result for verification without 
  assert.doesNotMatch(component,/>Not actually a lounge</);
  assert.match(component,/aria-busy=\{reportingId===place\.googlePlaceId\}/);
 });
+test("a successful lounge rating closes the rating window and confirms the save",()=>{
+ const component=readFileSync(new URL("../components/place-directory.tsx",import.meta.url),"utf8");
+ assert.match(component,/function ratingSaved\(\)\{\s*setSelected\(undefined\);\s*setMessage\("Thank you—your lounge rating was submitted\."\);/);
+ assert.match(component,/onSuccess=\{ratingSaved\}/);
+});
