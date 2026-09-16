@@ -9,7 +9,8 @@ test("invited testers receive one deterministic Hojavía presentation", () => {
   assert.doesNotMatch(source, /NEXT_PUBLIC_BRAND_PRESENTATION/);
 });
 
-test("inventory smoking-history navigation preserves the exact lot selection", () => {
+test("inventory records prominently log a smoke from the exact lot", () => {
   const source = readFileSync(new URL("../app/inventory/[inventoryId]/page.tsx", import.meta.url), "utf8");
-  assert.match(source, /records\?inventoryId=\$\{encodeURIComponent\(item\.inventoryId\)\}#log-smoke/);
+  assert.match(source, /className="button" href=\{`\/records\?inventoryId=\$\{encodeURIComponent\(item\.inventoryId\)\}#log-smoke`\}>Log a Smoke<\/Link>/);
+  assert.match(source, /!isPresentationAsset&&<Link className="button"/);
 });
