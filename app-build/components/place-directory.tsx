@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { QuickPlaceRating } from "@/components/quick-place-rating";
 import { brand } from "@/lib/brand";
-import { certificationDisplayLabels, certificationLevels, communityPlaceRankingScore, type GooglePlaceResult, type PlaceCertification } from "@/lib/places";
+import { certificationDisplayLabels, certificationLevels, communityPlaceRankingScore, placeWebsiteLabel, type GooglePlaceResult, type PlaceCertification } from "@/lib/places";
 import { LoungeLeafRating } from "@/components/lounge-leaf-rating";
 import { RatingLeafMark } from "@/components/rating-leaf-mark";
 
@@ -80,7 +80,7 @@ export function PlaceDirectory(){
     </div>
     {place.vibes.length>0&&<div className="placeVibes">{place.vibes.map(value=><span key={value.vibe}>{value.vibe} · {value.count}</span>)}</div>}
     {place.certification&&<blockquote>{place.certification.summary}</blockquote>}
-    <footer><a href={place.googleMapsUri} target="_blank" rel="noreferrer">Google Maps ↗</a>{place.websiteUri&&<a href={place.websiteUri} target="_blank" rel="noreferrer">Website ↗</a>}<button className="button" onClick={()=>setSelected(place)}>Rate this lounge</button><button type="button" className="button secondary" title="Tell Hojavía if this result does not offer an on-site cigar lounge" disabled={reportingId===place.googlePlaceId||reported.has(place.googlePlaceId)} aria-busy={reportingId===place.googlePlaceId} onClick={()=>reportNotLounge(place)}>{reported.has(place.googlePlaceId)?"Report sent":reportingId===place.googlePlaceId?"Sending report…":"Report: no on-site lounge"}</button>{reported.has(place.googlePlaceId)&&<small role="status">Thanks. Hojavía will verify this location; your report does not automatically remove it.</small>}</footer>
+    <footer><a href={place.googleMapsUri} target="_blank" rel="noreferrer">Google Maps ↗</a>{place.websiteUri&&<a href={place.websiteUri} target="_blank" rel="noreferrer">{placeWebsiteLabel(place.websiteUri)}</a>}<button className="button" onClick={()=>setSelected(place)}>Rate this lounge</button><button type="button" className="button secondary" title="Tell Hojavía if this result does not offer an on-site cigar lounge" disabled={reportingId===place.googlePlaceId||reported.has(place.googlePlaceId)} aria-busy={reportingId===place.googlePlaceId} onClick={()=>reportNotLounge(place)}>{reported.has(place.googlePlaceId)?"Report sent":reportingId===place.googlePlaceId?"Sending report…":"Report: no on-site lounge"}</button>{reported.has(place.googlePlaceId)&&<small role="status">Thanks. Hojavía will verify this location; your report does not automatically remove it.</small>}</footer>
    </article>;
   })}</section>
   {selected&&<section className="placeContribution">

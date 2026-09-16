@@ -1,4 +1,4 @@
-import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,filterPlacesByRadius,isConfirmedCigarLoungeCandidate,mergeOfficialLoungeLocations,placeDistanceMiles,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";import{communityPlaceRankingScore,communityPlaceScore,filterPlacesByRadius,isConfirmedCigarLoungeCandidate,mergeOfficialLoungeLocations,placeDistanceMiles,placeWebsiteLabel,PlaceCertificationInput,PlaceReviewInput,rankPlaces,vibeConsensus,weightedGoogleScore,type PlaceReview}from"../lib/places";
 import{normalizePlaceSearch}from"../lib/place-search";
 import{placeSearchDailyLimit,placeSearchQueryHash,placeSearchReservationDecision}from"../lib/place-search-guard";
 test("quick community ratings require only identity, visit, and score",()=>{const value=PlaceReviewInput.parse({googlePlaceId:"PLACE-1",displayName:"Brian",score:94,visitDate:"2026-07-24"});assert.deepEqual(value.vibes,[]);assert.equal(value.review,"");assert.throws(()=>PlaceReviewInput.parse({...value,vibes:["Relaxed","Upscale","Traditional","Professional"]}))});
@@ -53,6 +53,12 @@ test("official lounge branches fill Google result-limit omissions without duplic
  const withAmbassador=mergeOfficialLoungeLocations([...supplemented]);
  assert.equal(withAmbassador.filter(place=>place.address.includes("10810 N Tatum")).length,1);
  assert.equal(filterPlacesByRadius(supplemented,10).some(place=>place.address.includes("10810 N Tatum")),true);
+});
+test("lounge website links distinguish official sites from social and directory pages",()=>{
+ assert.equal(placeWebsiteLabel("https://ambassadorcigars.com/locations/"),"Official website ↗");
+ assert.equal(placeWebsiteLabel("https://www.instagram.com/example/"),"Social page ↗");
+ assert.equal(placeWebsiteLabel("https://www.yelp.com/biz/example"),"Directory listing ↗");
+ assert.equal(placeWebsiteLabel("not-a-url"),"Website ↗");
 });
 test("live discovery survives intentionally unprovisioned optional community tables",()=>{
  const route=readFileSync(new URL("../app/api/places/search/route.ts",import.meta.url),"utf8");

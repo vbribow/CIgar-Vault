@@ -57,6 +57,17 @@ export type PlaceReview=z.infer<typeof PlaceReviewInput>&{id:string;userId:strin
 export type PlaceCertification=z.infer<typeof PlaceCertificationInput>&{id:string;active:boolean;createdAt:string};
 export type GooglePlaceResult={googlePlaceId:string;name:string;address:string;googleRating?:number;googleReviewCount?:number;googleMapsUri:string;websiteUri?:string;businessStatus?:string;latitude?:number;longitude?:number};
 
+const socialWebsiteHosts=["facebook.com","instagram.com","x.com","twitter.com","tiktok.com","linktr.ee"];
+const directoryWebsiteHosts=["yelp.com","tripadvisor.com","yellowpages.com","mapquest.com"];
+export function placeWebsiteLabel(value:string){
+ try{
+  const host=new URL(value).hostname.toLowerCase().replace(/^www\./,"");
+  if(socialWebsiteHosts.some(domain=>host===domain||host.endsWith(`.${domain}`)))return"Social page ↗";
+  if(directoryWebsiteHosts.some(domain=>host===domain||host.endsWith(`.${domain}`)))return"Directory listing ↗";
+ }catch{return"Website ↗"}
+ return"Official website ↗";
+}
+
 const confirmedNonLoungeLocations=[
  {name:"shea smoke & cigar",address:"8764 e shea blvd"},
 ] as const;
