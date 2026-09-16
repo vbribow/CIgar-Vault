@@ -14,6 +14,11 @@ export type Collector25Contribution = {
   cigarKey: string;
 };
 
+function contributionSourceUnavailable(error: unknown) {
+  const value = error as { code?: string; message?: string } | null;
+  return value?.code === "42703" || /contribution_source.*does not exist/i.test(value?.message || "");
+}
+
 function exactSmokeIdentity(smoke: SmokingLog, inventory?: InventoryItem, requireOutsideConfirmation = false) {
   if (smoke.inventoryId === "MANUAL") {
     if (requireOutsideConfirmation && smoke.outsideInventory !== true) return undefined;
@@ -72,15 +77,19 @@ export async function syncCollector25Contribution(smoke: SmokingLog, inventory?:
       return { status:"ineligible" };
     }
     if (!contribution) return { status:"ineligible" };
-    const { error } = await admin.from("community_ratings").upsert({
+    const row = {
       user_id: user.id, display_name: "Anonymous collector", cigar_key: contribution.cigarKey,
       brand: contribution.brand, line: contribution.line, vitola: contribution.vitola,
       vintage: contribution.vintage === undefined ? null : String(contribution.vintage), score: contribution.score,
       review: null, status: "active",
       moderation_reason: "Exact-identity numeric score shared anonymously from a private smoking record. No private notes were shared.",
-      contribution_source: "smoking-journal", updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id,cigar_key" });
-    if (error) throw error;
+      updated_at: new Date().toISOString(),
+    };
+    let result = await admin.from("community_ratings").upsert({ ...row, contribution_source: "smoking-journal" }, { onConflict: "user_id,cigar_key" });
+    if (result.error && contributionSourceUnavailable(result.error)) {
+      result = await admin.from("community_ratings").upsert(row, { onConflict: "user_id,cigar_key" });
+    }
+    if (result.error) throw result.error;
     return { status: "contributed" };
   } catch {
     return { status: "unavailable" };

@@ -53,6 +53,8 @@ test("smoking sync is automatic, anonymous, deduplicated, and non-blocking",()=>
   assert.match(helper,/display_name: "Anonymous collector"/);
   assert.match(helper,/review: null/);
   assert.match(helper,/onConflict: "user_id,cigar_key"/);
+  assert.match(helper,/contributionSourceUnavailable\(result\.error\)/);
+  assert.match(helper,/upsert\(row, \{ onConflict: "user_id,cigar_key" \}\)/);
   assert.match(helper,/catch \{[\s\S]*status: "unavailable"/);
   assert.match(route,/data: item, collector25: await syncCollector25Contribution/);
   assert.match(migration,/collector_25_contributions boolean not null default false/);
