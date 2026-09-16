@@ -8,9 +8,9 @@ import { accountDataMode,saveOwnedRecordsAtomically } from "@/lib/user-data";
 import { uniqueSensorReadings } from "@/lib/sensor-model";
 
 async function sync(request:Request){
-  if(!authorizeSensorSync(request))return NextResponse.json({error:"Unauthorized"},{status:401});
   if(dataMode()==="mock")return NextResponse.json({data:{provider:"SensorPush",linked:0,imported:0,duplicates:0,message:"Cloud sync is disabled in mock mode"}});
   const accountOwned=await accountDataMode()==="supabase";
+  if(!accountOwned&&!authorizeSensorSync(request))return NextResponse.json({error:"Unauthorized"},{status:401});
   const sensors=accountOwned?await loadSensors():await getSensors();
   const sensorPush=sensors.filter(sensor=>sensor.provider.toLowerCase()==="sensorpush");
   try{
@@ -38,7 +38,8 @@ async function sync(request:Request){
       for(const sensor of updatedSensors)await saveSensor(sensor);
     }
     const notifications=accountOwned?{enabled:false,sent:0,skipped:0,retried:0}:await processClimateAlertNotifications();
-    return NextResponse.json({data:{provider:"SensorPush",linked:result.linked,...ingested,truncated:result.truncated,syncedAt,notifications,message:result.truncated?"SensorPush limited this batch. Saved progress is safe; wait at least one minute, then sync again to continue.":"All available SensorPush readings are current."}});
+    const message=result.truncated?"SensorPush limited this batch. Saved progress is safe; wait at least one minute, then sync again to continue.":ingested.imported||ingested.duplicates?"All available SensorPush readings are current.":"SensorPush connected, but returned no readings in the current import window.";
+    return NextResponse.json({data:{provider:"SensorPush",linked:result.linked,...ingested,truncated:result.truncated,syncedAt,notifications,message}});
   }catch(error){
     if(!accountOwned)await Promise.all(sensorPush.map(sensor=>saveSensor({...sensor,connectionStatus:"Error",syncMethod:"Cloud API"}).catch(()=>undefined)));
     throw error;

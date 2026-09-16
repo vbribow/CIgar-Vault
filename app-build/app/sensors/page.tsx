@@ -111,6 +111,7 @@ export default async function SensorsPage() {
         configured={sensorPushConfigured}
         linkedSensors={linkedSensorPush}
         scheduleReady={Boolean(process.env.CRON_SECRET)}
+        accountOwned={mode === "supabase"}
       />
       <SensorManager initialSensors={sensors} humidors={humidors} mode={mode} />
     </main>
