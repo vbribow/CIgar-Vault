@@ -20,6 +20,7 @@ import { fetchWithConfirmationRetry, fetchWithTimeout, RequestTimeoutError } fro
 import { matchesInventorySearchForgiving } from "@/lib/cigar-search";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
+const maxSmokePhotos=2;
 function normalizeSmokeSearch(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\btaurus\b/g, "tauros").replace(/\bopus x\b/g, "opusx").trim();
 }
@@ -230,11 +231,18 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   function chooseSmokePhotos(event: ChangeEvent<HTMLInputElement>) {
     const files = [...(event.target.files ?? [])];
     event.target.value = "";
-    const error = validatePhotoSelection([], files);
+    if(smokePhotos.length+files.length>maxSmokePhotos){setSmokePhotoMessage(`Choose up to ${maxSmokePhotos} photos for one smoke.`);return}
+    const error = validatePhotoSelection(smokePhotos, files);
     if (error) { setSmokePhotoMessage(error); return; }
-    setSmokePhotos(files);
+    const selected=[...smokePhotos,...files];
+    setSmokePhotos(selected);
     setSmokePhotoAnalysis(undefined);
-    setSmokePhotoMessage(`${files.length} photo${files.length === 1 ? " is" : "s are"} ready. Identification will not add anything to your Vault.`);
+    setSmokePhotoMessage(`${selected.length} of ${maxSmokePhotos} photos ready. Identification will not add anything to your Vault.`);
+  }
+
+  function clearSmokePhotos(){
+    smokePhotoRequest.current+=1;
+    setSmokePhotos([]);setSmokePhotoAnalysis(undefined);setSmokePhotoBusy(false);setSmokePhotoMessage("");
   }
 
   async function prepareSmokePhoto(file: File) {
@@ -331,7 +339,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         {selectedSmokeInventory && smokeQuantityBlocked && <p className="deviceDraftNotice" role="alert">{selectedSmokeInventory.currentQty === 0 ? "This lot has no cigars remaining." : "Record this lot’s remaining quantity before logging a smoke."} <a href={`/inventory?edit=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&vaultSearch=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&focus=quantity#inventory-editor`}>Correct this exact record →</a></p>}
         {smokeSourceMode === "MANUAL" && <div className="manualSmokeIdentity">
           <input type="hidden" name="inventoryId" value="MANUAL" data-draft-safe="true" />
-          <div className="smokePhotoIdentify" key={`smoke-camera-${smokeCameraSession}`}><div><strong>Identify by photo</strong><small>Photograph the cigar or band. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos}/><span>Take a photo</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos}/><span>Choose photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button></div>
+          <div className="smokePhotoIdentify" key={`smoke-camera-${smokeCameraSession}`}><div><strong>Identify with up to 2 photos</strong><small>Take a clear cigar view and a band view. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos} disabled={smokePhotos.length>=maxSmokePhotos}/><span>{smokePhotos.length?"Take second photo":"Take a photo"}</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos} disabled={smokePhotos.length>=maxSmokePhotos}/><span>Choose up to 2 photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button>{smokePhotos.length>0&&<button type="button" className="textLink" disabled={smokePhotoBusy} onClick={clearSmokePhotos}>Clear photos</button>}</div>
           {smokePhotoPreviews.length > 0 && <section className="smokePhotoProgress" aria-label={`${smokePhotoPreviews.length} selected cigar photo${smokePhotoPreviews.length === 1 ? "" : "s"}`} aria-busy={smokePhotoBusy}>
             <div>{smokePhotoPreviews.map(photo => <img key={photo.url} src={photo.url} alt={`Selected cigar evidence: ${photo.name}`} />)}</div>
             <p role="status" aria-live="polite"><strong>{smokePhotoBusy ? "Comparing visible details…" : "Photos ready for review"}</strong><span>{smokePhotoBusy ? "Hojavía is looking for brand, line, vitola, packaging, and date clues." : "You can identify these photos now or replace them before continuing."}</span></p>

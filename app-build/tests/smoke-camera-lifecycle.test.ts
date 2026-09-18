@@ -15,3 +15,12 @@ test("saving cannot race an active photo preparation or identification request",
   assert.match(manager,/smokeQuantityBlocked \|\| smokePhotoBusy \|\| smokeMutation\.pending/);
   assert.match(manager,/finally \{ if \(requestId === smokePhotoRequest\.current\) setSmokePhotoBusy\(false\); \}/);
 });
+
+test("smoke identification accepts two camera photos and keeps both for analysis",()=>{
+  assert.match(manager,/const maxSmokePhotos=2/);
+  assert.match(manager,/smokePhotos\.length\+files\.length>maxSmokePhotos/);
+  assert.match(manager,/const selected=\[\.\.\.smokePhotos,\.\.\.files\]/);
+  assert.match(manager,/Identify with up to 2 photos/);
+  assert.match(manager,/Take second photo/);
+  assert.match(manager,/Clear photos/);
+});
