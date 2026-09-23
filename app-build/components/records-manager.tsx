@@ -17,7 +17,7 @@ import type { CigarVisionResult } from "@/lib/cigar-vision";
 import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-capture";
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 import { fetchWithConfirmationRetry, fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
-import { matchesInventorySearchForgiving } from "@/lib/cigar-search";
+import { matchesInventorySearchExactWords, preferActionableInventoryMatches } from "@/lib/cigar-search";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 const maxSmokePhotos=2;
@@ -25,7 +25,7 @@ function normalizeSmokeSearch(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\btaurus\b/g, "tauros").replace(/\bopus x\b/g, "opusx").trim();
 }
 export function matchesSmokeInventory(item: InventoryItem, query: string) {
-  return matchesInventorySearchForgiving(item,query);
+  return matchesInventorySearchExactWords(item,query);
 }
 export function compareSmokeInventory(left: InventoryItem, right: InventoryItem) {
   const leftFamily = normalizeSmokeSearch(`${left.brand} ${left.line}`);
@@ -94,7 +94,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
   const smokeDraft = useDeviceFormDraft("hojavia:form-draft:smoke:v1");
   const valuationFormDraft = useDeviceFormDraft("hojavia:form-draft:valuation:v1");
   const smokePhotoPreviews = useMemo(() => smokePhotos.map(file => ({ name: file.name, url: URL.createObjectURL(file) })), [smokePhotos]);
-  const smokeInventoryMatches = useMemo(() => inventory.filter(item => matchesSmokeInventory(item, smokeInventoryQuery)).sort(compareSmokeInventory), [inventory, smokeInventoryQuery]);
+  const smokeInventoryMatches = useMemo(() => preferActionableInventoryMatches(inventory.filter(item => matchesSmokeInventory(item, smokeInventoryQuery))).sort(compareSmokeInventory), [inventory, smokeInventoryQuery]);
   const visibleSmokeInventoryMatches = useMemo(() => smokeInventoryMatches.slice(0, smokeInventoryQuery ? 100 : 40), [smokeInventoryMatches, smokeInventoryQuery]);
   const selectedSmokeInventory = useMemo(() => inventory.find(item => item.inventoryId === smokeSource), [inventory, smokeSource]);
   const smokeQuantityBlocked = Boolean(selectedSmokeInventory && (!selectedSmokeInventory.currentQty || selectedSmokeInventory.currentQty < 1));
@@ -336,7 +336,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
         {smokeSourceMode === "VAULT" && smokeInventoryMatches.length > visibleSmokeInventoryMatches.length && <p className="deviceDraftNotice" role="status">Showing the first {visibleSmokeInventoryMatches.length} of {smokeInventoryMatches.length} lots. Type more of the brand, line, vitola, or inventory ID to narrow the list.</p>}
         {smokeSourceMode === "VAULT" && smokeInventoryQuery && smokeInventoryMatches.length === 0 && <p className="deviceDraftNotice" role="status">No Vault match found. Check the spelling, clear the search to browse every lot, or choose “Do not remove from my Vault” above.</p>}
         {selectedSmokeInventory && selectedSmokeInventory.currentQty !== undefined && selectedSmokeInventory.currentQty > 0 && <label><span>Cigars smoked from this lot *</span><input name="quantitySmoked" type="number" min="1" max={selectedSmokeInventory.currentQty} step="1" defaultValue="1" required /><small>{selectedSmokeInventory.currentQty} remaining before this entry. Saving removes exactly the number entered; original quantity stays unchanged.</small></label>}
-        {selectedSmokeInventory && smokeQuantityBlocked && <p className="deviceDraftNotice" role="alert">{selectedSmokeInventory.currentQty === 0 ? "This lot has no cigars remaining." : "Record this lot’s remaining quantity before logging a smoke."} <a href={`/inventory?edit=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&vaultSearch=${encodeURIComponent(selectedSmokeInventory.inventoryId)}&focus=quantity#inventory-editor`}>Correct this exact record →</a></p>}
+        {selectedSmokeInventory && smokeQuantityBlocked && <p className="deviceDraftNotice" role="alert">{selectedSmokeInventory.currentQty === 0 ? "This lot has no cigars remaining." : "Record this lot’s remaining quantity before logging a smoke."} <a href={`/inventory/${encodeURIComponent(selectedSmokeInventory.inventoryId)}?focus=quantity&searchReturn=${encodeURIComponent("/records#log-smoke")}#inventory-editor`}>Correct this exact record →</a></p>}
         {smokeSourceMode === "MANUAL" && <div className="manualSmokeIdentity">
           <input type="hidden" name="inventoryId" value="MANUAL" data-draft-safe="true" />
           <div className="smokePhotoIdentify" key={`smoke-camera-${smokeCameraSession}`}><div><strong>Identify with up to 2 photos</strong><small>Take a clear cigar view and a band view. Hojavía proposes an identity; you approve or correct it. Identification may use configured AI credits.</small></div><label className="cameraCapture"><input type="file" accept="image/*" capture="environment" onChange={chooseSmokePhotos} disabled={smokePhotos.length>=maxSmokePhotos}/><span>{smokePhotos.length?"Take second photo":"Take a photo"}</span></label><label className="photoDrop compact"><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={chooseSmokePhotos} disabled={smokePhotos.length>=maxSmokePhotos}/><span>Choose up to 2 photos</span></label><button type="button" className="button secondary" disabled={!smokePhotos.length || smokePhotoBusy} onClick={identifySmokePhotos}>{smokePhotoBusy ? "Identifying…" : "Identify cigar"}</button>{smokePhotos.length>0&&<button type="button" className="textLink" disabled={smokePhotoBusy} onClick={clearSmokePhotos}>Clear photos</button>}</div>

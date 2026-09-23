@@ -80,3 +80,14 @@ test("outside-Vault choice survives app updates and draft restoration", () => {
   assert.match(source, /restoredFields\?\.inventoryId/);
   assert.match(source, /setSmokeSource\(restoredSource\)/);
 });
+
+test("quantity correction opens the exact selected Vault record",()=>{
+  assert.match(source,/href=\{`\/inventory\/\$\{encodeURIComponent\(selectedSmokeInventory\.inventoryId\)\}\?focus=quantity&searchReturn=/);
+  assert.match(source,/encodeURIComponent\("\/records#log-smoke"\)/);
+  assert.doesNotMatch(source,/\/inventory\?edit=\$\{encodeURIComponent\(selectedSmokeInventory\.inventoryId\)\}/);
+});
+
+test("Vault smoke search requires every exact word the collector enters",()=>{
+  assert.match(source,/matchesInventorySearchExactWords\(item,query\)/);
+  assert.doesNotMatch(source,/matchesInventorySearchForgiving\(item,query\)/);
+});
