@@ -10,11 +10,11 @@ export type LaunchGate = {
 };
 
 export const launchBaseline = {
-  recordedAt: "2026-08-07",
+  recordedAt: "2026-10-06",
   build: "Passed",
   typecheck: "Passed",
   automatedTests: {
-    passed: 928,
+    passed: 1159,
     failed: 0,
   },
   severityOneOpen: 0,
@@ -25,10 +25,10 @@ export const launchBaseline = {
 export const launchGates: readonly LaunchGate[] = [
   {
     id: "brand-clearance-adoption",
-    title: "Brand clearance, confidential disclosure, and adoption",
+    title: "Trademark, legal, and public-release readiness",
     status: "In progress",
-    detail: "Keep Hojavía private and reversible until the participant-disclosure, linguistic, trademark, common-law, registry, digital, residual-risk, and dated founder-adoption gates are complete.",
-    evidence: "Preliminary strategy, exact-domain, exact-mark, app-store, and partial handle screens are preserved. The live HOVIA record still requires attorney-grade assessment; business-registry scope awaits owner and state facts; confidential beta linguistic evidence, remaining digital refreshes, founder residual-risk acceptance, and a dated adoption decision remain incomplete. No public launch, rename, filing, purchase, claim, or campaign is authorized.",
+    detail: "Complete the remaining trademark, policy, support, and public-release decisions under the adopted Hojavía identity.",
+    evidence: "Hojavía was adopted on August 12, 2026 with Emberward Holdings LLC as owner; the Arizona entity is active. The federal intent-to-use application package, chain-of-title confirmation, final legal and privacy review, support ownership, and founder approval of filing and release remain open. Formation did not submit or pay for a trademark application.",
     priority: "Now",
   },
   {
@@ -37,6 +37,22 @@ export const launchGates: readonly LaunchGate[] = [
     status: "Passed",
     detail: "Honor collector preferences, require authorization, bound external work, and preserve durable evidence across scheduled operations.",
     evidence: "Preference-aware research, notifications, and analytics stop when choices cannot be verified. Every scheduled route requires authorization; monthly location verification is bounded, timed out, and cannot report success before both durable evidence writes pass.",
+    priority: "Now",
+  },
+  {
+    id: "sensor-continuity",
+    title: "Current humidor readings and unattended recovery",
+    status: "In progress",
+    detail: "Bring every linked SensorPush device current and prove hourly synchronization remains current without manual intervention.",
+    evidence: "All five devices are linked. The production sync now processes bounded 24-hour windows, preserves its cursor, and resumes hourly after a backlog; the fleet must finish catching up and remain current through the stability window.",
+    priority: "Now",
+  },
+  {
+    id: "places-scope-acceptance",
+    title: "Google Places launch scope and lounge-search acceptance",
+    status: "In progress",
+    detail: "Decide whether lounge discovery ships in the first web release and close every external-service control if it does.",
+    evidence: "Automated coverage enforces ZIP/city input, radius, lounge-only filtering, attribution, rating closure, daily limits, and monthly refresh. Production acceptance and the explicit founder scope decision remain open.",
     priority: "Now",
   },
   {
@@ -124,7 +140,7 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Device coverage and stability window",
     status: "In progress",
     detail: "Complete the required browser/device matrix and sustain seven production-like days without a Severity 1 or critical-path Severity 2 defect.",
-    evidence: "Automated mobile safeguards are green and one physical-phone quantity synchronization path has passed. On August 6, 928 tests, type checking, the 181-route navigation audit, and the production build passed. A local rollback rehearsal verified 278 files (13,002,204 bytes) under artifact SHA-256 419849e374a0c756d3d5f1f06a7c8f9271e56a859ec77a541f7963b2543bb587, rejected damage, and restored the prior artifact without production or collector-data changes. Eight authenticated production routes loaded read-only without a server error. The August 7 live El Tributo reconciliation closed the collection-data hold. The production dashboard confirmed both formerly colliding schema changes are deployed but no Supabase migration ledger exists; the local filename collision is reconciled, while a reviewed production baseline transaction remains required. The candidate remains unfrozen and the clock stays at 0/7 because that baseline and physical iPhone/Android plus recovery acceptance remain incomplete.",
+    evidence: "On October 6, 1,159 tests, TypeScript, the 193-route navigation audit, performance budgets, and the production build passed. The app.hojavia.com authenticated production surface and personal Top 10 were verified. A local rollback rehearsal previously rejected artifact damage and restored the prior artifact without production or collector-data changes. The candidate remains unfrozen and the clock stays at 0/7 until this combined batch is deployed and physical iPhone/Android, recovery, sensor-continuity, and second-device acceptance are complete.",
     priority: "Next",
   },
   {
@@ -188,15 +204,24 @@ export const betaValueJourney = [
   },
 ] as const;
 
+export const webLaunchCriticalJourneys = [
+  { id:"account", name:"Enter and recover the account", route:"/account", automated:"Passed", live:"Required", evidence:"Sign in from a clean browser, request password recovery, return to the account, and confirm another account cannot see the collector's records." },
+  { id:"vault", name:"Add, edit, find, and safely remove a Vault lot", route:"/inventory", automated:"Passed", live:"Required", evidence:"Use one disposable lot on desktop and the installed phone; verify one save, exact-record return, cross-device visibility, duplicate protection, and deliberate deletion." },
+  { id:"smoke", name:"Log a smoke with and without Vault deduction", route:"/records#log-smoke", automated:"Passed", live:"Required", evidence:"Save one Vault smoke and one outside-Vault smoke; verify clear confirmation, correct quantity change, editable score, journal visibility, and no duplicate from a repeated tap." },
+  { id:"rankings", name:"See My Top 10 and Hojavía 25", route:"/community?tab=ratings#my-top-10", automated:"Passed", live:"Observed", evidence:"Production API and signed-in display currently return 10 personal entries and 25 community entries; recheck after the release candidate is deployed." },
+  { id:"sensors", name:"See current humidor readings", route:"/sensors", automated:"Passed", live:"Catching up", evidence:"All five SensorPush devices are linked. The bounded hourly recovery must reach current time and remain current through the stability window." },
+  { id:"places", name:"Find and rate a real cigar lounge", route:"/places", automated:"Passed", live:"Required", evidence:"Before inclusion in launch scope, verify ZIP/city search, radius, lounge-only results, website and Google attribution, rating save/close, daily cost guardrail, and monthly refresh." },
+] as const;
+
 export const founderGoNoGoChecklist = [
-  { gate: "Release candidate", status: "Hold", detail: "Resolve the production migration ledger and complete physical-device recovery acceptance before freezing the verified artifact and starting day one." },
+  { gate: "Release candidate", status: "Hold", detail: "Deploy the combined stability batch, complete physical-device acceptance, then freeze the verified web artifact and start day one of the seven-day window." },
   { gate: "Database migrations", status: "Hold", detail: "The local collision is resolved. Create a reviewed production migration baseline only after backup and explicit approval; the production project currently has no Supabase migration ledger." },
   { gate: "Beta evidence", status: "Hold", detail: "Complete physical-device, recovery, and second-device sessions with approved identities." },
   { gate: "Brand and legal", status: "Founder decision", detail: "Record clearance advice, legal owner/state, support owner, incident owner, and dated adoption decision." },
-  { gate: "Google Places", status: "Deferred external", detail: "Configure restricted production credentials immediately before public lounge launch." },
+  { gate: "Google Places", status: "Founder scope decision", detail: "If included at web launch, complete restricted credentials, production migration, lounge-only ZIP/radius acceptance, attribution, ratings, cost controls, and monthly refresh verification before freezing the candidate." },
   { gate: "Billing", status: "Founder decision", detail: "Choose free beta or authorize a Stripe test-mode acceptance pass before any paid cohort." },
   { gate: "Live cigar research", status: "Hold — billing required", detail: "Create a dedicated OpenAI Platform project, approve its hard spending limit and alerts, apply the research-ledger migration after database reconciliation, add the protected production key, set OPENAI_RESEARCH_ENABLED=true, and pass the founder’s controlled research evaluation." },
-  { gate: "Sensors", status: "Deferred", detail: "Resume only when Brian is home and available to link the physical sensors." },
+  { gate: "Sensors", status: "Catching up", detail: "All five devices are linked. Bounded hourly synchronization must reach current readings and remain healthy through the stability window." },
 ] as const;
 
 export function launchReadinessSummary() {

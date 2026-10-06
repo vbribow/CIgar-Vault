@@ -1,4 +1,4 @@
-import { betaValueJourney, founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary } from "@/lib/launch-readiness";
+import { betaValueJourney, founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary, webLaunchCriticalJourneys } from "@/lib/launch-readiness";
 import { immediateIncidentActions, incidentSeverityStandard } from "@/lib/incident-response";
 import { currentStabilityCandidate, launchStabilityObservations } from "@/data/launch-stability";
 import { assessStabilityWindow } from "@/lib/stability-window";
@@ -14,8 +14,8 @@ export default function LaunchReadinessPage() {
     <section className="launchHero">
       <div>
         <div className="eyebrow">Founder launch control</div>
-        <h1>Launch when the evidence is ready.</h1>
-        <p className="lede">One plain-language view of the current baseline, the work in motion, and the decisions intentionally deferred. A clean build is necessary; it does not replace real-device acceptance.</p>
+        <h1>Prepare the shortest credible web launch.</h1>
+        <p className="lede">One plain-language view of the installable web app, the essential collector journeys, and the remaining evidence. Native app-store work is intentionally deferred.</p>
       </div>
       <aside className={summary.decision === "READY" ? "ready" : "attention"}>
         <strong>{summary.decision}</strong>
@@ -47,12 +47,18 @@ export default function LaunchReadinessPage() {
 
     <section className="card launchBoundary">
       <div className="eyebrow">Current priority</div>
-      <h2>Keep the candidate private while both product and clearance evidence mature.</h2>
-      <p>Hojavía remains a confidential, reversible presentation—not a cleared or commercially adopted public brand. Cross-device synchronization, photo completion, safe import/recovery, private-beta safeguards, and collection truth remain active product gates. Confidential linguistic evidence, attorney-grade trademark review, owner-and-state registry work, refreshed digital checks, residual-risk acceptance, and a dated founder adoption decision remain controlling brand gates.</p>
+      <h2>Finish the web release before adding another distribution channel.</h2>
+      <p>The launch path is the existing installable app at app.hojavia.com with the public website kept separate. Apple App Store and Google Play packaging, store billing, and submission work remain outside this release. Cross-device recovery, physical-phone acceptance, current sensor readings, operational monitoring, and the seven-day stability window remain controlling product gates.</p>
       <div className="launchBoundaryActions">
         <a className="button secondary" href="/founder-onboarding">Open Founder Beta gate</a>
         <small>Credential required. Enter the Founder key only in the protected screen; opening the queue sends no invitation, discloses no candidate to a participant, and changes no cohort record.</small>
       </div>
+    </section>
+
+    <section className="acceptanceWorkspace" aria-labelledby="web-critical-journeys-title">
+      <header><div><div className="eyebrow">Web launch essentials</div><h2 id="web-critical-journeys-title">Six journeys control the release.</h2></div><p>Automated coverage is necessary but cannot replace a real signed-in desktop and installed-phone pass. Each live result must preserve exact evidence or remain incomplete.</p></header>
+      <div>{webLaunchCriticalJourneys.map((journey,index)=><article key={journey.id}><span>Journey {index+1} · automated {journey.automated}</span><h3>{journey.name}</h3><p><strong>Live status:</strong> {journey.live}</p><small>{journey.evidence}</small><a className="button secondary" href={journey.route}>Open journey →</a></article>)}</div>
+      <footer><strong>Release rule</strong><span>No Severity 1 issue, no critical-path Severity 2 issue, no unresolved duplicate or data-loss concern, and no journey reported as passed from partial or unavailable data.</span></footer>
     </section>
 
     <section className="acceptanceWorkspace" aria-labelledby="founder-acceptance-title">

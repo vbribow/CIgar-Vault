@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary } from "../lib/launch-readiness";
+import { founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary, webLaunchCriticalJourneys } from "../lib/launch-readiness";
 
 test("launch baseline records the verified build and full-suite result", () => {
   assert.equal(launchBaseline.build, "Passed");
   assert.equal(launchBaseline.typecheck, "Passed");
-  assert.deepEqual(launchBaseline.automatedTests, { passed: 928, failed: 0 });
+  assert.deepEqual(launchBaseline.automatedTests, { passed: 1159, failed: 0 });
   assert.equal(launchReadinessSummary().blockingDefects, 0);
-  assert.equal(launchReadinessSummary().blockingGates, 10);
+  assert.equal(launchReadinessSummary().blockingGates, 12);
   assert.equal(launchReadinessSummary().decision, "HOLD");
   assert.equal(launchGates.find(gate => gate.id === "brand-clearance-adoption")?.status, "In progress");
   assert.equal(launchGates.find(gate => gate.id === "automation-privacy")?.status, "Passed");
@@ -24,19 +24,24 @@ test("a clean automated baseline never claims real-device gates are complete", (
 test("local artifact rollback evidence never claims production-provider rollback passed", () => {
   const gate = launchGates.find(item => item.id === "stability-device-acceptance");
   assert.ok(gate);
-  assert.match(gate.evidence, /local rollback rehearsal verified 278 files/i);
+  assert.match(gate.evidence, /1,159 tests/i);
   assert.match(gate.evidence, /without production or collector-data changes/i);
   assert.match(gate.evidence, /candidate remains unfrozen/i);
-  assert.match(gate.evidence, /no Supabase migration ledger exists/i);
+  assert.match(gate.evidence, /sensor-continuity/i);
   assert.equal(gate.status, "In progress");
 });
 
-test("brand clearance remains a controlling launch gate", () => {
+test("trademark and public-release work remains a controlling launch gate", () => {
   const gate = launchGates.find(item => item.id === "brand-clearance-adoption");
   assert.ok(gate);
-  assert.match(gate.evidence, /HOVIA/);
-  assert.match(gate.evidence, /No public launch/);
+  assert.match(gate.evidence, /Emberward Holdings LLC/);
+  assert.match(gate.evidence, /intent-to-use application/);
   assert.equal(launchReadinessSummary().decision, "HOLD");
+});
+
+test("sensor continuity and Places scope remain explicit launch gates",()=>{
+  assert.equal(launchGates.find(gate=>gate.id==="sensor-continuity")?.status,"In progress");
+  assert.equal(launchGates.find(gate=>gate.id==="places-scope-acceptance")?.status,"In progress");
 });
 
 test("every hard operational launch domain is represented before READY", () => {
@@ -65,7 +70,7 @@ test("the launch workspace exposes the three remaining founder acceptance sessio
   assert.match(page,/Three live product sessions remain/);
   assert.match(page,/launch decision/);
   assert.match(page,/summary\.blockingGates/);
-  assert.match(page,/confidential, reversible presentation/);
+  assert.match(page,/shortest credible web launch/i);
   assert.match(page,/href="\/inventory#inventory-records"/);
   assert.match(page,/href="\/inventory#mobile-intake"/);
   assert.match(page,/href="\/account"/);
@@ -87,9 +92,19 @@ test("the launch workspace exposes the three remaining founder acceptance sessio
 test("device and founder gates remain explicit instead of being inferred", () => {
   assert.deepEqual(launchDeviceMatrix.map(item => item.status), ["Partial", "Not run"]);
   assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Database migrations" && item.status === "Hold"));
-  assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Sensors" && item.status === "Deferred"));
+  assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Sensors" && item.status === "Catching up"));
   assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Live cigar research" && item.status === "Hold — billing required"));
   assert.equal(founderGoNoGoChecklist.some(item => String(item.status) === "Passed"), false);
+});
+
+test("the web launch pass keeps every essential collector journey visible",()=>{
+  assert.deepEqual(webLaunchCriticalJourneys.map(item=>item.id),["account","vault","smoke","rankings","sensors","places"]);
+  assert.ok(webLaunchCriticalJourneys.every(item=>item.automated==="Passed"));
+  assert.ok(webLaunchCriticalJourneys.some(item=>item.live==="Required"));
+  const page=readFileSync(new URL("../app/launch-readiness/page.tsx",import.meta.url),"utf8");
+  assert.match(page,/Six journeys control the release/);
+  assert.match(page,/Native app-store work is intentionally deferred/);
+  assert.match(page,/no unresolved duplicate or data-loss concern/i);
 });
 
 test("live collection evidence records the protected two-lot reconciliation", () => {
