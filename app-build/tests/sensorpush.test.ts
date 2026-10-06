@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { latestSensorPushCursors,normalizeSensorPushSamples,resolveSensorPushDevices,sensorPushSampleLimit,sensorPushStartTime } from "../lib/sensorpush";
+import { latestSensorPushCursors,normalizeSensorPushSamples,resolveSensorPushDevices,sensorPushSampleLimit,sensorPushStartTime,sensorPushStopTime } from "../lib/sensorpush";
 import type { EnvironmentalSensor } from "../lib/types";
 const sensor:EnvironmentalSensor={sensorId:"SP-1",humidorId:"H1",provider:"SensorPush",name:"Cabinet",externalDeviceId:"123.456",syncMethod:"Cloud API",connectionStatus:"Ready"};
 test("SensorPush samples normalize into provider-independent readings",()=>{const rows=normalizeSensorPushSamples({sensors:{"123.456":[{observed:"2026-07-21T12:00:00Z",temperature:68.2,humidity:66.4}]}},[sensor]);assert.equal(rows.length,1);assert.equal(rows[0].humidorId,"H1");assert.equal(rows[0].externalReadingId,"sensorpush:123.456:2026-07-21T12:00:00Z");});
@@ -14,3 +14,4 @@ test("short SensorPush device IDs resolve to the cloud sample ID",()=>{const [re
 test("sensor names resolve safely when a short ID was not supplied",()=>{const [resolved]=resolveSensorPushDevices([{...sensor,externalDeviceId:undefined,name:"Opus Drawer"}],{"09876.123":{deviceId:"17048918",name:"Opus Drawer",type:"HTP.xw"}});assert.equal(resolved.externalDeviceId,"09876.123");});
 test("ambiguous sensor names are never guessed",()=>{const [resolved]=resolveSensorPushDevices([{...sensor,externalDeviceId:"unknown",name:"Shelf"}],{"one.long":{name:"Shelf"},"two.long":{name:"Shelf"}});assert.equal(resolved.externalDeviceId,"unknown");});
 test("SensorPush history is downloaded in bounded catch-up batches",()=>{assert.equal(sensorPushSampleLimit,5000);const route=readFileSync(new URL("../app/api/sensor-sync/route.ts",import.meta.url),"utf8");assert.match(route,/export const maxDuration=60/);});
+test("SensorPush catch-up queries at most one day at a time",()=>{assert.equal(sensorPushStopTime("2026-09-16T12:00:00.000Z",Date.parse("2026-10-06T12:00:00.000Z")),"2026-09-17T12:00:00.000Z");assert.equal(sensorPushStopTime("2026-10-06T11:30:00.000Z",Date.parse("2026-10-06T12:00:00.000Z")),"2026-10-06T12:00:00.000Z");});

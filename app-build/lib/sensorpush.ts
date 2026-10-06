@@ -21,6 +21,12 @@ export function sensorPushStartTime(registered:EnvironmentalSensor[],now=Date.no
   return cursors.sort()[0]||initialLookback;
 }
 
+export function sensorPushStopTime(startTime:string,now=Date.now()){
+  const start=Date.parse(startTime);
+  if(!Number.isFinite(start))return new Date(now).toISOString();
+  return new Date(Math.min(start+24*3_600_000,now)).toISOString();
+}
+
 export function latestSensorPushCursors(readings:Array<{sensorId:string;recordedAt:string}>){
   const latest=new Map<string,string>();
   for(const reading of readings){
@@ -67,7 +73,8 @@ export async function fetchSensorPushReadings(registered:EnvironmentalSensor[]){
   const matched=resolved.filter(sensor=>devicesHaveId(inventory,sensor.externalDeviceId));
   if(!matched.length)throw new Error("Hojavía could not match the registered sensor names or short IDs to this SensorPush account.");
   const startTime=sensorPushStartTime(matched);
-  const response=await post<SampleResponse>("/samples",{sensors:matched.map(s=>s.externalDeviceId),startTime,limit:sensorPushSampleLimit,measures:["temperature","humidity"]},access.accesstoken);
+  const stopTime=sensorPushStopTime(startTime);
+  const response=await post<SampleResponse>("/samples",{sensors:matched.map(s=>s.externalDeviceId),startTime,stopTime,limit:sensorPushSampleLimit,measures:["temperature","humidity"]},access.accesstoken);
   const readings=normalizeSensorPushSamples(response,matched);
   return{readings,linked:matched.length,truncated:Boolean(response.truncated),cursors:latestSensorPushCursors(readings),resolvedSensors:matched};
 }
