@@ -6,6 +6,7 @@ import "./sensors.css";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
 import { SensorDashboard } from "@/components/sensor-dashboard";
+import { automaticSensorReadingIsStale } from "@/lib/sensor-model";
 export const dynamic = "force-dynamic";
 
 const providers = [
@@ -53,6 +54,9 @@ export default async function SensorsPage() {
     (sensor) =>
       sensor.provider.toLowerCase() === "sensorpush" && sensor.externalDeviceId,
   ).length;
+  const sensorPushIds=new Set(sensors.filter(sensor=>sensor.provider.toLowerCase()==="sensorpush").map(sensor=>sensor.sensorId));
+  const latestSensorPushReading=readings.filter(reading=>reading.sensorId&&sensorPushIds.has(reading.sensorId)).sort((a,b)=>b.recordedAt.localeCompare(a.recordedAt))[0];
+  const syncOverdue=linkedSensorPush>0&&automaticSensorReadingIsStale({syncMethod:"Cloud API"},latestSensorPushReading?.recordedAt);
   return (
     <main className="shell">
       <section className="sensorHero">
@@ -112,6 +116,7 @@ export default async function SensorsPage() {
         linkedSensors={linkedSensorPush}
         scheduleReady={Boolean(process.env.CRON_SECRET)}
         accountOwned={mode === "supabase"}
+        syncOverdue={syncOverdue}
       />
       <SensorManager initialSensors={sensors} humidors={humidors} mode={mode} />
     </main>

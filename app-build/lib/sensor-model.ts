@@ -14,3 +14,10 @@ export function uniqueSensorReadings<T extends {externalReadingId:string}>(value
   }
   return{unique,duplicates:values.length-unique.length};
 }
+
+export const AUTOMATIC_SENSOR_STALE_MS=2*60*60*1000;
+export function automaticSensorReadingIsStale(sensor:{syncMethod:string},recordedAt?:string,now=Date.now()){
+  if(sensor.syncMethod!=="Cloud API")return false;
+  const timestamp=recordedAt?Date.parse(recordedAt):NaN;
+  return !Number.isFinite(timestamp)||now-timestamp>AUTOMATIC_SENSOR_STALE_MS;
+}
