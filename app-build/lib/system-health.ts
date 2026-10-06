@@ -3,6 +3,24 @@ export type SystemRun={runId:string;jobId:SystemJobId;status:"Succeeded"|"Failed
 type AutomationOutcome={status?:string;inventoryId?:string;error?:string};
 type AutomationData={checked?:number;batchSize?:number;remainingEligible?:number;researched?:number;cached?:number;estimatedSpendThisMonth?:number;monthlyBudget?:number;pauseAt?:number;budgetPaused?:boolean;outcomes?:AutomationOutcome[]};
 export type HealthCheck={id:string;name:string;description:string;status:"Ready"|"Attention"|"Unavailable";detail:string;href?:string};
+export type SensorFleetSnapshot={total:number;current:number;stale:number;missing:number;latestReadingAt?:string;oldestReadingAt?:string;status:"Ready"|"Attention"};
+export function sensorFleetSnapshot(sensors:EnvironmentalSensor[],readings:HumidorReading[],now=Date.now()):SensorFleetSnapshot{
+  const automatic=sensors.filter(sensor=>sensor.syncMethod==="Cloud API");
+  const latest=new Map<string,HumidorReading>();
+  for(const reading of [...readings].sort((a,b)=>b.recordedAt.localeCompare(a.recordedAt)))if(reading.sensorId&&!latest.has(reading.sensorId))latest.set(reading.sensorId,reading);
+  const timestamps=automatic.flatMap(sensor=>{const reading=latest.get(sensor.sensorId);return reading&&Number.isFinite(Date.parse(reading.recordedAt))?[reading.recordedAt]:[]}).sort();
+  const missing=automatic.filter(sensor=>!latest.has(sensor.sensorId)).length;
+  const stale=automatic.filter(sensor=>automaticSensorReadingIsStale(sensor,latest.get(sensor.sensorId)?.recordedAt,now)).length;
+  return{total:automatic.length,current:Math.max(0,automatic.length-stale),stale,missing,latestReadingAt:timestamps.at(-1),oldestReadingAt:timestamps[0],status:automatic.length>0&&stale===0?"Ready":"Attention"};
+}
+export function launchJourneyChecks(input:{supabaseReady:boolean;inventoryLoaded:boolean;smokesLoaded:boolean;scoredSmokes:number;sensorFleet:SensorFleetSnapshot;placesReady:boolean}):HealthCheck[]{return[
+  {id:"journey-account",name:"Account access and recovery",description:"Sign-in, account records, and password recovery configuration",status:input.supabaseReady?"Ready":"Unavailable",detail:input.supabaseReady?"Account-backed access is configured":"Private account configuration is incomplete",href:"/account"},
+  {id:"journey-vault",name:"Vault records",description:"Inventory can load before collectors add, edit, or remove a lot",status:input.inventoryLoaded?"Ready":"Unavailable",detail:input.inventoryLoaded?"Private inventory loaded successfully":"Inventory could not be verified",href:"/inventory"},
+  {id:"journey-smoke",name:"Smoke journal",description:"Saved smoke history and rating inputs are reachable",status:input.smokesLoaded?"Ready":"Unavailable",detail:input.smokesLoaded?`${input.scoredSmokes} scored smoke${input.scoredSmokes===1?"":"s"} available to personal rankings`:"Smoke history could not be verified",href:"/smoke-journal"},
+  {id:"journey-rankings",name:"Personal and Hojavía rankings",description:"Scored smokes can feed My Top 10 and eligible community rankings",status:input.smokesLoaded&&input.scoredSmokes>0?"Ready":"Attention",detail:input.scoredSmokes>0?"Ranking input is present; community publication remains independently validated":"No scored smoke is available to exercise rankings",href:"/community?tab=ratings#my-top-10"},
+  {id:"journey-sensors",name:"Humidor monitoring",description:"Connected SensorPush devices have current readings",status:input.sensorFleet.status,detail:input.sensorFleet.total?`${input.sensorFleet.current} of ${input.sensorFleet.total} cloud sensors current · ${input.sensorFleet.stale} stale`:"No cloud sensor is linked",href:"/sensors"},
+  {id:"journey-places",name:"Lounge discovery",description:"Bounded Google Places search and lounge ratings",status:input.placesReady?"Ready":"Attention",detail:input.placesReady?"Live search is enabled with a configured API key":"Live search is intentionally unavailable until Places configuration is complete",href:"/places"},
+]}
 export const systemJobs:Array<{id:SystemJobId;name:string;path:string;schedule:string;nextDescription:string}>=[
   {id:"sensor-sync",name:"Sensor synchronization",path:"/api/sensor-sync",schedule:"0 * * * *",nextDescription:"Hourly at minute 0"},
   {id:"catalog-discovery",name:"Catalog discovery",path:"/api/catalog-discovery/run",schedule:"0 12 * * 1",nextDescription:"Monday at 12:00 UTC"},
@@ -88,4 +106,5 @@ export function valuationOperationsSnapshot(inventory:InventoryItem[],valuations
 import { dataAuthorityIsUnambiguous } from "./data-authority";
 import { cigarInventoryRecords } from "./collection-presentation";
 import { valuationNeedsMonitoring } from "./valuation-monitor";
-import type { CigarCollection, InventoryItem, Valuation } from "./types";
+import { automaticSensorReadingIsStale } from "./sensor-model";
+import type { CigarCollection, EnvironmentalSensor, HumidorReading, InventoryItem, Valuation } from "./types";
