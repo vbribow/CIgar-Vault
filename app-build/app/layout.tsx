@@ -14,7 +14,7 @@ import "./navigation-back.css";
 
 export async function generateMetadata():Promise<Metadata>{
   const requestHeaders=await headers();
-  const host=requestHeaders.get("x-forwarded-host")||requestHeaders.get("host")||"hojavia.com";
+  const host=requestHeaders.get("x-forwarded-host")||requestHeaders.get("host")||"app.hojavia.com";
   const hostname=host.replace(/^\[/,"").replace(/\](:\d+)?$/,"").replace(/:\d+$/,"");
   const protocol=requestHeaders.get("x-forwarded-proto")||(isPrivatePreviewHostname(hostname)?"http":"https");
   const origin=new URL(`${protocol}://${host}`);

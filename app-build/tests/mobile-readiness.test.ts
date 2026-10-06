@@ -71,7 +71,7 @@ test("mobile install guidance remains actionable across supported platforms",()=
   assert.match(manager,/current app/);
   assert.match(manager,/Your private records remain intact/);
   assert.match(manager,/Private collection pages are not stored for offline viewing/);
-  assert.match(manager,/const productionHost="hojavia\.com"/);
+  assert.match(manager,/const productionHost="app\.hojavia\.com"/);
   assert.match(manager,/isActiveProductHostname\(window\.location\.hostname\)/);
   assert.match(manager,/installStandalone\)\)setLegacyHost/);
   assert.match(manager,/Reinstall safely/);

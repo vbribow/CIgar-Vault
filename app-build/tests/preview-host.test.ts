@@ -4,6 +4,7 @@ import { isActiveProductHostname,isPrivatePreviewHostname } from "../lib/preview
 
 test("current Hojavía production hosts are recognized even before the custom domain cutover", () => {
   for (const hostname of [
+    "app.hojavia.com",
     "hojavia.com",
     "www.hojavia.com",
     "c-igar-vault-lmug.vercel.app",

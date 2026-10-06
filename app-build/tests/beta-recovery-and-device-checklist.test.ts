@@ -4,7 +4,7 @@ import test from "node:test";
 import { betaConfirmationRecoveryUrl, betaDeviceAcceptanceSteps, betaInvitationEmail } from "../lib/beta-onboarding";
 
 test("beta invitation recovery sends testers only to the permanent Hojavía sign-in flow", () => {
-  assert.equal(betaConfirmationRecoveryUrl, "https://hojavia.com/login?mode=signin&link=invalid");
+  assert.equal(betaConfirmationRecoveryUrl, "https://app.hojavia.com/login?mode=signin&link=invalid");
   const email = betaInvitationEmail({ name: "Tester", email: "tester@example.com" });
   assert.match(email.body, /try signing in once/i);
   assert.match(email.body, /newest link/i);

@@ -10,7 +10,7 @@ test("new public metadata defaults to the canonical Hojavía domain", () => {
   const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   delete process.env.NEXT_PUBLIC_SITE_URL;
   delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  assert.equal(siteUrl(), "https://hojavia.com");
+  assert.equal(siteUrl(), "https://app.hojavia.com");
   if(configured === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
   else process.env.NEXT_PUBLIC_SITE_URL = configured;
   if(vercel === undefined) delete process.env.VERCEL_PROJECT_PRODUCTION_URL;

@@ -4,7 +4,7 @@ import { brand } from "@/lib/brand";
 export const organizationName = brand.name;
 export const organizationDescription = brand.description;
 
-const fallbackSiteUrl = "https://hojavia.com";
+const fallbackSiteUrl = "https://app.hojavia.com";
 
 export function siteUrl() {
   const configured =

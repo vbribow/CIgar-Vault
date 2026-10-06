@@ -1,4 +1,4 @@
-export const canonicalAppOrigin = "https://hojavia.com";
+export const canonicalAppOrigin = "https://app.hojavia.com";
 export const canonicalInstallUrl = `${canonicalAppOrigin}/install`;
 export const installConfirmationEvent = "app-install-confirmed" as const;
 
@@ -8,5 +8,5 @@ export function appBuildVersion(env: Record<string, string | undefined> = proces
 
 export function isCanonicalAppHost(hostname: string) {
   const host = hostname.trim().toLowerCase();
-  return host === "hojavia.com" || host === "www.hojavia.com";
+  return host === "app.hojavia.com";
 }

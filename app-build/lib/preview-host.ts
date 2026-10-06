@@ -1,4 +1,5 @@
 const activeProductHostnames = new Set([
+  "app.hojavia.com",
   "hojavia.com",
   "www.hojavia.com",
   "c-igar-vault-lmug.vercel.app",

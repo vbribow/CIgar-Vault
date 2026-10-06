@@ -4,10 +4,11 @@ import test from "node:test";
 import { appBuildVersion, canonicalAppOrigin, canonicalInstallUrl, isCanonicalAppHost } from "../lib/app-install";
 
 test("the phone installer has one permanent public identity and visible build",()=>{
-  assert.equal(canonicalAppOrigin,"https://hojavia.com");
-  assert.equal(canonicalInstallUrl,"https://hojavia.com/install");
-  assert.equal(isCanonicalAppHost("hojavia.com"),true);
-  assert.equal(isCanonicalAppHost("www.hojavia.com"),true);
+  assert.equal(canonicalAppOrigin,"https://app.hojavia.com");
+  assert.equal(canonicalInstallUrl,"https://app.hojavia.com/install");
+  assert.equal(isCanonicalAppHost("app.hojavia.com"),true);
+  assert.equal(isCanonicalAppHost("hojavia.com"),false);
+  assert.equal(isCanonicalAppHost("www.hojavia.com"),false);
   assert.equal(isCanonicalAppHost("192.168.1.104"),false);
   assert.equal(appBuildVersion({VERCEL_GIT_COMMIT_SHA:"1234567890"}),"1234567");
 });
