@@ -2,6 +2,7 @@ import { requireEnv } from "./config";
 import type { EnvironmentalSensor } from "./types";
 
 const base="https://api.sensorpush.com/api/v1";
+export const sensorPushSampleLimit=5000;
 type SensorPushSample={observed:string;temperature?:number;humidity?:number};
 type SampleResponse={sensors?:Record<string,SensorPushSample[]>;truncated?:boolean;total_samples?:number};
 export type SensorPushDevice={id?:string;deviceId?:string;name?:string;type?:string;active?:boolean};
@@ -66,7 +67,7 @@ export async function fetchSensorPushReadings(registered:EnvironmentalSensor[]){
   const matched=resolved.filter(sensor=>devicesHaveId(inventory,sensor.externalDeviceId));
   if(!matched.length)throw new Error("Hojavía could not match the registered sensor names or short IDs to this SensorPush account.");
   const startTime=sensorPushStartTime(matched);
-  const response=await post<SampleResponse>("/samples",{sensors:matched.map(s=>s.externalDeviceId),startTime,limit:10000,measures:["temperature","humidity"]},access.accesstoken);
+  const response=await post<SampleResponse>("/samples",{sensors:matched.map(s=>s.externalDeviceId),startTime,limit:sensorPushSampleLimit,measures:["temperature","humidity"]},access.accesstoken);
   const readings=normalizeSensorPushSamples(response,matched);
   return{readings,linked:matched.length,truncated:Boolean(response.truncated),cursors:latestSensorPushCursors(readings),resolvedSensors:matched};
 }

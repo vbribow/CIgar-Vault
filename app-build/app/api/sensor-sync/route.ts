@@ -11,6 +11,8 @@ import { scheduledSensorPushOwner,sensorPushAccountOwners } from "@/lib/sensor-s
 import type { EnvironmentalSensor,HumidorReading } from "@/lib/types";
 import type { SystemRun } from "@/lib/system-health";
 
+export const maxDuration=60;
+
 type SyncResult={provider:"SensorPush";linked:number;imported:number;duplicates:number;truncated:boolean;syncedAt:string;notifications:{enabled:boolean;sent:number;skipped:number;retried:number};message:string};
 type VaultRow={user_id:string;record_id:string;payload:unknown};
 
