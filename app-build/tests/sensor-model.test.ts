@@ -36,7 +36,8 @@ test("the sensor page presents every current reading in one dashboard",()=>{
   assert.match(dashboard,/Every active sensor at a glance/);
   assert.match(dashboard,/activeCloudSensors/);
   assert.match(dashboard,/Historical CSV devices remain preserved/);
+  assert.match(dashboard,/other sensors continue updating independently/);
   assert.match(dashboard,/temperatureF\.toFixed/);
   assert.match(dashboard,/humidity\.toFixed/);
-  assert.match(dashboard,/Updated/);
+  assert.match(dashboard,/Last successful reading/);
 });

@@ -117,6 +117,7 @@ export default async function SensorsPage() {
         scheduleReady={Boolean(process.env.CRON_SECRET)}
         accountOwned={mode === "supabase"}
         syncOverdue={syncOverdue}
+        lastSuccessfulSync={latestSensorPushReading?.recordedAt}
       />
       <SensorManager initialSensors={sensors} humidors={humidors} mode={mode} />
     </main>

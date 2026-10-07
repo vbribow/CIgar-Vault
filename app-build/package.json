@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "audit:mobile-reliability": "node scripts/audit-mobile-reliability.mjs",
+    "audit:launch-journeys": "node scripts/audit-launch-journeys.mjs",
     "verify:release": "node scripts/audit-mobile-reliability.mjs && tsc --noEmit && tsx --test tests/*.test.ts && node scripts/build-app.mjs",
     "rehearse:rollback": "tsx scripts/rehearse-local-release-rollback.ts",
     "audit:migrations": "tsx scripts/audit-migration-safety.ts",

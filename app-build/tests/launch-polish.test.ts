@@ -25,7 +25,10 @@ test("offline and update states preserve record boundaries", async () => {
   assert.match(offline, /No stale collection totals are shown/);
   assert.match(offline, /not been classified as empty, missing, or changed/);
   assert.match(manager, /Your private records remain intact/);
+  assert.match(manager, /update available/);
+  assert.match(manager, /Finish any open form/);
   assert.match(worker, /hojavia-beta-shell-v4-__HOJAVIA_RELEASE__/);
+  assert.doesNotMatch(worker, /install[^\n]*skipWaiting/);
   assert.doesNotMatch(worker, /\/inventory|\/api\//);
 });
 
