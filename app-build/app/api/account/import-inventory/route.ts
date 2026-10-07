@@ -71,6 +71,8 @@ export async function POST(request:Request){
    const [currentInventory,currentValuations]=await Promise.all([loadAccountRecords<InventoryItem>("inventory").then(value=>value||[]),loadAccountRecords<Valuation>("valuations").then(value=>value||[])]);
    const inventoryRollback=safelyRollbackImportedRecords(currentInventory,item=>item.inventoryId,audit.inventoryFingerprints as Record<string,string>);
    const valuationRollback=safelyRollbackImportedRecords(currentValuations,value=>value.valuationId,(audit.valuationFingerprints&&typeof audit.valuationFingerprints==="object"?audit.valuationFingerprints:{}) as Record<string,string>);
+   const rollbackStartedAt=new Date().toISOString();
+   await saveOwnedRecord("integrity",String(body.batchId),{...audit,action:"inventory-spreadsheet-import-rollback-started",plannedInventoryIds:inventoryRollback.removable,plannedValuationIds:valuationRollback.removable,protectedIds:[...inventoryRollback.protectedIds,...valuationRollback.protectedIds],rollbackStartedAt});
    await Promise.all([deleteOwnedRecords("inventory",inventoryRollback.removable),deleteOwnedRecords("valuations",valuationRollback.removable)]);
    const protectedIds=[...inventoryRollback.protectedIds,...valuationRollback.protectedIds];
    await saveOwnedRecord("integrity",String(body.batchId),{...audit,action:"inventory-spreadsheet-import-rolled-back",removedInventoryIds:inventoryRollback.removable,removedValuationIds:valuationRollback.removable,protectedIds,alreadyMissingIds:[...inventoryRollback.alreadyMissing,...valuationRollback.alreadyMissing],rolledBackAt:new Date().toISOString()});

@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeAuthNext } from "@/lib/auth-navigation";
+import { isPublicAppPath } from "@/lib/public-path";
 
 export async function updateSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -17,7 +19,7 @@ export async function updateSupabaseSession(request: NextRequest) {
       },
     },
   );
-  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/recover" || request.nextUrl.pathname === "/reset-password" || request.nextUrl.pathname === "/offline" || request.nextUrl.pathname === "/privacy" || request.nextUrl.pathname === "/terms" || request.nextUrl.pathname === "/beta-agreement" || request.nextUrl.pathname === "/constitution" || request.nextUrl.pathname === "/manifesto" || request.nextUrl.pathname === "/data-model" || request.nextUrl.pathname === "/industry" || request.nextUrl.pathname.startsWith("/industry/") || request.nextUrl.pathname === "/learn" || request.nextUrl.pathname.startsWith("/learn/") || request.nextUrl.pathname.startsWith("/auth/") || request.nextUrl.pathname.startsWith("/partners/invite/");
+  const publicPath = isPublicAppPath(request.nextUrl.pathname);
   let claims;
   try {
     const { data, error } = await supabase.auth.getClaims();
@@ -27,16 +29,16 @@ export async function updateSupabaseSession(request: NextRequest) {
     if (publicPath) return response;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", request.nextUrl.pathname);
+    url.searchParams.set("next", safeAuthNext(`${request.nextUrl.pathname}${request.nextUrl.search}`));
     url.searchParams.set("error", "Authentication is temporarily unavailable. Please try again.");
     return NextResponse.redirect(url);
   }
   if (!claims && !publicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", request.nextUrl.pathname);
+    url.searchParams.set("next", safeAuthNext(`${request.nextUrl.pathname}${request.nextUrl.search}`));
     return NextResponse.redirect(url);
   }
-  if (claims && request.nextUrl.pathname === "/login") return NextResponse.redirect(new URL("/", request.url));
+  if (claims && request.nextUrl.pathname === "/login") return NextResponse.redirect(new URL(safeAuthNext(request.nextUrl.searchParams.get("next")), request.url));
   return response;
 }

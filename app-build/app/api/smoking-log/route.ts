@@ -9,7 +9,8 @@ import { loadSmokingLogs } from "@/lib/data";
 import { loadInventory } from "@/lib/inventory";
 import { consumeInventory } from "@/lib/inventory-model";
 import { syncCollector25Contribution } from "@/lib/collector-25-contribution";
-import { createOwnedRecord, deleteOwnedRecord, loadOwnedRecord, saveOwnedRecord } from "@/lib/user-data";
+import { createOwnedRecord, deleteOwnedRecord, loadOwnedRecord, saveOwnedRecordIfUnchanged } from "@/lib/user-data";
+import { recordRevision } from "@/lib/record-revision";
 export async function GET(request: Request) {
   if (dataMode() === "mock") return NextResponse.json({ data: [] });
   try {
@@ -48,7 +49,11 @@ export async function POST(request: Request) {
     if(owned === "created"){
       if(inventory){
         try {
-          await saveOwnedRecord("inventory",inventory.inventoryId,consumeInventory(inventory,item.quantitySmoked ?? 1));
+          const expectedRevision=request.headers.get("if-match");
+          if(!expectedRevision)throw new Error("Refresh the selected Vault lot before saving so Hojavía can protect changes made on another device.");
+          if(expectedRevision!==recordRevision(inventory))throw new Error("The selected Vault lot changed on another device. Refresh it before logging this smoke.");
+          const result=await saveOwnedRecordIfUnchanged("inventory",inventory.inventoryId,consumeInventory(inventory,item.quantitySmoked ?? 1),expectedRevision);
+          if(result!=="saved")throw new Error("The selected Vault lot changed while this smoke was saving. Refresh it and try again.");
         } catch (error) {
           await deleteOwnedRecord("smokes",item.smokeId).catch(() => undefined);
           throw error;

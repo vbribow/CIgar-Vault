@@ -4,6 +4,7 @@ import type { AccountVaultRecord } from "./account-security";
 export const RecoverableRecordKind = z.enum(["inventory","collections","humidors","readings","sensors","valuations","ratings","rating-drafts","smokes","activities","wishlist","integrity","system-runs"]);
 export const RecoveryMode = z.enum(["missing","replace","skip"]);
 export type RecoveryModeValue = z.infer<typeof RecoveryMode>;
+export const MAX_RECOVERY_RECORDS=250000;
 
 export const AccountExportSchema = z.object({
   format: z.enum(["hojavia-account-export","cigar-vault-account-export"]),
@@ -16,7 +17,7 @@ export const AccountExportSchema = z.object({
     record_id: z.string().trim().min(1).max(240),
     payload: z.record(z.string(),z.unknown()),
     updated_at: z.string().datetime().optional(),
-  })).max(10000),
+  })).max(MAX_RECOVERY_RECORDS),
 }).superRefine((value,context) => {
   const validFormatVersion =
     (value.format === "hojavia-account-export" && value.version === 2) ||

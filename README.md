@@ -23,3 +23,5 @@ pnpm dev
 ```
 
 See [`app-build/README.md`](app-build/README.md) for the full application setup and verification instructions.
+
+Launch evidence and remaining acceptance work are indexed in [`app-build/RELEASE_CANDIDATE_EVIDENCE_INDEX_2026-10-07.md`](app-build/RELEASE_CANDIDATE_EVIDENCE_INDEX_2026-10-07.md).

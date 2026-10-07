@@ -14,6 +14,7 @@ const manufacturingTruth = readFileSync(new URL("../app/learn/manufacturing-trut
 const manufacturingDirectory = readFileSync(new URL("../components/manufacturing-truth-directory.tsx", import.meta.url), "utf8");
 const rootProxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
 const supabaseProxy = readFileSync(new URL("../lib/supabase/proxy.ts", import.meta.url), "utf8");
+const publicPaths = readFileSync(new URL("../lib/public-path.ts", import.meta.url), "utf8");
 
 test("the Curious pathway opens a dedicated beginner journey", () => {
   assert.match(learn, /"\/learn\/seed-to-smoke","Follow tobacco from seed to smoke"/);
@@ -171,6 +172,7 @@ test("learning routes form a connected curriculum around manufacturing truth", (
 });
 
 test("the complete Hojavía learning curriculum remains publicly accessible", () => {
-  assert.match(rootProxy, /pathname\.startsWith\("\/learn\/"\)/);
-  assert.match(supabaseProxy, /pathname\.startsWith\("\/learn\/"\)/);
+  assert.match(publicPaths, /pathname\.startsWith\("\/learn\/"\)/);
+  assert.match(rootProxy, /isPublicAppPath/);
+  assert.match(supabaseProxy, /isPublicAppPath/);
 });

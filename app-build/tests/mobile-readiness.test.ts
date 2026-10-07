@@ -49,10 +49,12 @@ test("every production build gives the installed app a source-derived release",(
 
 test("offline, install, and social-preview assets bypass protected-route middleware", () => {
   const proxy = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
-  assert.match(proxy, /pathname === "\/offline"/);
+  const publicPaths = readFileSync(new URL("../lib/public-path.ts", import.meta.url), "utf8");
+  assert.match(proxy, /isPublicAppPath/);
+  assert.match(publicPaths, /"\/offline"/);
   assert.match(proxy, /assets\/\|favicon\.ico\|api\/\|icons\/\|sw\.js\|release\.json\|manifest\.webmanifest/);
   assert.match(proxy, /hojavia-mark\.svg/);
-  assert.match(proxy, /pathname === "\/install"/);
+  assert.match(publicPaths, /"\/install"/);
 });
 
 test("private phone previews keep install metadata on their reachable HTTP origin",()=>{

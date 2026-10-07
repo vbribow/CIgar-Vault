@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import type { InventoryItem } from "@/lib/types";
 import { getInventory } from "@/lib/smartsheet";
 import { loadAccountRecords, saveOwnedRecord } from "@/lib/user-data";
+import { authorizeWrite } from "@/lib/config";
 
 export async function GET(request: Request) {
-  const scope = new URL(request.url).searchParams.get("scope") === "account" ? "account" : "master";
+  const requestedScope=new URL(request.url).searchParams.get("scope");
+  const scope = requestedScope === "master" ? "master" : "account";
   try {
+    if(scope==="master"&&!authorizeWrite(request))return NextResponse.json({error:"Founder authorization is required for the shared master backup"},{status:401});
     const records = scope === "master" ? await getInventory() : await loadAccountRecords<InventoryItem>("inventory");
     if (!records) return NextResponse.json({ error: "Sign in to back up account inventory" }, { status: 401 });
     const timestamp = new Date().toISOString();

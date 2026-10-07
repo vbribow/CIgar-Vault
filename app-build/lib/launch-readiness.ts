@@ -17,7 +17,7 @@ export const launchBaseline = {
   build: "Passed",
   typecheck: "Passed",
   automatedTests: {
-    passed: 1168,
+    passed: 1175,
     failed: 0,
   },
   severityOneOpen: 0,
@@ -143,7 +143,7 @@ const launchGateDefinitions = [
     title: "Device coverage and stability window",
     status: "In progress",
     detail: "Complete the required browser/device matrix and sustain seven production-like days without a Severity 1 or critical-path Severity 2 defect.",
-    evidence: "On October 7, 1,168 tests, TypeScript, the 193-route navigation audit, seven critical journey checks, mobile reliability, performance budgets, and the production build passed. The app.hojavia.com authenticated production surface was verified before the final local scalability corrections. A local rollback rehearsal previously rejected artifact damage and restored the prior artifact without production or collector-data changes. The candidate remains unfrozen and the clock stays at 0/7 until the pending local commits are deployed and physical iPhone/Android, recovery, sensor-continuity, and second-device acceptance are complete.",
+    evidence: "On October 7, 1,175 tests, TypeScript, the 193-route navigation audit, seven critical journey checks, mobile reliability, performance budgets, and the production build passed. The app.hojavia.com authenticated production surface was verified before the final local reliability corrections. A local rollback rehearsal previously rejected artifact damage and restored the prior artifact without production or collector-data changes. The candidate remains unfrozen and the clock stays at 0/7 until the pending local commits are deployed and physical iPhone/Android, recovery, sensor-continuity, and second-device acceptance are complete.",
     priority: "Next",
   },
   {

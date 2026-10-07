@@ -18,6 +18,7 @@ import { photoPreparationError, validatePhotoSelection } from "@/lib/photo-captu
 import { captureOperationalFailure, captureOperationalSuccess } from "@/lib/operational-failure";
 import { fetchWithConfirmationRetry, fetchWithTimeout, RequestTimeoutError } from "@/lib/request-control";
 import { matchesInventorySearchExactWords, preferActionableInventoryMatches } from "@/lib/cigar-search";
+import { recordRevision } from "@/lib/record-revision";
 
 const today = () => new Date().toISOString().slice(0, 10);const scoreOptions = Array.from({ length: 101 }, (_, index) => 100 - index);
 const maxSmokePhotos=2;
@@ -168,7 +169,7 @@ export function RecordsManager({ inventory, initialSmokes, initialValuations, mo
       const endpoint = kind === "smoke" ? "/api/smoking-log" : "/api/valuations";
       const request = {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-founder-key": key },
+        headers: { "Content-Type": "application/json", "x-founder-key": key, ...(kind==="smoke"&&selectedSmokeInventory?{"if-match":recordRevision(selectedSmokeInventory)}:{}) },
         body: JSON.stringify(payload),
       };
       const response = kind === "smoke"

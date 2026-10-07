@@ -107,8 +107,10 @@ test("public registry withholds incomplete canonical research",async()=>{
 
 test("published Industry Hub pages are publicly reachable",async()=>{
   const proxy=await readFile(new URL("../lib/supabase/proxy.ts",import.meta.url),"utf8");
+  const publicPaths=await readFile(new URL("../lib/public-path.ts",import.meta.url),"utf8");
   const navigation=await readFile(new URL("../components/app-navigation.tsx",import.meta.url),"utf8");
-  assert.match(proxy,/pathname === ["']\/industry["']/);
-  assert.match(proxy,/startsWith\(["']\/industry\/["']\)/);
+  assert.match(proxy,/isPublicAppPath/);
+  assert.match(publicPaths,/"\/industry"/);
+  assert.match(publicPaths,/startsWith\("\/industry\/"\)/);
   assert.match(navigation,/Industry Hub/);
 });
