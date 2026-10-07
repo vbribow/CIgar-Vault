@@ -140,6 +140,8 @@ export default function LaunchReadinessPage() {
           <div><span>{gate.status}</span><h3>{gate.title}</h3></div>
           <p>{gate.detail}</p>
           <small>{gate.evidence}</small>
+          <small><strong>Owner:</strong> {gate.owner} · <strong>Evidence:</strong> {gate.evidenceDate}</small>
+          <small><strong>Next:</strong> {gate.nextAction}</small>
         </article>)}</div>
       </section>)}
     </section>

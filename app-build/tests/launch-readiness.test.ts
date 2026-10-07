@@ -6,7 +6,7 @@ import { founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates
 test("launch baseline records the verified build and full-suite result", () => {
   assert.equal(launchBaseline.build, "Passed");
   assert.equal(launchBaseline.typecheck, "Passed");
-  assert.deepEqual(launchBaseline.automatedTests, { passed: 1159, failed: 0 });
+  assert.deepEqual(launchBaseline.automatedTests, { passed: 1168, failed: 0 });
   assert.equal(launchReadinessSummary().blockingDefects, 0);
   assert.equal(launchReadinessSummary().blockingGates, 12);
   assert.equal(launchReadinessSummary().decision, "HOLD");
@@ -24,7 +24,7 @@ test("a clean automated baseline never claims real-device gates are complete", (
 test("local artifact rollback evidence never claims production-provider rollback passed", () => {
   const gate = launchGates.find(item => item.id === "stability-device-acceptance");
   assert.ok(gate);
-  assert.match(gate.evidence, /1,159 tests/i);
+  assert.match(gate.evidence, /1,168 tests/i);
   assert.match(gate.evidence, /without production or collector-data changes/i);
   assert.match(gate.evidence, /candidate remains unfrozen/i);
   assert.match(gate.evidence, /sensor-continuity/i);
@@ -60,9 +60,10 @@ test("every hard operational launch domain is represented before READY", () => {
   assert.equal(launchReadinessSummary().decision, "HOLD");
 });
 
-test("affiliate agreements and unresolved legal ownership remain deferred", () => {
+test("known legal ownership is recorded without passing trademark or affiliate work", () => {
   assert.equal(launchGates.find(gate => gate.id === "affiliate-programs")?.status, "Deferred");
-  assert.equal(launchGates.find(gate => gate.id === "legal-owner")?.status, "Deferred");
+  assert.equal(launchGates.find(gate => gate.id === "legal-owner")?.status, "Passed");
+  assert.equal(launchGates.find(gate => gate.id === "brand-clearance-adoption")?.status, "In progress");
 });
 
 test("the launch workspace exposes the three remaining founder acceptance sessions without claiming they passed",()=>{
@@ -92,9 +93,17 @@ test("the launch workspace exposes the three remaining founder acceptance sessio
 test("device and founder gates remain explicit instead of being inferred", () => {
   assert.deepEqual(launchDeviceMatrix.map(item => item.status), ["Partial", "Not run"]);
   assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Database migrations" && item.status === "Hold"));
-  assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Sensors" && item.status === "Catching up"));
+  assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Sensors" && item.status === "Current — stability open"));
   assert.ok(founderGoNoGoChecklist.some(item => item.gate === "Live cigar research" && item.status === "Hold — billing required"));
   assert.equal(founderGoNoGoChecklist.some(item => String(item.status) === "Passed"), false);
+});
+
+test("every launch gate identifies dated evidence, accountability, and an exact next action",()=>{
+  for(const gate of launchGates){
+    assert.ok(gate.owner.trim(),`${gate.id} needs an owner`);
+    assert.match(gate.evidenceDate,/^2026-\d{2}-\d{2}$/);
+    assert.ok(gate.nextAction.trim(),`${gate.id} needs a next action`);
+  }
 });
 
 test("the web launch pass keeps every essential collector journey visible",()=>{

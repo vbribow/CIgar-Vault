@@ -7,14 +7,17 @@ export type LaunchGate = {
   detail: string;
   evidence: string;
   priority: "Now" | "Next" | "Later";
+  owner: string;
+  evidenceDate: string;
+  nextAction: string;
 };
 
 export const launchBaseline = {
-  recordedAt: "2026-10-06",
+  recordedAt: "2026-10-07",
   build: "Passed",
   typecheck: "Passed",
   automatedTests: {
-    passed: 1159,
+    passed: 1168,
     failed: 0,
   },
   severityOneOpen: 0,
@@ -22,7 +25,7 @@ export const launchBaseline = {
   affiliateReview: "Deferred until after launch",
 } as const;
 
-export const launchGates: readonly LaunchGate[] = [
+const launchGateDefinitions = [
   {
     id: "brand-clearance-adoption",
     title: "Trademark, legal, and public-release readiness",
@@ -44,7 +47,7 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Current humidor readings and unattended recovery",
     status: "In progress",
     detail: "Bring every linked SensorPush device current and prove hourly synchronization remains current without manual intervention.",
-    evidence: "All five devices are linked. The production sync now processes bounded 24-hour windows, preserves its cursor, and resumes hourly after a backlog; the fleet must finish catching up and remain current through the stability window.",
+    evidence: "All five devices are linked and production readings were current on October 7. Two consecutive hourly synchronization cycles returned HTTP 200. Long-history calculations and scheduled reading pagination passed 100,000- and 150,000-reading regressions locally; continuity through the seven-day stability window remains open.",
     priority: "Now",
   },
   {
@@ -140,15 +143,15 @@ export const launchGates: readonly LaunchGate[] = [
     title: "Device coverage and stability window",
     status: "In progress",
     detail: "Complete the required browser/device matrix and sustain seven production-like days without a Severity 1 or critical-path Severity 2 defect.",
-    evidence: "On October 6, 1,159 tests, TypeScript, the 193-route navigation audit, performance budgets, and the production build passed. The app.hojavia.com authenticated production surface and personal Top 10 were verified. A local rollback rehearsal previously rejected artifact damage and restored the prior artifact without production or collector-data changes. The candidate remains unfrozen and the clock stays at 0/7 until this combined batch is deployed and physical iPhone/Android, recovery, sensor-continuity, and second-device acceptance are complete.",
+    evidence: "On October 7, 1,168 tests, TypeScript, the 193-route navigation audit, seven critical journey checks, mobile reliability, performance budgets, and the production build passed. The app.hojavia.com authenticated production surface was verified before the final local scalability corrections. A local rollback rehearsal previously rejected artifact damage and restored the prior artifact without production or collector-data changes. The candidate remains unfrozen and the clock stays at 0/7 until the pending local commits are deployed and physical iPhone/Android, recovery, sensor-continuity, and second-device acceptance are complete.",
     priority: "Next",
   },
   {
     id: "legal-owner",
-    title: "Legal owner and launch state",
-    status: "Deferred",
-    detail: "Record the approved owner, formation state, principal state, and legal-document transition.",
-    evidence: "Founder reminder is active; no owner or state is inferred.",
+    title: "Legal owner and formation state",
+    status: "Passed",
+    detail: "Keep the approved owner and formation state explicit while the separate trademark and public-release legal gate remains open.",
+    evidence: "Brian selected Emberward Holdings LLC as owner on August 12, 2026. Arizona approved its Articles of Organization on August 13, 2026; Business ID 25108068 is recorded active. This does not represent trademark clearance or filing.",
     priority: "Later",
   },
   {
@@ -160,6 +163,28 @@ export const launchGates: readonly LaunchGate[] = [
     priority: "Later",
   },
 ] as const;
+
+const launchGateAccountability: Record<(typeof launchGateDefinitions)[number]["id"],Pick<LaunchGate,"owner"|"evidenceDate"|"nextAction">> = {
+  "brand-clearance-adoption": {owner:"Brian + qualified legal reviewer",evidenceDate:"2026-10-07",nextAction:"Approve counsel and complete the dated legal, privacy, support-owner, and filing decisions."},
+  "automation-privacy": {owner:"Technical owner",evidenceDate:"2026-10-07",nextAction:"Retain the passing controls in the frozen release candidate."},
+  "sensor-continuity": {owner:"Technical owner + Brian",evidenceDate:"2026-10-07",nextAction:"Deploy the validated pagination fixes only after approval, then record seven current production days."},
+  "places-scope-acceptance": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Record the founder scope decision and complete the production ZIP, radius, attribution, rating, budget, and refresh acceptance script."},
+  "cross-device-sync": {owner:"Brian + beta tester",evidenceDate:"2026-10-07",nextAction:"Run the remaining story, collection-component, storage, and second-device checks."},
+  "photo-completion": {owner:"Brian + beta tester",evidenceDate:"2026-10-07",nextAction:"Complete the physical-phone upload, retry, correction, and saved-record protocol."},
+  "import-recovery": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Complete representative UI commit, rollback, export, restore, and second-device observations."},
+  "founder-beta": {owner:"Brian",evidenceDate:"2026-10-07",nextAction:"Inspect the protected cohort counts and resolve blocking feedback without widening access."},
+  "auth-isolation-recovery": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Complete clean-browser recovery, representative restore, and second-device account-isolation acceptance."},
+  "collection-truth": {owner:"Technical owner",evidenceDate:"2026-08-07",nextAction:"Retain the passing evidence and investigate only newly reported identity conflicts."},
+  "valuation-coverage": {owner:"Technical owner",evidenceDate:"2026-07-30",nextAction:"Retain evidence gaps explicitly and refresh only under the approved monthly policy."},
+  "legal-privacy-support": {owner:"Brian + qualified reviewer + support owner needed",evidenceDate:"2026-10-07",nextAction:"Name support and incident owners, approve notices and retention rules, and rehearse an authorized deletion request."},
+  "billing-entitlements": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Choose free beta or separately authorize the Stripe test-mode acceptance runbook."},
+  "openai-research-activation": {owner:"Brian",evidenceDate:"2026-10-07",nextAction:"Keep disabled unless a separate budget, credential, migration, and controlled-query approval is granted."},
+  "stability-device-acceptance": {owner:"Brian + beta testers",evidenceDate:"2026-10-07",nextAction:"Deploy the frozen candidate after approval, complete the physical-device matrix, and start the seven-day clock."},
+  "legal-owner": {owner:"Brian",evidenceDate:"2026-08-13",nextAction:"Preserve Emberward Holdings LLC as the recorded owner; chain-of-title and trademark filing remain under the separate legal gate."},
+  "affiliate-programs": {owner:"Brian",evidenceDate:"2026-07-29",nextAction:"Keep deferred until after launch and separate approval."},
+};
+
+export const launchGates: readonly LaunchGate[] = launchGateDefinitions.map(gate=>({...gate,...launchGateAccountability[gate.id]}));
 
 export const launchDeviceMatrix = [
   { platform: "iPhone", browser: "Safari", installedApp: "Add to Home Screen", status: "Partial", next: "Complete photo, navigation, sign-out, reopen, and second-device synchronization with a beta tester." },
@@ -221,7 +246,7 @@ export const founderGoNoGoChecklist = [
   { gate: "Google Places", status: "Founder scope decision", detail: "If included at web launch, complete restricted credentials, production migration, lounge-only ZIP/radius acceptance, attribution, ratings, cost controls, and monthly refresh verification before freezing the candidate." },
   { gate: "Billing", status: "Founder decision", detail: "Choose free beta or authorize a Stripe test-mode acceptance pass before any paid cohort." },
   { gate: "Live cigar research", status: "Hold — billing required", detail: "Create a dedicated OpenAI Platform project, approve its hard spending limit and alerts, apply the research-ledger migration after database reconciliation, add the protected production key, set OPENAI_RESEARCH_ENABLED=true, and pass the founder’s controlled research evaluation." },
-  { gate: "Sensors", status: "Catching up", detail: "All five devices are linked. Bounded hourly synchronization must reach current readings and remain healthy through the stability window." },
+  { gate: "Sensors", status: "Current — stability open", detail: "All five devices were current on October 7 and two consecutive hourly cycles succeeded. The seven-day stability window remains open." },
 ] as const;
 
 export function launchReadinessSummary() {
