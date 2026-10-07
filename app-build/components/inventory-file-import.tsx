@@ -61,6 +61,11 @@ export function InventoryFileImport() {
       });
       const result = await responseJson(response);
       if (!response.ok) throw new Error(result.error || "Import failed");
+      void fetch("/api/product-events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventType: "import-completed" }),
+      }).catch(() => undefined);
       setBatch(result.data.batchId);
       importMutation.succeed();
       setMessage(`${result.data.imported} inventory lots imported safely. Existing Vault records were not replaced. ${result.data.valuationStatus} Import receipt: ${result.data.batchId}.`);

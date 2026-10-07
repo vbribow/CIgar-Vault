@@ -41,3 +41,13 @@ test("first-session actions remain usable on small screens", () => {
   assert.match(styles, /\.firstRecordActions \.textLink\{[^}]*min-height:44px/);
   assert.match(styles, /\.firstRecordActions \.button\{width:100%\}/);
 });
+
+test("photo intake never calls a draft saved before Vault approval", () => {
+  const intake = read("components/photo-inventory-intake.tsx");
+
+  assert.match(intake, /type IntakeStage = "identify" \| "review" \| "confirm"/);
+  assert.match(intake, /: "Confirm"/);
+  assert.match(intake, /no inventory record has been created yet/);
+  assert.match(intake, /Add to my Vault button/);
+  assert.doesNotMatch(intake, /Your work is saved on this screen/);
+});

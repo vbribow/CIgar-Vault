@@ -1,3 +1,83 @@
-import{NextResponse}from"next/server";import{CigarSommQuestionSchema,askCigarSomm}from"@/lib/cigar-somm";import{buildCigarSommCollectorContext}from"@/lib/cigar-somm-context";import{loadInventory}from"@/lib/inventory";import{loadCatalog}from"@/lib/catalog";import{loadCollections,loadHumidorReadings,loadHumidors,loadSmokingLogs,loadValuations,loadWishlist}from"@/lib/data";import{createClient,supabaseConfigured}from"@/lib/supabase/server";import{authorizeWrite}from"@/lib/config";
-async function authorized(request:Request){if(authorizeWrite(request))return true;if(!supabaseConfigured())return false;const{data:{user}}=await(await createClient()).auth.getUser();return Boolean(user)}
-export async function POST(request:Request){if(!await authorized(request))return NextResponse.json({error:"Sign in to ask Cigar Somm"},{status:401});try{const input=CigarSommQuestionSchema.parse(await request.json());const[inventory,smokes,valuations,wishlist,collections,humidors,readings]=await Promise.all([loadInventory(),loadSmokingLogs(),loadValuations(),loadWishlist(),loadCollections(),loadHumidors(),loadHumidorReadings()]);const catalog=await loadCatalog(inventory);const context=buildCigarSommCollectorContext({inventory,smokes,valuations,wishlist,collections,humidors,readings,selectedInventoryId:input.inventoryId});return NextResponse.json({data:await askCigarSomm(input,inventory,smokes,context,catalog)})}catch(error){const message=error instanceof Error?error.message:"Cigar Somm could not answer";return NextResponse.json({error:message},{status:message.includes("configured")?503:422})}}
+import { NextResponse } from "next/server";
+import { CigarSommQuestionSchema, askCigarSomm } from "@/lib/cigar-somm";
+import { buildCigarSommCollectorContext } from "@/lib/cigar-somm-context";
+import { loadInventory } from "@/lib/inventory";
+import { loadCatalog } from "@/lib/catalog";
+import {
+  loadCollections,
+  loadHumidorReadings,
+  loadHumidors,
+  loadSmokingLogs,
+  loadValuations,
+  loadWishlist,
+} from "@/lib/data";
+import { createClient, supabaseConfigured } from "@/lib/supabase/server";
+import { authorizeWrite } from "@/lib/config";
+
+async function authorized(request: Request) {
+  if (authorizeWrite(request)) return true;
+  if (!supabaseConfigured()) return false;
+  const {
+    data: { user },
+  } = await (await createClient()).auth.getUser();
+  return Boolean(user);
+}
+
+async function recordFirstPartyUse() {
+  if (!supabaseConfigured()) return;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: preference } = await supabase
+      .from("account_preferences")
+      .select("product_analytics")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (preference?.product_analytics === false) return;
+    await supabase.from("product_events").insert({
+      user_id: user.id,
+      event_type: "cigar-somm-used",
+      properties: {},
+    });
+  } catch {
+    // Optional first-party measurement must never block the collector's answer.
+  }
+}
+
+export async function POST(request: Request) {
+  if (!(await authorized(request))) {
+    return NextResponse.json({ error: "Sign in to ask Cigar Somm" }, { status: 401 });
+  }
+  try {
+    const input = CigarSommQuestionSchema.parse(await request.json());
+    const [inventory, smokes, valuations, wishlist, collections, humidors, readings] = await Promise.all([
+      loadInventory(),
+      loadSmokingLogs(),
+      loadValuations(),
+      loadWishlist(),
+      loadCollections(),
+      loadHumidors(),
+      loadHumidorReadings(),
+    ]);
+    const catalog = await loadCatalog(inventory);
+    const context = buildCigarSommCollectorContext({
+      inventory,
+      smokes,
+      valuations,
+      wishlist,
+      collections,
+      humidors,
+      readings,
+      selectedInventoryId: input.inventoryId,
+    });
+    const data = await askCigarSomm(input, inventory, smokes, context, catalog);
+    await recordFirstPartyUse();
+    return NextResponse.json({ data });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Cigar Somm could not answer";
+    return NextResponse.json({ error: message }, { status: message.includes("configured") ? 503 : 422 });
+  }
+}

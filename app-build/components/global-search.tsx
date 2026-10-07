@@ -234,7 +234,7 @@ export function GlobalSearch({ initialOpen = false }: { initialOpen?: boolean })
               {loading && <p role="status">Searching your private Vault…</p>}
               {!loading && searchError && <div className="commandError" role="alert"><strong>Search could not finish.</strong><p>{searchError}</p><button type="button" className="button secondary" onClick={() => setRetryKey((value) => value + 1)}>Try search again</button></div>}
               {!loading && !searchError && query.length >= 2 && !results.length && (
-                <div className="commandEmpty"><strong>No matching records or workspaces.</strong><p>Try a broader name, or choose where you want to continue.</p><div><a className="button secondary" href="/inventory#mobile-intake">Document a cigar</a><a className="button secondary" href="/inventory">Open Vault</a></div></div>
+                <div className="commandEmpty"><strong>No matching records or workspaces.</strong><p>Your search is preserved. Try another identity, check Hojavía’s reference, or create a record from what you know.</p><div><a className="button secondary" href={`/discover?cigarName=${encodeURIComponent(query)}#research-any-cigar`}>Research “{query}”</a><a className="button secondary" href={`/inventory?add=new&cigarName=${encodeURIComponent(query)}#mobile-intake`}>Add “{query}” manually</a><a className="button secondary" href="/inventory">Open Vault</a></div></div>
               )}
               {!query.trim() && recentSearches.length > 0 && (
                 <section

@@ -23,8 +23,8 @@ test("the four core collector journeys share clear save and recovery contracts",
   assert.match(smoke, /Open cigar record/);
 
   assert.match(photo, /photoIntake card coreJourney/);
-  assert.match(photo, /Enter another cigar/);
-  assert.match(photo, /Return to Vault/);
+  assert.match(photo, /Confirm before adding to your Vault/);
+  assert.match(photo, /Add \$\{pending\} selected cigar/);
 
   assert.match(collections, /collectionEditor coreJourney/);
   assert.match(collections, /aria-busy=\{saving\}/);

@@ -16,7 +16,7 @@ test("core home journeys use prefetched client transitions", () => {
   const home = read("app/page.tsx");
   assert.match(home, /<Link className="button" href="\/inventory" prefetch>/);
   assert.match(home, /href="\/collector-walkthrough" prefetch/);
-  assert.match(home, /href="\/discover" prefetch/);
+  assert.doesNotMatch(home, /href="\/discover" prefetch/);
 });
 
 test("connection interruptions remain explicit and evidence safe", () => {

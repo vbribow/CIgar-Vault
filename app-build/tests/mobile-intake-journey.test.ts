@@ -5,12 +5,12 @@ import test from "node:test";
 const intake = readFileSync(new URL("../components/photo-inventory-intake.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../app/styles.css", import.meta.url), "utf8");
 
-test("mobile documentation follows an explicit identify, review, and save journey", () => {
-  assert.match(intake, /type IntakeStage = "identify" \| "review" \| "saved"/);
-  assert.match(intake, /Documentation progress/);
-  assert.match(intake, /Start with what you know/);
-  assert.match(intake, /Review before saving/);
-  assert.match(intake, /Your work is saved on this screen/);
+test("mobile documentation follows an explicit identify, review, and confirm journey", () => {
+  assert.match(intake, /type IntakeStage = "identify" \| "review" \| "confirm"/);
+  assert.match(intake, /Add a cigar/);
+  assert.match(intake, /Start with a photo or what you know/);
+  assert.match(intake, /Nothing is saved to your Vault until you confirm it/);
+  assert.match(intake, /no inventory record has been created yet/);
 });
 
 test("unfinished typed work is restored locally without overstating photo persistence", () => {
@@ -22,7 +22,7 @@ test("unfinished typed work is restored locally without overstating photo persis
 
 test("completion choices and founder-only controls remain clear", () => {
   assert.match(intake, /Document another cigar/);
-  assert.match(intake, /Return to Vault/);
+  assert.match(intake, /Add \$\{pending\} selected cigar/);
   assert.match(intake, /mode === "smartsheet" && <fieldset className="founderMasterControls"/);
   assert.match(intake, /Possible duplicate — review before saving/);
   assert.match(intake, /Details to confirm/);

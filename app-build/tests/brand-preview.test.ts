@@ -70,7 +70,7 @@ test("Hojavía owns metadata, install identity, and legacy presentation safeguar
   assert.match(navigation, /brand\.spokenName/);
   assert.match(navigation, /brandPronunciation/);
   assert.match(navigation, /<small className="brandSignature">\{brand\.signatureLine\}<\/small>/);
-  assert.match(home, /brand\.spokenName/);
+  assert.match(home, /brand\.name/);
   assert.match(home, /<CulturePromise\/>/);
   assert.match(culturePromise, /brand\.journeyLine/);
   for (const chapter of ["Leaf", "Craft", "Culture", "Legacy"]) assert.match(culturePromise, new RegExp(`label:\"${chapter}\"`));

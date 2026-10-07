@@ -23,7 +23,7 @@ test("private search distinguishes interruption from an honest empty result", ()
   assert.match(search, /role="alert"/);
   assert.match(search, /Try search again/);
   assert.match(search, /No matching records or workspaces/);
-  assert.match(search, /Document a cigar/);
+  assert.match(search, /Add “\{query\}” manually/);
   assert.match(search, /Open Vault/);
   assert.match(search, /aria-busy=\{loading\}/);
 });

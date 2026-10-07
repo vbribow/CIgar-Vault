@@ -6,7 +6,7 @@ import { founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates
 test("launch baseline records the verified build and full-suite result", () => {
   assert.equal(launchBaseline.build, "Passed");
   assert.equal(launchBaseline.typecheck, "Passed");
-  assert.deepEqual(launchBaseline.automatedTests, { passed: 1175, failed: 0 });
+  assert.deepEqual(launchBaseline.automatedTests, { passed: 1186, failed: 0 });
   assert.equal(launchReadinessSummary().blockingDefects, 0);
   assert.equal(launchReadinessSummary().blockingGates, 12);
   assert.equal(launchReadinessSummary().decision, "HOLD");
@@ -24,9 +24,9 @@ test("a clean automated baseline never claims real-device gates are complete", (
 test("local artifact rollback evidence never claims production-provider rollback passed", () => {
   const gate = launchGates.find(item => item.id === "stability-device-acceptance");
   assert.ok(gate);
-  assert.match(gate.evidence, /1,175 tests/i);
-  assert.match(gate.evidence, /without production or collector-data changes/i);
-  assert.match(gate.evidence, /candidate remains unfrozen/i);
+  assert.match(gate.evidence, /1,186 tests/i);
+  assert.match(gate.evidence, /local rollback rehearsal without production or collector-data changes/i);
+  assert.match(gate.evidence, /candidate remains undeployed/i);
   assert.match(gate.evidence, /sensor-continuity/i);
   assert.equal(gate.status, "In progress");
 });

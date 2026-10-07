@@ -23,7 +23,7 @@ test("existing inventory has explicit search and clear actions", () => {
 });
 
 test("enter another cigar resets the completed intake workflow", () => {
-  assert.match(intake, />Enter another cigar<\/button>/);
+  assert.match(intake, />Document another cigar<\/button>/);
   assert.match(intake, /function nextAsset\(\)/);
   assert.match(intake, /setQuery\(""\)/);
   assert.match(intake, /setPhotos/);

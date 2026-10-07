@@ -1,0 +1,2 @@
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";
+test("pricing distinguishes beta access from unlaunched paid tiers",()=>{const page=readFileSync(new URL("../app/pricing/page.tsx",import.meta.url),"utf8");assert.match(page,/Proposed post-beta tier/);assert.match(page,/Pricing and public availability are not set/);assert.match(page,/do not start billing/);assert.match(page,/Owned records remain visible/);assert.match(page,/Review proposed tier/)});
