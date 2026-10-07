@@ -7,7 +7,7 @@ export type SensorFleetSnapshot={total:number;current:number;stale:number;missin
 export function sensorFleetSnapshot(sensors:EnvironmentalSensor[],readings:HumidorReading[],now=Date.now()):SensorFleetSnapshot{
   const automatic=sensors.filter(sensor=>sensor.syncMethod==="Cloud API");
   const latest=new Map<string,HumidorReading>();
-  for(const reading of [...readings].sort((a,b)=>b.recordedAt.localeCompare(a.recordedAt)))if(reading.sensorId&&!latest.has(reading.sensorId))latest.set(reading.sensorId,reading);
+  for(const reading of readings){const current=reading.sensorId?latest.get(reading.sensorId):undefined;if(reading.sensorId&&(!current||reading.recordedAt>current.recordedAt))latest.set(reading.sensorId,reading)}
   const timestamps=automatic.flatMap(sensor=>{const reading=latest.get(sensor.sensorId);return reading&&Number.isFinite(Date.parse(reading.recordedAt))?[reading.recordedAt]:[]}).sort();
   const missing=automatic.filter(sensor=>!latest.has(sensor.sensorId)).length;
   const stale=automatic.filter(sensor=>automaticSensorReadingIsStale(sensor,latest.get(sensor.sensorId)?.recordedAt,now)).length;

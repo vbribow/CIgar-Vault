@@ -6,7 +6,11 @@ export function SensorDashboard({sensors,humidors,readings}:{sensors:Environment
   const activeCloudSensors=sensors.filter(sensor=>sensor.provider.toLowerCase()==="sensorpush"&&sensor.syncMethod==="Cloud API"&&sensor.externalDeviceId);
   const dashboardSensors=activeCloudSensors.length?activeCloudSensors:sensors;
   const latest=new Map<string,HumidorReading>();
-  for(const reading of [...readings].sort((a,b)=>b.recordedAt.localeCompare(a.recordedAt)))if(reading.sensorId&&!latest.has(reading.sensorId))latest.set(reading.sensorId,reading);
+  for(const reading of readings){
+    if(!reading.sensorId)continue;
+    const current=latest.get(reading.sensorId);
+    if(!current||reading.recordedAt>current.recordedAt)latest.set(reading.sensorId,reading);
+  }
   const state=(sensor:EnvironmentalSensor)=>{
     const reading=latest.get(sensor.sensorId),humidor=humidors.find(item=>item.humidorId===sensor.humidorId);
     if(sensor.connectionStatus==="Error")return"Error";
