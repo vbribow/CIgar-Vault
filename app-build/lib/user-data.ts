@@ -24,28 +24,38 @@ async function advanceInventoryProgress(context:Awaited<ReturnType<typeof accoun
 
 export async function accountDataMode(): Promise<DataMode> { return await accountContext() ? "supabase" : dataMode(); }
 
+const ownedRecordPageSize=1000;
+async function loadAllOwnedRows<T extends Record<string,unknown>>(context:NonNullable<Awaited<ReturnType<typeof accountContext>>>,kind:VaultRecordKind,columns:string):Promise<T[]>{
+  const rows:T[]=[];
+  for(let from=0;;from+=ownedRecordPageSize){
+    const{data,error}=await context.supabase.from("vault_records").select(columns).eq("user_id",context.user.id).eq("kind",kind).order("record_id").range(from,from+ownedRecordPageSize-1);
+    if(error)throw error;
+    const page=(data??[]) as unknown as T[];
+    rows.push(...page);
+    if(page.length<ownedRecordPageSize)break;
+  }
+  return rows;
+}
+
 export async function loadOwnedRecords<T>(kind: VaultRecordKind, _fallback: () => Promise<T[]>): Promise<T[]> {
   const context = await accountContext();
   if (!context) return [];
-  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("user_id", context.user.id).eq("kind", kind).order("record_id");
-  if (error) throw error;
-  return (data ?? []).map(row => row.payload as T);
+  const rows=await loadAllOwnedRows<{payload:unknown}>(context,kind,"payload");
+  return rows.map(row => row.payload as T);
 }
 
 export async function loadAccountRecords<T>(kind: VaultRecordKind): Promise<T[] | undefined> {
   const context = await accountContext();
   if (!context) return undefined;
-  const { data, error } = await context.supabase.from("vault_records").select("payload").eq("user_id", context.user.id).eq("kind", kind).order("record_id");
-  if (error) throw error;
-  return (data ?? []).map(row => row.payload as T);
+  const rows=await loadAllOwnedRows<{payload:unknown}>(context,kind,"payload");
+  return rows.map(row => row.payload as T);
 }
 
 export async function loadAccountRecordRows<T>(kind: VaultRecordKind): Promise<Array<{payload:T;createdAt:string}> | undefined> {
   const context = await accountContext();
   if (!context) return undefined;
-  const { data, error } = await context.supabase.from("vault_records").select("payload,created_at").eq("user_id", context.user.id).eq("kind", kind).order("record_id");
-  if (error) throw error;
-  return (data ?? []).map(row => ({ payload: row.payload as T, createdAt: row.created_at as string }));
+  const rows=await loadAllOwnedRows<{payload:unknown;created_at:string}>(context,kind,"payload,created_at");
+  return rows.map(row => ({ payload: row.payload as T, createdAt: row.created_at }));
 }
 
 export async function saveOwnedRecord(kind: VaultRecordKind, recordId: string, payload: unknown): Promise<boolean> {
