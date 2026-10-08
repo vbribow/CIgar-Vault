@@ -10,15 +10,18 @@ test("founder onboarding enforces cohort capacity and duplicate-email feedback o
   assert.match(route, /Founder authorization required/);
 });
 
-test("founder can directly send a confirmed invitation while the server records access only after provider acceptance", () => {
+test("founder invitation submission is tracked separately from confirmed delivery", () => {
   const route = readFileSync(new URL("../app/api/founder-onboarding/invite/route.ts", import.meta.url), "utf8");
   assert.match(route, /authorizeWrite/);
   assert.match(route, /submitAccountEmail/);
   assert.match(route, /assertBetaSeatAvailable/);
-  assert.match(route, /stage: "Invited"/);
+  assert.match(route, /getAccountEmailDelivery/);
+  assert.match(route, /action:z\.enum\(\["send","status"\]\)/);
+  assert.match(route, /delivered\?\{stage:"Invited"/);
+  assert.match(route, /status:delivered\?200:202/);
   assert.match(route, /accountEmailConfiguration/);
-  assert.match(route, /submissionId: z\.string\(\)\.uuid\(\)/);
-  assert.match(route, /beta-invitation-\$\{collector\.id\}-\$\{submissionId\}/);
+  assert.match(route, /submissionId:\s*z\.string\(\)\.uuid\(\)/);
+  assert.match(route, /beta-invitation-\$\{collector\.id\}-\$\{submissionId!?\}/);
   assert.match(route, /EMAIL_PROVIDER_NOT_CONFIGURED/);
   assert.doesNotMatch(route, /`beta-invitation-\$\{collector\.id\}`/);
 });
@@ -48,16 +51,18 @@ test("founder onboarding never describes provider acceptance as confirmed delive
   assert.doesNotMatch(component, /Hojavía sent the reinstall notice/);
 });
 
-test("founder onboarding offers one add-and-send invitation action with visible progress", () => {
+test("founder onboarding offers one add-and-submit invitation action with visible delivery progress", () => {
   const component = readFileSync(new URL("../components/founder-onboarding.tsx", import.meta.url), "utf8");
   const route = readFileSync(new URL("../app/api/founder-onboarding/route.ts", import.meta.url), "utf8");
-  assert.match(component, /Add & send invitation/);
-  assert.match(component, /Adding and sending…/);
+  assert.match(component, /Add & submit invitation/);
+  assert.match(component, /Adding and submitting…/);
   assert.match(component, /sendInvitation:true/);
   assert.doesNotMatch(component, /sendInvitation\(collector, false\)/);
   assert.match(component, /const submissionId = createClientUuid\(\)/);
   assert.match(component, /sendInvitation:true, submissionId/);
   assert.match(component, /provider reference/);
+  assert.match(component, /Check delivery/);
+  assert.match(component, /Email status:/);
   assert.match(component, /View invitation \/ Gmail/);
   assert.match(component, /use Open Gmail to send it now/);
   assert.match(component, /response\.status === 503/);

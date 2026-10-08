@@ -7,6 +7,23 @@ import { brand } from "./brand";
 export function notificationConfiguration(){return{email:Boolean(process.env.RESEND_API_KEY&&process.env.ALERT_EMAIL_TO&&process.env.ALERT_EMAIL_FROM),sms:Boolean(process.env.TWILIO_ACCOUNT_SID&&process.env.TWILIO_AUTH_TOKEN&&process.env.TWILIO_FROM_NUMBER&&process.env.ALERT_SMS_TO),history:Boolean(process.env.SMARTSHEET_ALERTS_SHEET_ID)}}
 async function sendEmail(subject:string,text:string,idempotencyKey:string){if(!notificationConfiguration().email)return false;const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":idempotencyKey},body:JSON.stringify({from:process.env.ALERT_EMAIL_FROM,to:[process.env.ALERT_EMAIL_TO],subject,text})});if(!response.ok)throw new Error(`Email delivery failed (${response.status})`);return true}
 export function accountEmailConfiguration(){return{configured:Boolean(process.env.RESEND_API_KEY&&(process.env.HOJAVIA_EMAIL_FROM||process.env.ALERT_EMAIL_FROM)),from:process.env.HOJAVIA_EMAIL_FROM||process.env.ALERT_EMAIL_FROM}}
+export type AccountEmailDeliveryStatus="submitted"|"delivered"|"failed"|"unknown";
+export type AccountEmailDelivery={status:AccountEmailDeliveryStatus;providerEvent?:string;messageId?:string};
+export function accountEmailDeliveryStatus(lastEvent?:string):AccountEmailDeliveryStatus{
+  const event=String(lastEvent||"").trim().toLowerCase();
+  if(["delivered","opened","clicked"].includes(event))return"delivered";
+  if(["bounced","complained","failed","canceled","cancelled","suppressed"].includes(event))return"failed";
+  if(["queued","scheduled","sent","delivery_delayed"].includes(event))return"submitted";
+  return"unknown";
+}
+export async function getAccountEmailDelivery(providerId:string):Promise<AccountEmailDelivery>{
+  if(!process.env.RESEND_API_KEY||!providerId)return{status:"unknown"};
+  const response=await fetch(`https://api.resend.com/emails/${encodeURIComponent(providerId)}`,{headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`},cache:"no-store"});
+  if(response.status===404)return{status:"unknown"};
+  if(!response.ok)throw new Error(`Email delivery status unavailable (${response.status})`);
+  const result=await response.json().catch(()=>({})) as{last_event?:string;message_id?:string};
+  return{status:accountEmailDeliveryStatus(result.last_event),providerEvent:result.last_event,messageId:result.message_id};
+}
 export async function sendAccountEmail(to:string,subject:string,text:string,idempotencyKey:string){const config=accountEmailConfiguration();if(!process.env.RESEND_API_KEY||!config.from)return false;const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":idempotencyKey},body:JSON.stringify({from:config.from,to:[to],subject,text})});if(!response.ok)throw new Error(`Email delivery failed (${response.status})`);return true}
 export async function submitAccountEmail(to:string,subject:string,text:string,idempotencyKey:string){const config=accountEmailConfiguration();if(!process.env.RESEND_API_KEY||!config.from)return undefined;const response=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json","Idempotency-Key":idempotencyKey},body:JSON.stringify({from:config.from,to:[to],subject,text})});if(!response.ok)throw new Error(`Email provider rejected the message (${response.status})`);const result=await response.json().catch(()=>({})) as{id?:string};return{accepted:true as const,providerId:result.id}}
 async function sendSms(text:string){if(!notificationConfiguration().sms)return false;const account=process.env.TWILIO_ACCOUNT_SID!;const body=new URLSearchParams({To:process.env.ALERT_SMS_TO!,From:process.env.TWILIO_FROM_NUMBER!,Body:text.slice(0,1500)});const response=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${account}/Messages.json`,{method:"POST",headers:{Authorization:`Basic ${btoa(`${account}:${process.env.TWILIO_AUTH_TOKEN}`)}`,"Content-Type":"application/x-www-form-urlencoded"},body});if(!response.ok)throw new Error(`Text delivery failed (${response.status})`);return true}

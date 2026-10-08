@@ -20,7 +20,7 @@ import { FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
 
 const stages: BetaStage[] = ["Prospect", "Invited", "Signed up", "Imported", "Activated"];
 type Readiness = { ready:boolean; readyCount:number; totalGates:number; invited:number; signedUp:number; consented:number; backedUp:number; openFeedback:number; criticalFeedback:number; gates:Array<{key:string;label:string;ready:boolean;detail:string}> };
-type InvitationResult = { kind:"accepted"; providerId:string } | { kind:"prepared" } | { kind:"cancelled" };
+type InvitationResult = { kind:"submitted"; delivered:boolean; status:string; providerId:string } | { kind:"prepared" } | { kind:"cancelled" };
 
 export function FounderOnboarding() {
   const [key, setKey] = useState("");
@@ -110,7 +110,7 @@ export function FounderOnboarding() {
     const response = await fetch("/api/founder-onboarding/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-founder-key": key },
-      body: JSON.stringify({ collectorId:item.id, submissionId:createClientUuid() }),
+      body: JSON.stringify({ collectorId:item.id, action:"send", submissionId:createClientUuid() }),
     });
     const result = await response.json();
     if (!response.ok && response.status === 503 && result.code === "EMAIL_PROVIDER_NOT_CONFIGURED") {
@@ -120,7 +120,34 @@ export function FounderOnboarding() {
     }
     if (!response.ok) throw new Error(result.error || "Unable to send invitation");
     setItems(current => (current || []).map(value => value.id === item.id ? { ...value, ...result.data.collector, progress:value.progress } : value));
-    return { kind:"accepted", providerId:String(result.data.providerId || "accepted") };
+    return {
+      kind:"submitted",
+      delivered:Boolean(result.data.delivered),
+      status:String(result.data.status || "submitted"),
+      providerId:String(result.data.providerId || "submitted"),
+    };
+  }
+
+  async function checkInvitation(item: BetaCollector) {
+    setBusy(true);
+    setMessage(`Checking delivery to ${item.email}…`);
+    try {
+      const response = await fetch("/api/founder-onboarding/invite", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "x-founder-key":key },
+        body:JSON.stringify({ collectorId:item.id, action:"status" }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to check invitation delivery");
+      setItems(current => (current || []).map(value => value.id === item.id ? { ...value, ...result.data.collector, progress:value.progress } : value));
+      setMessage(result.data.delivered
+        ? `Delivery confirmed for ${item.email}.`
+        : `Delivery is not confirmed for ${item.email}. Current provider status: ${result.data.status}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to check invitation delivery");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function create(event: FormEvent<HTMLFormElement>) {
@@ -158,7 +185,9 @@ export function FounderOnboarding() {
       const collector = result.data as BetaCollector;
       setItems(current => [collector, ...(current || [])]);
       event.currentTarget.reset();
-      setMessage(`A fresh invitation was accepted for ${collector.email} · provider reference ${result.delivery.providerId}. Delivery is not yet confirmed. No Gmail action is required.`);
+      setMessage(result.delivery.delivered
+        ? `Delivery confirmed for ${collector.email}.`
+        : `Invitation submitted for ${collector.email} · provider reference ${result.delivery.providerId}. Delivery is not yet confirmed.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to add tester");
     } finally {
@@ -263,7 +292,9 @@ export function FounderOnboarding() {
         return <article key={item.id}>
           <div><small>{item.email}</small><h3>{item.name}</h3><p>{item.notes || "No follow-up notes yet."}</p></div>
           <label><span>Stage</span><select value={item.stage} disabled={busy} onChange={event => update(item, event.target.value as BetaStage)}>{stages.map(stage => <option value={stage} key={stage}>{betaStageLabel(stage)}</option>)}</select></label>
-          <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Sending invitation…");try{const sent=await sendInvitation(item);if(sent.kind === "accepted")setMessage(`A fresh invitation was accepted for ${item.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed.`);else if(sent.kind === "prepared")setMessage(`Automated email is not configured. ${item.name}'s invitation is ready below—use Open Gmail to send it now.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to send invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Send invitation" : "Resend invitation"}</button>
+          <button type="button" className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);setMessage("Submitting invitation…");try{const sent=await sendInvitation(item);if(sent.kind === "submitted")setMessage(sent.delivered ? `Delivery confirmed for ${item.email}.` : `Invitation submitted for ${item.email} · provider reference ${sent.providerId}. Delivery is not yet confirmed (status: ${sent.status}).`);else if(sent.kind === "prepared")setMessage(`Automated email is not configured. ${item.name}'s invitation is ready below—use Open Gmail to send it now.`)}catch(error){setMessage(error instanceof Error?error.message:"Unable to submit invitation")}finally{setBusy(false)}}}>{item.stage === "Prospect" ? "Submit invitation" : "Submit again"}</button>
+          {item.invitationProviderId && <button type="button" className="textButton" disabled={busy} onClick={() => checkInvitation(item)}>Check delivery</button>}
+          <small>Email status: {item.invitationDeliveryStatus || "not submitted"}{item.invitationDeliveredAt ? ` · delivered ${new Date(item.invitationDeliveredAt).toLocaleString()}` : ""}</small>
           <button type="button" className="textButton" disabled={busy} onClick={() => prepare(item)}>{item.stage === "Prospect" ? "Open Gmail backup" : "View invitation / Gmail"}</button>
           <button type="button" className="button secondary" disabled={busy || item.stage === "Prospect"} onClick={() => sendReinstall(item)}>Send app update</button>
           <section className="betaCollectorProgress" aria-label={`${item.name} beta progress`}>
@@ -274,7 +305,7 @@ export function FounderOnboarding() {
       })}
       {!items.length && <div className="emptyState">No beta collectors tracked yet.</div>}
       {prepared && preparedEmail && webmailLinks && <section className="betaEmailPreview card" aria-label={`Invitation for ${prepared.name}`}><header><div><div className="eyebrow">Invitation ready</div><h2>{prepared.name}</h2><small>{preparedEmail.recipient}</small></div><button type="button" className="button secondary" onClick={() => setPrepared(undefined)}>Close</button></header>{prepared.stage === "Prospect" ? <p><strong>Gmail backup required.</strong> Open Gmail, review and send the prepared message, return here, then select “I sent it — enable access.” Access remains disabled until that final confirmation.</p> : <p className="small">System invitation access is active. Gmail is available only as a backup copy.</p>}<label><span>Subject</span><input readOnly value={preparedEmail.subject}/></label><label><span>Message</span><textarea readOnly rows={15} value={preparedEmail.body}/></label><div className="betaEmailActions"><button type="button" className="button" onClick={copyInvitation}>{copied ? "Copied ✓" : "Copy invitation"}</button><a className="button secondary" href={webmailLinks.gmail} target="_blank" rel="noreferrer">Open Gmail</a><a className="button secondary" href={webmailLinks.outlook} target="_blank" rel="noreferrer">Open Outlook</a><a className="button secondary" href={webmailLinks.yahoo} target="_blank" rel="noreferrer">Open Yahoo Mail</a>{prepared.stage === "Prospect" && <button type="button" className="button" disabled={busy} onClick={confirmManualInvitation}>I sent it — enable access</button>}</div></section>}
-    </div><aside className="card"><div className="eyebrow">Private beta</div><h2>Add and invite a tester</h2><p className="small">One action adds the tester and sends their invitation after your confirmation. Their access remains disabled if the email provider cannot accept the message.</p><form className="betaForm" onSubmit={create} aria-busy={busy}><label><span>Name</span><input name="name" required/></label><label><span>Email</span><input name="email" type="email" required/></label><label><span>Notes</span><textarea name="notes" rows={4}/></label><button className="button" disabled={busy}>{busy?"Adding and sending…":"Add & send invitation"}</button></form></aside></section>
+    </div><aside className="card"><div className="eyebrow">Private beta</div><h2>Add and invite a tester</h2><p className="small">One action adds the tester and submits their invitation after your confirmation. Hojavía reports delivery separately and keeps access disabled until delivery is confirmed.</p><form className="betaForm" onSubmit={create} aria-busy={busy}><label><span>Name</span><input name="name" required/></label><label><span>Email</span><input name="email" type="email" required/></label><label><span>Notes</span><textarea name="notes" rows={4}/></label><button className="button" disabled={busy}>{busy?"Adding and submitting…":"Add & submit invitation"}</button></form></aside></section>
     <FounderBetaFeedback writeKey={key} onFeedbackUpdated={() => fetchReadiness()}/>
   </>;
 }

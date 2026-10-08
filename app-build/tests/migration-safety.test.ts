@@ -23,7 +23,7 @@ test("current local migrations use unique versions after schema-level reconcilia
     filename,
     sql: await readFile(new URL(filename, root), "utf8"),
   }))));
-  assert.equal(audit.migrationCount, 37);
+  assert.equal(audit.migrationCount, 38);
   assert.deepEqual(audit.duplicateVersions, []);
   assert.deepEqual(audit.destructiveStatements, []);
   assert.deepEqual(audit.runtimeDataMutationFunctions, [

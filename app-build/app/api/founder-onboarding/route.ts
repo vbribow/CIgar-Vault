@@ -4,7 +4,7 @@ import { z } from "zod";
 import { authorizeWrite } from "@/lib/config";
 import { BetaCollectorInput, betaInvitationEmail, type BetaProgress } from "@/lib/beta-onboarding";
 import { assertBetaSeatAvailable, FOUNDER_BETA_SEAT_LIMIT } from "@/lib/beta-cohort";
-import { accountEmailConfiguration, submitAccountEmail } from "@/lib/alert-notifications";
+import { accountEmailConfiguration, getAccountEmailDelivery, submitAccountEmail } from "@/lib/alert-notifications";
 
 function admin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -23,6 +23,11 @@ const shape = (row: Record<string, unknown>, progress?: BetaProgress) => ({
   lastContactAt: row.last_contact_at ? String(row.last_contact_at) : undefined,
   createdAt: String(row.created_at),
   updatedAt: String(row.updated_at),
+  invitationProviderId:row.invitation_provider_id?String(row.invitation_provider_id):undefined,
+  invitationDeliveryStatus:String(row.invitation_delivery_status||"not_submitted"),
+  invitationSubmittedAt:row.invitation_submitted_at?String(row.invitation_submitted_at):undefined,
+  invitationDeliveredAt:row.invitation_delivered_at?String(row.invitation_delivered_at):undefined,
+  invitationFailure:row.invitation_failure?String(row.invitation_failure):undefined,
   progress,
 });
 
@@ -108,18 +113,21 @@ export async function POST(request: Request) {
     }
     if (!submission?.accepted) return NextResponse.json({ error:"The email provider did not accept the invitation.", data:shape(data), recoverable:true, recovery:"manual-email" }, { status:502 });
 
+    if(!submission.providerId)return NextResponse.json({error:"The email provider accepted the request without a trackable message ID. Hojavía did not mark the invitation delivered.",data:shape(data),recoverable:true,recovery:"manual-email"},{status:502});
     const acceptedAt = new Date().toISOString();
-    const invitationUpdate = { stage:"Invited", invited_at:acceptedAt, last_contact_at:acceptedAt, updated_at:acceptedAt };
+    const delivery=await getAccountEmailDelivery(submission.providerId).catch(()=>({status:"submitted" as const}));
+    const delivered=delivery.status==="delivered";
+    const invitationUpdate = { invitation_provider_id:submission.providerId,invitation_delivery_status:delivery.status,invitation_submitted_at:acceptedAt,invitation_last_checked_at:acceptedAt,invitation_delivered_at:delivered?acceptedAt:null,invitation_failure:delivery.status==="failed"?`Provider reported ${delivery.providerEvent||"failed"}`:null,...(delivered?{stage:"Invited",invited_at:acceptedAt,last_contact_at:acceptedAt}:{}),updated_at:acceptedAt };
     let update = await client.from("beta_collectors").update(invitationUpdate).eq("id", data.id).select().single();
     if (update.error && update.error.code !== "23514") update = await client.from("beta_collectors").update(invitationUpdate).eq("id", data.id).select().single();
     if (update.error) return NextResponse.json({
-      error:"The provider accepted the invitation, but Hojavía could not record access. Do not send a manual duplicate; use the tester card after reviewing the provider reference.",
+      error:"The provider accepted the invitation, but Hojavía could not record its delivery status. Do not send a manual duplicate; retry the status check from the tester card.",
       data:shape(data),
       providerId:submission.providerId,
       recoverable:true,
       recovery:"retry-status",
     }, { status:502 });
-    return NextResponse.json({ data:shape(update.data), delivery:{ accepted:true, providerId:submission.providerId } }, { status:201 });
+    return NextResponse.json({ data:shape(update.data), delivery:{ submitted:true,delivered,status:delivery.status,providerId:submission.providerId } }, { status:delivered?201:202 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid collector" }, { status: 422 });
   }

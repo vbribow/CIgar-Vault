@@ -4,7 +4,7 @@ export const BetaStage=z.enum(["Prospect","Invited","Signed up","Imported","Acti
 export const BetaCollectorInput=z.object({id:z.string().uuid().optional(),name:z.string().trim().min(1).max(100),email:z.string().email(),stage:BetaStage.default("Prospect"),notes:z.string().trim().max(1000).optional(),invitedAt:z.string().optional(),lastContactAt:z.string().optional()});
 export type BetaProgress={accountCreated:boolean;consentRecorded:boolean;inventoryLots:number;backupRecorded:boolean;smokeLogged:boolean;insuranceViewed:boolean};
 export type BetaProgressStep={key:string;label:string;complete:boolean;href:string;detail:string};
-export type BetaCollector=z.infer<typeof BetaCollectorInput>&{id:string;createdAt:string;updatedAt:string;progress?:BetaProgress};
+export type BetaCollector=z.infer<typeof BetaCollectorInput>&{id:string;createdAt:string;updatedAt:string;invitationProviderId?:string;invitationDeliveryStatus?:"not_submitted"|"submitted"|"delivered"|"failed"|"unknown";invitationSubmittedAt?:string;invitationDeliveredAt?:string;invitationFailure?:string;progress?:BetaProgress};
 const stageOrder:BetaStage[]=["Prospect","Invited","Signed up","Imported","Activated"];
 export const betaSignupUrl="https://app.hojavia.com/login?mode=signup";
 export const betaConfirmationRecoveryUrl="https://app.hojavia.com/login?mode=signin&link=invalid";
