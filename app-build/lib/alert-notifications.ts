@@ -19,6 +19,7 @@ export function accountEmailDeliveryStatus(lastEvent?:string):AccountEmailDelive
 export async function getAccountEmailDelivery(providerId:string):Promise<AccountEmailDelivery>{
   if(!process.env.RESEND_API_KEY||!providerId)return{status:"unknown"};
   const response=await fetch(`https://api.resend.com/emails/${encodeURIComponent(providerId)}`,{headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`},cache:"no-store"});
+  if(response.status===401||response.status===403)return{status:"unknown",providerEvent:"status_unavailable"};
   if(response.status===404)return{status:"unknown"};
   if(!response.ok)throw new Error(`Email delivery status unavailable (${response.status})`);
   const result=await response.json().catch(()=>({})) as{last_event?:string;message_id?:string};
