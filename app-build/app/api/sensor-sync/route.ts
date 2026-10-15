@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient as createAdminClient, type SupabaseClient } from "@supabase/supabase-js";
 import { authorizeSensorSync,dataMode } from "@/lib/config";
-import { fetchSensorPushReadings } from "@/lib/sensorpush";
+import { fetchSensorPushReadings,sensorPushReadingId } from "@/lib/sensorpush";
 import { getSensors,ingestSensorReadings,saveSensor } from "@/lib/smartsheet";
 import { processClimateAlertNotifications } from "@/lib/alert-notifications";
 import { loadHumidorReadings,loadSensors } from "@/lib/data";
@@ -15,21 +15,10 @@ export const maxDuration=60;
 
 type SyncResult={provider:"SensorPush";linked:number;imported:number;duplicates:number;truncated:boolean;syncedAt:string;notifications:{enabled:boolean;sent:number;skipped:number;retried:number};message:string};
 type VaultRow={user_id:string;record_id:string;payload:unknown};
-const scheduledPageSize=1000;
 
 const runRecord=(startedAt:string,status:SystemRun["status"],summary:string,error?:string):SystemRun=>{const completedAt=new Date().toISOString();return{runId:`RUN-sensor-sync-${completedAt}-${crypto.randomUUID()}`,jobId:"sensor-sync",status,startedAt,completedAt,summary,error}};
 const scheduledRequest=(request:Request)=>{const secret=process.env.CRON_SECRET?.trim();return Boolean(secret&&request.headers.get("authorization")===`Bearer ${secret}`)};
 const admin=():SupabaseClient=>{const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),key=process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();if(!url||!key)throw new Error("Scheduled SensorPush sync requires Supabase service credentials");return createAdminClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})};
-async function loadScheduledReadings(client:SupabaseClient,userId:string){
-  const rows:VaultRow[]=[];
-  for(let from=0;;from+=scheduledPageSize){
-    const{data,error}=await client.from("vault_records").select("user_id,record_id,payload").eq("user_id",userId).eq("kind","readings").range(from,from+scheduledPageSize-1);
-    if(error)throw error;
-    rows.push(...((data||[]) as VaultRow[]));
-    if((data||[]).length<scheduledPageSize)return rows;
-  }
-}
-
 async function syncReadings(sensors:EnvironmentalSensor[],existing:HumidorReading[]){
   const result=await fetchSensorPushReadings(sensors);
   if(!result.linked)throw new Error("Register a SensorPush device and add its external device ID first");
@@ -38,7 +27,7 @@ async function syncReadings(sensors:EnvironmentalSensor[],existing:HumidorReadin
   const importedAt=new Date().toISOString(),syncedAt=new Date().toISOString();
   const resolvedById=new Map((result.resolvedSensors||sensors).map(sensor=>[sensor.sensorId,sensor]));
   const updatedSensors=sensors.map(original=>{const sensor=resolvedById.get(original.sensorId)||original,cursor=result.cursors.get(sensor.sensorId);return{...sensor,lastSyncAt:cursor||sensor.lastSyncAt,connectionStatus:cursor?(result.truncated?"Stale" as const:"Connected" as const):"Stale" as const,syncMethod:"Cloud API" as const}});
-  const readings=unique.map(reading=>({...reading,readingId:`READ-${crypto.randomUUID()}`,importedAt}));
+  const readings=unique.map(reading=>({...reading,readingId:sensorPushReadingId(reading.externalReadingId!),importedAt}));
   const message=result.truncated?"SensorPush limited this batch. Saved progress is safe; the next hourly run will continue automatically.":readings.length||duplicates?"All available SensorPush readings are current.":"SensorPush connected, but returned no readings in the current import window.";
   const data:SyncResult={provider:"SensorPush",linked:result.linked,imported:readings.length,duplicates,truncated:result.truncated,syncedAt,notifications:{enabled:false,sent:0,skipped:0,retried:0},message};
   return{data,readings,updatedSensors};
@@ -64,9 +53,7 @@ async function syncScheduledAccount(startedAt:string){
   const configuredUserId=process.env.SENSORPUSH_ACCOUNT_USER_ID?.trim();
   const owner=scheduledSensorPushOwner(sensorPushAccountOwners((sensorRows||[]) as VaultRow[],configuredUserId),configuredUserId);
   try{
-    const readingRows=await loadScheduledReadings(client,owner.userId);
-    const existing=(readingRows||[]).flatMap(row=>{const value=row.payload as Partial<HumidorReading>|null;return value&&typeof value.readingId==="string"&&typeof value.recordedAt==="string"?[value as HumidorReading]:[]});
-    const result=await syncReadings(owner.sensors,existing);
+    const result=await syncReadings(owner.sensors,[]);
     const run=runRecord(startedAt,"Succeeded",`${result.data.imported} readings imported · ${result.data.duplicates} duplicates · ${result.data.linked} sensors linked`);
     const rows=[
       ...result.readings.map(reading=>({user_id:owner.userId,kind:"readings",record_id:reading.readingId,payload:reading,updated_at:result.data.syncedAt})),

@@ -8,8 +8,12 @@ type SampleResponse={sensors?:Record<string,SensorPushSample[]>;truncated?:boole
 export type SensorPushDevice={id?:string;deviceId?:string;name?:string;type?:string;active?:boolean};
 type SensorResponse=Record<string,SensorPushDevice>;
 
+export function sensorPushReadingId(externalReadingId:string){
+  return `READ-${encodeURIComponent(externalReadingId)}`.slice(0,180);
+}
+
 async function post<T>(path:string,body:unknown,token?:string):Promise<T>{
-  const response=await fetch(`${base}${path}`,{method:"POST",headers:{accept:"application/json","content-type":"application/json",...(token?{Authorization:token}:{})},body:JSON.stringify(body),cache:"no-store",signal:AbortSignal.timeout(30_000)});
+  const response=await fetch(`${base}${path}`,{method:"POST",headers:{accept:"application/json","content-type":"application/json",...(token?{Authorization:token}:{})},body:JSON.stringify(body),cache:"no-store",signal:AbortSignal.timeout(12_000)});
   const result=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(typeof result?.message==="string"?result.message:`SensorPush request failed (${response.status})`);
   return result as T;

@@ -27,6 +27,8 @@ test("scheduled sync resolves the private owner and writes with the service role
   assert.match(route,/SENSORPUSH_ACCOUNT_USER_ID/);
   assert.match(route,/user_id:owner\.userId,kind:"readings"/);
   assert.match(route,/user_id:owner\.userId,kind:"system-runs"/);
+  assert.doesNotMatch(route,/eq\("kind","readings"\)/);
+  assert.match(route,/sensorPushReadingId\(reading\.externalReadingId!\)/);
 });
 
 test("founder-authorized legacy sync retains its isolated Smartsheet path",()=>{
