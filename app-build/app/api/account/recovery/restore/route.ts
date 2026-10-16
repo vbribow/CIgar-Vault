@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AccountExportSchema, buildRecoveryPreview, recordsForRecovery, RecoveryMode, recoveryConfirmationPhrase, recoveryOwnerMatch } from "@/lib/account-recovery";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
+import { loadAllAccountVaultRecords } from "@/lib/account-record-store";
 
 const Input=z.object({export:AccountExportSchema,mode:RecoveryMode,confirmation:z.string(),acknowledgeDifferentOwner:z.boolean().default(false)}).superRefine((value,context)=>{
   const expected=recoveryConfirmationPhrase(value.mode);
@@ -16,9 +17,9 @@ export async function POST(request:Request){
     const input=Input.parse(await request.json());
     const ownerMatch=recoveryOwnerMatch(input.export.owner,{userId:user.id,email:user.email});
     if(ownerMatch==="different"&&!input.acknowledgeDifferentOwner)return NextResponse.json({error:"Confirm that this export belongs to you before restoring records from a different account identity."},{status:409});
-    const{data:existing,error}=await supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",user.id);if(error)throw error;
-    const preview=buildRecoveryPreview(input.export.records,existing||[]);
-    const selected=recordsForRecovery(input.export.records,existing||[],input.mode);
+    const existing=await loadAllAccountVaultRecords(supabase,user.id);
+    const preview=buildRecoveryPreview(input.export.records,existing);
+    const selected=recordsForRecovery(input.export.records,existing,input.mode);
     const restoredAt=new Date().toISOString();const auditId=`RECOVERY-${restoredAt}-${crypto.randomUUID()}`;
     const rows=[
       ...selected.map(record=>({user_id:user.id,kind:record.kind,record_id:record.record_id,payload:record.payload,updated_at:restoredAt})),

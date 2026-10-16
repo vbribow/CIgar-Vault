@@ -9,8 +9,16 @@ test("private record export downloads a non-empty account-scoped file",()=>{
   assert.match(component,/response\.blob\(\)/);
   assert.match(component,/anchor\.download=filename/);
   assert.match(component,/Downloaded \$\{filename\}/);
-  assert.match(route,/\.eq\("user_id",user\.id\)/);
+  assert.match(route,/loadAllAccountVaultRecords\(supabase,user\.id\)/);
   assert.match(route,/private-collector-record-/);
+});
+
+test("complete account export paginates beyond the provider's one-thousand-row response cap",()=>{
+  const store=readFileSync(new URL("../lib/account-record-store.ts",import.meta.url),"utf8");
+  assert.match(store,/\.eq\("user_id",userId\)/);
+  assert.match(store,/accountRecordPageSize=1000/);
+  assert.match(store,/\.range\(from,from\+accountRecordPageSize-1\)/);
+  assert.match(store,/if\(page\.length<accountRecordPageSize\)return records/);
 });
 
 test("complete vault export records an auditable recovery point",()=>{

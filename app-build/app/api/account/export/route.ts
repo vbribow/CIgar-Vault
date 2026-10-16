@@ -3,6 +3,7 @@ import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { buildAccountExport } from "@/lib/account-security";
 import { saveOwnedRecord } from "@/lib/user-data";
 import { loadAccountPreferenceRow } from "@/lib/account-preferences-store";
+import { loadAllAccountVaultRecords } from "@/lib/account-record-store";
 
 export async function GET() {
   if (!supabaseConfigured()) return NextResponse.json({ error: "Account service is not configured" }, { status: 503 });
@@ -10,15 +11,15 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Sign in to export your vault" }, { status: 401 });
   try {
-    const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }, { data: records, error: recordsError }] = await Promise.all([
+    const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }, records] = await Promise.all([
       supabase.from("profiles").select("display_name,collection_name,experience_level,billing_plan,billing_status,created_at,updated_at").eq("user_id", user.id).maybeSingle(),
       loadAccountPreferenceRow(supabase,user.id),
-      supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",user.id).order("kind").order("record_id"),
+      loadAllAccountVaultRecords(supabase,user.id),
     ]);
-    if (profileError || preferencesError || recordsError) throw profileError || preferencesError || recordsError;
+    if (profileError || preferencesError) throw profileError || preferencesError;
     const createdAt = new Date().toISOString();
-    const payload = buildAccountExport({ userId:user.id, email:user.email, profile, preferences, records:records || [], createdAt });
-    const inventoryCount = (records || []).filter(record => record.kind === "inventory").length;
+    const payload = buildAccountExport({ userId:user.id, email:user.email, profile, preferences, records, createdAt });
+    const inventoryCount = records.filter(record => record.kind === "inventory").length;
     await saveOwnedRecord("integrity", `BACKUP-${createdAt}-${crypto.randomUUID()}`, {
       action: "inventory-backup",
       scope: "complete-account",
