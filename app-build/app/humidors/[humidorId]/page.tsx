@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { accountDataMode } from "@/lib/user-data";
 import { humidorInsights } from "@/lib/humidor-insights";
 import { loadInventory } from "@/lib/inventory";
-import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
+import { loadRecentHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import { climateIntelligence } from "@/lib/climate-intelligence";
 import { brand } from "@/lib/brand";
 import "../humidors.css";
@@ -20,7 +20,7 @@ export default async function HumidorDetailPage({
     await Promise.allSettled([
       accountDataMode(),
       loadHumidors(),
-      loadHumidorReadings(),
+      loadRecentHumidorReadings(),
       loadInventory(),
       loadSensors(),
     ]);

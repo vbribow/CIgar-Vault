@@ -1,7 +1,7 @@
 import { SensorManager } from "@/components/sensor-manager";
 import { SensorSyncPanel } from "@/components/sensor-sync-panel";
 import { accountDataMode } from "@/lib/user-data";
-import { loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
+import { loadRecentHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./sensors.css";
 import { loadAccountPlan } from "@/lib/entitlements-server";
 import { UpgradeNudge } from "@/components/upgrade-nudge";
@@ -46,7 +46,7 @@ export default async function SensorsPage() {
   const [humidors, sensors, readings] =
     mode === "mock"
       ? [[], [], []]
-      : await Promise.all([loadHumidors(), loadSensors(), loadHumidorReadings()]);
+      : await Promise.all([loadHumidors(), loadSensors(), loadRecentHumidorReadings()]);
   const sensorPushConfigured = Boolean(
     process.env.SENSORPUSH_EMAIL && process.env.SENSORPUSH_PASSWORD,
   );

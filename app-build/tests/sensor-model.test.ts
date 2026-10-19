@@ -31,7 +31,7 @@ test("the sensor registry exposes a safe correction control",()=>{
 test("the sensor page presents every current reading in one dashboard",()=>{
   const page=readFileSync(new URL("../app/sensors/page.tsx",import.meta.url),"utf8");
   const dashboard=readFileSync(new URL("../components/sensor-dashboard.tsx",import.meta.url),"utf8");
-  assert.match(page,/loadHumidorReadings/);
+  assert.match(page,/loadRecentHumidorReadings/);
   assert.match(page,/SensorDashboard sensors=\{sensors\} humidors=\{humidors\} readings=\{readings\}/);
   assert.match(dashboard,/Every active sensor at a glance/);
   assert.match(dashboard,/activeCloudSensors/);

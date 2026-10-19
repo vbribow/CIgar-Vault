@@ -51,6 +51,22 @@ export async function loadAccountRecords<T>(kind: VaultRecordKind): Promise<T[] 
   return rows.map(row => row.payload as T);
 }
 
+export async function loadRecentAccountRecords<T>(kind:VaultRecordKind,limit=5000):Promise<T[]|undefined>{
+  const context=await accountContext();
+  if(!context)return undefined;
+  const safeLimit=Math.max(1,Math.min(10_000,Math.floor(limit)));
+  const rows:Array<{payload:unknown}>=[];
+  for(let from=0;from<safeLimit;from+=ownedRecordPageSize){
+    const to=Math.min(from+ownedRecordPageSize,safeLimit)-1;
+    const{data,error}=await context.supabase.from("vault_records").select("payload").eq("user_id",context.user.id).eq("kind",kind).order("updated_at",{ascending:false}).order("record_id",{ascending:false}).range(from,to);
+    if(error)throw error;
+    const page=(data??[]) as Array<{payload:unknown}>;
+    rows.push(...page);
+    if(page.length<to-from+1)break;
+  }
+  return rows.map(row=>row.payload as T);
+}
+
 export async function loadAccountRecordRows<T>(kind: VaultRecordKind): Promise<Array<{payload:T;createdAt:string}> | undefined> {
   const context = await accountContext();
   if (!context) return undefined;

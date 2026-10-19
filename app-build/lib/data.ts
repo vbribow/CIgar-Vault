@@ -3,7 +3,7 @@ import { dataMode } from "./config";
 import { getActivities, getCollections, getHumidorReadings, getHumidors, getSensors, getSmokingLogs, getValuations } from "./smartsheet";
 import { loadPreviewCollections } from "./preview-collections";
 import { loadPreviewValuations } from "./preview-valuations";
-import { loadAccountRecords, loadOwnedRecords } from "./user-data";
+import { loadAccountRecords, loadOwnedRecords, loadRecentAccountRecords } from "./user-data";
 import type { RatingDraftRecord } from "./rating-monitor";
 
 export const loadCollections=async()=>{
@@ -13,6 +13,7 @@ export const loadCollections=async()=>{
 };
 export const loadHumidors=()=>loadOwnedRecords<Humidor>("humidors",getHumidors);
 export const loadHumidorReadings=()=>loadOwnedRecords<HumidorReading>("readings",getHumidorReadings);
+export const loadRecentHumidorReadings=async(limit=5000)=>(await loadRecentAccountRecords<HumidorReading>("readings",limit))??[];
 export const loadSensors=()=>loadOwnedRecords<EnvironmentalSensor>("sensors",getSensors);
 export const loadValuations=async()=>{
   const accountValuations=await loadAccountRecords<Valuation>("valuations");

@@ -1,6 +1,6 @@
 import { Dashboard } from "@/components/dashboard";
 import { loadInventory } from "@/lib/inventory";
-import { loadCollections, loadHumidorReadings, loadHumidors, loadSensors, loadSmokingLogs, loadValuations } from "@/lib/data";
+import { loadCollections, loadRecentHumidorReadings, loadHumidors, loadSensors, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { accountDataMode, loadAccountRecords } from "@/lib/user-data";
 import { buildOnboardingSteps, type IntegrityAudit } from "@/lib/onboarding";
 import { buildCollectionIntelligence } from "@/lib/collection-intelligence";
@@ -24,7 +24,7 @@ async function PrivateDashboard() {
     mode === "mock" ? Promise.resolve([]) : loadHumidors(),
     mode === "mock" ? Promise.resolve([]) : loadSensors(),
     loadValuations(),
-    mode === "mock" ? Promise.resolve([]) : loadHumidorReadings(),
+    mode === "mock" ? Promise.resolve([]) : loadRecentHumidorReadings(),
     mode === "mock" ? Promise.resolve([]) : loadSmokingLogs(),
     mode === "mock" ? Promise.resolve([]) : loadAccountRecords<IntegrityAudit>("integrity").then(records => records ?? []),
   ] as const) : undefined;

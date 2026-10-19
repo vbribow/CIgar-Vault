@@ -40,7 +40,7 @@ export default function LaunchReadinessPage() {
       <div className="stabilityDayTrack" aria-label={`${stability.daysCompleted} of ${stability.daysRequired} stability days verified`}>
         {Array.from({ length: stability.daysRequired }, (_, index) => <i className={index < stability.daysCompleted ? "complete" : ""} key={index} aria-hidden="true" />)}
       </div>
-      <p>{stability.windowStart ? `Current candidate window: ${stability.windowStart} through ${stability.windowEnd}.` : `Candidate ${currentStabilityCandidateLabel} is frozen. Day one awaits complete production-like evidence.`}</p>
+      <p>{stability.windowStart ? `Current candidate window: ${stability.windowStart} through ${stability.windowEnd}.` : currentStabilityCandidate&&currentStabilityCandidateLabel ? `Candidate ${currentStabilityCandidateLabel} is frozen. Day one awaits complete production-like evidence.` : "The candidate is paused after a live acceptance defect. Deploy and verify the correction before freezing a new candidate."}</p>
       <ul>{stability.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
       {stability.nextRequiredDate && <small>Next required daily evidence: {stability.nextRequiredDate}</small>}
     </section>

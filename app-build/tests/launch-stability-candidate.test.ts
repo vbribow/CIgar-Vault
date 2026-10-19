@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { currentStabilityCandidate, currentStabilityCandidateLabel, launchStabilityObservations } from "../data/launch-stability";
 
-test("the verified production release is frozen without inventing a stability day",()=>{
-  assert.match(currentStabilityCandidate,/^[a-f0-9]{64}$/);
-  assert.equal(currentStabilityCandidateLabel,"3bfa2c77 · c7f94d42d3c5");
+test("a live critical-journey defect pauses the candidate without inventing a stability day",()=>{
+  assert.equal(currentStabilityCandidate,undefined);
+  assert.equal(currentStabilityCandidateLabel,undefined);
   assert.deepEqual(launchStabilityObservations,[]);
 });

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { loadInventory } from "@/lib/inventory";
-import { loadHumidorReadings,loadHumidors,loadSensors,loadSmokingLogs,loadValuations } from "@/lib/data";
+import { loadRecentHumidorReadings,loadHumidors,loadSensors,loadSmokingLogs,loadValuations } from "@/lib/data";
 import { buildCollectionIntelligence } from "@/lib/collection-intelligence";
 import { loadPublicIndustry } from "@/lib/industry-public";
 import { buildDailyBriefing } from "@/lib/daily-briefing";
@@ -11,11 +11,11 @@ export const dynamic="force-dynamic";
 export const metadata:Metadata={title:`${brand.name} Daily Briefing`,description:"Proactive, evidence-aware collection and industry intelligence personalized to the collector."};
 
 export default async function BriefingPage(){
-  const results=await Promise.allSettled([loadInventory(),loadValuations(),loadHumidors(),loadHumidorReadings(),loadSensors(),loadSmokingLogs(),loadPublicIndustry()] as const);
+  const results=await Promise.allSettled([loadInventory(),loadValuations(),loadHumidors(),loadRecentHumidorReadings(),loadSensors(),loadSmokingLogs(),loadPublicIndustry()] as const);
   if(!results.every(result=>result.status==="fulfilled"))return <main className="shell wideShell briefingPage">
     <section className="briefingHero"><div><div className="eyebrow">{brand.name} Daily Briefing · Private</div><h1>Your briefing is temporarily paused.</h1><p className="lede">{brand.name} could not verify every source needed to rank climate, collection, smoking-window, market, and industry signals. No partial briefing has been presented as complete.</p><div className="ctaRow"><a className="button" href="/briefing">Try again</a><a className="button secondary" href="/system-health">Check system health</a></div></div></section>
   </main>;
-  const[inventory,valuations,humidors,readings,sensors,smokes,industry]=results.map(result=>result.status==="fulfilled"?result.value:neverValue()) as [Awaited<ReturnType<typeof loadInventory>>,Awaited<ReturnType<typeof loadValuations>>,Awaited<ReturnType<typeof loadHumidors>>,Awaited<ReturnType<typeof loadHumidorReadings>>,Awaited<ReturnType<typeof loadSensors>>,Awaited<ReturnType<typeof loadSmokingLogs>>,Awaited<ReturnType<typeof loadPublicIndustry>>];
+  const[inventory,valuations,humidors,readings,sensors,smokes,industry]=results.map(result=>result.status==="fulfilled"?result.value:neverValue()) as [Awaited<ReturnType<typeof loadInventory>>,Awaited<ReturnType<typeof loadValuations>>,Awaited<ReturnType<typeof loadHumidors>>,Awaited<ReturnType<typeof loadRecentHumidorReadings>>,Awaited<ReturnType<typeof loadSensors>>,Awaited<ReturnType<typeof loadSmokingLogs>>,Awaited<ReturnType<typeof loadPublicIndustry>>];
   const intelligence=buildCollectionIntelligence({inventory,valuations,humidors,readings,sensors,smokes});const briefing=buildDailyBriefing({inventory,humidors,readings,sensors,intelligence,registry:industry.registryRecords});
   return <main className="shell wideShell briefingPage"><section className="briefingHero"><div><div className="eyebrow">{brand.name} Daily Briefing · Private</div><h1>What deserves your attention today.</h1><p className="lede">Climate, collection evidence, smoking windows, market movement, and official industry releases—ranked without manufacturing urgency.</p></div><aside><span>Generated</span><strong>{new Date(briefing.generatedAt).toLocaleDateString()}</strong><small>{new Date(briefing.generatedAt).toLocaleTimeString()}</small></aside></section>
     <section className="briefingSummary"><article><strong>{briefing.summary.urgent}</strong><span>urgent conditions</span></article><article><strong>{briefing.summary.collector}</strong><span>private collection signals</span></article><article><strong>{briefing.summary.industry}</strong><span>official industry updates</span></article><article><strong>{briefing.items.length}</strong><span>prioritized brief items</span></article></section>

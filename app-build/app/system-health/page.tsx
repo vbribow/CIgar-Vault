@@ -11,7 +11,7 @@ import {
 } from "@/lib/system-health";
 import { loadAccountRecords } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadCollections, loadHumidorReadings, loadSensors, loadSmokingLogs, loadValuations } from "@/lib/data";
+import { loadCollections, loadRecentHumidorReadings, loadSensors, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { checkSmartsheet } from "@/lib/smartsheet";
 import { SystemHealthManager } from "@/components/system-health-manager";
 import { valuationBatchSize, valuationCostEstimate, valuationMonthlyBudget } from "@/lib/valuation-monitor";
@@ -49,7 +49,7 @@ export default async function SystemHealthPage() {
     loadCollections(),
     loadSmokingLogs(),
     loadSensors(),
-    loadHumidorReadings(),
+    loadRecentHumidorReadings(),
   ]);
   const runs = validSystemRuns(settledValue(runsResult, []) ?? []);
   const inventory = settledValue<InventoryItem[]>(inventoryResult, []);

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadActivities, loadCollections, loadHumidorReadings, loadHumidors, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
+import { loadActivities, loadCollections, loadRecentHumidorReadings, loadHumidors, loadRatings, loadSmokingLogs, loadValuations } from "@/lib/data";
 import { ValuationInvalidationControl } from "@/components/valuation-invalidation-control";
 import { ratingResearchHref, ratingSummary, ratingsForInventory } from "@/lib/cigar-ratings";
 import { InventoryRecordTools } from "@/components/inventory-record-tools";
@@ -66,7 +66,7 @@ export default async function CigarPage({
       mode === "mock" ? Promise.resolve([]) : loadRatings(),
       mode === "mock" ? Promise.resolve([]) : loadCollections(),
       mode === "mock" ? Promise.resolve([]) : loadHumidors(),
-      mode === "mock" ? Promise.resolve([]) : loadHumidorReadings(),
+      mode === "mock" ? Promise.resolve([]) : loadRecentHumidorReadings(),
       loadCatalog(items),
     ] as const);
   const smokes = smokesResult.status === "fulfilled" ? smokesResult.value : [];

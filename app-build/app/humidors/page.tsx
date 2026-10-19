@@ -2,7 +2,7 @@ import { HumidorManager } from "@/components/humidor-manager";
 import { ClimateAlertDashboard } from "@/components/climate-alert-dashboard";
 import { accountDataMode } from "@/lib/user-data";
 import { loadInventory } from "@/lib/inventory";
-import { loadCollections, loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
+import { loadCollections, loadRecentHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
 import "./humidors.css";
 import "./quick-links.css";
@@ -20,7 +20,7 @@ export default async function HumidorsPage() {
       loadInventory(),
       loadCollections(),
       mode === "mock" ? Promise.resolve([]) : loadHumidors(),
-      mode === "mock" ? Promise.resolve([]) : loadHumidorReadings(),
+      mode === "mock" ? Promise.resolve([]) : loadRecentHumidorReadings(),
       mode === "mock" ? Promise.resolve([]) : loadSensors(),
     ]);
   if (

@@ -2,7 +2,7 @@ import { ReportActions } from "@/components/report-actions";
 import { accountDataMode } from "@/lib/user-data";
 import { buildInsuranceReport } from "@/lib/insurance-report";
 import { loadInventory } from "@/lib/inventory";
-import { loadCollections, loadHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
+import { loadCollections, loadRecentHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import "./reports.css";
 import { ProductEvent } from "@/components/product-event";
 import { loadAccountPlan } from "@/lib/entitlements-server";
@@ -66,7 +66,7 @@ export default async function ReportsPage() {
   const [humidorsResult, readingsResult, sensorsResult] =
     await Promise.allSettled([
       live ? loadHumidors() : Promise.resolve([]),
-      live ? loadHumidorReadings() : Promise.resolve([]),
+      live ? loadRecentHumidorReadings() : Promise.resolve([]),
       live ? loadSensors() : Promise.resolve([]),
     ]);
   const climateReady =
