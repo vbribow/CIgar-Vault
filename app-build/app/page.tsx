@@ -4,6 +4,7 @@ import { loadCollections, loadRecentHumidorReadings, loadHumidors, loadSensors, 
 import { accountDataMode, loadAccountRecords } from "@/lib/user-data";
 import { buildOnboardingSteps, type IntegrityAudit } from "@/lib/onboarding";
 import { buildCollectionIntelligence } from "@/lib/collection-intelligence";
+import { buildPortfolioHistory } from "@/lib/portfolio-history";
 import { CollectorJourney } from "@/components/collector-journey";
 import { DataModelStory } from "@/components/data-model-story";
 import { brand } from "@/lib/brand";
@@ -38,7 +39,9 @@ async function PrivateDashboard() {
   const smokes = evidenceResults?.[5]?.status === "fulfilled" ? evidenceResults[5].value : [];
   const integrityAudits = evidenceResults?.[6]?.status === "fulfilled" ? evidenceResults[6].value : [];
   const onboarding = buildOnboardingSteps({ inventory: allItems, collections, humidors, sensors, valuations, integrityAudits });
-  const intelligence = buildCollectionIntelligence({ inventory: items, valuations, humidors, readings, smokes, sensors });
+  const baseIntelligence = buildCollectionIntelligence({ inventory: items, valuations, humidors, readings, smokes, sensors });
+  const collectionAwareHistory=buildPortfolioHistory(items,valuations,collections);
+  const intelligence={...baseIntelligence,history:collectionAwareHistory,totals:{...baseIntelligence.totals,value:collectionAwareHistory.totals.currentValue}};
   return dashboardReady
     ? <Dashboard items={items} onboarding={onboarding} intelligence={intelligence} />
     : <section className="section card"><div className="eyebrow">Private dashboard protected</div><h2>Your collection summary is temporarily paused.</h2><p className="small">{brand.name} could not verify every source needed for quantities, values, climate, history, and onboarding. Rather than present partial information as complete, the summary will remain paused until those records can be checked together.</p><a className="button secondary" href="/">Check again</a></section>;

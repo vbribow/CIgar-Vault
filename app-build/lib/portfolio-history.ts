@@ -1,6 +1,7 @@
 import type { CigarCollection, InventoryItem, Valuation } from "@/lib/types";
 import { isCurrentInventoryRecord } from "@/lib/inventory-model";
 import { cigarInventoryRecords } from "@/lib/collection-presentation";
+import { collectionTemplateFor } from "@/lib/collection-dashboard";
 
 export type PortfolioSnapshot = { date: string; value: number; valuedLots: number };
 export type PortfolioMover = { item: InventoryItem; latestValue: number; previousValue: number; change: number; changePercent: number; lotChange: number };
@@ -18,17 +19,35 @@ export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Va
   }
   for (const records of byItem.values()) records.sort((a, b) => a.valuationDate.localeCompare(b.valuationDate));
 
-  const dates = [...new Set(valuations.filter(value => unitValue(value) !== undefined).map(value => value.valuationDate))].sort();
+  const collectionWholeValue=(collection:CigarCollection)=>collection.wholeMarketValue??collectionTemplateFor(collection)?.documentedWholeValue;
+  const collectionValueDate=(collection:CigarCollection)=>collection.valuationDate??collectionTemplateFor(collection)?.valueAsOf;
+  const documentedCollections=collections.filter(collection=>collectionWholeValue(collection)!==undefined&&collectionWholeValue(collection)!>=0);
+  const dates = [...new Set([
+    ...valuations.filter(value => unitValue(value) !== undefined).map(value => value.valuationDate),
+    ...documentedCollections.flatMap(collection=>collectionValueDate(collection)?[collectionValueDate(collection)!]:[]),
+  ])].sort();
+  const collectionAdjustment=(collection:CigarCollection,itemValue:(item:InventoryItem)=>number)=>{
+    const componentValue=currentInventory.filter(item=>item.collectionId===collection.collectionId).reduce((sum,item)=>sum+itemValue(item),0);
+    const wholeValue=(collectionWholeValue(collection)??0)*(collection.ownedSetQty??1);
+    return Math.max(0,wholeValue-componentValue);
+  };
   const snapshots: PortfolioSnapshot[] = dates.map(date => {
     let value = 0;
     let valuedLots = 0;
     for (const item of currentInventory) {
       const record = (byItem.get(item.inventoryId) || []).filter(entry => entry.valuationDate <= date).at(-1);
-      const unit = record ? unitValue(record) : undefined;
+      const unit = record ? unitValue(record) : item.retailValue;
       if (unit === undefined || item.currentQty === undefined) continue;
       value += unit * item.currentQty;
       valuedLots++;
     }
+    value+=documentedCollections
+      .filter(collection=>!collectionValueDate(collection)||collectionValueDate(collection)!<=date)
+      .reduce((sum,collection)=>sum+collectionAdjustment(collection,item=>{
+        const record=(byItem.get(item.inventoryId)||[]).filter(entry=>entry.valuationDate<=date).at(-1);
+        const unit=record?unitValue(record):undefined;
+        return (unit??item.retailValue??0)*(item.currentQty||0);
+      }),0);
     return { date, value, valuedLots };
   });
 
@@ -44,7 +63,8 @@ export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Va
 
   const latestByItem = new Map<string, Valuation>();
   for (const [id, records] of byItem) if (records.length) latestByItem.set(id, records.at(-1)!);
-  const currentValue = currentInventory.reduce((sum, item) => sum + ((latestByItem.get(item.inventoryId) && unitValue(latestByItem.get(item.inventoryId)!)) ?? item.retailValue ?? 0) * (item.currentQty || 0), 0);
+  const currentItemValue=(item:InventoryItem)=>((latestByItem.get(item.inventoryId)&&unitValue(latestByItem.get(item.inventoryId)!))??item.retailValue??0)*(item.currentQty||0);
+  const currentValue=currentInventory.reduce((sum,item)=>sum+currentItemValue(item),0)+documentedCollections.reduce((sum,collection)=>sum+collectionAdjustment(collection,currentItemValue),0);
   const acquisitionCost = currentInventory.reduce((sum, item) => sum + (item.actualCost || 0), 0);
   const unrealizedChange = currentValue - acquisitionCost;
   const valuedCurrentLots = currentInventory.filter(item => latestByItem.has(item.inventoryId)).length;
@@ -54,6 +74,12 @@ export function buildPortfolioHistory(inventory: InventoryItem[], valuations: Va
   for (const item of currentInventory) {
     const unit = (latestByItem.get(item.inventoryId) && unitValue(latestByItem.get(item.inventoryId)!)) ?? item.retailValue ?? 0;
     brands.set(item.brand, (brands.get(item.brand) || 0) + unit * (item.currentQty || 0));
+  }
+  for(const collection of documentedCollections){
+    const adjustment=collectionAdjustment(collection,currentItemValue);
+    if(adjustment<=0)continue;
+    const label=collection.maker||collection.name;
+    brands.set(label,(brands.get(label)||0)+adjustment);
   }
   const brandAllocation = [...brands.entries()].map(([brand, value]) => ({ brand, value, percent: currentValue ? Math.round(value / currentValue * 1000) / 10 : 0 })).sort((a, b) => b.value - a.value);
 
