@@ -26,6 +26,17 @@ test("collection research rejects Hemingway House restaurant results",()=>{
   assert.equal(collectionResultIsRelevant(restaurant,"Arturo Fuente Hemingway House collection"),false);
   const cigar={title:"Arturo Fuente Hemingway House Collection",url:"https://cigars.example/fuente-hemingway-house",summary:"A documented Fuente cigar collection with perfecto cigars."};
   assert.equal(collectionResultIsRelevant(cigar,"Arturo Fuente Hemingway House collection"),true);
+  const singularTitle={title:"Elie Bleu Fuente Hemingway House of Dream",url:"https://cigars.example/hemingway-house-of-dream",summary:"A 60-cigar OpusX humidor collection."};
+  assert.equal(collectionResultIsRelevant(singularTitle,"Hemingway House of Dreams Humidor"),true);
+});
+
+test("Hemingway House of Dreams is available as a researched exact collection",()=>{
+  const template=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-HEMINGWAY-HOUSE-DREAMS");
+  assert.ok(template);
+  assert.equal(template.expectedCigars,60);
+  assert.equal(template.expectedComponents,1);
+  assert.match(template.requirements[0]||"",/7 × 48/);
+  assert.equal(template.researchStatus,"Verified");
 });
 
 test("RSS parsing applies the exact collection relevance gate",()=>{

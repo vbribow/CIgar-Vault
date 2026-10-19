@@ -119,8 +119,8 @@ test("every collection admitted for automation satisfies the same exact-lot and 
 
 test("the launch collection library exposes one automatic truth gate",()=>{
   const audit=auditCollectionTemplateLibrary(collectionTemplates);
-  assert.equal(audit.total,21);
-  assert.equal(audit.ready,21);
+  assert.equal(audit.total,22);
+  assert.equal(audit.ready,22);
   assert.equal(audit.blocked.length,0);
   assert.equal(audit.automationReady,true);
 });

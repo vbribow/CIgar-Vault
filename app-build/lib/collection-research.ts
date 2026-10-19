@@ -18,13 +18,14 @@ const tobaccoContext=/\b(cigar|cigars|tobacco|humidor|sampler|vitola|perfecto|ro
 const unrelatedHospitality=/\b(restaurant|restaurants|menu|dining|cuisine|pizzeria|pizza|reservations?|hotel|resort|vacation|tripadvisor|yelp|opentable)\b/i;
 
 const searchableWords=(value:string)=>value.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().match(/[a-z0-9]+/g)||[];
+const comparableWord=(word:string)=>word.length>4&&word.endsWith("s")&&!word.endsWith("ss")?word.slice(0,-1):word;
 
 export function collectionResultIsRelevant(result:Pick<WebCollectionResult,"title"|"url"|"summary">,query:string){
   const text=`${result.title} ${result.summary} ${result.url}`;
   if(unrelatedHospitality.test(text))return false;
   if(!tobaccoContext.test(text))return false;
-  const required=[...new Set(searchableWords(query).filter(word=>word.length>2&&!collectionStopWords.has(word)))];
-  const haystack=new Set(searchableWords(text));
+  const required=[...new Set(searchableWords(query).filter(word=>word.length>2&&!collectionStopWords.has(word)).map(comparableWord))];
+  const haystack=new Set(searchableWords(text).map(comparableWord));
   return required.length===0||required.every(word=>haystack.has(word));
 }
 
