@@ -83,7 +83,7 @@ test("the launch workspace exposes the three remaining founder acceptance sessio
   assert.match(page,/Classify, contain, recover, then reopen/);
   assert.match(page,/Seven-day stability/);
   assert.match(page,/verified days/);
-  assert.match(page,/stability clock has not started/);
+  assert.match(page,/is frozen\. Day one awaits complete production-like evidence/);
   assert.match(page,/feedback\?incident=severity-/);
   assert.match(page,/Close evidence, not checkboxes/);
   assert.match(page,/launchDeviceMatrix/);

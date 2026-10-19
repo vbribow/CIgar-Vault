@@ -1,6 +1,6 @@
 import { betaValueJourney, founderGoNoGoChecklist, launchBaseline, launchDeviceMatrix, launchGates, launchReadinessSummary, webLaunchCriticalJourneys } from "@/lib/launch-readiness";
 import { immediateIncidentActions, incidentSeverityStandard } from "@/lib/incident-response";
-import { currentStabilityCandidate, launchStabilityObservations } from "@/data/launch-stability";
+import { currentStabilityCandidate, currentStabilityCandidateLabel, launchStabilityObservations } from "@/data/launch-stability";
 import { assessStabilityWindow } from "@/lib/stability-window";
 import "./launch-readiness.css";
 import "./launch-batch.css";
@@ -40,7 +40,7 @@ export default function LaunchReadinessPage() {
       <div className="stabilityDayTrack" aria-label={`${stability.daysCompleted} of ${stability.daysRequired} stability days verified`}>
         {Array.from({ length: stability.daysRequired }, (_, index) => <i className={index < stability.daysCompleted ? "complete" : ""} key={index} aria-hidden="true" />)}
       </div>
-      <p>{stability.windowStart ? `Current candidate window: ${stability.windowStart} through ${stability.windowEnd}.` : "The stability clock has not started. Freeze the release candidate before recording day one."}</p>
+      <p>{stability.windowStart ? `Current candidate window: ${stability.windowStart} through ${stability.windowEnd}.` : `Candidate ${currentStabilityCandidateLabel} is frozen. Day one awaits complete production-like evidence.`}</p>
       <ul>{stability.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
       {stability.nextRequiredDate && <small>Next required daily evidence: {stability.nextRequiredDate}</small>}
     </section>
