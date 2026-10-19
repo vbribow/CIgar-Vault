@@ -6,8 +6,8 @@ const route = fs.readFileSync("app/api/account/recovery/restore/route.ts", "utf8
 const previewRoute = fs.readFileSync("app/api/account/recovery/preview/route.ts", "utf8");
 
 test("vault recovery reads only the authenticated collector's records", () => {
-  assert.match(route, /loadAllAccountVaultRecords\(supabase,user\.id\)/);
-  assert.match(previewRoute, /loadAllAccountVaultRecords\(supabase,user\.id\)/);
+  assert.match(route, /loadAllAccountVaultRecords\(supabase,user\.id,kinds\)/);
+  assert.match(previewRoute, /loadAllAccountVaultRecords\(supabase,user\.id,kinds\)/);
 });
 
 test("vault recovery writes restored records and its audit atomically", () => {

@@ -48,7 +48,7 @@ export function CreateRecoveryPoint() {
   }
 
   return <div className="recoveryPointAction" id="recovery-point" aria-busy={busy}>
-    <div><strong>Create a recovery point</strong><small id="recovery-point-help">Downloads a complete private JSON backup and records the safeguard in your account. Importing a collection does not create a recovery point.</small></div>
+    <div><strong>Create a recovery point</strong><small id="recovery-point-help">Downloads your portable collector records and records the safeguard in your account. High-volume sensor readings remain protected in your account and can synchronize again from the sensor provider; operational logs are not restored. Importing a collection does not create a recovery point.</small></div>
     <ol className="recoverySteps" aria-label="Recovery-point process">
       <li><span>1</span><div><strong>Prepare</strong><small>Hojavía gathers the account-backed Vault records you own.</small></div></li>
       <li><span>2</span><div><strong>Verify</strong><small>The export is checked before it is offered as a download.</small></div></li>

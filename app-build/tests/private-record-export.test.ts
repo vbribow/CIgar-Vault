@@ -9,7 +9,7 @@ test("private record export downloads a non-empty account-scoped file",()=>{
   assert.match(component,/response\.blob\(\)/);
   assert.match(component,/anchor\.download=filename/);
   assert.match(component,/Downloaded \$\{filename\}/);
-  assert.match(route,/loadAllAccountVaultRecords\(supabase,user\.id\)/);
+  assert.match(route,/loadAllAccountVaultRecords\(supabase,user\.id,portableAccountRecordKinds\)/);
   assert.match(route,/private-collector-record-/);
 });
 
@@ -21,10 +21,21 @@ test("complete account export paginates beyond the provider's one-thousand-row r
   assert.match(store,/if\(page\.length<accountRecordPageSize\)return records/);
 });
 
+test("portable recovery excludes high-volume and regenerated operational records transparently",()=>{
+  const store=readFileSync(new URL("../lib/account-record-store.ts",import.meta.url),"utf8");
+  const component=readFileSync(new URL("../components/create-recovery-point.tsx",import.meta.url),"utf8");
+  assert.match(store,/portableAccountRecordKinds/);
+  assert.doesNotMatch(store,/portableAccountRecordKinds=\[[\s\S]*"readings"/);
+  assert.match(route,/kind:"readings"/);
+  assert.match(route,/kind:"integrity"/);
+  assert.match(route,/kind:"system-runs"/);
+  assert.match(component,/High-volume sensor readings remain protected/);
+});
+
 test("complete vault export records an auditable recovery point",()=>{
   assert.match(route,/saveOwnedRecord\("integrity"/);
   assert.match(route,/action:\s*"inventory-backup"/);
-  assert.match(route,/scope:\s*"complete-account"/);
+  assert.match(route,/scope:\s*"portable-account-recovery"/);
   assert.match(route,/record\.kind === "inventory"/);
   assert.match(route,/totalRecordCount:\s*payload\.recordCount/);
 });

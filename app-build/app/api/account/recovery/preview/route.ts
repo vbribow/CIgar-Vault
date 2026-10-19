@@ -9,7 +9,8 @@ export async function POST(request:Request){
   if(!user)return NextResponse.json({error:"Sign in to inspect a vault export"},{status:401});
   try{
     const parsed=AccountExportSchema.parse(await request.json());
-    const records=await loadAllAccountVaultRecords(supabase,user.id);
+    const kinds=[...new Set(parsed.records.map(record=>record.kind))];
+    const records=await loadAllAccountVaultRecords(supabase,user.id,kinds);
     return NextResponse.json({data:{source:{createdAt:parsed.createdAt,email:parsed.owner.email,recordCount:parsed.recordCount,ownerMatch:recoveryOwnerMatch(parsed.owner,{userId:user.id,email:user.email})},preview:buildRecoveryPreview(parsed.records,records)}});
   }catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Invalid vault export"},{status:422})}
 }

@@ -22,9 +22,9 @@ test("complete export, insurance PDF, and recovery are explicitly owner scoped",
   const pdfRoute = await readFile(new URL("../app/api/reports/insurance-pdf/route.ts", import.meta.url), "utf8");
   const recoveryRoute = await readFile(new URL("../app/api/account/recovery/restore/route.ts", import.meta.url), "utf8");
   const accountRecordStore = await readFile(new URL("../lib/account-record-store.ts", import.meta.url), "utf8");
-  assert.match(exportRoute, /loadAllAccountVaultRecords\(supabase,user\.id\)/);
+  assert.match(exportRoute, /loadAllAccountVaultRecords\(supabase,user\.id,portableAccountRecordKinds\)/);
   assert.match(pdfRoute, /\.eq\("user_id",user\.id\)/);
-  assert.match(recoveryRoute, /loadAllAccountVaultRecords\(supabase,user\.id\)/);
+  assert.match(recoveryRoute, /loadAllAccountVaultRecords\(supabase,user\.id,kinds\)/);
   assert.match(accountRecordStore, /\.eq\("user_id",\s*userId\)/);
   assert.match(recoveryRoute, /user_id:user\.id/);
 });

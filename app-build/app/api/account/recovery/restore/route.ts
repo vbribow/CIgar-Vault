@@ -17,7 +17,8 @@ export async function POST(request:Request){
     const input=Input.parse(await request.json());
     const ownerMatch=recoveryOwnerMatch(input.export.owner,{userId:user.id,email:user.email});
     if(ownerMatch==="different"&&!input.acknowledgeDifferentOwner)return NextResponse.json({error:"Confirm that this export belongs to you before restoring records from a different account identity."},{status:409});
-    const existing=await loadAllAccountVaultRecords(supabase,user.id);
+    const kinds=[...new Set(input.export.records.map(record=>record.kind))];
+    const existing=await loadAllAccountVaultRecords(supabase,user.id,kinds);
     const preview=buildRecoveryPreview(input.export.records,existing);
     const selected=recordsForRecovery(input.export.records,existing,input.mode);
     const restoredAt=new Date().toISOString();const auditId=`RECOVERY-${restoredAt}-${crypto.randomUUID()}`;

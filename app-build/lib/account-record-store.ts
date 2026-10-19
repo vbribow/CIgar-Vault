@@ -4,10 +4,25 @@ export type AccountVaultRecord={kind:string;record_id:string;payload:unknown;upd
 
 const accountRecordPageSize=1000;
 
-export async function loadAllAccountVaultRecords(client:SupabaseClient,userId:string):Promise<AccountVaultRecord[]>{
+export const portableAccountRecordKinds=[
+  "inventory",
+  "collections",
+  "humidors",
+  "sensors",
+  "valuations",
+  "ratings",
+  "rating-drafts",
+  "smokes",
+  "activities",
+  "wishlist",
+] as const;
+
+export async function loadAllAccountVaultRecords(client:SupabaseClient,userId:string,kinds?:readonly string[]):Promise<AccountVaultRecord[]>{
   const records:AccountVaultRecord[]=[];
   for(let from=0;;from+=accountRecordPageSize){
-    const{data,error}=await client.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",userId).order("kind").order("record_id").range(from,from+accountRecordPageSize-1);
+    let query=client.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",userId);
+    if(kinds?.length)query=query.in("kind",[...kinds]);
+    const{data,error}=await query.order("kind").order("record_id").range(from,from+accountRecordPageSize-1);
     if(error)throw error;
     const page=(data||[]) as AccountVaultRecord[];
     records.push(...page);
