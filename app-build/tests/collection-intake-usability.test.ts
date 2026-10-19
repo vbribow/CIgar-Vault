@@ -15,6 +15,16 @@ test("collection search state is isolated from the full Vault manager",()=>{
   assert.match(intake,/Typing no longer rerenders your full Vault/);
 });
 
+test("known catalog search and dropdown selection lead directly to an add action",()=>{
+  assert.match(intake,/Found in Hojavía’s researched catalog/);
+  assert.match(intake,/Choose Use this edition to review and add it/);
+  assert.match(manager,/function selectTemplate/);
+  assert.match(manager,/if\(item\)selectTemplate\(item\)/);
+  assert.match(manager,/Review and add this collection/);
+  assert.match(manager,/form="collection-form"/);
+  assert.match(manager,/"Add this collection"/);
+});
+
 test("heritage brand and year controls include their own search action",()=>{
   assert.match(intake,/searchBrandAndYear/);
   assert.match(intake,/Search this brand and year/);
