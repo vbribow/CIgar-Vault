@@ -1,7 +1,7 @@
 "use client";
 import { FormEvent,useMemo,useState } from "react";
 import type { CollectionTemplate } from "@/lib/collection-templates";
-import { collectionTemplates } from "@/lib/collection-templates";
+import { collectionTemplateMatchesSearch,collectionTemplates } from "@/lib/collection-templates";
 import { collectionResultIsRelevant,type WebCollectionResult } from "@/lib/collection-research";
 import type { CigarVisionResult } from "@/lib/cigar-vision";
 import { cigarBrands } from "@/lib/brand-directory";
@@ -10,7 +10,7 @@ import { brand } from "@/lib/brand";
 
 export function CollectionResearchIntake({onTemplate,onDraft}:{onTemplate:(template:CollectionTemplate)=>void;onDraft:(draft:{name:string;maker?:string;releaseYear?:string;result:WebCollectionResult})=>void}){
  const[researchBrand,setResearchBrand]=useState("");const[researchYear,setResearchYear]=useState("");const[researchQuery,setResearchQuery]=useState("");const[researching,setResearching]=useState(false);const[researchMessage,setResearchMessage]=useState("");const[webResults,setWebResults]=useState<WebCollectionResult[]>([]);const[photos,setPhotos]=useState<File[]>([]);const[identifying,setIdentifying]=useState(false);
- const catalogMatches=useMemo(()=>{const words=researchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);if(!words.length)return[];return collectionTemplates.filter(item=>(!researchYear||String(item.releaseYear||"")===researchYear)&&words.every(word=>`${item.name} ${item.maker} ${item.edition||""}`.toLowerCase().includes(word)))},[researchQuery,researchYear]);
+ const catalogMatches=useMemo(()=>collectionTemplates.filter(item=>(!researchYear||String(item.releaseYear||"")===researchYear)&&collectionTemplateMatchesSearch(item,researchQuery)),[researchQuery,researchYear]);
  async function runResearch(query=researchQuery,maker=researchBrand,year=researchYear){if(query.trim().length<3)return;setResearching(true);setResearchMessage("");setWebResults([]);try{const exactQuery=[maker,query,year].filter(Boolean).join(" ");const response=await fetch(`/api/collection-research?q=${encodeURIComponent(exactQuery)}`);const result=await response.json();if(!response.ok)throw new Error(result.error||"Search failed");const relevant=(result.data||[]).filter((item:WebCollectionResult)=>collectionResultIsRelevant(item,exactQuery));setWebResults(relevant);if(!relevant.length)setResearchMessage("No exact cigar-collection source was found. Hojavía rejected unrelated places and products; add the maker or release year and try again.")}catch(error){setResearchMessage(error instanceof Error?error.message:"Search failed")}finally{setResearching(false)}}
  async function research(event:FormEvent<HTMLFormElement>){event.preventDefault();await runResearch()}
  async function searchBrandAndYear(){if(!researchBrand)return;setResearchQuery(researchBrand);await runResearch(researchBrand,"",researchYear)}

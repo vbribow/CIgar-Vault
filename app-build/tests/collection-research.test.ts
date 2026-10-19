@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { collectionResultIsRelevant, collectionSearchUrl, collectionVerificationSearchUrls, inferCollectionDetails, parseCollectionSearchRss } from "../lib/collection-research";
-import { collectionTemplates } from "../lib/collection-templates";
+import { collectionTemplateMatchesSearch,collectionTemplates } from "../lib/collection-templates";
 import { matchCollectionRequirements } from "../lib/collection-matching";
 import type { InventoryItem } from "../lib/types";
 
@@ -37,6 +37,14 @@ test("Hemingway House of Dreams is available as a researched exact collection",(
   assert.equal(template.expectedComponents,1);
   assert.match(template.requirements[0]||"",/7 × 48/);
   assert.equal(template.researchStatus,"Verified");
+});
+
+test("catalog search recognizes Stairway to Heaven and possessive wording variations",()=>{
+  const template=collectionTemplates.find(item=>item.templateId==="TPL-FUENTE-STAIRWAY");
+  assert.ok(template);
+  assert.equal(collectionTemplateMatchesSearch(template,"angels share stairway to heaven"),true);
+  assert.equal(collectionTemplateMatchesSearch(template,"Angel's Share Collection"),true);
+  assert.equal(collectionTemplateMatchesSearch(template,"Elie Bleu Stairway to Heaven Humidor"),true);
 });
 
 test("RSS parsing applies the exact collection relevance gate",()=>{
