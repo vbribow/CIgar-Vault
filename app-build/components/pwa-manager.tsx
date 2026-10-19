@@ -7,7 +7,7 @@ export type InstallEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{out
 const productionHost="app.hojavia.com";
 const installDismissedKey="hojavia:pwa-dismissed:v1";
 export function PwaManager({ initialEvent }: { initialEvent?: InstallEvent }){
-  const[event,setEvent]=useState<InstallEvent|undefined>(initialEvent),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[installError,setInstallError]=useState("");
+  const[event,setEvent]=useState<InstallEvent|undefined>(initialEvent),[showIos,setShowIos]=useState(false),[hidden,setHidden]=useState(true),[waiting,setWaiting]=useState<ServiceWorker>(),[legacyHost,setLegacyHost]=useState(""),[installing,setInstalling]=useState(false),[updating,setUpdating]=useState(false),[installError,setInstallError]=useState("");
   useEffect(()=>{
     const installStandalone=window.matchMedia("(display-mode: standalone)").matches||(navigator as Navigator&{standalone?:boolean}).standalone;
     if(!isActiveProductHostname(window.location.hostname)&&(!isPrivatePreviewHostname(window.location.hostname)||installStandalone))setLegacyHost(window.location.host);
@@ -56,8 +56,17 @@ export function PwaManager({ initialEvent }: { initialEvent?: InstallEvent }){
       setInstalling(false);
     }
   }
+  function installUpdate(){
+    if(!waiting||updating)return;
+    setUpdating(true);
+    try{waiting.postMessage({type:"SKIP_WAITING"})}catch{/* The reload fallback below still requests the newest network shell. */}
+    // Some installed iOS/web views do not emit controllerchange reliably. A
+    // bounded reload makes the user action deterministic while the service
+    // worker's navigation handler fetches the page with cache disabled.
+    window.setTimeout(()=>window.location.reload(),1200);
+  }
   if(legacyHost)return <aside className="installPrompt updatePrompt" aria-live="polite"><span className="appBrandMark">!</span><div><strong>Older {brand.name} address</strong><small>{legacyHost} is separate from the current app and may not show current records.</small></div><a href={`https://${productionHost}/`}>Reinstall safely</a></aside>;
-  if(waiting)return <aside className="installPrompt updatePrompt" aria-live="polite" role="status">{!brand.isPreview&&<HojaviaMark/>}<div><strong>{brand.name} update available</strong><small>Your private records remain intact. Finish any open form, then update to load the newest version.</small></div><button onClick={()=>waiting.postMessage({type:"SKIP_WAITING"})}>Update now</button></aside>;
+  if(waiting)return <aside className="installPrompt updatePrompt" aria-live="polite" role="status">{!brand.isPreview&&<HojaviaMark/>}<div><strong>{brand.name} update available</strong><small>{updating?"Loading the newest version…":"Your private records remain intact. Finish any open form, then update to load the newest version."}</small></div><button onClick={installUpdate} disabled={updating}>{updating?"Updating…":"Update now"}</button></aside>;
   if(hidden||(!event&&!showIos))return null;
   return <aside className="installPrompt" aria-live="polite">{!brand.isPreview&&<HojaviaMark/>}<div><strong>Keep {brand.name} on your phone</strong><small>{installError||(showIos?"Use your browser’s Share menu, then choose Add to Home Screen.":"Install the app shell for faster return access. Private collection pages are not stored for offline viewing.")}</small></div>{event&&<button onClick={install} disabled={installing}>{installing?"Opening…":"Install"}</button>}<a href="/install">Installation help</a><button className="installDismiss" onClick={dismiss} aria-label="Dismiss install suggestion">×</button></aside>;
 }

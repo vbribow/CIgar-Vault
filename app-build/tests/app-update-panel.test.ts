@@ -34,4 +34,8 @@ test("installed phones can check the release and refresh when the app resumes",(
   assert.match(proxy,/sw\.js\|release\.json\|manifest\.webmanifest/);
   assert.match(manager,/visibilitychange/);
   assert.match(manager,/window\.addEventListener\("online",refreshUpdate\)/);
+  assert.match(manager,/function installUpdate\(\)/);
+  assert.match(manager,/waiting\.postMessage\(\{type:"SKIP_WAITING"\}\)/);
+  assert.match(manager,/window\.setTimeout\(\(\)=>window\.location\.reload\(\),1200\)/);
+  assert.match(manager,/disabled=\{updating\}/);
 });
