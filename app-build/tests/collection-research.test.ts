@@ -47,6 +47,17 @@ test("catalog search recognizes Stairway to Heaven and possessive wording variat
   assert.equal(collectionTemplateMatchesSearch(template,"Elie Bleu Stairway to Heaven Humidor"),true);
 });
 
+test("every known manufacturer collection is searchable by its documented names",()=>{
+  for(const template of collectionTemplates){
+    const names=[template.name,...(template.aliases||[]),...(template.presentationAliases||[])];
+    for(const name of names)assert.equal(
+      collectionTemplateMatchesSearch(template,name),
+      true,
+      `${template.name} must be searchable by ${name}`,
+    );
+  }
+});
+
 test("RSS parsing applies the exact collection relevance gate",()=>{
   const xml=`<rss><channel><item><title>Hemingway House Italian Restaurant</title><link>https://example.com/restaurant</link><description>Italian menu and reservations</description></item><item><title>Arturo Fuente Hemingway House Collection</title><link>https://cigars.example/fuente</link><description>Fuente cigar collection and humidor</description></item></channel></rss>`;
   const results=parseCollectionSearchRss(xml,"Arturo Fuente Hemingway House collection");
