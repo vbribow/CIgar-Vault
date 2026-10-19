@@ -29,3 +29,12 @@ export async function loadAllAccountVaultRecords(client:SupabaseClient,userId:st
     if(page.length<accountRecordPageSize)return records;
   }
 }
+
+export async function loadAccountDashboardRecords(client:SupabaseClient,userId:string):Promise<AccountVaultRecord[]>{
+  const[portableRecords,integrityResult]=await Promise.all([
+    loadAllAccountVaultRecords(client,userId,portableAccountRecordKinds),
+    client.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id",userId).eq("kind","integrity").order("updated_at",{ascending:false}).limit(50),
+  ]);
+  if(integrityResult.error)throw integrityResult.error;
+  return[...portableRecords,...((integrityResult.data||[]) as AccountVaultRecord[])];
+}

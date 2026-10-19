@@ -16,6 +16,7 @@ import { DeviceAwareSignOut } from "@/components/device-aware-sign-out";
 import { DeviceDraftManager } from "@/components/device-draft-manager";
 import { CreateRecoveryPoint } from "@/components/create-recovery-point";
 import { loadAccountPreferenceRow } from "@/lib/account-preferences-store";
+import { loadAccountDashboardRecords } from "@/lib/account-record-store";
 
 export const dynamic = "force-dynamic";
 
@@ -25,16 +26,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const [profileResult, preferencesResult, vaultResult, consentResult] = await Promise.all([
-    supabase.from("profiles").select("display_name, collection_name, experience_level, onboarding_completed, billing_plan, billing_status, stripe_customer_id").eq("user_id", user.id).maybeSingle(),
-    loadAccountPreferenceRow(supabase,user.id),
-    supabase.from("vault_records").select("kind,record_id,payload,updated_at").eq("user_id", user.id),
-    supabase.from("account_consents").select("age_confirmed_at,terms_version,terms_accepted_at,privacy_version,privacy_accepted_at,beta_version,beta_accepted_at").eq("user_id", user.id).maybeSingle(),
-  ]);
-  if (profileResult.error || preferencesResult.error || vaultResult.error || consentResult.error) return <main className="shell accountShell"><section className="section card"><div className="eyebrow">Account records protected</div><h1>Your account controls are temporarily paused.</h1><p className="lede">{brand.name} could not verify profile, preferences, private Vault records, and consent together. Nothing is being shown as missing, expired, or reset.</p><a className="button secondary" href="/account">Try again</a></section></main>;
-  const profile = profileResult.data, preferences = preferencesResult.data, vaultRecords = vaultResult.data, consent = consentResult.data;
+  let profileResult,preferencesResult,vaultRecords,consentResult;
+  try{
+    [profileResult,preferencesResult,vaultRecords,consentResult]=await Promise.all([
+      supabase.from("profiles").select("display_name, collection_name, experience_level, onboarding_completed, billing_plan, billing_status, stripe_customer_id").eq("user_id", user.id).maybeSingle(),
+      loadAccountPreferenceRow(supabase,user.id),
+      loadAccountDashboardRecords(supabase,user.id),
+      supabase.from("account_consents").select("age_confirmed_at,terms_version,terms_accepted_at,privacy_version,privacy_accepted_at,beta_version,beta_accepted_at").eq("user_id", user.id).maybeSingle(),
+    ]);
+  }catch{return <main className="shell accountShell"><section className="section card"><div className="eyebrow">Account records protected</div><h1>Your account controls are temporarily paused.</h1><p className="lede">{brand.name} could not verify profile, preferences, private Vault records, and consent together. Nothing is being shown as missing, expired, or reset.</p><a className="button secondary" href="/account">Try again</a></section></main>}
+  if (profileResult.error || preferencesResult.error || consentResult.error) return <main className="shell accountShell"><section className="section card"><div className="eyebrow">Account records protected</div><h1>Your account controls are temporarily paused.</h1><p className="lede">{brand.name} could not verify profile, preferences, private Vault records, and consent together. Nothing is being shown as missing, expired, or reset.</p><a className="button secondary" href="/account">Try again</a></section></main>;
+  const profile = profileResult.data, preferences = preferencesResult.data, consent = consentResult.data;
   const founder = profile?.billing_plan === "founder" && ["active", "trialing"].includes(profile?.billing_status || "");
-  const records = (vaultRecords || []) as AccountVaultRecord[];
+  const records = vaultRecords as AccountVaultRecord[];
   const checklist = buildAccountChecklist(Boolean(profile?.onboarding_completed), records);
   const security = accountSecuritySummary(records);
   return <main className="shell accountShell">
