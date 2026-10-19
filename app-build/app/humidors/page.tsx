@@ -8,6 +8,8 @@ import "./humidors.css";
 import "./quick-links.css";
 import { WorkspaceGuide } from "@/components/workspace-guide";
 import { brand } from "@/lib/brand";
+import { SensorDashboard } from "@/components/sensor-dashboard";
+import "../sensors/sensors.css";
 export const dynamic = "force-dynamic";
 export default async function HumidorsPage() {
   const modeResult = await Promise.allSettled([accountDataMode()]);
@@ -57,6 +59,7 @@ export default async function HumidorsPage() {
         </div>
       </section>
       <WorkspaceGuide items={[{label:"Set",title:"Choose climate targets",detail:"Temperature and humidity ranges remain under collector control."},{label:"Connect",title:"Add readings or sensors",detail:"Use manual records, Tempi history, or configured cloud connections.",href:"/sensors"},{label:"Protect",title:"Act on value at risk",detail:"Alerts connect environmental exceptions to the inventory stored inside."}]}/>
+      <SensorDashboard sensors={sensors} humidors={humidors} readings={readings}/>
       <section className="humidorEducation">
         <div><div className="eyebrow">Climate education in context</div><h2>Protect the trend—not a folklore number.</h2><p>A brief door-opening spike is different from a month of heat. Learn how temperature and relative humidity interact, what New World cigars and Habanos call for, and how to correct a problem without shocking the tobacco.</p></div>
         <div><span><b>New World start</b><strong>65–70°F · 65–69% RH</strong></span><span><b>Official Habanos</b><strong>61–64°F · 65–70% RH</strong></span><a className="button secondary" href="/learn/humidor-climate">Open the complete climate lesson</a></div>

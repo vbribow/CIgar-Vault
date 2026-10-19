@@ -1,5 +1,9 @@
 # Authentication, Recovery, and Isolation Acceptance — October 7, 2026
 
+**Current candidate:** `e82bd304` · `hojavia-beta-shell-v4-c1704144324d`
+**Candidate fingerprint:** `7fecc5437937df1f83339501fa5e58079b89690ff45fa7f264dbcac24a29bd66`
+**Acceptance status as of October 19:** `NOT RUN` — this packet records the exact remaining human checks; it does not infer a pass.
+
 ## Local audit result
 
 The local review covered signup, invitation enforcement, confirmation, sign-in, safe return paths, sign-out, password recovery, malformed/expired/reused email links, session refresh, protected-route redirects, account export, restore ownership, and signed-in record scoping.
@@ -14,7 +18,7 @@ Account data APIs reviewed in this milestone obtain the verified Supabase user a
 
 ## Minimal production acceptance script
 
-Use two approved test identities and disposable records only. Do not capture private collection content.
+Use two founder-controlled test identities and disposable records only. These identities are acceptance instruments, not additional beta testers. Do not capture private collection content.
 
 1. In a clean browser, open a protected URL containing a harmless query. Expected: Login appears and successful sign-in returns to that exact internal path and query.
 2. Try `next=https://example.com`, `next=//example.com`, and a backslash-host form. Expected: all return to `/`, never an external origin.
@@ -26,3 +30,19 @@ Use two approved test identities and disposable records only. Do not capture pri
 8. With Identity A create a disposable record. With Identity B search, export, restore-preview, edit, and delete using A's record ID. Expected: B cannot see or mutate A's record.
 9. Export A's records and preview under B. Expected: different-owner warning and no write without the explicit acknowledgement and recovery confirmation phrase.
 10. Record PASS, FAIL, BLOCKED, or NOT RUN for each step with timestamp, browser/device, non-sensitive screenshot, and any returned status. Any cross-account visibility, external redirect, or unauthorized password change is Severity 1 and keeps launch on HOLD.
+
+## Candidate acceptance worksheet
+
+| Check | Result | Device/browser | Evidence | Issue/owner |
+| --- | --- | --- | --- | --- |
+| Clean-browser protected-route return | NOT RUN |  |  | Brian + technical owner |
+| Unsafe `next` values rejected | NOT RUN |  |  | Brian + technical owner |
+| Invited signup and confirmation | NOT RUN |  |  | Brian + technical owner |
+| Reused/malformed confirmation link | NOT RUN |  |  | Brian + technical owner |
+| Password recovery and new sign-in | NOT RUN |  |  | Brian + technical owner |
+| Reused recovery link rejected | NOT RUN |  |  | Brian + technical owner |
+| Installed-PWA session reopen | NOT RUN |  |  | Brian |
+| Identity B cannot access Identity A | NOT RUN |  |  | Brian + technical owner |
+| Different-owner export/restore warning | NOT RUN |  |  | Brian + technical owner |
+
+**Launch rule:** all rows must pass. Any Severity 1 result invalidates the candidate; any other failure remains assigned and the launch decision stays `HOLD`.

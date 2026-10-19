@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     })));
     const successful=responses.filter(response=>response.ok);
     if(!successful.length)throw new Error(`Search provider returned ${responses.map(response=>response.status).join(", ")}`);
-    const groups=await Promise.all(successful.map(async response=>parseCollectionSearchRss(await response.text())));
+    const groups=await Promise.all(successful.map(async response=>parseCollectionSearchRss(await response.text(),query)));
     const seen=new Set<string>();
     const data=groups.flat().filter(result=>{if(seen.has(result.url))return false;seen.add(result.url);return true}).slice(0,10);
     return NextResponse.json({ data });

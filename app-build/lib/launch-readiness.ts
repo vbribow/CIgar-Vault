@@ -13,11 +13,11 @@ export type LaunchGate = {
 };
 
 export const launchBaseline = {
-  recordedAt: "2026-10-07",
+  recordedAt: "2026-10-19",
   build: "Passed",
   typecheck: "Passed",
   automatedTests: {
-    passed: 1186,
+    passed: 1197,
     failed: 0,
   },
   severityOneOpen: 0,
@@ -47,7 +47,7 @@ const launchGateDefinitions = [
     title: "Current humidor readings and unattended recovery",
     status: "In progress",
     detail: "Bring every linked SensorPush device current and prove hourly synchronization remains current without manual intervention.",
-    evidence: "All five devices are linked and production readings were current on October 7. Two consecutive hourly synchronization cycles returned HTTP 200. Long-history calculations and scheduled reading pagination passed 100,000- and 150,000-reading regressions locally; continuity through the seven-day stability window remains open.",
+    evidence: "On October 19, the signed-in production dashboard loaded successfully after the bounded-history release and reviewed production index were applied. All five SensorPush devices reported current readings, GitHub CI passed 1,197 tests, typecheck, and build, and the production health check passed. Continuity through the seven-day stability window remains open.",
     priority: "Now",
   },
   {
@@ -84,10 +84,10 @@ const launchGateDefinitions = [
   },
   {
     id: "founder-beta",
-    title: "Founder Beta safeguards",
+    title: "Controlled-launch safeguards",
     status: "In progress",
-    detail: "Require invitation-only enrollment, healthy administration data, migrations, consent, recovery points, and no unresolved blocking feedback.",
-    evidence: "The gate fails closed when authentication, cohort, consent, feedback, or backup evidence is unavailable. A July 30 read-only check confirmed the live onboarding queue exposes no cohort data without the Founder key. Brian must enter that credential in the private local screen before the readiness counts can be inspected; no invitation, email, or cohort mutation is authorized by that check.",
+    detail: "Keep existing controlled accounts safe while founder-led acceptance replaces additional beta recruitment.",
+    evidence: "The gate fails closed when authentication, consent, feedback, or backup evidence is unavailable. A July 30 read-only check confirmed the live onboarding queue exposes no account data without the Founder key. On October 19 Brian ended additional beta-tester recruitment; no new cohort size or invitation target remains a launch prerequisite.",
     priority: "Now",
   },
   {
@@ -143,7 +143,7 @@ const launchGateDefinitions = [
     title: "Device coverage and stability window",
     status: "In progress",
     detail: "Complete the required browser/device matrix and sustain seven production-like days without a Severity 1 or critical-path Severity 2 defect.",
-    evidence: "On October 7, the exact local candidate passed 1,186 tests, TypeScript, the 193-route navigation audit, seven critical journey checks, mobile reliability, source and built-asset performance budgets, production builds for the private app and separate public website, and a local rollback rehearsal without production or collector-data changes. The candidate remains undeployed and the clock stays at 0/7 until deployment is separately approved and physical iPhone/Android, recovery, sensor-continuity, and second-device acceptance are complete.",
+    evidence: "The corrected October 19 production candidate is frozen as fingerprint 7fecc5437937df1f83339501fa5e58079b89690ff45fa7f264dbcac24a29bd66 from source e82bd304 and app artifact hojavia-beta-shell-v4-c1704144324d. GitHub CI passed 1,197 tests, TypeScript, and the production build; Vercel reported Ready; the health endpoint passed; and the signed-in Sensors dashboard loaded all five current devices. The clock stays at 0/7 until real-account authentication/isolation and the required physical-device checks are recorded.",
     priority: "Next",
   },
   {
@@ -167,19 +167,19 @@ const launchGateDefinitions = [
 const launchGateAccountability: Record<(typeof launchGateDefinitions)[number]["id"],Pick<LaunchGate,"owner"|"evidenceDate"|"nextAction">> = {
   "brand-clearance-adoption": {owner:"Brian + qualified legal reviewer",evidenceDate:"2026-10-07",nextAction:"Approve counsel and complete the dated legal, privacy, support-owner, and filing decisions."},
   "automation-privacy": {owner:"Technical owner",evidenceDate:"2026-10-07",nextAction:"Retain the passing controls in the frozen release candidate."},
-  "sensor-continuity": {owner:"Technical owner + Brian",evidenceDate:"2026-10-07",nextAction:"Deploy the validated pagination fixes only after approval, then record seven current production days."},
+  "sensor-continuity": {owner:"Technical owner + Brian",evidenceDate:"2026-10-19",nextAction:"Record seven consecutive current production days for the frozen candidate."},
   "places-scope-acceptance": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Record the founder scope decision and complete the production ZIP, radius, attribution, rating, budget, and refresh acceptance script."},
-  "cross-device-sync": {owner:"Brian + beta tester",evidenceDate:"2026-10-07",nextAction:"Run the remaining story, collection-component, storage, and second-device checks."},
-  "photo-completion": {owner:"Brian + beta tester",evidenceDate:"2026-10-07",nextAction:"Complete the physical-phone upload, retry, correction, and saved-record protocol."},
+  "cross-device-sync": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Run the remaining story, collection-component, storage, and second-device checks with controlled test identities."},
+  "photo-completion": {owner:"Brian + designated device operator",evidenceDate:"2026-10-07",nextAction:"Complete the physical-phone upload, retry, correction, and saved-record protocol."},
   "import-recovery": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Complete representative UI commit, rollback, export, restore, and second-device observations."},
-  "founder-beta": {owner:"Brian",evidenceDate:"2026-10-07",nextAction:"Inspect the protected cohort counts and resolve blocking feedback without widening access."},
+  "founder-beta": {owner:"Brian",evidenceDate:"2026-10-19",nextAction:"Retain safeguards for existing controlled accounts; do not recruit or invite additional beta testers."},
   "auth-isolation-recovery": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Complete clean-browser recovery, representative restore, and second-device account-isolation acceptance."},
   "collection-truth": {owner:"Technical owner",evidenceDate:"2026-08-07",nextAction:"Retain the passing evidence and investigate only newly reported identity conflicts."},
   "valuation-coverage": {owner:"Technical owner",evidenceDate:"2026-07-30",nextAction:"Retain evidence gaps explicitly and refresh only under the approved monthly policy."},
   "legal-privacy-support": {owner:"Brian + qualified reviewer + support owner needed",evidenceDate:"2026-10-07",nextAction:"Name support and incident owners, approve notices and retention rules, and rehearse an authorized deletion request."},
   "billing-entitlements": {owner:"Brian + technical owner",evidenceDate:"2026-10-07",nextAction:"Choose free beta or separately authorize the Stripe test-mode acceptance runbook."},
   "openai-research-activation": {owner:"Brian",evidenceDate:"2026-10-07",nextAction:"Keep disabled unless a separate budget, credential, migration, and controlled-query approval is granted."},
-  "stability-device-acceptance": {owner:"Brian + beta testers",evidenceDate:"2026-10-07",nextAction:"Deploy the frozen candidate after approval, complete the physical-device matrix, and start the seven-day clock."},
+  "stability-device-acceptance": {owner:"Brian + designated device operator",evidenceDate:"2026-10-19",nextAction:"Complete controlled-account isolation plus iPhone and Android acceptance, then record day one of the seven-day window."},
   "legal-owner": {owner:"Brian",evidenceDate:"2026-08-13",nextAction:"Preserve Emberward Holdings LLC as the recorded owner; chain-of-title and trademark filing remain under the separate legal gate."},
   "affiliate-programs": {owner:"Brian",evidenceDate:"2026-07-29",nextAction:"Keep deferred until after launch and separate approval."},
 };
@@ -187,7 +187,7 @@ const launchGateAccountability: Record<(typeof launchGateDefinitions)[number]["i
 export const launchGates: readonly LaunchGate[] = launchGateDefinitions.map(gate=>({...gate,...launchGateAccountability[gate.id]}));
 
 export const launchDeviceMatrix = [
-  { platform: "iPhone", browser: "Safari", installedApp: "Add to Home Screen", status: "Partial", next: "Complete photo, navigation, sign-out, reopen, and second-device synchronization with a beta tester." },
+  { platform: "iPhone", browser: "Safari", installedApp: "Add to Home Screen", status: "Partial", next: "Complete photo, navigation, sign-out, reopen, and second-device synchronization with controlled test identities." },
   { platform: "Android", browser: "Chrome", installedApp: "Install app", status: "Not run", next: "Complete the same journey on a physical Android phone; emulator evidence cannot replace it." },
 ] as const;
 
@@ -239,14 +239,14 @@ export const webLaunchCriticalJourneys = [
 ] as const;
 
 export const founderGoNoGoChecklist = [
-  { gate: "Release candidate", status: "Hold", detail: "Deploy the combined stability batch, complete physical-device acceptance, then freeze the verified web artifact and start day one of the seven-day window." },
-  { gate: "Database migrations", status: "Hold", detail: "The local collision is resolved. Create a reviewed production migration baseline only after backup and explicit approval; the production project currently has no Supabase migration ledger." },
-  { gate: "Beta evidence", status: "Hold", detail: "Complete physical-device, recovery, and second-device sessions with approved identities." },
+  { gate: "Release candidate", status: "Hold", detail: "The corrected production candidate is frozen. Complete real-account and physical-device acceptance before recording day one of the seven-day window." },
+  { gate: "Database migrations", status: "Hold", detail: "The reviewed owner-history index was applied successfully on October 19 and is preserved in source as migration 202610190001. Do not infer a complete Supabase migration ledger from that one accepted change; baseline reconciliation remains open." },
+  { gate: "Founder acceptance", status: "Hold", detail: "Complete physical-device, recovery, and second-device sessions with controlled test identities; no additional beta recruitment is required." },
   { gate: "Brand and legal", status: "Founder decision", detail: "Record clearance advice, legal owner/state, support owner, incident owner, and dated adoption decision." },
   { gate: "Google Places", status: "Founder scope decision", detail: "If included at web launch, complete restricted credentials, production migration, lounge-only ZIP/radius acceptance, attribution, ratings, cost controls, and monthly refresh verification before freezing the candidate." },
   { gate: "Billing", status: "Founder decision", detail: "Choose free beta or authorize a Stripe test-mode acceptance pass before any paid cohort." },
   { gate: "Live cigar research", status: "Hold — billing required", detail: "Create a dedicated OpenAI Platform project, approve its hard spending limit and alerts, apply the research-ledger migration after database reconciliation, add the protected production key, set OPENAI_RESEARCH_ENABLED=true, and pass the founder’s controlled research evaluation." },
-  { gate: "Sensors", status: "Current — stability open", detail: "All five devices were current on October 7 and two consecutive hourly cycles succeeded. The seven-day stability window remains open." },
+  { gate: "Sensors", status: "Current — stability open", detail: "All five devices were current in the signed-in production dashboard on October 19 after the indexed-history correction. The seven-day stability window remains open." },
 ] as const;
 
 export function launchReadinessSummary() {

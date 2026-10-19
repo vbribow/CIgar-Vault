@@ -13,6 +13,21 @@ export type InferredCollectionDetails = {
   confidence: "High" | "Medium" | "Low";
 };
 
+const collectionStopWords=new Set(["a","an","and","box","cigar","cigars","collection","contents","edition","from","house","of","set","the","with","year"]);
+const tobaccoContext=/\b(cigar|cigars|tobacco|humidor|sampler|vitola|perfecto|robusto|toro|lancero|churchill|opusx|fuente|padron|padr[oó]n|cohiba|davidoff|habanos)\b/i;
+const unrelatedHospitality=/\b(restaurant|restaurants|menu|dining|cuisine|pizzeria|pizza|reservations?|hotel|resort|vacation|tripadvisor|yelp|opentable)\b/i;
+
+const searchableWords=(value:string)=>value.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().match(/[a-z0-9]+/g)||[];
+
+export function collectionResultIsRelevant(result:Pick<WebCollectionResult,"title"|"url"|"summary">,query:string){
+  const text=`${result.title} ${result.summary} ${result.url}`;
+  if(unrelatedHospitality.test(text))return false;
+  if(!tobaccoContext.test(text))return false;
+  const required=[...new Set(searchableWords(query).filter(word=>word.length>2&&!collectionStopWords.has(word)))];
+  const haystack=new Set(searchableWords(text));
+  return required.length===0||required.every(word=>haystack.has(word));
+}
+
 const knownMakers = ["Arturo Fuente", "Padrón", "Cohiba", "Davidoff", "La Aurora", "My Father", "Joya de Nicaragua", "H. Upmann", "Hoyo de Monterrey", "Romeo y Julieta", "Partagás", "Trinidad", "Bolívar", "Montecristo", "Plasencia", "Oliva", "Ashton", "A.J. Fernandez", "Drew Estate", "Tatuaje", "Rocky Patel", "Perdomo"];
 
 export function inferCollectionDetails(text: string): InferredCollectionDetails {
@@ -42,16 +57,16 @@ const tag = (item: string, name: string) => {
   return decodeXml(match?.[1]?.trim() || "");
 };
 
-export function parseCollectionSearchRss(xml: string): WebCollectionResult[] {
-  return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)]
+export function parseCollectionSearchRss(xml: string,query?:string): WebCollectionResult[] {
+  const results=[...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)]
     .map((match) => {
       const title = tag(match[1], "title");
       const url = tag(match[1], "link");
       const summary = tag(match[1], "description").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
       return { title, url, summary, inferred: inferCollectionDetails(`${title} ${summary}`) };
     })
-    .filter((item) => item.title && /^https?:\/\//.test(item.url))
-    .slice(0, 6);
+    .filter((item) => item.title && /^https?:\/\//.test(item.url));
+  return results.filter(item=>!query||collectionResultIsRelevant(item,query)).slice(0,6);
 }
 
 export function collectionSearchUrl(query: string) {

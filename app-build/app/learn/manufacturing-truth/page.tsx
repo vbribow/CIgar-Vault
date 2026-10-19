@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FactoryConnectedRecords, ManufacturingCoverageIndex, ManufacturingTruthDirectory } from "@/components/manufacturing-truth-directory";
 import { allBrandManufacturingCoverage, manufacturingFactories, manufacturingRegions, manufacturingTruthRecords } from "@/lib/manufacturing-truth";
 import { brandCoverageWithCatalog } from "@/lib/brand-research";
+import { loadManufacturerEvidenceLedger, mergeManufacturerEvidence } from "@/lib/manufacturer-evidence";
 import { getCatalog } from "@/lib/smartsheet";
 import { dataMode } from "@/lib/config";
 import { publicPageMetadata } from "@/lib/seo";
@@ -28,6 +29,7 @@ export default async function ManufacturingTruthPage() {
   let coverage = allBrandManufacturingCoverage;
   if (dataMode() !== "mock") {
     try { coverage = brandCoverageWithCatalog(await getCatalog()); } catch { coverage = allBrandManufacturingCoverage; }
+    try { const ledger=await loadManufacturerEvidenceLedger();if(ledger.status==="ready")coverage=mergeManufacturerEvidence(coverage,ledger.claims); } catch { /* Preserve static evidence if the ledger is unavailable. */ }
   }
   return <main className="shell manufacturingTruthPage">
     <section className="truthHero">

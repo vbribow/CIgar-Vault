@@ -95,7 +95,7 @@ test("Collector 25 is the prominent default community destination",()=>{
  const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
  assert.match(page,/initialTab=\{tab==="board"\?"board":"ratings"\}/);
  assert.match(page,/className="hojavia25Hero"/);
- assert.match(page,/href="\/community\?tab=ratings#top-25"/);
+ assert.match(page,/rankingHref=tab==="board"\?"\/community\?tab=ratings#top-25":"#top-25"/);
  assert.match(page,/The community benchmark/);
  assert.equal(component.includes(["ced","riva","25Metric"].join("")),false);
  assert.match(page,/The \{brand\.labels\.community\}/);

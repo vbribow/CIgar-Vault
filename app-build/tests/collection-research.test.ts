@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { collectionSearchUrl, collectionVerificationSearchUrls, inferCollectionDetails, parseCollectionSearchRss } from "../lib/collection-research";
+import { collectionResultIsRelevant, collectionSearchUrl, collectionVerificationSearchUrls, inferCollectionDetails, parseCollectionSearchRss } from "../lib/collection-research";
 import { collectionTemplates } from "../lib/collection-templates";
 import { matchCollectionRequirements } from "../lib/collection-matching";
 import type { InventoryItem } from "../lib/types";
@@ -19,6 +19,19 @@ test("every collection verification pass includes an exact Fox Cigar search",()=
 test("collection research parses web results without markup", () => {
   const xml = `<rss><channel><item><title><![CDATA[La Gran &amp; Fumada]]></title><link>https://example.com/set</link><description><![CDATA[<b>13 cigars</b> &amp; cutter]]></description></item></channel></rss>`;
   assert.deepEqual(parseCollectionSearchRss(xml), [{ title: "La Gran & Fumada", url: "https://example.com/set", summary: "13 cigars & cutter", inferred: { expectedCigars: 13, confidence: "Medium" } }]);
+});
+
+test("collection research rejects Hemingway House restaurant results",()=>{
+  const restaurant={title:"Hemingway House Italian Restaurant",url:"https://example.com/restaurants/hemingway-house",summary:"Italian cuisine, dining menu, and reservations."};
+  assert.equal(collectionResultIsRelevant(restaurant,"Arturo Fuente Hemingway House collection"),false);
+  const cigar={title:"Arturo Fuente Hemingway House Collection",url:"https://cigars.example/fuente-hemingway-house",summary:"A documented Fuente cigar collection with perfecto cigars."};
+  assert.equal(collectionResultIsRelevant(cigar,"Arturo Fuente Hemingway House collection"),true);
+});
+
+test("RSS parsing applies the exact collection relevance gate",()=>{
+  const xml=`<rss><channel><item><title>Hemingway House Italian Restaurant</title><link>https://example.com/restaurant</link><description>Italian menu and reservations</description></item><item><title>Arturo Fuente Hemingway House Collection</title><link>https://cigars.example/fuente</link><description>Fuente cigar collection and humidor</description></item></channel></rss>`;
+  const results=parseCollectionSearchRss(xml,"Arturo Fuente Hemingway House collection");
+  assert.equal(results.length,1);assert.match(results[0]!.title,/Arturo Fuente/);
 });
 
 test("collection research infers structured evidence without inventing fields", () => {

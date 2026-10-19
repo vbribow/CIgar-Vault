@@ -34,8 +34,8 @@ test("Cigar Somm bounds an overlong model summary before schema validation",()=>
 test("Cigar Somm shows research progress and releases stalled requests",()=>{
   const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
   assert.match(component,/Researching · \$\{elapsed\}s/);
-  assert.match(component,/30–90 seconds/);
-  assert.match(component,/AbortSignal\.timeout\(105_000\)/);
+  assert.match(component,/under 40 seconds/);
+  assert.match(component,/AbortSignal\.timeout\(50_000\)/);
 });
 
 test("Cigar Somm keeps a URL-selected inventory cigar available outside the shortened dropdown",()=>{
@@ -56,19 +56,19 @@ test("Cigar Somm requires explicit confirmation when a linked cigar belongs to a
   assert.match(component,/collectionChoiceConfirmed:source!=="inventory"\|\|collectionChoiceConfirmed/);
 });
 
-test("Cigar Somm uses the fast source-aware search path for pairing requests",()=>{
+test("Cigar Somm uses the bounded reviewed-knowledge path for pairing requests",()=>{
   const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
   assert.match(service,/gpt-4\.1-mini/);
-  assert.match(service,/search_context_size:"low"/);
-  assert.match(service,/tool_choice:"required"/);
-  assert.match(service,/AbortSignal\.timeout\(60_000\)/);
+  assert.doesNotMatch(service,/tool_choice:"required"/);
+  assert.match(service,/allowedSourceUrls/);
+  assert.match(service,/AbortSignal\.timeout\(35_000\)/);
 });
 test("Cigar Somm requests verified named spirit bottlings and discloses editorial independence",()=>{
  const library=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
  const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
- assert.match(library,/real, currently documented bottlings/);
- assert.match(library,/producer, exact label, and direct verificationUrl/);
- assert.match(library,/official producer or importer product page/);
+ assert.match(library,/named producer and exact bottling only when the supplied approved library directly supports it/);
+ assert.match(library,/set verificationUrl to null/);
+ assert.match(library,/Never invent a bottle or URL/);
  assert.match(library,/IDENTITY LOCK/);
  assert.match(library,/never merge their maker, construction, blend, review evidence, or tasting notes/);
  assert.match(component,/Specific spirits/);

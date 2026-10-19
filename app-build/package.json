@@ -19,6 +19,9 @@
     "verify:release": "node scripts/audit-mobile-reliability.mjs && tsc --noEmit && tsx --test tests/*.test.ts && node scripts/build-app.mjs",
     "rehearse:rollback": "tsx scripts/rehearse-local-release-rollback.ts",
     "audit:migrations": "tsx scripts/audit-migration-safety.ts",
+    "audit:config": "node scripts/audit-production-config.mjs",
+    "reconcile:migrations": "tsx scripts/reconcile-migration-ledger.ts",
+    "preflight:release": "node scripts/release-preflight.mjs",
     "provision:smartsheet": "tsx scripts/provision-smartsheet.ts",
     "import:inventory": "tsx scripts/import-inventory.ts"
   },

@@ -7,7 +7,7 @@ import { exactCatalogMatch } from "./inventory-origin";
 
 export const CigarSommQuestionSchema=z.object({question:z.string().trim().min(3).max(1000),inventoryId:z.string().trim().max(100).optional(),cigarName:z.string().trim().min(3).max(300).optional(),pairingDirection:z.enum(["cigar-to-beverage","occasion-to-cigar"]).default("cigar-to-beverage"),pairingContext:z.string().trim().max(500).optional(),occasion:z.string().trim().max(120).optional(),includeAlcohol:z.boolean().default(true),collectionChoiceConfirmed:z.boolean().default(false)}).strict().refine(value=>value.pairingDirection==="occasion-to-cigar"?Boolean(value.pairingContext&&value.pairingContext.length>=3):Boolean(value.inventoryId||value.cigarName),{message:"Choose a cigar, or describe the drink, meal, time, or occasion you want to pair"});
 const Pairing=z.object({name:z.string(),style:z.string(),why:z.string(),service:z.string()});
-const SpiritPairing=Pairing.extend({producer:z.string().trim().min(2),label:z.string().trim().min(2),verificationUrl:z.string().url()});
+const SpiritPairing=Pairing.extend({producer:z.string().trim().min(2),label:z.string().trim().min(2),verificationUrl:z.string().url().nullable()});
 const ResearchSource=z.object({title:z.string(),url:z.string().url(),publisher:z.string(),supports:z.string()});
 const TastingProfile=z.object({body:z.string(),strength:z.string(),coreNotes:z.array(z.string()).min(1).max(10),development:z.array(z.string()).min(1).max(5),evidence:z.string()});
 const Personalization=z.object({used:z.boolean(),signals:z.array(z.string()).max(5),explanation:z.string()});
@@ -54,12 +54,12 @@ export function enforceSommRecommendationPurity(answer:CigarSommAnswer,allowedIn
  return answer;
 }
 const pairingJson=(required:boolean)=>({type:"array",...(required?{minItems:1}:{}),maxItems:3,items:{type:"object",additionalProperties:false,properties:{name:{type:"string"},style:{type:"string"},why:{type:"string"},service:{type:"string"}},required:["name","style","why","service"]}} as const);
-const spiritPairingJson=(required:boolean)=>({type:"array",...(required?{minItems:1}:{}),maxItems:3,items:{type:"object",additionalProperties:false,properties:{name:{type:"string"},producer:{type:"string"},label:{type:"string"},verificationUrl:{type:"string"},style:{type:"string"},why:{type:"string"},service:{type:"string"}},required:["name","producer","label","verificationUrl","style","why","service"]}} as const);
+const spiritPairingJson=(required:boolean)=>({type:"array",...(required?{minItems:1}:{}),maxItems:3,items:{type:"object",additionalProperties:false,properties:{name:{type:"string"},producer:{type:"string"},label:{type:"string"},verificationUrl:{type:["string","null"]},style:{type:"string"},why:{type:"string"},service:{type:"string"}},required:["name","producer","label","verificationUrl","style","why","service"]}} as const);
 export const cigarSommJsonSchemaFor=(includeAlcohol:boolean)=>({type:"object",additionalProperties:false,properties:{answer:{type:"string",maxLength:600},cigarContext:{type:"string"},cigarRecommendations:{type:"array",maxItems:5,items:{type:"object",additionalProperties:false,properties:{inventoryId:{type:"string"},cigarName:{type:"string"},why:{type:"string"},serviceMoment:{type:"string"}},required:["inventoryId","cigarName","why","serviceMoment"]}},confidence:{type:"string",enum:["High","Medium","Developing"]},personalization:{type:"object",additionalProperties:false,properties:{used:{type:"boolean"},signals:{type:"array",maxItems:5,items:{type:"string"}},explanation:{type:"string"}},required:["used","signals","explanation"]},tastingProfile:{type:"object",additionalProperties:false,properties:{body:{type:"string"},strength:{type:"string"},coreNotes:{type:"array",minItems:1,maxItems:10,items:{type:"string"}},development:{type:"array",minItems:1,maxItems:5,items:{type:"string"}},evidence:{type:"string"}},required:["body","strength","coreNotes","development","evidence"]},basis:{type:"array",maxItems:6,items:{type:"string"}},coffee:pairingJson(true),spirits:spiritPairingJson(includeAlcohol),cocktails:pairingJson(includeAlcohol),nonAlcoholic:pairingJson(true),sources:{type:"array",maxItems:8,items:{type:"object",additionalProperties:false,properties:{title:{type:"string"},url:{type:"string"},publisher:{type:"string"},supports:{type:"string"}},required:["title","url","publisher","supports"]}},cautions:{type:"array",maxItems:4,items:{type:"string"}}},required:["answer","cigarContext","cigarRecommendations","confidence","personalization","tastingProfile","basis","coffee","spirits","cocktails","nonAlcoholic","sources","cautions"]} as const);
 export function requireCompletePairings(answer:CigarSommAnswer,includeAlcohol:boolean){
  const missing=[!answer.coffee.length&&"coffee",!answer.nonAlcoholic.length&&"nonalcoholic",includeAlcohol&&!answer.spirits.length&&"spirits",includeAlcohol&&!answer.cocktails.length&&"cocktails"].filter(Boolean);
  if(missing.length)throw new Error(`Cigar Somm returned an incomplete pairing profile (${missing.join(", ")}). Please analyze again.`);
- if(includeAlcohol&&answer.spirits.some(spirit=>!spirit.producer||!spirit.label||!spirit.verificationUrl))throw new Error("Cigar Somm could not verify a specific spirit label. Please analyze again.");
+ if(includeAlcohol&&answer.spirits.some(spirit=>!spirit.producer||!spirit.label))throw new Error("Cigar Somm could not identify a useful spirit pairing. Please analyze again.");
  return answer;
 }
 
@@ -98,14 +98,14 @@ PAIRING KNOWLEDGE STANDARD:
 - For a selected cigar, provide a dedicated tastingProfile: body, nicotine strength, concise core notes, and likely beginning/middle/final-third development. Ground it in exact-product sources or the collector's tasting history; otherwise label it as a conservative expectation rather than a fact.
 - Do not confuse body with nicotine strength. Do not copy one reviewer's subjective notes as universal experience.
 - Treat constructionQuality and burn as separate physical performance observations. They may qualify confidence in a past tasting, but they are never flavor or nicotine-strength evidence and missing values must remain unknown.
-- Use web research for the exact cigar, brand, blend, vitola, beverage category, spirit style, or cocktail when it would materially improve the answer. Do not present model memory as researched fact.
-- Source priority for cigars: official manufacturer and importer pages; then established cigar-industry publications and documented professional reviews. Source priority for beverages: official producer and appellation or regulatory references; then recognized beverage education, distilling, coffee, tea, and cocktail references.
+- This request uses Hojavía's reviewed knowledge path and does not perform live web research. Treat only the supplied exact inventory, catalog, collector context, and Founder-approved Master Somm Library as evidence. Do not present model memory as researched fact.
+- Include a research source only when its URL appears exactly in the supplied Founder-approved Master Somm Library. Otherwise leave sources empty and label tasting or pairing guidance as a conservative application of general principles.
 - Separate product facts from pairing judgment. Never copy marketing language as objective tasting fact.
 - Cite only direct pages actually used and state what each supports. If reliable exact-product evidence is unavailable, lower confidence and say so.
 - Match beverage intensity to cigar body first; then use flavor bridges or deliberate contrast.
 - Coffee: consider roast level, origin/process, acidity, milk, extraction, temperature, and sweetness. Avoid claiming one origin is universally correct.
 - Spirits: consider proof, oak, sweetness, smoke, fruit, oxidation, and serving dilution. Bourbon/rye, aged rum, Scotch, Irish whiskey, Cognac/Armagnac, brandy, tequila/mezcal, and fortified-wine styles may fit, but recommend only what serves the cigar.
-- When includeAlcohol is true, turn the spirit style into one to three real, currently documented bottlings from named producers. Every spirit object must contain the producer, exact label, and direct verificationUrl. Put the full producer plus label in name (for example, "Appleton Estate 12 Year Rare Casks," never merely "aged rum"). Prefer an official producer or importer product page; use a reliable specialist page only when an official product page is unavailable.
+- When includeAlcohol is true, recommend a named producer and exact bottling only when the supplied approved library directly supports it; use that exact approved URL as verificationUrl. Otherwise recommend a precise spirit style, set producer to "Style recommendation," use the specific style as label and name, and set verificationUrl to null. Never invent a bottle or URL.
 - Do not invent a label, age statement, proof, tasting note, or availability claim. A generic spirit style is not a completed spirit recommendation. If no specific label can be verified, return no alcoholic pairing rather than disguising a category as a bottle; the application will transparently ask the collector to retry.
 - Specific bottles are independent editorial pairing suggestions, never paid placement or an implication that the producer endorses the platform.
 - Cocktails are separate from neat spirits. Consider base spirit, modifiers, sugar, bitterness, acidity, dilution, ice, garnish, and aromatic intensity. Prefer established cocktail styles and prevent an overly sweet, sour, smoky, or high-proof drink from overwhelming the cigar.
@@ -123,6 +123,7 @@ Include alcoholic pairings: ${input.includeAlcohol}
 Selected cigar context: ${JSON.stringify(context)}
 Private collector summary: ${JSON.stringify(collectorContext||null)}
 Founder-approved Master Somm Library: ${JSON.stringify(library.map(record=>({subject:record.subject,factType:record.factType,statement:record.statement,pairingImplications:record.pairingImplications,sourceTitle:record.sourceTitle,sourceUrl:record.sourceUrl,evidenceDate:record.evidenceDate,confidence:record.confidence})))}`;
+const allowedSourceUrls=new Set(library.map(record=>record.sourceUrl).filter(Boolean));
 const model=process.env.OPENAI_SOMM_MODEL?.trim()||"gpt-4.1-mini";
 const response=await fetch("https://api.openai.com/v1/responses",{
  method:"POST",
@@ -130,14 +131,11 @@ const response=await fetch("https://api.openai.com/v1/responses",{
  body:JSON.stringify({
   model,
   store:false,
-  max_output_tokens:2200,
-  tools:[{type:"web_search",search_context_size:"low"}],
-  tool_choice:"required",
-  include:["web_search_call.action.sources"],
+  max_output_tokens:1800,
   input:prompt,
   text:{format:{type:"json_schema",name:"cigar_somm_answer",strict:true,schema:cigarSommJsonSchemaFor(input.includeAlcohol)}},
  }),
- signal:AbortSignal.timeout(60_000),
+ signal:AbortSignal.timeout(35_000),
 });
 const payload=await response.json();
 if(!response.ok)throw new Error((payload as{error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);
@@ -145,5 +143,7 @@ const text=responseOutputText(payload);
 if(!text)throw new Error("Cigar Somm returned no answer");
 const parsed=JSON.parse(text) as Record<string,unknown>;
 if(typeof parsed.answer==="string"&&parsed.answer.length>600) parsed.answer=parsed.answer.slice(0,597).trimEnd()+"…";
+if(Array.isArray(parsed.sources))parsed.sources=parsed.sources.filter(value=>Boolean(value&&typeof value==="object"&&allowedSourceUrls.has(String((value as{url?:unknown}).url||""))));
+if(Array.isArray(parsed.spirits))parsed.spirits=parsed.spirits.map(value=>{if(!value||typeof value!=="object")return value;const spirit={...value} as Record<string,unknown>;if(!allowedSourceUrls.has(String(spirit.verificationUrl||"")))spirit.verificationUrl=null;return spirit});
 const answer=requireCompletePairings(CigarSommAnswerSchema.parse(parsed),input.includeAlcohol);
 return reverse?enforceSommRecommendationPurity(answer,new Set(eligibleCandidates.map(candidate=>candidate.inventoryId)),constraints):answer}

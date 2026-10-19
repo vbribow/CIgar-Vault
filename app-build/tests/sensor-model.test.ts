@@ -41,3 +41,11 @@ test("the sensor page presents every current reading in one dashboard",()=>{
   assert.match(dashboard,/humidity\.toFixed/);
   assert.match(dashboard,/Last successful reading/);
 });
+test("the Humidors page restores the live dashboard beside the Raching humidor",()=>{
+  const page=readFileSync(new URL("../app/humidors/page.tsx",import.meta.url),"utf8");
+  const dashboard=readFileSync(new URL("../components/sensor-dashboard.tsx",import.meta.url),"utf8");
+  assert.match(page,/SensorDashboard sensors=\{sensors\} humidors=\{humidors\} readings=\{readings\}/);
+  assert.match(page,/\.\.\/sensors\/sensors\.css/);
+  assert.match(dashboard,/humidors\.length===1\?`\$\{humidors\[0\]\.name\} dashboard`/);
+  assert.match(dashboard,/No connected sensors are assigned yet/);
+});

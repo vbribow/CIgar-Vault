@@ -5,6 +5,7 @@ import { loadInventory } from "@/lib/inventory";
 import { loadRecentHumidorReadings, loadHumidors, loadSensors } from "@/lib/data";
 import { climateIntelligence } from "@/lib/climate-intelligence";
 import { brand } from "@/lib/brand";
+import { LocalDateTime } from "@/components/local-date-time";
 import "../humidors.css";
 import "./detail.css";
 export const dynamic = "force-dynamic";
@@ -240,7 +241,7 @@ export default async function HumidorDetailPage({
                 <strong>
                   {r.temperatureF}°F · {r.humidity}%
                 </strong>
-                <small>{r.recordedAt.replace("T", " ")}</small>
+                <small><LocalDateTime value={r.recordedAt}/></small>
               </div>
               <span>
                 {r.temperatureF < humidor.minTempF

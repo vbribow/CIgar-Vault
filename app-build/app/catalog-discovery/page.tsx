@@ -2,6 +2,7 @@ import { getCatalog, getCatalogDiscoveries } from "@/lib/smartsheet";
 import { dataMode } from "@/lib/config";
 import { CatalogDiscoveryReview } from "@/components/catalog-discovery-review";
 import { BrandResearchBacklog } from "@/components/brand-research-backlog";
+import { ManufacturerEvidenceBatch } from "@/components/manufacturer-evidence-batch";
 import { brandResearchBacklog, brandResearchSources } from "@/lib/brand-research";
 import { buildCanonicalCigarRecord, canonicalCatalogHref } from "@/lib/canonical-cigar-record";
 import { groupCatalogDiscoveries } from "@/lib/catalog-discovery";
@@ -70,6 +71,7 @@ export default async function CatalogDiscoveryPage({searchParams}:{searchParams:
       </details>
     </section>
     <section className="approvalSection"><div className="researchSectionHead"><div><div className="eyebrow">Release review queue</div><h2>Review the release, not every cigar.</h2></div><p>Each source-backed release is one decision. The review queue highlights duplicates, weak confidence, and conflicting evidence; individual cigar fields stay tucked away unless an exception needs correction.</p></div><CatalogDiscoveryReview initialItems={items} existingCatalog={catalog}/></section>
+    <ManufacturerEvidenceBatch/>
     <BrandResearchBacklog items={backlog}/>
     <section className="sourceRegistry"><div className="researchSectionHead"><div><div className="eyebrow">Monitoring registry</div><h2>Signals lead. Sources prove.</h2></div><p>Trade-show and publication coverage can surface a candidate. Direct manufacturer evidence remains preferred before publishing ownership or manufacturing claims.</p></div><div>{brandResearchSources.map((source)=><a key={source.name} href={source.href} target={source.href.startsWith("http")?"_blank":undefined} rel={source.href.startsWith("http")?"noreferrer":undefined}><span>{source.kind} · {source.cadence}</span><h3>{source.name}</h3><p>{source.use}</p><strong>Open source ↗</strong></a>)}</div></section>
   </main>

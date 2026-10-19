@@ -7,6 +7,7 @@ import type { BrandResearchReport } from "@/lib/brand-research-report";
 
 type ResearchJob = {
   id: string;
+  runId: string;
   status: "queued" | "in_progress" | "completed";
   report?: BrandResearchReport;
 };
@@ -18,6 +19,7 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
   const [report, setReport] = useState<BrandResearchReport | null>(null);
   const [message, setMessage] = useState("");
   const [running, setRunning] = useState(false);
+  const [writeKey,setWriteKey]=useState("");
 
   async function runResearch() {
     setRunning(true);
@@ -26,7 +28,7 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
     try {
       const response = await fetch("/api/brand-research", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-founder-key":writeKey },
         body: JSON.stringify({ brand: item.brand }),
       });
       const result = await response.json();
@@ -36,14 +38,14 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
       while (job.status !== "completed") {
         if (Date.now() >= deadline) throw new Error("Research is still running. Try this brand again in a moment.");
         await wait(2_500);
-        const statusResponse = await fetch(`/api/brand-research?id=${encodeURIComponent(job.id)}`, { cache: "no-store" });
+        const statusResponse = await fetch(`/api/brand-research?id=${encodeURIComponent(job.id)}&runId=${encodeURIComponent(job.runId)}`, { cache: "no-store" });
         const statusResult = await statusResponse.json();
         if (!statusResponse.ok) throw new Error(statusResult.error || "Brand research status failed");
         job = statusResult.data as ResearchJob;
       }
       if (!job.report) throw new Error("Brand research completed without a report");
       setReport(job.report);
-      setMessage("Research complete. Review every claim and source before publication.");
+      setMessage("Research complete. Safe high-confidence official claims entered the Brand Universe; every other claim is waiting for review.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Brand research failed");
     } finally {
@@ -69,8 +71,9 @@ export function BrandResearchWorkspace({ item }: { item: BrandResearchItem }) {
       <div><div className="eyebrow">Live source research</div><h2>Build the evidence report.</h2><p>The research workspace searches primary and established trade sources, keeps line-level factory relationships separate, and returns unresolved questions without guessing.</p></div>
       <div className="brandResearchRunControls">
         <span className="brandResearchAuthorization">Signed-in research workspace</span>
-        <button className="button" type="button" disabled={running} onClick={runResearch}>{running ? "Researching trusted sources…" : `Research ${item.brand}`}</button>
-        <small>The report is a review draft. Nothing publishes automatically.</small>
+        <label><span>Founder write key</span><input type="password" value={writeKey} onChange={event=>setWriteKey(event.target.value)} placeholder="Required before paid research"/></label>
+        <button className="button" type="button" disabled={running||!writeKey} onClick={runResearch}>{running ? "Researching trusted sources…" : `Research ${item.brand}`}</button>
+        <small>This action uses one paid public-web research call. Safe high-confidence official claims can publish automatically; all other claims require review.</small>
         {message && <output aria-live="polite">{message}</output>}
       </div>
     </section>

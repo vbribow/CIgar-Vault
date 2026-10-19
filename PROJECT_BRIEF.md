@@ -9,6 +9,7 @@
 - When Brian approves a code deployment, batch the approved changes into one validated candidate and deploy that same commit to the production origin. A release is complete only after the production domain is verified and the installed-app update path is checked.
 - Report deployment status separately as: validated locally, preview available, production deployed, and installed-app verified. Never collapse these states into a single “deployed” claim.
 - Database migrations, paid services, purchases, public launch, access widening, and partner campaigns remain separately authorized operations.
+- On October 19, 2026 Brian ended additional beta-tester recruitment. The shortest launch path now uses founder-led acceptance with controlled test identities and designated device testing, followed by the seven-day stability window and a founder web-launch decision. Do not make a larger beta cohort or additional tester invitations a launch prerequisite.
 
 ## Product boundaries
 

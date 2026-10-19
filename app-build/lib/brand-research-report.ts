@@ -3,6 +3,7 @@ import { responseOutputText } from "./cigar-vision";
 
 const EvidenceStatus = z.enum(["Verified", "Partially verified", "Unresolved"]);
 const Confidence = z.enum(["High", "Medium", "Low"]);
+const ResearchSourceType = z.enum(["Official", "Verified Historical", "Expert"]);
 
 const EvidenceClaim = z.object({
   value: z.string(),
@@ -11,6 +12,7 @@ const EvidenceClaim = z.object({
   sourceTitle: z.string(),
   sourceUrl: z.string(),
   evidenceDate: z.string(),
+  sourceType: ResearchSourceType,
   notes: z.string(),
 });
 
@@ -31,6 +33,7 @@ export const BrandResearchReportSchema = z.object({
     sourceTitle: z.string(),
     sourceUrl: z.string(),
     evidenceDate: z.string(),
+    sourceType: ResearchSourceType,
     notes: z.string(),
   })).max(20),
   officialSources: z.array(z.object({
@@ -85,9 +88,10 @@ export const brandResearchReportJsonSchema = {
           sourceTitle: { type: "string" },
           sourceUrl: { type: "string" },
           evidenceDate: { type: "string" },
+          sourceType: { type: "string", enum: ["Official", "Verified Historical", "Expert"] },
           notes: { type: "string" },
         },
-        required: ["factory", "country", "lineOrRelease", "productionPeriod", "relationship", "status", "confidence", "sourceTitle", "sourceUrl", "evidenceDate", "notes"],
+        required: ["factory", "country", "lineOrRelease", "productionPeriod", "relationship", "status", "confidence", "sourceTitle", "sourceUrl", "evidenceDate", "sourceType", "notes"],
       },
     },
     officialSources: {
@@ -119,9 +123,10 @@ export const brandResearchReportJsonSchema = {
         sourceTitle: { type: "string" },
         sourceUrl: { type: "string" },
         evidenceDate: { type: "string" },
+        sourceType: { type: "string", enum: ["Official", "Verified Historical", "Expert"] },
         notes: { type: "string" },
       },
-      required: ["value", "status", "confidence", "sourceTitle", "sourceUrl", "evidenceDate", "notes"],
+      required: ["value", "status", "confidence", "sourceTitle", "sourceUrl", "evidenceDate", "sourceType", "notes"],
     },
   },
 } as const;
@@ -179,7 +184,7 @@ Search official manufacturer and brand websites, official press releases, factor
 
 This is a bounded first-pass report, not an exhaustive biography. Use no more than eight strong sources. Prioritize the current owner, named creative contributors, core manufacturing relationships, and documented factory changes. Return remaining lines or periods as unresolved questions for follow-up instead of continuing to search indefinitely.
 
-Every verified or partially verified claim must include a direct attributable source URL, source title, evidence date, and confidence. For an unresolved claim, use "Unresolved" as the value, an empty source URL only when no defensible source exists, and explain the gap. Return only information about premium handmade cigars.
+Every verified or partially verified claim must include a direct attributable source URL, source title, evidence date, confidence, and sourceType. Use Official only for a page controlled by the manufacturer, brand owner, factory, authorized distributor, or named organization making the claim. Use Verified Historical for corroborated archives or established trade reporting, and Expert for attributable interviews or specialist research. For an unresolved claim, use "Unresolved" as the value, an empty source URL only when no defensible source exists, and explain the gap. Return only information about premium handmade cigars.
 
 Keep the structured report concise enough to complete reliably: summary at most 100 words; no more than 4 creative authorship entries; no more than 8 manufacturing relationships; no more than 8 source-ledger entries; no more than 6 unresolved questions; notes at most 45 words each. Never repeat the same evidence in multiple fields.`;
   const response = await fetch("https://api.openai.com/v1/responses", {
