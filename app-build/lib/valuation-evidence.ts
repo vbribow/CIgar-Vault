@@ -9,7 +9,7 @@ export const marketEvidenceTypes = [
 ] as const;
 
 export type MarketEvidenceType = typeof marketEvidenceTypes[number];
-export const marketAskingPriceLabel = "Market asking price — no confirmed sale";
+export const marketAskingPriceLabel = "Listed — sale not verified";
 
 /** Return one navigable source URL from legacy or concatenated evidence text. */
 export function strongestEvidenceUrl(value?: string): string | undefined {

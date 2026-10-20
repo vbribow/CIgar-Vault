@@ -24,5 +24,5 @@ test("valuation renderers identify asking prices as listings with no confirmed s
   const records=read("../components/records-manager.tsx");
   assert.match(inventory,/marketAskingPriceLabel/);
   assert.match(valuations,/marketAskingPriceLabel/);
-  assert.match(records,/Market asking price \/ cigar — no confirmed sale/);
+  assert.match(records,/Listed price \/ cigar — sale not verified/);
 });

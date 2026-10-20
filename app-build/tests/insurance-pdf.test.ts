@@ -42,7 +42,7 @@ test("full-sized insurance PDF is bounded and preserves every valuation evidence
   assert.match(text,/Active lots: 750/);
   assert.match(text,/Known cigars: 7500/);
   assert.match(text,/Retail replacement/);
-  assert.match(text,/Market asking price - no confirmed sale/);
+  assert.match(text,/Listed - sale not verified/);
   assert.match(text,/Estimated market range/);
   assert.match(text,/Verified completed sale/);
   assert.match(text,/Legacy market value - completed sale unverified/);

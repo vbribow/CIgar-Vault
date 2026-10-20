@@ -57,7 +57,7 @@ test("a completed sale requires value, sale date, and direct sold-lot URL",()=>{
 });
 
 test("an unsold listing has one plain universal market-asking label",()=>{
-  assert.equal(marketAskingPriceLabel,"Market asking price — no confirmed sale");
+  assert.equal(marketAskingPriceLabel,"Listed — sale not verified");
   assert.notEqual(marketAskingPriceLabel,"Market value");
   assert.notEqual(marketAskingPriceLabel,"Verified completed sale");
 });
