@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CigarSommQuestionSchema, askCigarSomm } from "@/lib/cigar-somm";
+import { CigarSommQuestionSchema, askCigarSomm, requiresSommCatalog } from "@/lib/cigar-somm";
 import { buildCigarSommCollectorContext } from "@/lib/cigar-somm-context";
 import { loadInventory } from "@/lib/inventory";
 import { loadCatalog } from "@/lib/catalog";
@@ -13,6 +13,8 @@ import {
 } from "@/lib/data";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { authorizeWrite } from "@/lib/config";
+
+export const maxDuration = 60;
 
 async function authorized(request: Request) {
   if (authorizeWrite(request)) return true;
@@ -62,7 +64,9 @@ export async function POST(request: Request) {
       loadHumidors(),
       loadHumidorReadings(),
     ]);
-    const catalog = await loadCatalog(inventory);
+    // The master catalog can require a remote Smartsheet read. Ordinary cigar
+    // pairings never need it; load it only for explicit origin/strength filters.
+    const catalog = requiresSommCatalog(input) ? await loadCatalog(inventory) : [];
     const context = buildCigarSommCollectorContext({
       inventory,
       smokes,
@@ -74,7 +78,7 @@ export async function POST(request: Request) {
       selectedInventoryId: input.inventoryId,
     });
     const data = await askCigarSomm(input, inventory, smokes, context, catalog);
-    await recordFirstPartyUse();
+    void recordFirstPartyUse();
     return NextResponse.json({ data });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Cigar Somm could not answer";

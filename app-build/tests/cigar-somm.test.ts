@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { buildCigarSommFallback, CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, enforceSommRecommendationPurity, parseSommCandidateConstraints, requireCompletePairings, sommLeadSummary, strictSommCandidates, uniqueSommItems } from "../lib/cigar-somm";
+import { buildCigarSommFallback, CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, enforceSommRecommendationPurity, parseSommCandidateConstraints, requireCompletePairings, requiresSommCatalog, sommLeadSummary, strictSommCandidates, uniqueSommItems } from "../lib/cigar-somm";
 
 test("Cigar Somm accepts an inventory-grounded pairing question",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I pair with this after dinner?",inventoryId:"INV-1",occasion:"After dinner",includeAlcohol:true});assert.equal(value.inventoryId,"INV-1");assert.equal(value.includeAlcohol,true)});
 test("Cigar Somm accepts a manually entered cigar without adding inventory",()=>{const value=CigarSommQuestionSchema.parse({question:"Analyze this cigar",cigarName:"Arturo Fuente OpusX Lost City Double Robusto",includeAlcohol:true});assert.equal(value.cigarName,"Arturo Fuente OpusX Lost City Double Robusto");assert.equal(value.inventoryId,undefined)});
 test("Cigar Somm accepts a drink, meal, time, or occasion without forcing a cigar first",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I smoke?",pairingDirection:"occasion-to-cigar",pairingContext:"Morning coffee after breakfast",includeAlcohol:false});assert.equal(value.pairingDirection,"occasion-to-cigar");assert.equal(value.pairingContext,"Morning coffee after breakfast")});
+test("ordinary pairings skip the remote master catalog while exact filters retain it",()=>{
+ assert.equal(requiresSommCatalog(CigarSommQuestionSchema.parse({question:"Pair this cigar",inventoryId:"INV-1",includeAlcohol:true})),false);
+ assert.equal(requiresSommCatalog(CigarSommQuestionSchema.parse({question:"What should I smoke?",pairingDirection:"occasion-to-cigar",pairingContext:"Morning coffee",includeAlcohol:false})),false);
+ assert.equal(requiresSommCatalog(CigarSommQuestionSchema.parse({question:"What should I smoke?",pairingDirection:"occasion-to-cigar",pairingContext:"Medium Nicaraguan cigar",includeAlcohol:false})),true);
+});
 test("Cigar Somm requires context when pairing from a moment to a cigar",()=>{assert.equal(CigarSommQuestionSchema.safeParse({question:"What should I smoke?",pairingDirection:"occasion-to-cigar",includeAlcohol:false}).success,false)});
 test("Cigar Somm requires either an inventory selection or manual cigar",()=>{assert.equal(CigarSommQuestionSchema.safeParse({question:"Analyze this cigar",includeAlcohol:true}).success,false)});
 

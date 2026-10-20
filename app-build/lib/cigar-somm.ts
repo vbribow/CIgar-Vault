@@ -35,6 +35,11 @@ export function parseSommCandidateConstraints(value:string):SommCandidateConstra
  const strength=key==="medium full"||key==="medium-full"?"Medium-full":key==="full"?"Full":key==="medium"?"Medium":key==="mild"?"Mild":undefined;
  return{country,strength};
 }
+export function requiresSommCatalog(input:z.infer<typeof CigarSommQuestionSchema>){
+ if(input.pairingDirection!=="occasion-to-cigar")return false;
+ const constraints=parseSommCandidateConstraints(`${input.question} ${input.pairingContext||""} ${input.occasion||""}`);
+ return Boolean(constraints.country||constraints.strength);
+}
 export function strictSommCandidates(inventory:InventoryItem[],catalog:CatalogCigar[],constraints:SommCandidateConstraints){
  const constrained=Boolean(constraints.country||constraints.strength);
  return inventory.filter(item=>{
