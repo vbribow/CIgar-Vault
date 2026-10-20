@@ -1,16 +1,9 @@
 import { NextResponse } from "next/server";
-import { CigarSommQuestionSchema, askCigarSomm, requiresSommCatalog } from "@/lib/cigar-somm";
+import { CigarSommQuestionSchema, askCigarSomm, buildCigarSommFallback, requiresSommCatalog } from "@/lib/cigar-somm";
 import { buildCigarSommCollectorContext } from "@/lib/cigar-somm-context";
 import { loadInventory } from "@/lib/inventory";
 import { loadCatalog } from "@/lib/catalog";
-import {
-  loadCollections,
-  loadHumidorReadings,
-  loadHumidors,
-  loadSmokingLogs,
-  loadValuations,
-  loadWishlist,
-} from "@/lib/data";
+import { loadSmokingLogs } from "@/lib/data";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { authorizeWrite } from "@/lib/config";
 
@@ -55,29 +48,20 @@ export async function POST(request: Request) {
   }
   try {
     const input = CigarSommQuestionSchema.parse(await request.json());
-    const [inventory, smokes, valuations, wishlist, collections, humidors, readings] = await Promise.all([
-      loadInventory(),
-      loadSmokingLogs(),
-      loadValuations(),
-      loadWishlist(),
-      loadCollections(),
-      loadHumidors(),
-      loadHumidorReadings(),
-    ]);
+    const inventory = input.inventorySnapshot ?? await loadInventory();
+    const smokes = input.smokingSnapshot ?? await loadSmokingLogs();
     // The master catalog can require a remote Smartsheet read. Ordinary cigar
     // pairings never need it; load it only for explicit origin/strength filters.
-    const catalog = requiresSommCatalog(input) ? await loadCatalog(inventory) : [];
+    const catalog = requiresSommCatalog(input) ? await Promise.race([loadCatalog(inventory),new Promise<Awaited<ReturnType<typeof loadCatalog>>>(resolve=>setTimeout(()=>resolve([]),5_000))]) : [];
     const context = buildCigarSommCollectorContext({
       inventory,
       smokes,
-      valuations,
-      wishlist,
-      collections,
-      humidors,
-      readings,
       selectedInventoryId: input.inventoryId,
     });
-    const data = await askCigarSomm(input, inventory, smokes, context, catalog);
+    const data = await Promise.race([
+      askCigarSomm(input, inventory, smokes, context, catalog),
+      new Promise<ReturnType<typeof buildCigarSommFallback>>(resolve=>setTimeout(()=>resolve(buildCigarSommFallback(input,inventory,smokes,catalog)),15_000)),
+    ]);
     void recordFirstPartyUse();
     return NextResponse.json({ data });
   } catch (error) {

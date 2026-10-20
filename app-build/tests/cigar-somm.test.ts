@@ -40,7 +40,17 @@ test("Cigar Somm shows research progress and releases stalled requests",()=>{
   const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
   assert.match(component,/Researching · \$\{elapsed\}s/);
   assert.match(component,/under 40 seconds/);
-  assert.match(component,/AbortSignal\.timeout\(45_000\)/);
+  assert.match(component,/AbortSignal\.timeout\(30_000\)/);
+  assert.match(component,/inventorySnapshot/);
+  assert.match(component,/smokingSnapshot/);
+});
+
+test("Cigar Somm uses page-loaded context and guarantees a server response before the platform timeout",()=>{
+ const route=readFileSync(new URL("../app/api/cigar-somm/route.ts",import.meta.url),"utf8");
+ assert.match(route,/input\.inventorySnapshot \?\?/);
+ assert.match(route,/input\.smokingSnapshot \?\?/);
+ assert.match(route,/buildCigarSommFallback/);
+ assert.match(route,/15_000/);
 });
 
 test("Cigar Somm keeps a URL-selected inventory cigar available outside the shortened dropdown",()=>{
