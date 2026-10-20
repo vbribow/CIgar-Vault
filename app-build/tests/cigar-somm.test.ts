@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, enforceSommRecommendationPurity, parseSommCandidateConstraints, requireCompletePairings, sommLeadSummary, strictSommCandidates, uniqueSommItems } from "../lib/cigar-somm";
+import { buildCigarSommFallback, CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, enforceSommRecommendationPurity, parseSommCandidateConstraints, requireCompletePairings, sommLeadSummary, strictSommCandidates, uniqueSommItems } from "../lib/cigar-somm";
 
 test("Cigar Somm accepts an inventory-grounded pairing question",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I pair with this after dinner?",inventoryId:"INV-1",occasion:"After dinner",includeAlcohol:true});assert.equal(value.inventoryId,"INV-1");assert.equal(value.includeAlcohol,true)});
 test("Cigar Somm accepts a manually entered cigar without adding inventory",()=>{const value=CigarSommQuestionSchema.parse({question:"Analyze this cigar",cigarName:"Arturo Fuente OpusX Lost City Double Robusto",includeAlcohol:true});assert.equal(value.cigarName,"Arturo Fuente OpusX Lost City Double Robusto");assert.equal(value.inventoryId,undefined)});
@@ -35,7 +35,7 @@ test("Cigar Somm shows research progress and releases stalled requests",()=>{
   const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
   assert.match(component,/Researching · \$\{elapsed\}s/);
   assert.match(component,/under 40 seconds/);
-  assert.match(component,/AbortSignal\.timeout\(50_000\)/);
+  assert.match(component,/AbortSignal\.timeout\(45_000\)/);
 });
 
 test("Cigar Somm keeps a URL-selected inventory cigar available outside the shortened dropdown",()=>{
@@ -61,7 +61,19 @@ test("Cigar Somm uses the bounded reviewed-knowledge path for pairing requests",
   assert.match(service,/gpt-4\.1-mini/);
   assert.doesNotMatch(service,/tool_choice:"required"/);
   assert.match(service,/allowedSourceUrls/);
-  assert.match(service,/AbortSignal\.timeout\(35_000\)/);
+  assert.match(service,/AbortSignal\.timeout\(25_000\)/);
+  assert.match(service,/buildCigarSommFallback/);
+});
+
+test("Cigar Somm returns a complete evidence-safe recovery answer when synthesis cannot complete",()=>{
+ const input=CigarSommQuestionSchema.parse({question:"Pair this cigar",inventoryId:"INV-1",includeAlcohol:true});
+ const answer=buildCigarSommFallback(input,[{inventoryId:"INV-1",brand:"Test",line:"Reserva",vitola:"Toro",currentQty:2}],[]);
+ assert.equal(answer.confidence,"Developing");
+ assert.equal(answer.coffee.length,1);
+ assert.equal(answer.spirits.length,1);
+ assert.equal(answer.cocktails.length,1);
+ assert.equal(answer.nonAlcoholic.length,1);
+ assert.match(answer.cautions[0],/recovery path/);
 });
 test("Cigar Somm requests verified named spirit bottlings and discloses editorial independence",()=>{
  const library=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");

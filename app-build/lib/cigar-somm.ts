@@ -78,6 +78,33 @@ export function uniqueSommItems(values:string[]){
  return values.filter(value=>{const key=cleanSommText(value).toLowerCase();if(!key||seen.has(key))return false;seen.add(key);return true});
 }
 
+function fallbackPairing(name:string,style:string,why:string,service:string){return{name,style,why,service}}
+export function buildCigarSommFallback(input:z.infer<typeof CigarSommQuestionSchema>,inventory:InventoryItem[],smokes:SmokingLog[],catalog:CatalogCigar[]=[]):CigarSommAnswer{
+ const reverse=input.pairingDirection==="occasion-to-cigar",selected=input.inventoryId?inventory.find(item=>item.inventoryId===input.inventoryId):undefined;
+ const constraints=reverse?parseSommCandidateConstraints(`${input.question} ${input.pairingContext||""} ${input.occasion||""}`):{};
+ const candidates=reverse?strictSommCandidates(inventory,catalog,constraints).slice(0,3):[];
+ if(reverse&&!candidates.length)throw new Error("No available Vault cigar matches the requested evidence filters. Try broadening one filter.");
+ const identity=selected?`${selected.brand} ${selected.line} ${selected.vitola}`.replace(/\s+/g," ").trim():input.cigarName||(candidates[0]?`${candidates[0].brand} ${candidates[0].line} ${candidates[0].vitola}`.replace(/\s+/g," ").trim():"Selected cigar");
+ const exact=selected?exactCatalogMatch(selected,catalog):candidates[0]?exactCatalogMatch(candidates[0],catalog):undefined;
+ const tastings=selected?smokes.filter(smoke=>smoke.inventoryId===selected.inventoryId).slice(-5):[];
+ const notes=uniqueSommItems(tastings.flatMap(smoke=>String(smoke.tastingNotes||"").split(/[,;·]/)).map(value=>value.trim()).filter(Boolean)).slice(0,6);
+ const strength=exact?.strength||tastings.map(smoke=>smoke.strength).find(Boolean)||"Not yet documented";
+ const body=/full/i.test(String(strength))?"Full":/mild/i.test(String(strength))?"Mild":"Medium";
+ const coffee=fallbackPairing(body==="Full"?"Espresso or moka coffee":"Medium-roast coffee",body==="Full"?"Concentrated, low-acid":"Balanced roast","A measured coffee pairing supports the cigar without inventing exact flavor claims.","Serve unsweetened first; add milk only if the cigar feels sharper than expected.");
+ const nonAlcoholic=fallbackPairing("Sparkling mineral water","Cold, neutral palate reset","Carbonation refreshes the palate without competing with an uncertain cigar profile.","Serve well chilled in a clean glass.");
+ const spirits=input.includeAlcohol?[fallbackPairing(body==="Full"?"Aged rum":"Mature brandy",body==="Full"?"Oak-led, moderately sweet style":"Rounded, fruit-led style","The style offers weight and sweetness while the exact cigar profile is still being confirmed.","Start with a small neat pour; add a few drops of water if alcohol dominates.") as CigarSommAnswer["spirits"][number]]:[];
+ if(spirits[0])Object.assign(spirits[0],{producer:"Style recommendation",label:spirits[0].name,verificationUrl:null});
+ const cocktails=input.includeAlcohol?[fallbackPairing("Old Fashioned style","Spirit-forward and lightly sweetened","A restrained build preserves balance better than a highly acidic or heavily sweet cocktail.","Use modest sugar, full dilution, and one large cube.")]:[];
+ const cigarRecommendations=candidates.map(item=>({inventoryId:item.inventoryId,cigarName:`${item.brand} ${item.line} ${item.vitola}`.replace(/\s+/g," ").trim(),why:`Available in your Vault${constraints.country?` with exact ${constraints.country} catalog evidence`:""}${constraints.strength?` and ${constraints.strength} strength evidence`:""}.`,serviceMoment:input.pairingContext||input.occasion||"Your stated occasion"}));
+ return CigarSommAnswerSchema.parse({
+  answer:reverse?`${cigarRecommendations[0].cigarName} is the strongest evidence-matched choice currently available in your Vault. This quick recommendation preserves your requested filters while deeper synthesis is temporarily unavailable.`:`${identity} can still be paired confidently at the style level while deeper synthesis is temporarily unavailable. These recommendations are intentionally conservative and avoid unsupported product or flavor claims.`,
+  cigarContext:reverse?cigarRecommendations[0].cigarName:identity,cigarRecommendations,confidence:"Developing",
+  personalization:{used:Boolean(selected||candidates.length),signals:[selected?"Selected from your Vault":"Available Vault inventory"],explanation:"This recovery answer uses only the selected or eligible Vault record and documented catalog evidence."},
+  tastingProfile:{body,strength:String(strength),coreNotes:notes.length?notes:["Exact tasting notes not yet documented"],development:["Reassess the cigar after the opening third","Adjust the pairing only if the cigar gains strength or sweetness"],evidence:notes.length?"Based on your recorded tasting notes; broader profile synthesis was unavailable.":"Conservative expectation only; no exact tasting evidence was asserted."},
+  basis:["Intensity balance","Evidence-safe recovery guidance"],coffee:[coffee],spirits,cocktails,nonAlcoholic:[nonAlcoholic],sources:[],cautions:["Cigar Somm used its immediate recovery path because full synthesis did not complete.","Pairing remains subjective; begin with a small serving."]
+ });
+}
+
 export async function askCigarSomm(input:z.infer<typeof CigarSommQuestionSchema>,inventory:InventoryItem[],smokes:SmokingLog[],collectorContext?:CigarSommCollectorContext,catalog:CatalogCigar[]=[]){const apiKey=process.env.OPENAI_API_KEY?.trim();if(!apiKey)throw new Error("Cigar Somm is not configured");const reverse=input.pairingDirection==="occasion-to-cigar";const item=input.inventoryId?inventory.find(value=>value.inventoryId===input.inventoryId):undefined;if(input.inventoryId&&!item)throw new Error("The selected inventory cigar was not found");const collectionSiblings=item?.collectionId?inventory.filter(value=>value.collectionId===item.collectionId&&value.inventoryId!==item.inventoryId):[];if(collectionSiblings.length&&!input.collectionChoiceConfirmed)throw new Error("This collection contains multiple cigars. Confirm the exact cigar before Cigar Somm can continue.");const tastings=item?smokes.filter(value=>value.inventoryId===item.inventoryId).slice(-5):[];const collectionCompanions=collectionSiblings.map(value=>({brand:value.brand,line:value.line,vitola:value.vitola}));const constraints=reverse?parseSommCandidateConstraints(`${input.question} ${input.pairingContext||""} ${input.occasion||""}`):{};const eligibleCandidates=reverse?strictSommCandidates(inventory,catalog,constraints):[];if(reverse&&(constraints.country||constraints.strength)&&!eligibleCandidates.length)throw new Error(`No available Vault cigar has exact catalog evidence for ${[constraints.strength,constraints.country].filter(Boolean).join(" · ")}. Hojavía will not substitute cigars from another origin or intensity.`);const ownedCandidates=eligibleCandidates.slice(0,150).map(value=>{const evidence=exactCatalogMatch(value,catalog);return{inventoryId:value.inventoryId,brand:value.brand,line:value.line,vitola:value.vitola,vintage:value.vintage,quantity:value.currentQty,score:value.score,notes:value.notes,country:evidence?.country,strength:evidence?.strength,evidenceSourceUrl:evidence?.sourceUrl}});const context=reverse?{source:"reverse pairing",pairingContext:input.pairingContext,strictConstraints:constraints,ownedCandidates}:item?{source:"owned inventory",inventoryId:item.inventoryId,exactIdentity:{makerOrBrand:item.brand,line:item.line,physicalVitola:item.vitola,vintage:item.vintage},collectionCompanions,quantity:item.currentQty,status:item.status,personalScore:item.score,notes:item.notes,tastings:tastings.map(value=>({overall:value.overall,strength:value.strength,sweetness:value.sweetness,flavor:value.flavor,constructionQuality:value.construction,burn:value.burn,notes:value.tastingNotes,buyAgain:value.buyAgain}))}:{source:"manual entry",cigarName:input.cigarName};const cigarIdentity=item?`${item.brand} ${item.line} ${item.vitola}`:input.cigarName||input.pairingContext||"";const library=relevantKnowledge(`${input.question} ${cigarIdentity}`,await loadKnowledge("approved"));const prompt=`You are Cigar Somm, a premium cigar advisor. Answer the collector's question using their supplied inventory, tasting context, and founder-approved Master Somm Library when available. Be refined, concise, useful, and candid about uncertainty.
 
 PERSONALIZATION AND PRIVACY:
@@ -125,7 +152,7 @@ Private collector summary: ${JSON.stringify(collectorContext||null)}
 Founder-approved Master Somm Library: ${JSON.stringify(library.map(record=>({subject:record.subject,factType:record.factType,statement:record.statement,pairingImplications:record.pairingImplications,sourceTitle:record.sourceTitle,sourceUrl:record.sourceUrl,evidenceDate:record.evidenceDate,confidence:record.confidence})))}`;
 const allowedSourceUrls=new Set(library.map(record=>record.sourceUrl).filter(Boolean));
 const model=process.env.OPENAI_SOMM_MODEL?.trim()||"gpt-4.1-mini";
-const response=await fetch("https://api.openai.com/v1/responses",{
+try{const response=await fetch("https://api.openai.com/v1/responses",{
  method:"POST",
  headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},
  body:JSON.stringify({
@@ -135,15 +162,16 @@ const response=await fetch("https://api.openai.com/v1/responses",{
   input:prompt,
   text:{format:{type:"json_schema",name:"cigar_somm_answer",strict:true,schema:cigarSommJsonSchemaFor(input.includeAlcohol)}},
  }),
- signal:AbortSignal.timeout(35_000),
+ signal:AbortSignal.timeout(25_000),
 });
-const payload=await response.json();
-if(!response.ok)throw new Error((payload as{error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);
-const text=responseOutputText(payload);
-if(!text)throw new Error("Cigar Somm returned no answer");
-const parsed=JSON.parse(text) as Record<string,unknown>;
-if(typeof parsed.answer==="string"&&parsed.answer.length>600) parsed.answer=parsed.answer.slice(0,597).trimEnd()+"…";
-if(Array.isArray(parsed.sources))parsed.sources=parsed.sources.filter(value=>Boolean(value&&typeof value==="object"&&allowedSourceUrls.has(String((value as{url?:unknown}).url||""))));
-if(Array.isArray(parsed.spirits))parsed.spirits=parsed.spirits.map(value=>{if(!value||typeof value!=="object")return value;const spirit={...value} as Record<string,unknown>;if(!allowedSourceUrls.has(String(spirit.verificationUrl||"")))spirit.verificationUrl=null;return spirit});
-const answer=requireCompletePairings(CigarSommAnswerSchema.parse(parsed),input.includeAlcohol);
-return reverse?enforceSommRecommendationPurity(answer,new Set(eligibleCandidates.map(candidate=>candidate.inventoryId)),constraints):answer}
+ const payload=await response.json();
+ if(!response.ok)throw new Error((payload as{error?:{message?:string}}).error?.message||`OpenAI request failed (${response.status})`);
+ const text=responseOutputText(payload);
+ if(!text)throw new Error("Cigar Somm returned no answer");
+ const parsed=JSON.parse(text) as Record<string,unknown>;
+ if(typeof parsed.answer==="string"&&parsed.answer.length>600) parsed.answer=parsed.answer.slice(0,597).trimEnd()+"…";
+ if(Array.isArray(parsed.sources))parsed.sources=parsed.sources.filter(value=>Boolean(value&&typeof value==="object"&&allowedSourceUrls.has(String((value as{url?:unknown}).url||""))));
+ if(Array.isArray(parsed.spirits))parsed.spirits=parsed.spirits.map(value=>{if(!value||typeof value!=="object")return value;const spirit={...value} as Record<string,unknown>;if(!allowedSourceUrls.has(String(spirit.verificationUrl||"")))spirit.verificationUrl=null;return spirit});
+ const answer=requireCompletePairings(CigarSommAnswerSchema.parse(parsed),input.includeAlcohol);
+ return reverse?enforceSommRecommendationPurity(answer,new Set(eligibleCandidates.map(candidate=>candidate.inventoryId)),constraints):answer
+}catch(error){console.warn("Cigar Somm synthesis failed; using recovery response",{reason:error instanceof Error?error.name:"Unknown error"});return buildCigarSommFallback(input,inventory,smokes,catalog)}}
