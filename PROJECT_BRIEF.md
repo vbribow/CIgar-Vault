@@ -14,5 +14,6 @@
 ## Product boundaries
 
 - Keep the public website separate from the private collector application.
+- Apply a five-diamond-caliber hospitality standard to every Hojavía interaction: anticipatory, polished, calm, precise, personal, and gracious in recovery. This is an internal service standard, not a claim of affiliation with or recognition by AAA, Michelin, or any other rating organization. Expertise should remain welcoming, with useful preparation, alternatives, and accommodations.
 - Preserve collector inventory, exact cigar identity, physical-lot distinctions, provenance, and evidence-led valuation rules.
 - Do not launch partner campaigns, especially anything involving Fox Cigars, without Brian’s explicit approval.

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { buildCigarSommFallback, CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, enforceSommRecommendationPurity, parseSommCandidateConstraints, requireCompletePairings, requiresSommCatalog, sommLeadSummary, strictSommCandidates, uniqueSommItems } from "../lib/cigar-somm";
+import { buildCigarSommFallback, CigarSommAnswerSchema, CigarSommQuestionSchema, cigarSommJsonSchemaFor, cleanSommText, enforceSommRecommendationPurity, knowledgeBasedCocktails, knowledgeBasedSpirits, parseSommCandidateConstraints, requireCompletePairings, requiresSommCatalog, sommLeadSummary, strictSommCandidates, uniqueSommItems } from "../lib/cigar-somm";
 
 test("Cigar Somm accepts an inventory-grounded pairing question",()=>{const value=CigarSommQuestionSchema.parse({question:"What should I pair with this after dinner?",inventoryId:"INV-1",occasion:"After dinner",includeAlcohol:true});assert.equal(value.inventoryId,"INV-1");assert.equal(value.includeAlcohol,true)});
 test("Cigar Somm accepts a manually entered cigar without adding inventory",()=>{const value=CigarSommQuestionSchema.parse({question:"Analyze this cigar",cigarName:"Arturo Fuente OpusX Lost City Double Robusto",includeAlcohol:true});assert.equal(value.cigarName,"Arturo Fuente OpusX Lost City Double Robusto");assert.equal(value.inventoryId,undefined)});
@@ -85,11 +85,21 @@ test("Cigar Somm returns a complete evidence-safe recovery answer when synthesis
  const answer=buildCigarSommFallback(input,[{inventoryId:"INV-1",brand:"Test",line:"Reserva",vitola:"Toro",currentQty:2}],[]);
  assert.equal(answer.confidence,"Developing");
  assert.equal(answer.coffee.length,1);
- assert.equal(answer.spirits.length,1);
- assert.equal(answer.cocktails.length,1);
+ assert.equal(answer.spirits.length,2);
+ assert.equal(answer.cocktails.length,2);
  assert.equal(answer.nonAlcoholic.length,1);
  assert.match(answer.cautions[0],/recovery path/);
 });
+test("recovery uses distinct spirit and cocktail reasoning instead of one default drink",()=>{
+ const delicateCocktails=knowledgeBasedCocktails("Mild","delicate cedar almond afternoon",2),richCocktails=knowledgeBasedCocktails("Full","dark chocolate earth espresso after dinner",2);
+ const delicateSpirits=knowledgeBasedSpirits("Mild","delicate cedar almond afternoon",2),richSpirits=knowledgeBasedSpirits("Full","dark chocolate earth espresso after dinner",2);
+ assert.equal(delicateCocktails[0].name,"Bamboo");
+ assert.equal(richCocktails[0].name,"Manhattan");
+ assert.equal(delicateSpirits[0].name,"Oloroso or Amontillado sherry");
+ assert.equal(richSpirits[0].name,"Aged rum");
+ assert.notDeepEqual(delicateCocktails.map(item=>item.name),richCocktails.map(item=>item.name));
+});
+test("Cigar Somm applies a fine-hospitality service standard without claiming affiliation",()=>{const service=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");assert.match(service,/Michelin-caliber hospitality mindset without claiming Michelin affiliation/);assert.match(service,/pour size, temperature, dilution, glassware, ice, garnish, sequence, and pacing/);assert.match(service,/Avoid snobbery/)});
 test("Cigar Somm requests verified named spirit bottlings and discloses editorial independence",()=>{
  const library=readFileSync(new URL("../lib/cigar-somm.ts",import.meta.url),"utf8");
  const component=readFileSync(new URL("../components/cigar-somm.tsx",import.meta.url),"utf8");
