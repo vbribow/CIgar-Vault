@@ -233,7 +233,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
 <RatingLeafMark value={item.averageScore} label="Your score" compact/>
-</article>)}</div>{!data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Add a 1–100 score to a smoking experience with an exact cigar identity. Your list will update automatically.</p></div>}</section>
+</article>)}</div>{loading ? <div className="emptyState" role="status">Loading your Top 10…</div> : !data.myTop10.length && <div className="emptyState"><strong>Your Top 10 is ready to take shape.</strong><p>Add a 1–100 score to a smoking experience with an exact cigar identity. Your list will update automatically.</p></div>}</section>
       <div className="communityLayout">
       <section id="top-25">
 <div className="sectionHead">
@@ -252,7 +252,7 @@ export function CommunityHub({ inventoryOptions = [], initialTab = "board" }: { 
 <span>{item.vitola}{item.vintage ? ` · ${item.vintage}` : ""}</span>
 </div>
 <RatingLeafMark value={item.weightedScore} label={`${brand.name} score`} detail={`${item.averageScore} average · ${item.ratingCount} rating${item.ratingCount === 1 ? "" : "s"} · ${item.confidence}`} compact/>
-</article>)}</div>{!data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the {brand.labels.communityRanking} without invented scores or promotional placement.</p></div>}</section>
+</article>)}</div>{loading ? <div className="emptyState" role="status">Loading the {brand.labels.communityRanking}…</div> : !data.top25.length && <div className="emptyState"><strong>The ranking is waiting for credible experience.</strong><p>Published collector ratings will establish the {brand.labels.communityRanking} without invented scores or promotional placement.</p></div>}</section>
       <form id="rate-a-cigar" className="communityForm" onSubmit={submitRating} aria-busy={ratingMutation.pending}>
 <div className="eyebrow">Rate a cigar</div>
 <h2>Document your experience</h2>

@@ -102,6 +102,12 @@ test("Collector 25 is the prominent default community destination",()=>{
  assert.match(page,/brand\.labels\.communityRanking/);
 });
 
+test("rankings show loading feedback instead of false empty states while community data loads",()=>{
+ const component=readFileSync(new URL("../components/community-hub.tsx",import.meta.url),"utf8");
+ assert.match(component,/loading \? <div className="emptyState" role="status">Loading your Top 10…<\/div> : !data\.myTop10\.length/);
+ assert.match(component,/loading \? <div className="emptyState" role="status">Loading the \{brand\.labels\.communityRanking\}…<\/div> : !data\.top25\.length/);
+});
+
 test("manual ratings remain writable before the contribution-source migration",()=>{
  const route=readFileSync(new URL("../app/api/community/route.ts",import.meta.url),"utf8");
  assert.match(route,/contributionSourceUnavailable/);
