@@ -11,6 +11,5 @@ test("Vault smoke saves use the selected lot revision and reject concurrent quan
   assert.match(route,/import \{ consumeInventory, normalizeInventory \} from "@\/lib\/inventory-model"/);
   assert.match(route,/saveOwnedRecordIfUnchanged\("inventory",inventory\.inventoryId,consumeInventory\(inventory,item\.quantitySmoked \?\? 1\),expectedRevision,normalizeInventory\)/);
   assert.match(route,/deleteOwnedRecord\("smokes",item\.smokeId\)/);
-  assert.match(storage,/\.eq\("payload", current\.payload\)/);
-  assert.doesNotMatch(storage,/\.eq\("updated_at", current\.updated_at\)/);
+  assert.match(storage,/\.eq\("updated_at", current\.updated_at\)/);
 });

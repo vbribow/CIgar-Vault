@@ -44,6 +44,5 @@ test("inventory and photo saves reject stale records instead of overwriting them
   assert.match(inventoryRoute, /saveOwnedRecordIfUnchanged/);
   assert.match(photoRoute, /saveOwnedRecordIfUnchanged/);
   assert.match(photoRoute, /newer record was preserved/);
-  assert.match(ownedRecords, /\.eq\("payload", current\.payload\)/);
-  assert.doesNotMatch(ownedRecords, /\.eq\("updated_at", current\.updated_at\)/);
+  assert.match(ownedRecords, /\.eq\("updated_at", current\.updated_at\)/);
 });

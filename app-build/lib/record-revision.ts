@@ -3,7 +3,11 @@ function stable(value: unknown): unknown {
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
-        .filter(([, entry]) => entry !== undefined)
+        // `addedAt` is derived from the vault row's creation timestamp when a
+        // record is loaded. It is presentation metadata, not part of the
+        // collector's stored payload, so including it makes an unchanged
+        // loaded record disagree with that same record read for an atomic save.
+        .filter(([key, entry]) => key !== "addedAt" && entry !== undefined)
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([key, entry]) => [key, stable(entry)]),
     );

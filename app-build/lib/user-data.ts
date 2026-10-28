@@ -107,11 +107,7 @@ export async function saveOwnedRecordIfUnchanged<T = unknown>(
     .eq("user_id", context.user.id)
     .eq("kind", kind)
     .eq("record_id", recordId)
-    // Compare the record itself instead of its formatted timestamp. PostgREST
-    // can return a timestamptz in a representation that does not round-trip
-    // through an equality filter, which falsely reported a mobile Vault lot as
-    // changed even though its payload was still the exact record we reviewed.
-    .eq("payload", current.payload)
+    .eq("updated_at", current.updated_at)
     .select("record_id")
     .maybeSingle();
   if (saveError) throw saveError;
