@@ -7,6 +7,7 @@ test("Vault smoke saves use the selected lot revision and reject concurrent quan
   const route=readFileSync(new URL("../app/api/smoking-log/route.ts",import.meta.url),"utf8");
   assert.match(manager,/"if-match":recordRevision\(selectedSmokeInventory\)/);
   assert.match(route,/request\.headers\.get\("if-match"\)/);
-  assert.match(route,/saveOwnedRecordIfUnchanged\("inventory",inventory\.inventoryId,consumeInventory/);
+  assert.match(route,/import \{ consumeInventory, normalizeInventory \} from "@\/lib\/inventory-model"/);
+  assert.match(route,/saveOwnedRecordIfUnchanged\("inventory",inventory\.inventoryId,consumeInventory\(inventory,item\.quantitySmoked \?\? 1\),expectedRevision,normalizeInventory\)/);
   assert.match(route,/deleteOwnedRecord\("smokes",item\.smokeId\)/);
 });
