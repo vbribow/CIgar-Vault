@@ -5,9 +5,12 @@ import {readFileSync} from "node:fs";
 test("Vault smoke saves use the selected lot revision and reject concurrent quantity changes",()=>{
   const manager=readFileSync(new URL("../components/records-manager.tsx",import.meta.url),"utf8");
   const route=readFileSync(new URL("../app/api/smoking-log/route.ts",import.meta.url),"utf8");
+  const storage=readFileSync(new URL("../lib/user-data.ts",import.meta.url),"utf8");
   assert.match(manager,/"if-match":recordRevision\(selectedSmokeInventory\)/);
   assert.match(route,/request\.headers\.get\("if-match"\)/);
   assert.match(route,/import \{ consumeInventory, normalizeInventory \} from "@\/lib\/inventory-model"/);
   assert.match(route,/saveOwnedRecordIfUnchanged\("inventory",inventory\.inventoryId,consumeInventory\(inventory,item\.quantitySmoked \?\? 1\),expectedRevision,normalizeInventory\)/);
   assert.match(route,/deleteOwnedRecord\("smokes",item\.smokeId\)/);
+  assert.match(storage,/\.eq\("payload", current\.payload\)/);
+  assert.doesNotMatch(storage,/\.eq\("updated_at", current\.updated_at\)/);
 });
