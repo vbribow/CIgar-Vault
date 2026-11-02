@@ -7,5 +7,7 @@ const source = readFileSync(new URL("../components/inventory-record-tools.tsx", 
 test("individual records expose correction and photo tools with server refresh", () => {
   assert.match(source, /InventoryCorrectionAssistant/);
   assert.match(source, /PhotoManager/);
+  assert.match(source, /id="record-photos-anchor"/);
+  assert.ok(source.indexOf("<PhotoManager") < source.indexOf("<InventoryCorrectionAssistant"));
   assert.match(source, /router\.refresh\(\)/);
 });

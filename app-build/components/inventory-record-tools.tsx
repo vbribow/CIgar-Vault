@@ -20,7 +20,9 @@ export function InventoryRecordTools({ initialItem, inventory, mode }: { initial
   const router = useRouter();
   function synchronize(updated: InventoryItem) { setItem(updated); router.refresh(); }
   return <>
+    <div id="record-photos-anchor" className="recordPhotosAnchor" tabIndex={-1}>
+      <PhotoManager item={item} onAttached={synchronize} />
+    </div>
     <InventoryCorrectionAssistant item={item} inventory={inventory} mode={mode} onApplied={synchronize} />
-    <PhotoManager item={item} onAttached={synchronize} />
   </>;
 }

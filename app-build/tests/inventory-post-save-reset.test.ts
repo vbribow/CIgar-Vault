@@ -23,6 +23,6 @@ test("an opened record offers exact quantity editing and photo attachment",()=>{
   assert.match(page,/const inlineEditHref="#inventory-editor"/);
   assert.match(page,/href=\{inlineEditHref\}>Edit box or cigar quantity/);
   assert.match(page,/Edit box or cigar quantity/);
-  assert.match(page,/href="#record-photos">Add photos/);
+  assert.match(page,/href="#record-photos-anchor">Add photos/);
   assert.match(photos,/id="record-photos"/);
 });
