@@ -148,7 +148,7 @@ export function PhotoInventoryIntake({ catalog, inventory, mode, onDraft, onAppr
     try {
       let response: Response;
       if (kind === "text") response = await fetchWithTimeout("/api/photo-identification", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query }) }, 25_000);
-      else { const form = new FormData(); for (const photo of photos) form.append("photos", await preparedPhoto(photo.file)); response = await fetchWithTimeout("/api/photo-identification", { method: "POST", body: form }, 25_000); }
+      else { const form = new FormData(); for (const photo of photos) form.append("photos", await preparedPhoto(photo.file)); if(query.trim())form.set("context",query.trim()); response = await fetchWithTimeout("/api/photo-identification", { method: "POST", body: form }, 85_000); }
       const result = await response.json(); if (!response.ok) throw new Error(result.error || "Identification failed"); if (requestId === identificationRequest.current) applyIdentification(result.data);
     } catch (error) { if (requestId === identificationRequest.current) setMessage(error instanceof RequestTimeoutError ? "Identification is taking longer than expected. Your photos are still selected—try again when you’re ready." : error instanceof Error ? error.message : "Identification failed"); } finally { if (requestId === identificationRequest.current) { setAnalyzing(false); setAnalysisKind(null); } }
   }

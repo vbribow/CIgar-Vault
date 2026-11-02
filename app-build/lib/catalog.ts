@@ -1,11 +1,13 @@
 import { dataMode } from "./config";
 import { canonicalCigarIdentity, cigarProductKey } from "./cigar-identity";
+import { curatedCatalogSeeds } from "./catalog-curated-seeds";
 import { getCatalog } from "./smartsheet";
 import type { CatalogCigar, InventoryItem } from "./types";
 
 export function mergeCatalogRecords(master: CatalogCigar[], inventory: InventoryItem[]): CatalogCigar[] {
   const combined: unknown[] = [
     ...master,
+    ...curatedCatalogSeeds,
     ...inventory.map((item) => ({ catalogId: item.catalogId || canonicalCigarIdentity(item).identityId, brand: item.brand, line: item.line, vitola: item.vitola })),
   ];
   const seen = new Set<string>();

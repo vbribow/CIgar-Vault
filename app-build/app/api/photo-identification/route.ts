@@ -3,6 +3,7 @@ import { authorizeWrite } from "@/lib/config";
 import { CigarVisionResultSchema, cigarVisionJsonSchema, reconcileVisionQuantityProposal, responseOutputText } from "@/lib/cigar-vision";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 import { retryableVisionFailure, visionFailureMessage } from "@/lib/photo-identification";
+import { photoIdentificationHints } from "@/lib/catalog-curated-seeds";
 
 export const runtime="nodejs";
 export const maxDuration=120;
@@ -37,7 +38,8 @@ export async function POST(request: Request) {
       if (files.some((file) => !allowedTypes.has(file.type))) return NextResponse.json({ error: "Use JPG, PNG, or WebP photos" }, { status: 415 });
       if (files.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_BYTES) return NextResponse.json({ error: "The prepared photos exceed the 4 MB analysis limit" }, { status: 413 });
       images = await Promise.all(files.map(async (file) => ({ type: "input_image" as const, image_url: `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`, detail: "high" as const })));
-      prompt = "Identify the cigar inventory represented by these views of exactly one physical asset. Reconcile all photos as front, back, band, seal, box-code, and contents views of that same asset. Read visible manufacturer, line or collection, named cigar/vitola, release or vintage year, packaging, factory/box code, and count. Distinguish a sealed or full box from an open box and loose sticks. A printed box capacity is sticksPerBox; visible remaining cigars are not automatically a full box. Never infer ownership quantity from packaging capacity. Never invent missing details: use empty strings or nulls and list ambiguity and alternate matches in uncertainties. Return manufacturer as brand, product family or collection as line, and the exact named cigar, vitola, or assortment as vitola. This result is only a review draft and must not save inventory.";
+      const collectorContext=String(form.get("context")||"").trim().slice(0,500);
+      prompt = `Identify the cigar inventory represented by these views of exactly one physical asset. Reconcile all photos as front, back, band, seal, box-code, and contents views of that same asset. Read visible manufacturer, line or collection, named cigar/vitola, release or vintage year, packaging, factory/box code, and count. Distinguish a sealed or full box from an open box and loose sticks. A printed box capacity is sticksPerBox; visible remaining cigars are not automatically a full box. Never infer ownership quantity from packaging capacity. Never invent missing details: use empty strings or nulls and list ambiguity and alternate matches in uncertainties. Return manufacturer as brand, product family or collection as line, and the exact named cigar, vitola, or assortment as vitola. Collector-entered context, when consistent with the photos: ${JSON.stringify(collectorContext||"none")}. Known identity hints are candidates only and must match visible wording: ${photoIdentificationHints.join("\n")}. Preserve a photographed or collector-confirmed count when it conflicts with a public listing, and disclose the conflict in uncertainties. This result is only a review draft and must not save inventory.`;
     }
     const requestBody=JSON.stringify({ model: process.env.OPENAI_VISION_MODEL?.trim() || "gpt-5.6-terra", reasoning: { effort: "low" }, store: false, max_output_tokens: 1800,
         input: [{ role: "user", content: [{ type: "input_text", text: prompt }, ...images] }],

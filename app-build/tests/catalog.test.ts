@@ -13,9 +13,10 @@ test("production catalog supplements master choices with owned cigar vitolas", (
 
   const catalog = mergeCatalogRecords(master, inventory);
 
-  assert.equal(catalog.length, 2);
+  assert.equal(catalog.length, 3);
   assert.equal(catalog[0].catalogId, "CAT-1");
-  assert.deepEqual(catalog[1], {
+  assert.equal(catalog[1].vitola, "El Trece Magistral 13");
+  assert.deepEqual(catalog[2], {
     catalogId: canonicalCigarIdentity(inventory[1]).identityId,
     brand: "Casa Fuente",
     line: "Casa Fuente",
@@ -32,6 +33,6 @@ test("one malformed catalog row cannot empty every valid Discover choice", () =>
 
   const catalog = mergeCatalogRecords(master, []);
 
-  assert.deepEqual(catalog.map(item => item.catalogId), ["CAT-DR", "CAT-NI"]);
-  assert.deepEqual(catalog.map(item => item.country), ["Dominican Republic", "Nicaragua"]);
+  assert.deepEqual(catalog.map(item => item.catalogId), ["CAT-DR", "CAT-NI", "CAT-ARTURO-FUENTE-OPUSX-FORBIDDEN-X-EL-TRECE-MAGISTRAL-13"]);
+  assert.deepEqual(catalog.map(item => item.country), ["Dominican Republic", "Nicaragua", "Dominican Republic"]);
 });
