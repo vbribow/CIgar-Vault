@@ -4,6 +4,11 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { billingProfileChangeForEvent, validStripeSignature } from "../lib/billing-webhook";
 
+process.env.STRIPE_COLLECTOR_MONTHLY_PRICE_ID = "price_collector_month";
+process.env.STRIPE_COLLECTOR_ANNUAL_PRICE_ID = "price_collector_year";
+process.env.STRIPE_PRO_MONTHLY_PRICE_ID = "price_pro_month";
+process.env.STRIPE_PRO_ANNUAL_PRICE_ID = "price_pro_year";
+
 test("Stripe signatures accept a current matching v1 value and reject stale or mismatched values", () => {
   const payload = '{"id":"evt_test"}';
   const secret = "whsec_test";
@@ -20,11 +25,12 @@ test("subscription lifecycle events produce authoritative account status changes
       id: "sub_1",
       customer: "cus_1",
       status: "trialing",
+      items: { data: [{ price: { id: "price_collector_month" } }] },
     }),
     {
       customerId: "cus_1",
       subscriptionId: "sub_1",
-      billingPlan: "founder",
+      billingPlan: "collector",
       billingStatus: "trialing",
     },
   );
@@ -33,6 +39,7 @@ test("subscription lifecycle events produce authoritative account status changes
       id: "sub_1",
       customer: "cus_1",
       status: "active",
+      items: { data: [{ price: { id: "price_collector_year" } }] },
     })?.billingStatus,
     "canceled",
   );
@@ -41,6 +48,7 @@ test("subscription lifecycle events produce authoritative account status changes
       id: "sub_1",
       customer: "cus_1",
       status: "unknown",
+      items: { data: [{ price: { id: "price_collector_month" } }] },
     }),
     undefined,
   );
@@ -51,6 +59,7 @@ test("invoice success and failure reconcile billing status without inventing a c
     billingProfileChangeForEvent("invoice.payment_failed", {
       customer: "cus_1",
       subscription: "sub_1",
+      lines: { data: [{ price: { id: "price_pro_month" } }] },
     })?.billingStatus,
     "past_due",
   );
@@ -58,6 +67,7 @@ test("invoice success and failure reconcile billing status without inventing a c
     billingProfileChangeForEvent("invoice.paid", {
       customer: "cus_1",
       subscription: "sub_1",
+      lines: { data: [{ price: { id: "price_pro_year" } }] },
     })?.billingStatus,
     "active",
   );
@@ -70,8 +80,11 @@ test("billing routes use verified checkout state and lifecycle reconciliation", 
   const webhook = readFileSync(new URL("../app/api/billing/webhook/route.ts", import.meta.url), "utf8");
   const entitlements = readFileSync(new URL("../lib/entitlements-server.ts", import.meta.url), "utf8");
   assert.match(confirm, /checkoutSessionGrantsAccess/);
+  assert.doesNotMatch(confirm, /\.from\("profiles"\)\.upsert/);
   assert.match(webhook, /billingProfileChangeForEvent/);
   assert.match(webhook, /stripe_customer_id/);
+  assert.match(webhook, /billing_webhook_events/);
+  assert.match(webhook, /stripe_event_created_at/);
   assert.match(entitlements, /billing_plan,billing_status/);
   assert.match(entitlements, /effectivePlan/);
 });

@@ -10,14 +10,21 @@ export async function POST(request: Request) {
   const payload = await request.text();
   if (!validStripeSignature(payload, request.headers.get("stripe-signature"), secret)) return NextResponse.json({ error: "Invalid Stripe signature" }, { status: 401 });
   try {
-    const event = JSON.parse(payload) as { id:string;type:string;data?:{object?:Record<string,unknown>} };
+    const event = JSON.parse(payload) as { id:string;type:string;created?:number;data?:{object?:Record<string,unknown>} };
     const object = event.data?.object;
     if (!event.id || !event.type || !object) return NextResponse.json({ error: "Invalid Stripe event" }, { status: 400 });
+    const admin = partnerAdmin();
+    if (!admin) throw new Error("Billing profile storage is not configured");
+    const { data: priorEvent, error: priorError } = await admin.from("billing_webhook_events").select("status").eq("event_id", event.id).maybeSingle();
+    if (priorError) throw priorError;
+    if (priorEvent?.status === "processed") return NextResponse.json({ received: true, duplicate: true });
+    if (!priorEvent) {
+      const { error: eventInsertError } = await admin.from("billing_webhook_events").insert({ event_id: event.id, event_type: event.type, event_created_at: Number(event.created || 0), status: "pending" });
+      if (eventInsertError && eventInsertError.code !== "23505") throw eventInsertError;
+    }
 
     const profileChange = billingProfileChangeForEvent(event.type, object);
     if (profileChange) {
-      const admin = partnerAdmin();
-      if (!admin) throw new Error("Billing profile storage is not configured");
       const { data: profile, error: profileError } = await admin
         .from("profiles")
         .select("user_id")
@@ -31,16 +38,17 @@ export async function POST(request: Request) {
           billing_plan: profileChange.billingPlan,
           billing_status: profileChange.billingStatus,
           ...(profileChange.subscriptionId ? { stripe_subscription_id: profileChange.subscriptionId } : {}),
+          stripe_event_created_at: Number(event.created || 0),
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", profile.user_id);
+        .eq("user_id", profile.user_id)
+        .lte("stripe_event_created_at", Number(event.created || 0));
       if (updateError) throw updateError;
     }
 
     if (event.type === "invoice.paid" && object.billing_reason !== "subscription_create") {
       const customerId = typeof object.customer === "string" ? object.customer : "";
-      const admin = partnerAdmin();
-      const { data: profile } = admin && customerId ? await admin.from("profiles").select("user_id").eq("stripe_customer_id", customerId).maybeSingle() : { data: null };
+      const { data: profile } = customerId ? await admin.from("profiles").select("user_id").eq("stripe_customer_id", customerId).maybeSingle() : { data: null };
       if (profile?.user_id) await recordPaidPartnerConversion({
         userId: profile.user_id,
         externalEventId: `invoice:${String(object.id)}`,
@@ -54,8 +62,15 @@ export async function POST(request: Request) {
       });
     }
     if (event.type === "charge.refunded" && typeof object.invoice === "string") await reversePartnerConversion(`invoice:${object.invoice}`);
+    const { error: eventUpdateError } = await admin.from("billing_webhook_events").update({ status: "processed", processed_at: new Date().toISOString(), error_message: null }).eq("event_id", event.id);
+    if (eventUpdateError) throw eventUpdateError;
     return NextResponse.json({ received: true });
   } catch (error) {
+    try {
+      const failedEvent = JSON.parse(payload) as { id?:string };
+      const admin = partnerAdmin();
+      if (admin && failedEvent.id) await admin.from("billing_webhook_events").update({ status: "failed", error_message: error instanceof Error ? error.message.slice(0, 500) : "Webhook processing failed" }).eq("event_id", failedEvent.id);
+    } catch {}
     return NextResponse.json({ error: error instanceof Error ? error.message : "Partner webhook processing failed" }, { status: 500 });
   }
 }
